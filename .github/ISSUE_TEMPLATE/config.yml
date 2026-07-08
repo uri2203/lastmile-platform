@@ -1,0 +1,20 @@
+---
+name: Bug Report
+about: Reporta un bug
+title: '[BUG] '
+labels: bug
+assignees: uri2203
+---
+
+**Pasos para reproducir**
+1. ...
+2. ...
+
+**Comportamiento actual**
+Que esta pasando?
+
+**Comportamiento esperado**
+Que deberia pasar?
+
+**Screenshots**
+Si aplica, agrega screenshots.

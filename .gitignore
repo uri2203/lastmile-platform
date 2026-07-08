@@ -4,6 +4,9 @@ __pycache__/
 *.pyo
 venv/
 .env
+*.egg-info/
+dist/
+build/
 
 # Java build
 build/
@@ -21,23 +24,29 @@ error.log
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Temp
 temp_ssh.bat
 ssh_connect.bat
 connect_linux.*
 linux_session.txt
+*.tmp
 
-# Reportes generados (se generan desde AS/400, no van en repo)
-reportes/*.xlsx
-reportes/*.pdf
-reportes/~$*
+# Reportes generados
+reportes/
+!reportes/.gitkeep
 
 # Archivos locales
 ejecutar.bat
 ejecutar_app.bat
-*.tmp
+
+# Node (si se usa en el futuro)
+node_modules/
+package-lock.json

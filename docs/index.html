@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Last Mile Platform - Software de Delivery para México</title>
+  <meta name="description" content="Plataforma SaaS de última milla para empresas de delivery en México. Whitelabel, sin comisiones, CFDI incluido.">
+  <style>
+    :root {
+      --primary: #e94560;
+      --primary-dark: #c73650;
+      --dark: #1a1a2e;
+      --darker: #16213e;
+      --accent: #0f3460;
+      --light: #f5f5f7;
+      --success: #27ae60;
+      --text: #333;
+      --gray: #6c757d;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); }
+    
+    /* NAV */
+    .nav { background: var(--dark); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .nav-brand { color: white; font-size: 1.5rem; font-weight: 800; }
+    .nav-brand span { color: var(--primary); }
+    .nav-links a { color: #ccc; text-decoration: none; margin-left: 24px; font-size: 0.9rem; }
+    .nav-links a:hover { color: white; }
+    .nav-cta { background: var(--primary); color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+    .nav-cta:hover { background: var(--primary-dark); }
+    
+    /* HERO */
+    .hero { background: linear-gradient(135deg, var(--dark), var(--accent)); color: white; padding: 80px 40px; text-align: center; }
+    .hero h1 { font-size: 3rem; margin-bottom: 16px; line-height: 1.2; }
+    .hero h1 span { color: var(--primary); }
+    .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto 32px; }
+    .hero-cta { background: var(--primary); color: white; padding: 16px 40px; border-radius: 12px; font-size: 1.1rem; font-weight: 700; text-decoration: none; display: inline-block; }
+    .hero-cta:hover { background: var(--primary-dark); transform: translateY(-2px); }
+    .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; }
+    .hero-stat { text-align: center; }
+    .hero-stat .num { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+    .hero-stat .label { font-size: 0.9rem; color: #aaa; }
+    
+    /* PROBLEMA */
+    .section { padding: 60px 40px; }
+    .section-title { text-align: center; font-size: 2rem; margin-bottom: 40px; }
+    .section-title span { color: var(--primary); }
+    
+    .problema-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+    .problema-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px; }
+    .problema-card .icon { font-size: 2rem; margin-bottom: 12px; }
+    .problema-card h3 { margin-bottom: 8px; }
+    .problema-card p { color: var(--gray); font-size: 0.95rem; }
+    
+    /* SOLUCION */
+    .solucion { background: var(--light); }
+    .solucion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; max-width: 1100px; margin: 0 auto; }
+    .solucion-item { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .solucion-item h3 { color: var(--primary); margin-bottom: 12px; font-size: 1.2rem; }
+    .solucion-item ul { list-style: none; }
+    .solucion-item li { padding: 6px 0; color: #555; }
+    .solucion-item li::before { content: '✓ '; color: var(--success); font-weight: 700; }
+    
+    /* PRECIOS */
+    .precios-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .precio-card { background: white; border: 2px solid #eee; border-radius: 16px; padding: 32px; text-align: center; }
+    .precio-card.featured { border-color: var(--primary); transform: scale(1.05); box-shadow: 0 8px 30px rgba(233,69,96,0.2); }
+    .precio-card h3 { font-size: 1.3rem; margin-bottom: 8px; }
+    .precio-card .precio { font-size: 2.5rem; font-weight: 800; color: var(--primary); margin: 16px 0; }
+    .precio-card .precio span { font-size: 1rem; color: var(--gray); font-weight: 400; }
+    .precio-card ul { list-style: none; text-align: left; margin: 20px 0; }
+    .precio-card li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #555; }
+    .precio-card li::before { content: '✓ '; color: var(--success); }
+    .precio-btn { display: block; padding: 14px; border-radius: 10px; font-weight: 700; text-decoration: none; margin-top: 16px; }
+    .precio-btn.primary { background: var(--primary); color: white; }
+    .precio-btn.secondary { background: var(--light); color: var(--primary); border: 2px solid var(--primary); }
+    
+    /* COMPARA */
+    .compara { background: var(--dark); color: white; }
+    .compara table { width: 100%; max-width: 900px; margin: 0 auto; border-collapse: collapse; }
+    .compara th, .compara td { padding: 14px 20px; text-align: left; border-bottom: 1px solid #333; }
+    .compara th { color: var(--primary); }
+    .compara td:last-child { color: var(--success); font-weight: 600; }
+    
+    /* CTA */
+    .cta-section { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; text-align: center; padding: 60px 40px; }
+    .cta-section h2 { font-size: 2rem; margin-bottom: 16px; }
+    .cta-section p { font-size: 1.1rem; margin-bottom: 24px; opacity: 0.9; }
+    .cta-btn { background: white; color: var(--primary); padding: 16px 40px; border-radius: 12px; font-size: 1.1rem; font-weight: 700; text-decoration: none; display: inline-block; }
+    
+    /* FOOTER */
+    .footer { background: var(--darker); color: #888; padding: 40px; text-align: center; }
+    .footer a { color: #aaa; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">🚚 <span>Last</span>Mile</div>
+    <div class="nav-links">
+      <a href="#solucion">Solución</a>
+      <a href="#precios">Precios</a>
+      <a href="#compara">Compara</a>
+      <a class="nav-cta" href="#contacto">Prueba Gratis</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>Tu marca de delivery.<br><span>Sin comisiones.</span></h1>
+    <p>Plataforma white-label de última milla para empresas en México. Facturación CFDI incluida, app chofer, tracking GPS y más.</p>
+    <a href="#contacto" class="hero-cta">🚀 Empezar Ahora - 14 Días Gratis</a>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="num">15,000+</div>
+        <div class="label">Micro-paqueterías en MX</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">0%</div>
+        <div class="label">Comisión por envío</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">CFDI</div>
+        <div class="label">Facturación incluida</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEMA -->
+  <section class="section">
+    <h2 class="section-title">¿Te suena <span>esto</span>?</h2>
+    <div class="problema-grid">
+      <div class="problema-card">
+        <div class="icon">💸</div>
+        <h3>Rappi te cobra 25% por cada envío</h3>
+        <p>Con 50 envíos diarios a $100 promedio, pierdes $37,500 al mes solo en comisiones.</p>
+      </div>
+      <div class="problema-card">
+        <div class="icon">🏷️</div>
+        <h3>Dependes de Estafeta/Paquetexpress</h3>
+        <p>Sin tracking en tiempo real, sin control, sin tu propia marca. Tus clientes no saben dónde va su paquete.</p>
+      </div>
+      <div class="problema-card">
+        <div class="icon">📊</div>
+        <h3>Excel y WhatsApp para todo</h3>
+        <p>Sin datos, sin reportes, sin KPIs. No sabes cuánto ganas por ruta ni quién es tu mejor chofer.</p>
+      </div>
+      <div class="problema-card">
+        <div class="icon">📄</div>
+        <h3>Facturación un desastre</h3>
+        <p>Manual, con errores, sin CFDI. Tus clientes se quejan y el SAT te puede multar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUCION -->
+  <section class="section solucion" id="solucion">
+    <h2 class="section-title">Todo lo que necesitas, <span>nada que no</span></h2>
+    <div class="solucion-grid">
+      <div class="solucion-item">
+        <h3>📱 App Chofer (PWA)</h3>
+        <ul>
+          <li>Se instala sin Play Store</li>
+          <li>Funciona offline</li>
+          <li>GPS tracking en tiempo real</li>
+          <li>Foto de evidencia de entrega</li>
+          <li>Firma digital del cliente</li>
+        </ul>
+      </div>
+      <div class="solucion-item">
+        <h3>📊 Dashboard Operación</h3>
+        <ul>
+          <li>Pedidos en tiempo real</li>
+          <li>Mapa de choferes activos</li>
+          <li>Alertas de incidencias</li>
+          <li>Asignación automática de rutas</li>
+          <li>KPIs y métricas</li>
+        </ul>
+      </div>
+      <div class="solucion-item">
+        <h3>📄 Facturación CFDI 4.0</h3>
+        <ul>
+          <li>Timbrado automático SAT</li>
+          <li>Complemento de pagos</li>
+          <li>Cancelaciones con motivo</li>
+          <li>Historial fiscal completo</li>
+          <li>Integración con PAC</li>
+        </ul>
+      </div>
+      <div class="solucion-item">
+        <h3>💰 Cobros Flexibles</h3>
+        <ul>
+          <li>OXXO / SPEI / Efectivo</li>
+          <li>Mercado Pago integrado</li>
+          <li>Tarjeta crédito/débito</li>
+          <li>Conciliación bancaria</li>
+          <li>Reportes de cobranza</li>
+        </ul>
+      </div>
+      <div class="solucion-item">
+        <h3>🗺️ Logística Inteligente</h3>
+        <ul>
+          <li>Rutas optimizadas</li>
+          <li>Logística inversa (devoluciones)</li>
+          <li>Zonas y tarifas</li>
+          <li>Control de flota vehicular</li>
+          <li>Mantenimiento preventivo</li>
+        </ul>
+      </div>
+      <div class="solucion-item">
+        <h3>🏪 Portal Cliente</h3>
+        <ul>
+          <li>Solicitar envíos en línea</li>
+          <li>Tracking en tiempo real</li>
+          <li>Historial de pedidos</li>
+          <li>Descarga de facturas</li>
+          <li>Tu marca, tu dominio</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARA -->
+  <section class="section compara" id="compara">
+    <h2 class="section-title" style="color:white;">Compara: <span style="color:var(--primary)">Nosotros</span> vs la Competencia</h2>
+    <table>
+      <thead>
+        <tr><th>Característica</th><th>Rappi/Uber</th><th>Paquetexpress</th><th>Last Mile Platform</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Comisión por envío</td><td>20-30%</td><td>Variable</td><td>0% - Solo mensualidad</td></tr>
+        <tr><td>Tu marca / Whitelabel</td><td>No</td><td>No</td><td>✅ Sí, 100%</td></tr>
+        <tr><td>CFDI 4.0 incluido</td><td>No</td><td>No</td><td>✅ Sí</td></tr>
+        <tr><td>App chofer propia</td><td>Sí, de ellos</td><td>No</td><td>✅ Sí, PWA tuya</td></tr>
+        <tr><td>Tracking GPS</td><td>Sí</td><td>Básico</td><td>✅ Tiempo real + historial</td></tr>
+        <tr><td>Logística inversa</td><td>No</td><td>Sí, limitado</td><td>✅ Completa</td></tr>
+        <tr><td>API abierta</td><td>No</td><td>No</td><td>✅ REST completa</td></tr>
+        <tr><td>Control total</td><td>No</td><td>No</td><td>✅ Tus datos, tu control</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PRECIOS -->
+  <section class="section" id="precios">
+    <h2 class="section-title">Precios <span>sin sorpresas</span></h2>
+    <div class="precios-grid">
+      <div class="precio-card">
+        <h3>Starter</h3>
+        <p style="color:var(--gray);">Para negocios pequeños</p>
+        <div class="precio">$999<span>/mes MXN</span></div>
+        <ul>
+          <li>1 empresa</li>
+          <li>5 choferes</li>
+          <li>1,000 envíos/mes</li>
+          <li>CFDI incluido</li>
+          <li>App chofer PWA</li>
+          <li>Soporte por email</li>
+        </ul>
+        <a href="#contacto" class="precio-btn secondary">Empezar</a>
+      </div>
+      <div class="precio-card featured">
+        <h3>Pro ⭐</h3>
+        <p style="color:var(--gray);">El más popular</p>
+        <div class="precio">$2,499<span>/mes MXN</span></div>
+        <ul>
+          <li>1 empresa</li>
+          <li>25 choferes</li>
+          <li>10,000 envíos/mes</li>
+          <li>CFDI + Pagos OXXO/SPEI</li>
+          <li>Whitelabel completo</li>
+          <li>Portal cliente</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <a href="#contacto" class="precio-btn primary">Empezar Ahora</a>
+      </div>
+      <div class="precio-card">
+        <h3>Enterprise</h3>
+        <p style="color:var(--gray);">Multi-sucursal</p>
+        <div class="precio">$5,999<span>/mes MXN</span></div>
+        <ul>
+          <li>Sucursales ilimitadas</li>
+          <li>Choferes ilimitados</li>
+          <li>Envíos ilimitados</li>
+          <li>Todo lo anterior</li>
+          <li>API dedicada</li>
+          <li>Integraciones custom</li>
+          <li>Account manager</li>
+        </ul>
+        <a href="#contacto" class="precio-btn secondary">Contactar Ventas</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" id="contacto">
+    <h2>Empieza a usar tu propia plataforma de delivery hoy</h2>
+    <p>14 días de prueba gratis. Sin tarjeta de crédito. Cancela cuando quieras.</p>
+    <a href="mailto:ventas@lastmile.mx?subject=Prueba%20Gratis" class="cta-btn">🚀 Solicitar Prueba Gratis</a>
+    <p style="margin-top:20px;font-size:0.9rem;opacity:0.7;">O escríbenos a ventas@lastmile.mx | WhatsApp: 5512345678</p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>&copy; 2026 Last Mile Platform. Todos los derechos reservados.</p>
+    <p style="margin-top:8px;"><a href="#">Términos</a> | <a href="#">Privacidad</a> | <a href="#">Contacto</a></p>
+  </footer>
+</body>
+</html>
