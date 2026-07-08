@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# Java build
+build/
+*.class
+*.jar
+
+# Logs
+*.log
+server_out.log
+server_err.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temp
+temp_ssh.bat
+ssh_connect.bat
+connect_linux.*
+linux_session.txt

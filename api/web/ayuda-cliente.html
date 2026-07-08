@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Envio - Ayuda</title>
+  <style>
+    :root{--primary:#e94560;--dark:#1a1a2e;--gray:#6c757d;--gray-light:#e9ecef;--success:#27ae60}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f7;color:#333}
+    .header{background:var(--dark);color:white;padding:16px 20px;text-align:center}
+    .header h1{font-size:1.2rem}
+    .content{max-width:500px;margin:16px auto;padding:0 16px}
+    .help-card{background:white;border-radius:12px;padding:20px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+    .help-card h3{color:var(--primary);margin-bottom:8px;font-size:1rem}
+    .help-card p{font-size:0.9rem;color:#555;line-height:1.5}
+    .help-card a{color:var(--primary);font-weight:600;text-decoration:none}
+    .faq-item{border-bottom:1px solid var(--gray-light);padding:12px 0}
+    .faq-item h4{font-size:0.9rem;cursor:pointer}
+    .faq-item p{font-size:0.85rem;color:var(--gray);margin-top:4px;display:none}
+    .faq-item.open p{display:block}
+    .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .contact-btn{display:block;padding:14px;border-radius:10px;text-align:center;text-decoration:none;font-weight:600;font-size:0.85rem}
+    .btn-phone{background:var(--success);color:white}
+    .btn-email{background:var(--primary);color:white}
+    .btn-wa{background:#25d366;color:white}
+    .btn-help{background:var(--dark);color:white}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>❓ Centro de Ayuda</h1>
+  </div>
+  <div class="content">
+    <div class="help-card">
+      <h3>📞 Contacto directo</h3>
+      <p>Si tienes un problema con tu envio, contacta al equipo de soporte:</p>
+      <div class="contact-grid">
+        <a href="tel:5512345678" class="contact-btn btn-phone">📞 Llamar</a>
+        <a href="mailto:soporte@lastmile.mx" class="contact-btn btn-email">📧 Email</a>
+        <a href="https://wa.me/5215512345678" class="contact-btn btn-wa" target="_blank">💬 WhatsApp</a>
+        <a href="#" class="contact-btn btn-help" onclick="alert('Ticket creado')">🎫 Abrir Ticket</a>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <h3>❓ Preguntas frecuentes</h3>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <h4>🕐 Cuanto tarda mi envio?</h4>
+        <p>Los envios locales se entregan en 2-4 horas. Los foraneos en 24-48 horas.</p>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <h4>📍 Como rastreo mi paquete?</h4>
+        <p>Ingresa el token que recibiste en la pantalla principal. Tambien puedes usar tu numero de pedido.</p>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <h4>🔄 Puedo cambiar la direccion?</h4>
+        <p>Contacta a soporte lo antes posible. Si el paquete aun no salio, podemos cambiarlo.</p>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <h4>❌ Que hago si no estoy en casa?</h4>
+        <p>El chofer dejara un aviso. Puedes reprogramar la entrega llamando a soporte.</p>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <h4>📄 Como obtengo mi factura?</h4>
+        <p>Solicita tu factura al correo facturacion@tuempresa.com con tu numero de pedido.</p>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <h4>💰 Cuanto cuesta el envio?</h4>
+        <p>El costo depende de la zona y peso. Consulta el desglose en tu confirmacion de pedido.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin:20px 0">
+      <a href="tracking-cliente.html" style="color:var(--primary);font-weight:600;text-decoration:none">← Volver a rastrear mi envio</a>
+    </div>
+  </div>
+</body>
+</html>

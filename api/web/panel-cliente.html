@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Last Mile - Portal Cliente</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .tracking-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .tracking-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .tracking-number { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+    .tracking-date { font-size: 0.85rem; color: var(--gray-500); }
+    .tracking-destino { font-size: 0.95rem; color: var(--gray-700); margin-bottom: 8px; }
+    .tracking-info { display: flex; gap: 16px; font-size: 0.85rem; color: var(--gray-500); margin-bottom: 12px; }
+    
+    .timeline { padding: 0; margin: 16px 0; }
+    .timeline-item { display: flex; gap: 12px; padding-bottom: 16px; position: relative; }
+    .timeline-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 28px;
+      bottom: 0;
+      width: 2px;
+      background: var(--gray-200);
+    }
+    .timeline-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+    .timeline-dot.active { background: var(--success); color: white; }
+    .timeline-dot.current { background: var(--info); color: white; }
+    .timeline-dot.pending { background: var(--gray-200); color: var(--gray-500); }
+    .timeline-content { flex: 1; }
+    .timeline-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+    .timeline-time { font-size: 0.8rem; color: var(--gray-500); }
+    
+    .cliente-search {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .cliente-search input { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h2>🚚 Last Mile</h2>
+        <div class="empresa">Portal Cliente</div>
+      </div>
+      <div class="sidebar-nav">
+        <a href="#" class="active"><span class="icon">📦</span> Mis Pedidos</a>
+        <a href="#nuevo"><span class="icon">➕</span> Nuevo Pedido</a>
+        <a href="#tracking"><span class="icon">📍</span> Tracking</a>
+        <a href="#historial"><span class="icon">📋</span> Historial</a>
+        <a href="#perfil"><span class="icon">👤</span> Mi Perfil</a>
+      </div>
+      <div class="sidebar-footer">
+        <a href="index.html" style="color:var(--gray-500);text-decoration:none;">Cerrar sesión</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Mis Pedidos -->
+      <section id="mis-pedidos">
+        <div class="page-header">
+          <h1>📦 Mis Pedidos</h1>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="loadMisPedidos()">🔄 Actualizar</button>
+          </div>
+        </div>
+        
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-value" id="total-pedidos">0</div>
+            <div class="kpi-label">Mis Pedidos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="pendientes">0</div>
+            <div class="kpi-label">Pendientes</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="en-transito">0</div>
+            <div class="kpi-label">En Tránsito</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="entregados">0</div>
+            <div class="kpi-label">Entregados</div>
+          </div>
+        </div>
+        
+        <div id="pedidos-list">
+          <p class="text-center text-muted">Cargando pedidos...</p>
+        </div>
+      </section>
+
+      <!-- Nuevo Pedido -->
+      <section id="nuevo">
+        <div class="card">
+          <div class="card-header">
+            <h3>➕ Solicitar Nuevo Pedido</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Nombre del destinatario *</label>
+              <input type="text" id="nuevo-nombre" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+              <label>Teléfono *</label>
+              <input type="tel" id="nuevo-telefono" placeholder="10 dígitos">
+            </div>
+            <div class="form-group">
+              <label>Dirección completa *</label>
+              <input type="text" id="nuevo-direccion" placeholder="Calle, número, colonia">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Colonia *</label>
+                <input type="text" id="nuevo-colonia" placeholder="Colonia">
+              </div>
+              <div class="form-group">
+                <label>Código Postal</label>
+                <input type="text" id="nuevo-cp" placeholder="CP">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Referencias</label>
+              <textarea id="nuevo-referencias" rows="2" placeholder="Entre calles, color de casa, etc."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bultos *</label>
+                <input type="number" id="nuevo-bultos" value="1" min="1">
+              </div>
+              <div class="form-group">
+                <label>Peso (kg)</label>
+                <input type="number" id="nuevo-peso" step="0.1" value="1">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Prioridad</label>
+              <select id="nuevo-prioridad">
+                <option value="NORMAL">Normal</option>
+                <option value="ALTA">Alta</option>
+                <option value="URGENTE">Urgente</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Indicaciones especiales</label>
+              <textarea id="nuevo-indicaciones" rows="2" placeholder="Horario preferido, instrucciones especiales..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="crearPedido()">📦 Crear Pedido</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tracking -->
+      <section id="tracking">
+        <div class="card">
+          <div class="card-header">
+            <h3>📍 Rastrear Pedido</h3>
+          </div>
+          <div class="card-body">
+            <div class="cliente-search">
+              <input type="text" id="tracking-input" placeholder="Número de pedido (ej: PED-001)">
+              <button class="btn btn-primary" onclick="buscarPedido()">🔍 Buscar</button>
+            </div>
+            <div id="tracking-result"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Historial -->
+      <section id="historial">
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Historial de Entregas</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Fecha</th>
+                    <th>Destino</th>
+                    <th>Bultos</th>
+                    <th>Costo</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="historial-tbody">
+                  <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mi Perfil -->
+      <section id="perfil">
+        <div class="card">
+          <div class="card-header">
+            <h3>👤 Mi Perfil</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input type="text" value="Mi Empresa S.A." readonly>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" value="contacto@miempresa.com" readonly>
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="tel" value="5512345678" readonly>
+            </div>
+            <div class="form-group">
+              <label>Dirección Principal</label>
+              <input type="text" value="Av. Revolución 1234, Col. Centro, CDMX" readonly>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    async function loadMisPedidos() {
+      const result = await api('/api/pedidos?limite=50');
+      if (result.success) {
+        let pendientes = 0, enTransito = 0, entregados = 0;
+        const container = document.getElementById('pedidos-list');
+        container.innerHTML = '';
+        
+        result.data.forEach(p => {
+          if (p.PED_ESTADO === 'PENDIENTE' || p.PED_ESTADO === 'ASIGNADO') pendientes++;
+          if (p.PED_ESTADO === 'EN_RUTA') enTransito++;
+          if (p.PED_ESTADO === 'ENTREGADO') entregados++;
+          
+          const div = document.createElement('div');
+          div.className = 'tracking-card';
+          div.innerHTML = `
+            <div class="tracking-header">
+              <span class="tracking-number">${p.PED_NUMERO || ''}</span>
+              ${getBadgeEstado(p.PED_ESTADO)}
+            </div>
+            <div class="tracking-destino">📍 ${p.PED_DESTINO_DIR || ''}, ${p.PED_DESTINO_COL || ''}</div>
+            <div class="tracking-info">
+              <span>📦 ${p.PED_BULTOS || 0} bultos</span>
+              <span>💰 ${formatCurrency(p.PED_COSTO_TOTAL)}</span>
+              <span>📅 ${formatDate(p.PED_FECHA_PEDIDO)}</span>
+            </div>
+            <div style="font-size:0.85rem;color:var(--gray-500);">
+              👤 Chofer: ${p.CHOFER_ASIGNADO || 'Sin asignar'}
+            </div>
+          `;
+          container.appendChild(div);
+        });
+        
+        document.getElementById('total-pedidos').textContent = result.data.length;
+        document.getElementById('pendientes').textContent = pendientes;
+        document.getElementById('en-transito').textContent = enTransito;
+        document.getElementById('entregados').textContent = entregados;
+      }
+    }
+    
+    async function crearPedido() {
+      const data = {
+        cliente_nombre: document.getElementById('nuevo-nombre').value,
+        cliente_telefono: document.getElementById('nuevo-telefono').value,
+        destino_dir: document.getElementById('nuevo-direccion').value,
+        destino_col: document.getElementById('nuevo-colonia').value,
+        destino_cp: document.getElementById('nuevo-cp').value,
+        destino_ref: document.getElementById('nuevo-referencias').value,
+        bultos: parseInt(document.getElementById('nuevo-bultos').value),
+        peso_kg: parseFloat(document.getElementById('nuevo-peso').value),
+        prioridad: document.getElementById('nuevo-prioridad').value,
+        indicaciones: document.getElementById('nuevo-indicaciones').value
+      };
+      
+      if (!data.cliente_nombre || !data.cliente_telefono || !data.destino_dir || !data.destino_col) {
+        alert('⚠️ Por favor completa los campos obligatorios');
+        return;
+      }
+      
+      const result = await api('/api/pedidos', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      
+      if (result.success) {
+        alert('✅ Pedido creado exitosamente: ' + result.pedido_numero);
+        loadMisPedidos();
+      } else {
+        alert('❌ Error al crear pedido');
+      }
+    }
+    
+    async function buscarPedido() {
+      const num = document.getElementById('tracking-input').value;
+      if (!num) {
+        alert('Ingresa un número de pedido');
+        return;
+      }
+      
+      const result = await api(`/api/pedidos?numero=${num}`);
+      const container = document.getElementById('tracking-result');
+      container.innerHTML = '';
+      
+      if (result.success && result.data.length > 0) {
+        const p = result.data[0];
+        
+        const steps = [
+          { label: 'Pedido Creado', time: p.PED_FECHA_PEDIDO, done: true },
+          { label: 'Asignado a Chofer', time: p.PED_FECHA_ASIGNACION, done: !!p.PED_FECHA_ASIGNACION },
+          { label: 'En Ruta', time: p.PED_FECHA_SALIDA, done: p.PED_ESTADO === 'EN_RUTA' || p.PED_ESTADO === 'ENTREGADO' },
+          { label: 'Entregado', time: p.PED_FECHA_ENTREGA, done: p.PED_ESTADO === 'ENTREGADO' }
+        ];
+        
+        let html = `
+          <div class="tracking-card">
+            <div class="tracking-header">
+              <span class="tracking-number">${p.PED_NUMERO}</span>
+              ${getBadgeEstado(p.PED_ESTADO)}
+            </div>
+            <div class="tracking-destino">📍 ${p.PED_DESTINO_DIR}, ${p.PED_DESTINO_COL}</div>
+            <div class="timeline">
+        `;
+        
+        steps.forEach(s => {
+          const dotClass = s.done ? 'active' : 'pending';
+          html += `
+            <div class="timeline-item">
+              <div class="timeline-dot ${dotClass}">${s.done ? '✓' : '○'}</div>
+              <div class="timeline-content">
+                <div class="timeline-title">${s.label}</div>
+                <div class="timeline-time">${s.time ? formatDateTime(s.time) : 'Pendiente'}</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += '</div></div>';
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<p class="text-center text-muted">Pedido no encontrado</p>';
+      }
+    }
+    
+    // Init
+    loadMisPedidos();
+    
+    // Load historial
+    async function loadHistorial() {
+      const result = await api('/api/pedidos?estado=ENTREGADO&limite=20');
+      if (result.success) {
+        const tbody = document.getElementById('historial-tbody');
+        tbody.innerHTML = '';
+        result.data.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${p.PED_NUMERO || ''}</strong></td>
+            <td>${formatDate(p.PED_FECHA_PEDIDO)}</td>
+            <td>${p.PED_DESTINO_COL || ''}</td>
+            <td>${p.PED_BULTOS || 0}</td>
+            <td>${formatCurrency(p.PED_COSTO_TOTAL)}</td>
+            <td>${getBadgeEstado(p.PED_ESTADO)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+    loadHistorial();
+  </script>
+</body>
+</html>

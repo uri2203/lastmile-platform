@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mi Envio - Tracking</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e94560">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    :root{--primary:#e94560;--dark:#1a1a2e;--light:#f5f5f7;--success:#27ae60;--warning:#f39c12;--danger:#e74c3c;--gray:#6c757d;--gray-light:#e9ecef}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--light);color:#333;min-height:100vh}
+
+    /* HEADER */
+    .header{background:var(--dark);color:white;padding:16px 20px;text-align:center}
+    .header h1{font-size:1.2rem;font-weight:700}
+    .header p{font-size:0.8rem;color:#aaa;margin-top:4px}
+
+    /* LOGIN */
+    .login-screen{display:flex;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .login-box{background:white;border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.1);text-align:center}
+    .login-box h2{margin-bottom:8px}
+    .login-box p{color:var(--gray);margin-bottom:24px;font-size:0.9rem}
+    .login-input{width:100%;padding:16px;border:2px solid var(--gray-light);border-radius:12px;font-size:1.1rem;text-align:center;letter-spacing:2px;margin-bottom:16px}
+    .login-input:focus{border-color:var(--primary);outline:none}
+    .login-btn{width:100%;padding:16px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer}
+    .login-btn:hover{opacity:0.9}
+
+    /* TRACKING SCREEN */
+    .tracking-screen{display:none;padding:16px;max-width:500px;margin:0 auto}
+
+    /* PEDIDO CARD */
+    .pedido-card{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    .pedido-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .pedido-num{font-size:1.1rem;font-weight:700;color:var(--primary)}
+    .pedido-estado{padding:6px 12px;border-radius:20px;font-size:0.75rem;font-weight:700;text-transform:uppercase}
+    .estado-pendiente{background:#fff3cd;color:#856404}
+    .estado-asignado{background:#cce5ff;color:#004085}
+    .estado-ruta{background:#d4edda;color:#155724}
+    .estado-entregado{background:#d1ecf1;color:#0c5460}
+    .estado-fallido{background:#f8d7da;color:#721c24}
+
+    .pedido-destino{font-size:0.95rem;color:#555;margin-bottom:4px}
+    .pedido-info{display:flex;gap:16px;font-size:0.85rem;color:var(--gray);margin-top:8px}
+
+    /* CHOFER CARD */
+    .chofer-card{background:white;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    .chofer-row{display:flex;align-items:center;gap:12px}
+    .chofer-avatar{width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700}
+    .chofer-info h4{font-size:0.95rem}
+    .chofer-info p{font-size:0.8rem;color:var(--gray)}
+    .chofer-actions{display:flex;gap:8px;margin-top:12px}
+    .chofer-btn{flex:1;padding:10px;border-radius:10px;border:none;font-weight:600;font-size:0.85rem;cursor:pointer;text-align:center}
+    .btn-call{background:var(--success);color:white}
+    .btn-sms{background:#25d366;color:white}
+    .btn-whatsapp{background:#25d366;color:white}
+
+    /* TIMELINE */
+    .timeline{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    .timeline h3{font-size:1rem;margin-bottom:16px}
+    .tl-item{display:flex;gap:12px;padding-bottom:16px;position:relative}
+    .tl-item:not(:last-child)::after{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--gray-light)}
+    .tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0}
+    .tl-dot.active{background:var(--success);color:white}
+    .tl-dot.pending{background:var(--gray-light);color:var(--gray)}
+    .tl-content h4{font-size:0.9rem;margin-bottom:2px}
+    .tl-content p{font-size:0.8rem;color:var(--gray)}
+
+    /* MAP PLACEHOLDER */
+    .map-card{background:white;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);height:200px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e8f4f8,#d4edda)}
+    .map-card p{color:var(--gray);font-size:0.9rem}
+
+    /* BOTTOM NAV */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;border-top:1px solid var(--gray-light);padding:8px 0;z-index:100}
+    .bottom-nav a{flex:1;text-align:center;padding:6px;font-size:0.7rem;color:var(--gray);text-decoration:none}
+    .bottom-nav a.active{color:var(--primary);font-weight:600}
+    .bottom-nav a .icon{font-size:1.2rem;display:block;margin-bottom:2px}
+
+    /* HIDDEN */
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <h1>📦 Mi Envio</h1>
+    <p>Rastrea tu paquete en tiempo real</p>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h2>🔍 Rastrear mi paquete</h2>
+      <p>Ingresa el token que recibiste por SMS o email</p>
+      <input type="text" class="login-input" id="tokenInput" placeholder="tk_xxxxxxxxxxxx" value="tk_abc123def456">
+      <button class="login-btn" onclick="buscarPedido()">Rastrear</button>
+      <p style="margin-top:16px;font-size:0.8rem;color:var(--gray)">También puedes usar tu número de pedido</p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" class="login-input" id="pedidoInput" placeholder="PED-XXXXXXX" style="flex:1;letter-spacing:1px;font-size:0.9rem">
+        <button class="login-btn" style="width:auto;padding:16px 24px;font-size:0.9rem" onclick="buscarPorPedido()">Buscar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACKING -->
+  <div class="tracking-screen" id="trackingScreen">
+    <!-- Pedido -->
+    <div class="pedido-card" id="pedidoCard"></div>
+
+    <!-- Mapa -->
+    <div class="map-card" id="mapCard">
+      <p>📍 Mapa de ubicacion en tiempo real</p>
+    </div>
+
+    <!-- Chofer -->
+    <div class="chofer-card hidden" id="choferCard"></div>
+
+    <!-- Timeline -->
+    <div class="timeline" id="timelineCard">
+      <h3>📋 Historial del envio</h3>
+      <div id="timelineBody"></div>
+    </div>
+
+    <!-- Compartir -->
+    <div style="text-align:center;margin:16px 0">
+      <button style="padding:12px 24px;background:var(--dark);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer" onclick="compartir()">📤 Compartir estado del envio</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav" style="display:none">
+    <a href="#" class="active" onclick="showSection('pedido')"><span class="icon">📦</span>Mi Envio</a>
+    <a href="#" onclick="showSection('chofer')"><span class="icon">🚚</span>Chofer</a>
+    <a href="#" onclick="showSection('ayuda')"><span class="icon">❓</span>Ayuda</a>
+  </nav>
+
+  <script>
+    const API = 'http://localhost:5000';
+    let trackingData = null;
+
+    async function buscarPedido() {
+      const token = document.getElementById('tokenInput').value.trim();
+      if (!token) { alert('Ingresa un token'); return; }
+
+      try {
+        const r = await fetch(`${API}/api/cliente-final/${token}`);
+        const d = await r.json();
+        if (d.success && d.data) {
+          trackingData = d.data;
+          mostrarTracking(d.data);
+        } else {
+          alert('Token no encontrado. Verifica el token.');
+        }
+      } catch(e) { alert('Error de conexion'); }
+    }
+
+    async function buscarPorPedido() {
+      const ped = document.getElementById('pedidoInput').value.trim();
+      if (!ped) { alert('Ingresa un numero de pedido'); return; }
+      alert('Buscando pedido: ' + ped);
+    }
+
+    function mostrarTracking(d) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('trackingScreen').style.display = 'block';
+      document.getElementById('bottomNav').style.display = 'flex';
+
+      // Pedido card
+      const estadoClass = getEstadoClass(d.PED_ESTADO);
+      document.getElementById('pedidoCard').innerHTML = `
+        <div class="pedido-header">
+          <span class="pedido-num">${d.PED_NUMERO || 'N/A'}</span>
+          <span class="pedido-estado ${estadoClass}">${d.PED_ESTADO || 'PENDIENTE'}</span>
+        </div>
+        <div class="pedido-destino">📍 ${d.PED_DESTINO_DIR || ''}, ${d.PED_DESTINO_COL || ''}</div>
+        <div class="pedido-info">
+          <span>📦 ${d.PED_BULTOS || 0} bultos</span>
+          <span>📅 ${formatDate(d.PED_FECHA_PEDIDO)}</span>
+        </div>
+      `;
+
+      // Mapa con ubicacion actual
+      if (d.UBICACION_ACTUAL) {
+        const coords = d.UBICACION_ACTUAL.split(',');
+        document.getElementById('mapCard').innerHTML = `
+          <div style="text-align:center;padding:20px">
+            <p style="font-size:2rem;margin-bottom:8px">📍</p>
+            <p style="font-weight:600">Chofer en camino</p>
+            <p style="font-size:0.8rem;color:var(--gray)">Lat: ${coords[0]} | Lng: ${coords[1]}</p>
+            <a href="https://www.google.com/maps?q=${d.UBICACION_ACTUAL}" target="_blank" style="display:inline-block;margin-top:12px;color:var(--primary);font-weight:600;text-decoration:none">Abrir en Google Maps →</a>
+          </div>
+        `;
+      }
+
+      // Chofer card
+      if (d.CHO_NOMBRE) {
+        document.getElementById('choferCard').classList.remove('hidden');
+        document.getElementById('choferCard').innerHTML = `
+          <div class="chofer-row">
+            <div class="chofer-avatar">${(d.CHO_NOMBRE||'?')[0]}</div>
+            <div class="chofer-info">
+              <h4>${d.CHO_NOMBRE} ${d.CHO_APELLIDO || ''}</h4>
+              <p>Tu chofer asignado</p>
+            </div>
+          </div>
+          <div class="chofer-actions">
+            <button class="chofer-btn btn-call" onclick="llamar()">📞 Llamar</button>
+            <button class="chofer-btn btn-whatsapp" onclick="whatsapp()">💬 WhatsApp</button>
+          </div>
+        `;
+      }
+
+      // Timeline
+      cargarTimeline(d.CLIF_TOKEN_TRACKING);
+    }
+
+    async function cargarTimeline(token) {
+      try {
+        const r = await fetch(`${API}/api/cliente-final/${token}/timeline`);
+        const d = await r.json();
+        const body = document.getElementById('timelineBody');
+        body.innerHTML = '';
+
+        const pasos = [
+          {estado:'Pedido creado', icono:'📦', completado:true},
+          {estado:'Asignado a chofer', icono:'👤', completado:d.data && d.data.length > 0},
+          {estado:'En camino', icono:'🚚', completado:trackingData?.PED_ESTADO === 'EN_RUTA' || trackingData?.PED_ESTADO === 'ENTREGADO'},
+          {estado:'Entregado', icono:'✅', completado:trackingData?.PED_ESTADO === 'ENTREGADO'}
+        ];
+
+        pasos.forEach(p => {
+          body.innerHTML += `
+            <div class="tl-item">
+              <div class="tl-dot ${p.completado ? 'active' : 'pending'}">${p.icono}</div>
+              <div class="tl-content">
+                <h4>${p.estado}</h4>
+                <p>${p.completado ? 'Completado' : 'Pendiente'}</p>
+              </div>
+            </div>
+          `;
+        });
+
+        if (d.data) {
+          d.data.forEach(h => {
+            body.innerHTML += `
+              <div class="tl-item">
+                <div class="tl-dot active">📋</div>
+                <div class="tl-content">
+                  <h4>${h.estado || 'Evento'}</h4>
+                  <p>${h.fecha || ''} ${h.usuario ? '- ' + h.usuario : ''}</p>
+                </div>
+              </div>
+            `;
+          });
+        }
+      } catch(e) {}
+    }
+
+    function getEstadoClass(estado) {
+      const map = {'PENDIENTE':'estado-pendiente','ASIGNADO':'estado-asignado','EN_RUTA':'estado-ruta','ENTREGADO':'estado-entregado','FALLIDO':'estado-fallido','CANCELADO':'estado-fallido'};
+      return map[estado] || 'estado-pendiente';
+    }
+
+    function formatDate(s) {
+      if (!s) return '';
+      return new Date(s).toLocaleDateString('es-MX');
+    }
+
+    function llamar() {
+      if (trackingData?.PED_CLIENTE_TELEFONO) {
+        window.location.href = `tel:${trackingData.PED_CLIENTE_TELEFONO}`;
+      }
+    }
+
+    function whatsapp() {
+      window.open('https://wa.me/5215512345678?text=Hola, estoy rastreando mi envio', '_blank');
+    }
+
+    function compartir() {
+      if (navigator.share) {
+        navigator.share({title:'Mi Envio', text:'Rastrea mi paquete', url:window.location.href});
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link copiado al portapapeles');
+      }
+    }
+
+    function showSection(s) {
+      document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+</html>

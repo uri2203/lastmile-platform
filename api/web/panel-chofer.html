@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Last Mile - App Chofer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e94560">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <style>
+    /* Mobile-first chofer app styles */
+    body { background: var(--gray-50); }
+    .main-content { padding: 10px; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi-card { padding: 12px; }
+    .kpi-value { font-size: 1.5rem; }
+    
+    .entrega-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--primary);
+    }
+    .entrega-card.urgente { border-left-color: var(--danger); }
+    .entrega-card.completada { border-left-color: var(--success); }
+    
+    .entrega-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .entrega-numero { font-weight: 700; font-size: 1.1rem; color: var(--primary); }
+    .entrega-destino { font-size: 0.9rem; color: var(--gray-700); margin-bottom: 6px; }
+    .entrega-cliente { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 10px; }
+    
+    .entrega-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-action {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 8px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-entregar { background: var(--success); color: white; }
+    .btn-fallido { background: var(--danger); color: white; }
+    .btn-navegar { background: var(--info); color: white; }
+    .btn-llamar { background: var(--warning); color: white; }
+    
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      border-top: 1px solid var(--gray-200);
+      padding: 8px 0;
+      z-index: 100;
+    }
+    .bottom-nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-decoration: none;
+    }
+    .bottom-nav-item.active { color: var(--primary); font-weight: 600; }
+    .bottom-nav-item .icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+    
+    .status-bar {
+      background: white;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-200);
+      margin: -10px -10px 10px -10px;
+    }
+    .status-online { color: var(--success); font-weight: 600; }
+    .status-offline { color: var(--danger); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div>
+        <strong>🚚 Last Mile</strong>
+        <span class="text-muted" style="font-size:0.8rem;margin-left:8px;">Chofer</span>
+      </div>
+      <div>
+        <span class="status-online" id="gps-status">● GPS Activo</span>
+      </div>
+    </div>
+
+    <main class="main-content" style="padding-bottom:70px;">
+      <!-- Resumen del Día -->
+      <section id="resumen">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-value" id="mis-pedidos">0</div>
+            <div class="kpi-label">Mis Pedidos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="mis-entregados">0</div>
+            <div class="kpi-label">Entregados</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="mis-pendientes">0</div>
+            <div class="kpi-label">Pendientes</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="mis-km">0</div>
+            <div class="kpi-label">KM Recorridos</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mis Entregas -->
+      <section id="mis-entregas">
+        <h3 style="margin-bottom:12px;">📦 Mis Entregas de Hoy</h3>
+        <div id="entregas-list">
+          <p class="text-center text-muted">Cargando entregas...</p>
+        </div>
+      </section>
+
+      <!-- Mi Rendimiento -->
+      <section id="mi-rendimiento" style="margin-top:20px;">
+        <div class="card">
+          <div class="card-header">
+            <h3>📊 Mi Rendimiento</h3>
+          </div>
+          <div class="card-body" id="mi-rendimiento-body">
+            <p class="text-muted">Cargando...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <a href="#resumen" class="bottom-nav-item active">
+        <span class="icon">📊</span> Resumen
+      </a>
+      <a href="#mis-entregas" class="bottom-nav-item">
+        <span class="icon">📦</span> Entregas
+      </a>
+      <a href="#tracking" class="bottom-nav-item" onclick="enviarUbicacion()">
+        <span class="icon">📍</span> GPS
+      </a>
+      <a href="#mi-rendimiento" class="bottom-nav-item">
+        <span class="icon">⭐</span> Mi Rendimiento
+      </a>
+    </nav>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const CHOFER_ACTUAL_ID = 1; // Simular chofer logueado
+    
+    async function loadMisEntregas() {
+      const result = await api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}`);
+      if (result.success) {
+        const container = document.getElementById('entregas-list');
+        container.innerHTML = '';
+        
+        let pendientes = 0, entregados = 0;
+        
+        result.data.forEach(e => {
+          if (e.ENT_ESTADO === 'PENDIENTE' || e.ENT_ESTADO === 'ASIGNADO') pendientes++;
+          if (e.ENT_ESTADO === 'ENTREGADO') entregados++;
+          
+          const esUrgente = e.PED_PRIORIDAD === 'URGENTE';
+          const esCompletada = e.ENT_ESTADO === 'ENTREGADO';
+          
+          const div = document.createElement('div');
+          div.className = `entrega-card ${esUrgente ? 'urgente' : ''} ${esCompletada ? 'completada' : ''}`;
+          div.innerHTML = `
+            <div class="entrega-header">
+              <span class="entrega-numero">${e.PED_NUMERO || ''}</span>
+              ${getBadgeEstado(e.ENT_ESTADO)}
+            </div>
+            <div class="entrega-destino">📍 ${e.PED_DESTINO_DIR || ''}, ${e.PED_DESTINO_COL || ''}</div>
+            <div class="entrega-cliente">👤 ${e.PED_CLIENTE_NOMBRE || ''} | 📞 ${e.PED_CLIENTE_TELEFONO || ''}</div>
+            <div style="font-size:0.8rem;color:var(--gray-500);margin-bottom:8px;">
+              📦 ${e.PED_BULTOS || 0} bultos | 💰 ${formatCurrency(e.PED_COSTO_TOTAL)}
+              ${e.ENT_EVIDENCIA ? ' | 📷 Evidencia' : ''}
+              ${e.ENT_FIRMA ? ' | ✍️ Firmado' : ''}
+            </div>
+            ${!esCompletada ? `
+            <div class="entrega-actions">
+              <button class="btn-action btn-entregar" onclick="marcarEntregado(${e.ENT_ID})">✅ Entregado</button>
+              <button class="btn-action btn-fallido" onclick="marcarFallido(${e.ENT_ID})">❌ Fallido</button>
+              <button class="btn-action btn-navegar" onclick="navegar('${e.PED_DESTINO_DIR}')">🗺️ Navegar</button>
+              <button class="btn-action btn-llamar" onclick="llamar('${e.PED_CLIENTE_TELEFONO}')">📞 Llamar</button>
+            </div>
+            ` : `
+            <div style="font-size:0.85rem;color:var(--success);font-weight:600;">
+              ✅ Entregado - ${e.ENT_HORA_ENTREGA ? formatDateTime(e.ENT_HORA_ENTREGA) : ''}
+            </div>
+            `}
+          `;
+          container.appendChild(div);
+        });
+        
+        document.getElementById('mis-pedidos').textContent = result.data.length;
+        document.getElementById('mis-entregados').textContent = entregados;
+        document.getElementById('mis-pendientes').textContent = pendientes;
+      }
+    }
+    
+    async function loadMiRendimiento() {
+      const result = await api('/api/choferes/rendimiento');
+      if (result.success && result.data.length > 0) {
+        const ch = result.data[0]; // Primer chofer como ejemplo
+        const body = document.getElementById('mi-rendimiento-body');
+        body.innerHTML = `
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:3rem;font-weight:800;color:var(--primary);">${ch.TASA_EXITO || 0}%</div>
+            <div style="font-size:0.9rem;color:var(--gray-500);">Tasa de Éxito</div>
+          </div>
+          <div class="kpi-grid" style="grid-template-columns:1fr 1fr;">
+            <div style="text-align:center;padding:10px;background:var(--gray-50);border-radius:8px;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--success);">${ch.ENTREGAS_EXITOSAS || 0}</div>
+              <div style="font-size:0.8rem;color:var(--gray-500);">Exitosas</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--gray-50);border-radius:8px;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--danger);">${ch.ENTREGAS_FALLIDAS || 0}</div>
+              <div style="font-size:0.8rem;color:var(--gray-500);">Fallidas</div>
+            </div>
+          </div>
+          <div style="margin-top:12px;font-size:0.85rem;color:var(--gray-600);">
+            ⏱️ Tiempo promedio espera: <strong>${ch.TIEMPO_PROM_ESPERA || 0} min</strong>
+          </div>
+        `;
+        document.getElementById('mis-km').textContent = parseFloat(ch.KM_TOTAL || 0).toFixed(1);
+      }
+    }
+    
+    // Acciones del chofer
+    async function marcarEntregado(entId) {
+      if (confirm('¿Confirmar entrega exitosa?')) {
+        const result = await api(`/api/entregas/${entId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            estado: 'ENTREGADO',
+            hora: new Date().toISOString(),
+            evidencia: 'EVID_' + Date.now()
+          })
+        });
+        if (result.success) {
+          loadMisEntregas();
+          alert('✅ Entrega registrada exitosamente');
+        }
+      }
+    }
+    
+    async function marcarFallido(entId) {
+      const motivo = prompt('Motivo de falla:');
+      if (motivo) {
+        const result = await api(`/api/entregas/${entId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            estado: 'NO_ENTREGADO',
+            motivo: motivo
+          })
+        });
+        if (result.success) {
+          loadMisEntregas();
+          alert('❌ Incidencia registrada');
+        }
+      }
+    }
+    
+    function navegar(direccion) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`, '_blank');
+    }
+    
+    function llamar(telefono) {
+      window.location.href = `tel:${telefono}`;
+    }
+    
+    function enviarUbicacion() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          api(`/api/tracking/${CHOFER_ACTUAL_ID}`, {
+            method: 'POST',
+            body: JSON.stringify({
+              latitud: pos.coords.latitude,
+              longitud: pos.coords.longitude,
+              velocidad: pos.coords.speed || 0,
+              bateria: 85
+            })
+          });
+          alert('📍 Ubicación enviada: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
+        });
+      } else {
+        alert('GPS no disponible');
+      }
+    }
+    
+    // ========================================
+    // PWA: Register Service Worker
+    // ========================================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.log('SW error:', err));
+    }
+
+    // ========================================
+    // GPS: Tracking continuo en background
+    // ========================================
+    let gpsWatchId = null;
+    let gpsActivo = false;
+
+    function iniciarGPS() {
+      if (!navigator.geolocation) {
+        document.getElementById('gps-status').textContent = '❌ Sin GPS';
+        document.getElementById('gps-status').className = 'status-offline';
+        return;
+      }
+
+      gpsWatchId = navigator.geolocation.watchPosition(
+        pos => {
+          gpsActivo = true;
+          document.getElementById('gps-status').textContent = '● GPS Activo';
+          document.getElementById('gps-status').className = 'status-online';
+          
+          // Enviar al servidor cada 30 segundos
+          if (Date.now() % 30000 < 1000) {
+            api('/api/tracking', {
+              method: 'POST',
+              body: JSON.stringify({
+                choId: CHOFER_ACTUAL_ID,
+                latitud: pos.coords.latitude,
+                longitud: pos.coords.longitude,
+                velocidad: pos.coords.speed || 0,
+                bateria: getBatteryLevel()
+              })
+            });
+          }
+        },
+        err => {
+          document.getElementById('gps-status').textContent = '⚠️ GPS Error';
+          document.getElementById('gps-status').className = 'status-offline';
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      );
+    }
+
+    async function getBatteryLevel() {
+      if (navigator.getBattery) {
+        const battery = await navigator.getBattery();
+        return Math.round(battery.level * 100);
+      }
+      return 100;
+    }
+
+    // ========================================
+    // PUSH: Solicitar permiso notificaciones
+    // ========================================
+    async function solicitarPermisos() {
+      if ('Notification' in window) {
+        const permiso = await Notification.requestPermission();
+        if (permiso === 'granted') {
+          console.log('Notificaciones habilitadas');
+        }
+      }
+    }
+
+    // ========================================
+    // OFFLINE: Detectar conexión
+    // ========================================
+    function updateOnlineStatus() {
+      const status = document.getElementById('gps-status');
+      if (navigator.onLine) {
+        status.textContent = '● En línea';
+        status.className = 'status-online';
+      } else {
+        status.textContent = '● Sin conexión';
+        status.className = 'status-offline';
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // ========================================
+    // INSTALL: Prompt de instalación PWA
+    // ========================================
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Mostrar botón de instalación
+      if (confirm('📱 ¿Instalar app en tu celular?')) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choice => {
+          if (choice.outcome === 'accepted') {
+            console.log('App instalada');
+          }
+          deferredPrompt = null;
+        });
+      }
+    });
+
+    // ========================================
+    // INIT
+    // ========================================
+    loadMisEntregas();
+    loadMiRendimiento();
+    iniciarGPS();
+    solicitarPermisos();
+    updateOnlineStatus();
+  </script>
+</body>
+</html>

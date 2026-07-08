@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Last Mile - Crear Mi Empresa</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: linear-gradient(135deg, var(--dark), var(--accent)); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .onboard-container { width: 100%; max-width: 640px; padding: 20px; }
+    .onboard-card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; }
+    .step-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--gray-200); }
+    .step-dot.active { background: var(--primary); }
+    .step-dot.done { background: var(--success); }
+    .step { display: none; }
+    .step.active { display: block; }
+    .step h2 { text-align: center; margin-bottom: 8px; color: var(--dark); }
+    .step p.subtitle { text-align: center; color: var(--gray); margin-bottom: 24px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .plan-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .plan-card { border: 2px solid #eee; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; }
+    .plan-card:hover, .plan-card.selected { border-color: var(--primary); background: #fef2f4; }
+    .plan-card h4 { margin-bottom: 4px; }
+    .plan-card .price { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+    .plan-card .price small { font-size: 0.7rem; color: var(--gray); }
+    .success-icon { font-size: 4rem; text-align: center; margin-bottom: 16px; }
+    .step-nav { display: flex; justify-content: space-between; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="onboard-container">
+    <div class="onboard-card">
+      <!-- Progress -->
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+        <div class="step-dot" id="dot4"></div>
+      </div>
+
+      <!-- Step 1: Datos de la Empresa -->
+      <div class="step active" id="step1">
+        <h2>🏢 Datos de tu Empresa</h2>
+        <p class="subtitle">Cuéntanos sobre tu negocio</p>
+        <div class="form-group">
+          <label>Nombre comercial *</label>
+          <input type="text" id="emp-nombre" placeholder="Ej: Mi Delivery MX">
+        </div>
+        <div class="form-group">
+          <label>RFC *</label>
+          <input type="text" id="emp-rfc" placeholder="Ej: DEL123456789" maxlength="13">
+        </div>
+        <div class="form-group">
+          <label>Razón Social *</label>
+          <input type="text" id="emp-razon" placeholder="Ej: MI DELIVERY SA DE CV">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Regimen Fiscal</label>
+            <select id="emp-regimen">
+              <option value="601">601 - General de Ley</option>
+              <option value="612">612 - Personas Morales</option>
+              <option value="621">621 - Actividades Empresariales</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Código Postal *</label>
+            <input type="text" id="emp-cp" placeholder="00000" maxlength="5">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email de facturación</label>
+          <input type="email" id="emp-email" placeholder="facturacion@midelivery.com">
+        </div>
+        <div class="step-nav">
+          <div></div>
+          <button class="btn btn-primary" onclick="nextStep(2)">Siguiente →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Configuración de Delivery -->
+      <div class="step" id="step2">
+        <h2>🚚 Configuración</h2>
+        <p class="subtitle">Personaliza tu plataforma</p>
+        <div class="form-group">
+          <label>¿Cuántos choferes tienes?</label>
+          <select id="cfg-choferes">
+            <option value="5">1-5 choferes</option>
+            <option value="15">6-15 choferes</option>
+            <option value="25">16-25 choferes</option>
+            <option value="50">26-50 choferes</option>
+            <option value="999">Más de 50</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>¿Cuántos envíos esperas al mes?</label>
+          <select id="cfg-envios">
+            <option value="500">Hasta 500</option>
+            <option value="2000">500 - 2,000</option>
+            <option value="10000">2,000 - 10,000</option>
+            <option value="50000">Más de 10,000</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de negocio</label>
+          <select id="cfg-tipo">
+            <option value="paqueteria">Paquetería / Última Milla</option>
+            <option value="restaurantes">Restaurantes / Food Delivery</option>
+            <option value="eCommerce">E-commerce / Envíos</option>
+            <option value="mudanza">Mudanza / Local</option>
+            <option value="distribucion">Distribución Mayorista</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Zona principal</label>
+          <select id="cfg-zona">
+            <option value="CDMX">Ciudad de México</option>
+            <option value="GDL">Guadalajara</option>
+            <option value="MTY">Monterrey</option>
+            <option value="PUE">Puebla</option>
+            <option value="QRO">Querétaro</option>
+            <option value="OTH">Otra</option>
+          </select>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-secondary" onclick="nextStep(1)">← Atrás</button>
+          <button class="btn btn-primary" onclick="nextStep(3)">Siguiente →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Seleccionar Plan -->
+      <div class="step" id="step3">
+        <h2>📦 Elige tu Plan</h2>
+        <p class="subtitle">Sin comisiones por envío. Cancela cuando quieras.</p>
+        <div class="plan-cards">
+          <div class="plan-card" onclick="selectPlan(this, 'starter')">
+            <h4>Starter</h4>
+            <div class="price">$999<small>/mes</small></div>
+            <p style="font-size:0.8rem;color:var(--gray);">5 choferes, 1K envíos</p>
+          </div>
+          <div class="plan-card selected" onclick="selectPlan(this, 'pro')">
+            <h4>Pro ⭐</h4>
+            <div class="price">$2,499<small>/mes</small></div>
+            <p style="font-size:0.8rem;color:var(--gray);">25 choferes, 10K envíos</p>
+          </div>
+          <div class="plan-card" onclick="selectPlan(this, 'enterprise')">
+            <h4>Enterprise</h4>
+            <div class="price">$5,999<small>/mes</small></div>
+            <p style="font-size:0.8rem;color:var(--gray);">Ilimitado</p>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:16px;">
+          <p style="color:var(--success);font-weight:600;">🎁 14 días de prueba gratis en cualquier plan</p>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-secondary" onclick="nextStep(2)">← Atrás</button>
+          <button class="btn btn-primary" onclick="nextStep(4)">Crear Mi Cuenta →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Datos de Acceso -->
+      <div class="step" id="step4">
+        <h2>👤 Datos de Acceso</h2>
+        <p class="subtitle">Crea tu cuenta de administrador</p>
+        <div class="form-group">
+          <label>Tu nombre *</label>
+          <input type="text" id="usr-nombre" placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="usr-email" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label>Teléfono *</label>
+          <input type="tel" id="usr-telefono" placeholder="5512345678">
+        </div>
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="password" id="usr-pass" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="form-group">
+          <label>Confirmar contraseña *</label>
+          <input type="password" id="usr-pass2" placeholder="Repite tu contraseña">
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-secondary" onclick="nextStep(3)">← Atrás</button>
+          <button class="btn btn-primary" onclick="crearCuenta()">🚀 Crear Mi Empresa</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Éxito -->
+      <div class="step" id="step5">
+        <div class="success-icon">🎉</div>
+        <h2 style="text-align:center;">¡Tu plataforma está lista!</h2>
+        <p class="subtitle">Te enviamos un email con tus datos de acceso</p>
+        <div style="background:var(--light);border-radius:12px;padding:20px;margin:16px 0;">
+          <p><strong>Tu empresa:</strong> <span id="res-empresa">-</span></p>
+          <p><strong>Plan:</strong> <span id="res-plan">-</span></p>
+          <p><strong>Email:</strong> <span id="res-email">-</span></p>
+          <p><strong>Dashboard:</strong> <a href="http://localhost:5000/panel-admin.html" id="res-url">http://localhost:5000</a></p>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+          <a href="panel-admin.html" class="btn btn-primary" style="text-decoration:none;">Ir al Dashboard →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let selectedPlan = 'pro';
+
+    function nextStep(step) {
+      document.getElementById('step' + currentStep).classList.remove('active');
+      document.getElementById('step' + step).classList.add('active');
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById('dot' + i);
+        dot.classList.remove('active', 'done');
+        if (i < step) dot.classList.add('done');
+        if (i === step) dot.classList.add('active');
+      }
+      currentStep = step;
+    }
+
+    function selectPlan(el, plan) {
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedPlan = plan;
+    }
+
+    async function crearCuenta() {
+      const nombre = document.getElementById('emp-nombre').value;
+      const rfc = document.getElementById('emp-rfc').value;
+      const email = document.getElementById('usr-email').value;
+      
+      if (!nombre || !rfc || !email) {
+        alert('⚠️ Por favor completa los campos obligatorios');
+        return;
+      }
+
+      // Simular creación (en producción sería POST al API)
+      document.getElementById('res-empresa').textContent = nombre;
+      document.getElementById('res-plan').textContent = selectedPlan.toUpperCase();
+      document.getElementById('res-email').textContent = email;
+      
+      nextStep(5);
+    }
+  </script>
+</body>
+</html>
