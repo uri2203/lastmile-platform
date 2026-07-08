@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html><head><title>Test</title></head>
+<body>
+<h1>API Test</h1>
+<pre id="output">Loading...</pre>
+<script>
+async function test() {
+    try {
+        const r = await fetch('/api/clientes');
+        const data = await r.json();
+        document.getElementById('output').textContent = 
+            'Records: ' + data.length + '\n' +
+            'First key: ' + Object.keys(data[0]).join(', ') + '\n' +
+            'First row: ' + JSON.stringify(data[0], null, 2);
+    } catch(e) {
+        document.getElementById('output').textContent = 'ERROR: ' + e.message;
+    }
+}
+test();
+</script>
+</body></html>

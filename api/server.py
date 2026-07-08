@@ -1,0 +1,828 @@
+"""
+LAST MILE DELIVERY SYSTEM - Backend API (Python/Flask)
+Conecta a AS/400 (TESTLIB) via JDBC
+Multi-tenant: cada request lleva X-Emp-Id
+"""
+
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+import jaydebeapi
+import os
+from datetime import datetime
+
+# Servir archivos estáticos desde /web
+app = Flask(__name__, static_folder='web', static_url_path='')
+CORS(app)
+
+# Ruta raíz → Login
+@app.route('/')
+def root():
+    return send_from_directory('web', 'index.html')
+
+# Rutas para paneles
+@app.route('/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('web', filename)
+
+# ========================================
+# CONFIGURACIÓN
+# ========================================
+DB_CONFIG = {
+    'driver_path': os.path.join(os.path.dirname(__file__), '..', '..', 'BOOT-INF', 'lib', 'jt400-21.0.6.jar'),
+    'driver_class': 'com.ibm.as400.access.AS400JDBCDriver',
+    'url': 'jdbc:as400://192.168.0.240;errors=full',
+    'user': 'AYUDATX',
+    'password': 'MXTAC23'
+}
+
+# ========================================
+# HELPER: Conexión a DB
+# ========================================
+def get_db():
+    return jaydebeapi.connect(
+        DB_CONFIG['driver_class'],
+        DB_CONFIG['url'],
+        [DB_CONFIG['user'], DB_CONFIG['password']],
+        DB_CONFIG['driver_path']
+    )
+
+def query(sql, params=None):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, params or [])
+    columns = [desc[0] for desc in cursor.description] if cursor.description else []
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [dict(zip(columns, row)) for row in rows]
+
+def execute(sql, params=None):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, params or [])
+    conn.commit()
+    affected = cursor.rowcount
+    cursor.close()
+    conn.close()
+    return affected
+
+def get_emp_id():
+    return int(request.headers.get('X-Emp-Id', '1'))
+
+# ========================================
+# HEALTH CHECK
+# ========================================
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({
+        'status': 'OK',
+        'timestamp': datetime.now().isoformat(),
+        'version': '1.0.0',
+        'database': 'AS/400 TESTLIB'
+    })
+
+# ========================================
+# MÓDULO: EMPRESAS
+# ========================================
+@app.route('/api/empresas', methods=['GET'])
+def get_empresas():
+    data = query('SELECT * FROM TESTLIB.EMPRESAS ORDER BY EMP_ID')
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/empresas/<int:emp_id>', methods=['GET'])
+def get_empresa(emp_id):
+    data = query('SELECT * FROM TESTLIB.EMPRESAS WHERE EMP_ID = ?', [emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else None})
+
+# ========================================
+# MÓDULO: DASHBOARD
+# ========================================
+@app.route('/api/dashboard/<int:emp_id>', methods=['GET'])
+def get_dashboard(emp_id):
+    data = query('SELECT * FROM TESTLIB.V_DASHBOARD_RESUMEN WHERE EMP_ID = ?', [emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else {}})
+
+# ========================================
+# MÓDULO: PEDIDOS
+# ========================================
+@app.route('/api/pedidos', methods=['GET'])
+def get_pedidos():
+    emp_id = get_emp_id()
+    estado = request.args.get('estado')
+    limite = request.args.get('limite', '100')
+    
+    sql = 'SELECT * FROM TESTLIB.V_PEDIDOS_COMPLETO WHERE EMP_ID = ?'
+    params = [emp_id]
+    
+    if estado:
+        sql += ' AND PED_ESTADO = ?'
+        params.append(estado)
+    
+    sql += f' ORDER BY PED_FECHA_PEDIDO DESC FETCH FIRST {limite} ROWS ONLY'
+    
+    data = query(sql, params)
+    return jsonify({'success': True, 'data': data, 'total': len(data)})
+
+@app.route('/api/pedidos/<int:ped_id>', methods=['GET'])
+def get_pedido(ped_id):
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_PEDIDOS_COMPLETO WHERE PED_ID = ? AND EMP_ID = ?', [ped_id, emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else None})
+
+@app.route('/api/pedidos', methods=['POST'])
+def create_pedido():
+    emp_id = get_emp_id()
+    p = request.json
+    execute(
+        '''INSERT INTO TESTLIB.PEDIDOS (EMP_ID, PED_NUMERO, CLI_ID, PED_CLIENTE_NOMBRE,
+           PED_CLIENTE_TELEFONO, PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD,
+           PED_PESO_KG, PED_BULTOS, PED_COSTO_TOTAL, PED_FORMA_PAGO, PED_ESTADO, PED_PRIORIDAD)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)''',
+        [emp_id, p.get('pedNumero'), p.get('cliId'), p.get('clienteNombre'),
+         p.get('clienteTelefono'), p.get('destinoDir'), p.get('destinoCol'),
+         p.get('destinoCiudad'), p.get('pesoKg', 0), p.get('bultos', 1),
+         p.get('costoTotal', 0), p.get('formaPago', 'EFECTIVO'), p.get('prioridad', 'NORMAL')]
+    )
+    return jsonify({'success': True, 'message': 'Pedido creado'})
+
+@app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT'])
+def update_estado_pedido(ped_id):
+    emp_id = get_emp_id()
+    estado = request.json.get('estado')
+    usuario = request.json.get('usuario', 'SYSTEM')
+    
+    execute('UPDATE TESTLIB.PEDIDOS SET PED_ESTADO = ? WHERE PED_ID = ? AND EMP_ID = ?', [estado, ped_id, emp_id])
+    execute('INSERT INTO TESTLIB.PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO) VALUES (?, ?, ?)', [ped_id, estado, usuario])
+    
+    return jsonify({'success': True, 'message': f'Estado actualizado a {estado}'})
+
+# ========================================
+# MÓDULO: CHOFERES
+# ========================================
+@app.route('/api/choferes', methods=['GET'])
+def get_choferes():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.CHOFERES WHERE EMP_ID = ? ORDER BY CHO_NOMBRE', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/choferes/rendimiento', methods=['GET'])
+def get_rendimiento_choferes():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: VEHÍCULOS
+# ========================================
+@app.route('/api/vehiculos', methods=['GET'])
+def get_vehiculos():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.VEHICULOS WHERE EMP_ID = ? ORDER BY VEH_UNIDAD', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/vehiculos/flota', methods=['GET'])
+def get_flota():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_ESTADO_FLOTA WHERE EMP_ID = ?', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: RUTAS
+# ========================================
+@app.route('/api/rutas', methods=['GET'])
+def get_rutas():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_COSTOS_RUTA WHERE EMP_ID = ? ORDER BY RUT_FECHA DESC', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: ENTREGAS
+# ========================================
+@app.route('/api/entregas', methods=['GET'])
+def get_entregas():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.ENTREGAS WHERE EMP_ID = ? ORDER BY ENT_FECHA_LLEGADA DESC FETCH FIRST 50 ROWS ONLY', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/entregas/chofer/<int:cho_id>', methods=['GET'])
+def get_entregas_chofer(cho_id):
+    emp_id = get_emp_id()
+    data = query(
+        '''SELECT E.*, P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR 
+           FROM TESTLIB.ENTREGAS E 
+           JOIN TESTLIB.PEDIDOS P ON E.PED_ID = P.PED_ID 
+           WHERE E.CHO_ID = ? AND E.EMP_ID = ? 
+           ORDER BY E.ENT_FECHA_LLEGADA DESC''', [cho_id, emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: CLIENTES
+# ========================================
+@app.route('/api/clientes', methods=['GET'])
+def get_clientes():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.CLIENTES_LM WHERE EMP_ID = ? ORDER BY CLI_RAZON_SOCIAL', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/clientes/top', methods=['GET'])
+def get_top_clientes():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_TOP_CLIENTES WHERE EMP_ID = ? ORDER BY TOTAL_GASTADO DESC FETCH FIRST 10 ROWS ONLY', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: KPIs
+# ========================================
+@app.route('/api/kpis', methods=['GET'])
+def get_kpis():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_KPI_CONSOLIDADO WHERE EMP_ID = ?', [emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else {}})
+
+@app.route('/api/kpis/diario', methods=['GET'])
+def get_kpis_diario():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.KPI_DIARIO WHERE EMP_ID = ? ORDER BY KPI_FECHA DESC FETCH FIRST 30 ROWS ONLY', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: INCIDENCIAS
+# ========================================
+@app.route('/api/incidencias', methods=['GET'])
+def get_incidencias():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.INCIDENCIAS WHERE EMP_ID = ? ORDER BY INC_FECHA DESC', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/incidencias/resumen', methods=['GET'])
+def get_incidencias_resumen():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.V_INCIDENCIAS_RESUMEN WHERE EMP_ID = ?', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: TRACKING GPS
+# ========================================
+@app.route('/api/tracking/<int:cho_id>', methods=['GET'])
+def get_tracking(cho_id):
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.TRACKING WHERE CHO_ID = ? AND EMP_ID = ? ORDER BY TRK_FECHA DESC FETCH FIRST 10 ROWS ONLY', [cho_id, emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/tracking', methods=['POST'])
+def post_tracking():
+    emp_id = get_emp_id()
+    t = request.json
+    execute(
+        '''INSERT INTO TESTLIB.TRACKING (EMP_ID, CHO_ID, VEH_ID, TRK_LATITUD, TRK_LONGITUD, TRK_VELOCIDAD, TRK_RUMBO, TRK_BATERIA)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        [emp_id, t.get('choId'), t.get('vehId'), t.get('latitud'), t.get('longitud'),
+         t.get('velocidad', 0), t.get('rumbo', 0), t.get('bateria', 100)]
+    )
+    return jsonify({'success': True, 'message': 'Tracking registrado'})
+
+# ========================================
+# MÓDULO: ZONAS
+# ========================================
+@app.route('/api/zonas', methods=['GET'])
+def get_zonas():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.ZONAS WHERE EMP_ID = ? ORDER BY ZON_NOMBRE', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: TARIFAS
+# ========================================
+@app.route('/api/tarifas', methods=['GET'])
+def get_tarifas():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.TARIFAS_LM WHERE EMP_ID = ? ORDER BY TAR_NOMBRE', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: AUDITORÍA
+# ========================================
+@app.route('/api/audit', methods=['GET'])
+def get_audit():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.AUDIT_LOG WHERE EMP_ID = ? ORDER BY AUD_FECHA DESC FETCH FIRST 100 ROWS ONLY', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: EDGAR DATA (Mantenimiento)
+# ========================================
+@app.route('/api/mantenimiento/unidades', methods=['GET'])
+def get_unidades_mantto():
+    data = query('SELECT * FROM TESTLIB.UNIDADESTA ORDER BY RVNEUN')
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/mantenimiento/ots', methods=['GET'])
+def get_ots_mantto():
+    data = query('SELECT * FROM TESTLIB.OTSXMARCA2 ORDER BY CCTOTA01 DESC FETCH FIRST 50 ROWS ONLY')
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: CFDI 4.0 (Facturación Electrónica MX)
+# ========================================
+@app.route('/api/cfdi/facturas', methods=['GET'])
+def get_cfdi_facturas():
+    emp_id = get_emp_id()
+    data = query('SELECT * FROM TESTLIB.CFDI_FACTURAS WHERE EMP_ID = ? ORDER BY FAC_FECHA_EMISION DESC FETCH FIRST 50 ROWS ONLY', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/cfdi/facturas', methods=['POST'])
+def create_cfdi_factura():
+    emp_id = get_emp_id()
+    f = request.json
+    # Obtener siguiente folio
+    folio_data = query('SELECT FOL_SERIE, FOL_SIGUIENTE FROM TESTLIB.CFDI_FOLIOS WHERE EMP_ID = ? AND FOL_ESTATUS = ? FETCH FIRST 1 ROW ONLY', [emp_id, 'ACTIVO'])
+    if not folio_data:
+        return jsonify({'success': False, 'error': 'No hay folios disponibles'}), 400
+    serie = folio_data[0]['FOL_SERIE']
+    folio = folio_data[0]['FOL_SIGUIENTE']
+    execute('UPDATE TESTLIB.CFDI_FOLIOS SET FOL_SIGUIENTE = FOL_SIGUIENTE + 1 WHERE EMP_ID = ? AND FOL_SERIE = ?', [emp_id, serie])
+    
+    execute('''INSERT INTO TESTLIB.CFDI_FACTURAS (EMP_ID, FAC_SERIE, FAC_FOLIO, FAC_FORMA_PAGO, FAC_METODO_PAGO,
+        FAC_SUBTOTAL, FAC_TOTAL_IVA, FAC_TOTAL, FAC_RECEPTOR_RFC, FAC_RECEPTOR_RAZON,
+        FAC_RECEPTOR_REGIMEN, FAC_RECEPTOR_CP, FAC_RECEPTOR_USO_CFDI, FAC_RECEPTOR_EMAIL, FAC_PED_ID, FAC_ESTATUS)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE')''',
+        [emp_id, serie, str(folio), f.get('formaPago', '01'), f.get('metodoPago', 'PUE'),
+         f.get('subtotal', 0), f.get('iva', 0), f.get('total', 0),
+         f.get('receptorRfc', ''), f.get('receptorRazon', ''),
+         f.get('receptorRegimen', '601'), f.get('receptorCp', '00000'),
+         f.get('receptorUsoCfdi', 'G03'), f.get('receptorEmail', ''),
+         f.get('pedId')])
+    
+    return jsonify({'success': True, 'message': f'Factura {serie}-{folio} creada', 'serie': serie, 'folio': folio})
+
+@app.route('/api/cfdi/facturas/<int:fac_id>/timbrar', methods=['POST'])
+def timbrar_factura(fac_id):
+    """Timbra la factura con el PAC (simulado por ahora)"""
+    import uuid
+    emp_id = get_emp_id()
+    # Simular timbrado
+    uuid_cfdi = str(uuid.uuid4()).upper()
+    execute('UPDATE TESTLIB.CFDI_FACTURAS SET FAC_UUID = ?, FAC_FECHA_TIMBRADO = CURRENT_TIMESTAMP, FAC_ESTATUS = ? WHERE FAC_ID = ? AND EMP_ID = ?',
+            [uuid_cfdi, 'TIMBRADA', fac_id, emp_id])
+    execute('INSERT INTO TESTLIB.CFDI_TIMBRADO_LOG (FAC_ID, TIM_PAC, TIM_CODIGO_RESPUESTA, TIM_MENSAJE, TIM_EXITOSO) VALUES (?, ?, ?, ?, ?)',
+            [fac_id, 'FINKOK_SIMULADO', '200', 'Timbrado exitoso', 'S'])
+    return jsonify({'success': True, 'uuid': uuid_cfdi, 'message': 'Factura timbrada correctamente'})
+
+@app.route('/api/cfdi/facturas/<int:fac_id>/cancelar', methods=['POST'])
+def cancelar_factura(fac_id):
+    motivo = request.json.get('motivo', 'Error en factura')
+    execute('UPDATE TESTLIB.CFDI_FACTURAS SET FAC_ESTATUS = ?, FAC_MOTIVO_CANCELACION = ? WHERE FAC_ID = ? AND EMP_ID = ?',
+            ['CANCELADA', motivo, fac_id, get_emp_id()])
+    return jsonify({'success': True, 'message': 'Factura cancelada'})
+
+@app.route('/api/cfdi/catalogo', methods=['GET'])
+def get_cfdi_catalogo():
+    data = query('SELECT * FROM TESTLIB.CFDI_CONCEPTOS_CATALOGO WHERE EMP_ID = ? AND COC_ESTATUS = ?', [get_emp_id(), 'ACTIVO'])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/cfdi/empresa-fiscal', methods=['GET'])
+def get_empresa_fiscal():
+    data = query('SELECT * FROM TESTLIB.CFDI_EMPRESA_FISCAL WHERE EMP_ID = ?', [get_emp_id()])
+    return jsonify({'success': True, 'data': data[0] if data else None})
+
+@app.route('/api/cfdi/empresa-fiscal', methods=['PUT'])
+def update_empresa_fiscal():
+    emp_id = get_emp_id()
+    f = request.json
+    existing = query('SELECT FISC_ID FROM TESTLIB.CFDI_EMPRESA_FISCAL WHERE EMP_ID = ?', [emp_id])
+    if existing:
+        execute('''UPDATE TESTLIB.CFDI_EMPRESA_FISCAL SET FISC_RFC=?, FISC_RAZON_SOCIAL=?, FISC_REGIMEN_FISCAL=?,
+            FISC_CODIGO_POSTAL=?, FISC_COLONIA=?, FISC_CALLE=?, FISC_NUMERO_EXTERIOR=?,
+            FISC_MUNICIPIO=?, FISC_ESTADO=?, FISC_TELEFONO=?, FISC_EMAIL=?
+            WHERE EMP_ID = ?''',
+            [f.get('rfc'), f.get('razonSocial'), f.get('regimenFiscal'),
+             f.get('codigoPostal'), f.get('colonia'), f.get('calle'),
+             f.get('numeroExterior'), f.get('municipio'), f.get('estado'),
+             f.get('telefono'), f.get('email'), emp_id])
+    else:
+        execute('''INSERT INTO TESTLIB.CFDI_EMPRESA_FISCAL (EMP_ID, FISC_RFC, FISC_RAZON_SOCIAL,
+            FISC_REGIMEN_FISCAL, FISC_CODIGO_POSTAL, FISC_COLONIA, FISC_CALLE,
+            FISC_NUMERO_EXTERIOR, FISC_MUNICIPIO, FISC_ESTADO, FISC_TELEFONO, FISC_EMAIL, FISC_TIPO_PERSONA)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            [emp_id, f.get('rfc'), f.get('razonSocial'), f.get('regimenFiscal'),
+             f.get('codigoPostal'), f.get('colonia'), f.get('calle'),
+             f.get('numeroExterior'), f.get('municipio'), f.get('estado'),
+             f.get('telefono'), f.get('email'), f.get('tipoPersona', 'M')])
+    return jsonify({'success': True, 'message': 'Datos fiscales actualizados'})
+
+@app.route('/api/cfdi/folios', methods=['GET'])
+def get_folios():
+    data = query('SELECT * FROM TESTLIB.CFDI_FOLIOS WHERE EMP_ID = ?', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/cfdi/timbrado-log', methods=['GET'])
+def get_timbrado_log():
+    data = query('SELECT T.*, F.FAC_SERIE, F.FAC_FOLIO FROM TESTLIB.CFDI_TIMBRADO_LOG T JOIN TESTLIB.CFDI_FACTURAS F ON T.FAC_ID = F.FAC_ID WHERE F.EMP_ID = ? ORDER BY T.TIM_FECHA DESC FETCH FIRST 20 ROWS ONLY', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: PAGOS
+# ========================================
+@app.route('/api/pagos/metodos', methods=['GET'])
+def get_pagos_metodos():
+    data = query('SELECT * FROM TESTLIB.PAGOS_METODOS WHERE EMP_ID = ? AND PMT_ACTIVO = ?', [get_emp_id(), 'S'])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/pagos/transacciones', methods=['GET'])
+def get_pagos_transacciones():
+    data = query('SELECT * FROM TESTLIB.PAGOS_TRANSACCIONES WHERE EMP_ID = ? ORDER BY TRP_FECHA_REGISTRO DESC FETCH FIRST 50 ROWS ONLY', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/pagos/transacciones', methods=['POST'])
+def create_pago_transaccion():
+    emp_id = get_emp_id()
+    p = request.json
+    execute('''INSERT INTO TESTLIB.PAGOS_TRANSACCIONES (EMP_ID, PED_ID, FAC_ID, TRP_NUM_REFERENCIA,
+        TRP_MONTO, TRP_MONEDA, TRP_METODO, TRP_ESTATUS)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        [emp_id, p.get('pedId'), p.get('facId'), p.get('numReferencia'),
+         p.get('monto'), p.get('moneda', 'MXN'), p.get('metodo'), p.get('estatus', 'PENDIENTE')])
+    return jsonify({'success': True, 'message': 'Pago registrado'})
+
+@app.route('/api/pagos/resumen', methods=['GET'])
+def get_pagos_resumen():
+    data = query('''SELECT TRP_METODO, COUNT(*) as TOTAL, SUM(TRP_MONTO) as MONTO_TOTAL,
+        SUM(CASE WHEN TRP_ESTATUS = 'PAGADO' THEN TRP_MONTO ELSE 0 END) as COBRADO,
+        SUM(CASE WHEN TRP_ESTATUS = 'PENDIENTE' THEN TRP_MONTO ELSE 0 END) as PENDIENTE
+        FROM TESTLIB.PAGOS_TRANSACCIONES WHERE EMP_ID = ?
+        GROUP BY TRP_METODO ORDER BY MONTO_TOTAL DESC''', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/pagos/oxxo', methods=['POST'])
+def create_oxxo():
+    import random, string
+    p = request.json
+    ref = 'OXXO' + ''.join(random.choices(string.digits, k=12))
+    execute('''INSERT INTO TESTLIB.PAGOS_TRANSACCIONES (EMP_ID, PED_ID, TRP_NUM_REFERENCIA, TRP_MONTO, TRP_METODO, TRP_ESTATUS)
+        VALUES (?, ?, ?, ?, 'OXXO', 'PENDIENTE')''',
+        [get_emp_id(), p.get('pedId'), ref, p.get('monto')])
+    return jsonify({'success': True, 'referencia': ref, 'message': f'Referencia OXXO: {ref}'})
+
+@app.route('/api/pagos/mercado-pago/webhook', methods=['POST'])
+def mp_webhook():
+    data = request.json
+    # Procesar notificación de Mercado Pago
+    return jsonify({'success': True, 'message': 'Webhook procesado'})
+
+# ========================================
+# MÓDULO: WHITELABEL (Marca del Cliente)
+# ========================================
+@app.route('/api/whitelabel/<int:emp_id>', methods=['GET'])
+def get_whitelabel(emp_id):
+    data = query('''SELECT E.EMP_ID, E.EMP_NOMBRE,
+        COALESCE(F.FISC_RFC, '') as RFC,
+        COALESCE(F.FISC_RAZON_SOCIAL, '') as RAZON_SOCIAL
+        FROM TESTLIB.EMPRESAS E
+        LEFT JOIN TESTLIB.CFDI_EMPRESA_FISCAL F ON E.EMP_ID = F.EMP_ID
+        WHERE E.EMP_ID = ?''', [emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else {}})
+
+@app.route('/api/whitelabel/config', methods=['POST'])
+def update_whitelabel():
+    # Por ahora retorna OK, después se guarda configuración de marca
+    return jsonify({'success': True, 'message': 'Whitelabel actualizado'})
+
+# ========================================
+# MÓDULO: SaaS ADMIN (Gestión de Tenants)
+# ========================================
+@app.route('/api/saas/tenants', methods=['GET'])
+def get_saas_tenants():
+    data = query('''SELECT E.*,
+        (SELECT COUNT(*) FROM TESTLIB.PEDIDOS P WHERE P.EMP_ID = E.EMP_ID) as TOTAL_PEDIDOS,
+        (SELECT COUNT(*) FROM TESTLIB.CHOFERES C WHERE C.EMP_ID = E.EMP_ID) as TOTAL_CHOFERES,
+        (SELECT COUNT(*) FROM TESTLIB.CLIENTES_LM CL WHERE CL.EMP_ID = E.EMP_ID) as TOTAL_CLIENTES
+        FROM TESTLIB.EMPRESAS E ORDER BY E.EMP_ID''')
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/saas/plan-usage/<int:emp_id>', methods=['GET'])
+def get_plan_usage(emp_id):
+    data = query('''SELECT E.EMP_ID, E.EMP_NOMBRE,
+        (SELECT COUNT(*) FROM TESTLIB.PEDIDOS WHERE EMP_ID = ? AND PED_FECHA_PEDIDO >= CURRENT_DATE - 30 DAYS) as PEDIDOS_MES,
+        (SELECT COUNT(*) FROM TESTLIB.CHOFERES WHERE EMP_ID = ?) as CHOFERES,
+        (SELECT COUNT(*) FROM TESTLIB.CLIENTES_LM WHERE EMP_ID = ?) as CLIENTES,
+        (SELECT COUNT(*) FROM TESTLIB.VEHICULOS WHERE EMP_ID = ?) as VEHICULOS
+        FROM TESTLIB.EMPRESAS E WHERE E.EMP_ID = ?''', [emp_id]*5)
+    return jsonify({'success': True, 'data': data[0] if data else {}})
+
+@app.route('/api/saas/health', methods=['GET'])
+def saas_health():
+    empresas = query('SELECT COUNT(*) as TOTAL FROM TESTLIB.EMPRESAS')
+    pedidos_hoy = query("SELECT COUNT(*) as TOTAL FROM TESTLIB.PEDIDOS WHERE EMP_ID IS NOT NULL")
+    return jsonify({
+        'success': True,
+        'empresas_activas': empresas[0]['TOTAL'] if empresas else 0,
+        'pedidos_hoy': pedidos_hoy[0]['TOTAL'] if pedidos_hoy else 0
+    })
+
+# ========================================
+# MÓDULO: NOTIFICACIONES PUSH
+# ========================================
+@app.route('/api/notif/push', methods=['GET'])
+def get_notif_push():
+    data = query('SELECT * FROM TESTLIB.NOTIF_PUSH WHERE EMP_ID = ? ORDER BY NPUSH_FECHA_REGISTRO DESC FETCH FIRST 20 ROWS ONLY', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/notif/push', methods=['POST'])
+def send_notif_push():
+    emp_id = get_emp_id()
+    n = request.json
+    execute('''INSERT INTO TESTLIB.NOTIF_PUSH (EMP_ID, USR_ID, CHO_ID, NPUSH_TIPO, NPUSH_TITULO, NPUSH_CUERPO, NPUSH_DATA)
+        VALUES (?, ?, ?, ?, ?, ?, ?)''',
+        [emp_id, n.get('usrId'), n.get('choId'), n.get('tipo'), n.get('titulo'), n.get('cuerpo'), n.get('data', '{}')])
+    return jsonify({'success': True, 'message': 'Notificación enviada'})
+
+@app.route('/api/notif/dispositivos', methods=['POST'])
+def register_device():
+    emp_id = get_emp_id()
+    d = request.json
+    execute('''INSERT INTO TESTLIB.NOTIF_DISPOSITIVOS (EMP_ID, USR_ID, CHO_ID, DISP_TOKEN, DISP_PLATAFORMA)
+        VALUES (?, ?, ?, ?, ?)''',
+        [emp_id, d.get('usrId'), d.get('choId'), d.get('token'), d.get('plataforma', 'WEB')])
+    return jsonify({'success': True, 'message': 'Dispositivo registrado'})
+
+@app.route('/api/notif/stats', methods=['GET'])
+def get_notif_stats():
+    data = query('''SELECT NPUSH_TIPO, COUNT(*) as TOTAL,
+        SUM(CASE WHEN NPUSH_ENVIADO = 'S' THEN 1 ELSE 0 END) as ENVIADOS,
+        SUM(CASE WHEN NPUSH_LEIDO = 'S' THEN 1 ELSE 0 END) as LEIDOS
+        FROM TESTLIB.NOTIF_PUSH WHERE EMP_ID = ? GROUP BY NPUSH_TIPO''', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: EMAIL TRANSCACIONAL
+# ========================================
+@app.route('/api/email/enviados', methods=['GET'])
+def get_emails():
+    data = query('SELECT * FROM TESTLIB.EMAIL_ENVIADOS WHERE EMP_ID = ? ORDER BY EMAIL_FECHA_REGISTRO DESC FETCH FIRST 20 ROWS ONLY', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/email/enviar', methods=['POST'])
+def send_email():
+    emp_id = get_emp_id()
+    e = request.json
+    execute('''INSERT INTO TESTLIB.EMAIL_ENVIADOS (EMP_ID, PED_ID, EMAIL_DESTINATARIO, EMAIL_ASUNTO, EMAIL_TIPO, EMAIL_BODY_HTML, EMAIL_ENVIADO)
+        VALUES (?, ?, ?, ?, ?, ?, 'S')''',
+        [emp_id, e.get('pedId'), e.get('destinatario'), e.get('asunto'), e.get('tipo'), e.get('bodyHtml')])
+    return jsonify({'success': True, 'message': 'Email enviado'})
+
+@app.route('/api/email/stats', methods=['GET'])
+def get_email_stats():
+    data = query('''SELECT EMAIL_TIPO, COUNT(*) as TOTAL,
+        SUM(CASE WHEN EMAIL_ENVIADO = 'S' THEN 1 ELSE 0 END) as ENVIADOS
+        FROM TESTLIB.EMAIL_ENVIADOS WHERE EMP_ID = ? GROUP BY EMAIL_TIPO''', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: SMS / WHATSAPP
+# ========================================
+@app.route('/api/sms/enviados', methods=['GET'])
+def get_sms():
+    data = query('SELECT * FROM TESTLIB.SMS_ENVIADOS WHERE EMP_ID = ? ORDER BY SMS_FECHA_REGISTRO DESC FETCH FIRST 20 ROWS ONLY', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/sms/enviar', methods=['POST'])
+def send_sms():
+    emp_id = get_emp_id()
+    s = request.json
+    execute('''INSERT INTO TESTLIB.SMS_ENVIADOS (EMP_ID, PED_ID, SMS_TELEFONO, SMS_MENSAJE, SMS_PLATAFORMA, SMS_ENVIADO)
+        VALUES (?, ?, ?, ?, ?, 'S')''',
+        [emp_id, s.get('pedId'), s.get('telefono'), s.get('mensaje'), s.get('plataforma', 'SMS')])
+    return jsonify({'success': True, 'message': 'SMS enviado'})
+
+@app.route('/api/sms/stats', methods=['GET'])
+def get_sms_stats():
+    data = query('''SELECT SMS_PLATAFORMA, COUNT(*) as TOTAL,
+        SUM(SMS_COSTO) as COSTO_TOTAL
+        FROM TESTLIB.SMS_ENVIADOS WHERE EMP_ID = ? GROUP BY SMS_PLATAFORMA''', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: REPORTES PDF
+# ========================================
+@app.route('/api/reportes', methods=['GET'])
+def get_reportes():
+    data = query('SELECT * FROM TESTLIB.REPORTES_GENERADOS WHERE EMP_ID = ? ORDER BY RPT_FECHA_GENERACION DESC FETCH FIRST 20 ROWS ONLY', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/reportes/generar', methods=['POST'])
+def generar_reporte():
+    emp_id = get_emp_id()
+    r = request.json
+    tipo = r.get('tipo', 'ENTREGAS')
+    execute('''INSERT INTO TESTLIB.REPORTES_GENERADOS (EMP_ID, RPT_TIPO, RPT_NOMBRE, RPT_PARAMETROS, RPT_GENERADO_POR)
+        VALUES (?, ?, ?, ?, ?)''',
+        [emp_id, tipo, f'Reporte {tipo}', r.get('parametros', '{}'), r.get('usuario', 'ADMIN')])
+    return jsonify({'success': True, 'message': f'Reporte {tipo} generado'})
+
+@app.route('/api/reportes/entregas', methods=['GET'])
+def reporte_entregas():
+    """ Datos para reporte de entregas """
+    data = query('''SELECT P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR, P.PED_DESTINO_COL,
+        P.PED_BULTOS, P.PED_COSTO_TOTAL, P.PED_ESTADO, P.PED_FECHA_PEDIDO,
+        C.CHO_NOMBRE, C.CHO_APELLIDO, V.VEH_UNIDAD
+        FROM TESTLIB.PEDIDOS P
+        LEFT JOIN TESTLIB.CHOFERES C ON P.CHO_ID = C.CHO_ID
+        LEFT JOIN TESTLIB.VEHICULOS V ON P.VEH_ID = V.VEH_ID
+        WHERE P.EMP_ID = ? ORDER BY P.PED_FECHA_PEDIDO DESC FETCH FIRST 50 ROWS ONLY''', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/reportes/rendimiento-choferes', methods=['GET'])
+def reporte_rendimiento():
+    data = query('SELECT * FROM TESTLIB.V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/reportes/costos-rutas', methods=['GET'])
+def reporte_costos():
+    data = query('SELECT * FROM TESTLIB.V_COSTOS_RUTA WHERE EMP_ID = ? ORDER BY RUT_COSTO_TOTAL DESC', [get_emp_id()])
+    return jsonify({'success': True, 'data': data})
+
+# ========================================
+# MÓDULO: APP CLIENTE (Tracking Final)
+# ========================================
+@app.route('/api/cliente-final/<token>', methods=['GET'])
+def get_cliente_tracking(token):
+    data = query('''SELECT CF.CLIF_NOMBRE, CF.CLIF_TELEFONO, CF.CLIF_EMAIL, CF.PED_ID,
+        P.PED_NUMERO, P.PED_ESTADO, P.PED_DESTINO_DIR, P.PED_DESTINO_COL,
+        P.PED_BULTOS, P.PED_FECHA_PEDIDO, P.CHOFER_ASIGNADO, P.UNIDAD_ASIGNADA
+        FROM TESTLIB.CLIENTE_FINAL CF
+        JOIN TESTLIB.V_PEDIDOS_COMPLETO P ON CF.PED_ID = P.PED_ID AND P.EMP_ID = CF.EMP_ID
+        WHERE CF.CLIF_TOKEN_TRACKING = ?''', [token])
+    if not data:
+        return jsonify({'success': False, 'error': 'Token no encontrado'}), 404
+    # Buscar ubicacion del chofer por nombre
+    cho_name = data[0].get('CHOFER_ASIGNADO', '')
+    ubicacion = None
+    if cho_name:
+        loc = query('SELECT T.TRK_LATITUD, T.TRK_LONGITUD FROM TESTLIB.TRACKING T JOIN TESTLIB.CHOFERES C ON T.CHO_ID = C.CHO_ID WHERE C.CHO_NOMBRE || C.CHO_APELLIDO LIKE ? ORDER BY T.TRK_FECHA DESC FETCH FIRST 1 ROWS ONLY', [f'%{cho_name.replace(" ","%")}%'])
+        if loc:
+            ubicacion = f"{loc[0]['TRK_LATITUD']},{loc[0]['TRK_LONGITUD']}"
+    data[0]['UBICACION_ACTUAL'] = ubicacion
+    return jsonify({'success': True, 'data': data[0]})
+
+@app.route('/api/cliente-final/<token>/timeline', methods=['GET'])
+def get_cliente_timeline(token):
+    """ Timeline del envío para el cliente final """
+    pedido = query('SELECT PED_ID FROM TESTLIB.CLIENTE_FINAL WHERE CLIF_TOKEN_TRACKING = ?', [token])
+    if not pedido:
+        return jsonify({'success': False, 'error': 'Token inválido'}), 404
+    ped_id = pedido[0]['PED_ID']
+    
+    timeline = []
+    # Estado del pedido
+    p = query('SELECT * FROM TESTLIB.PEDIDOS WHERE PED_ID = ?', [ped_id])
+    if p:
+        timeline.append({'estado': 'Creado', 'fecha': str(p[0].get('PED_FECHA_PEDIDO', '')), 'icono': '📦'})
+    # Historial
+    hist = query('SELECT * FROM TESTLIB.PEDIDO_HISTORIAL WHERE PED_ID = ? ORDER BY HIS_FECHA DESC', [ped_id])
+    for h in hist:
+        timeline.append({'estado': h.get('HIS_ESTADO', ''), 'fecha': str(h.get('HIS_FECHA', '')), 'usuario': h.get('HIS_USUARIO', '')})
+    
+    return jsonify({'success': True, 'data': timeline})
+
+@app.route('/api/cliente-final', methods=['POST'])
+def create_cliente_final():
+    emp_id = get_emp_id()
+    import secrets
+    c = request.json
+    token = secrets.token_hex(32)
+    execute('''INSERT INTO TESTLIB.CLIENTE_FINAL (EMP_ID, PED_ID, CLIF_NOMBRE, CLIF_TELEFONO, CLIF_EMAIL, CLIF_TOKEN_TRACKING)
+        VALUES (?, ?, ?, ?, ?, ?)''',
+        [emp_id, c.get('pedId'), c.get('nombre'), c.get('telefono'), c.get('email'), token])
+    return jsonify({'success': True, 'token': token, 'message': 'Tracking link generado'})
+
+# ========================================
+# MÓDULO: BILLING SaaS
+# ========================================
+@app.route('/api/saas/planes', methods=['GET'])
+def get_saas_planes():
+    data = query('SELECT * FROM TESTLIB.SAAS_PLANES WHERE PLAN_ACTIVO = ? ORDER BY PLAN_ORDEN', ['S'])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/saas/planes/<int:plan_id>', methods=['GET'])
+def get_saas_plan(plan_id):
+    data = query('SELECT * FROM TESTLIB.SAAS_PLANES WHERE PLAN_ID = ?', [plan_id])
+    return jsonify({'success': True, 'data': data[0] if data else None})
+
+@app.route('/api/saas/suscripciones', methods=['GET'])
+def get_suscripciones():
+    data = query('''SELECT S.*, P.PLAN_NOMBRE, P.PLAN_PRECIO_MENSUAL, E.EMP_NOMBRE
+        FROM TESTLIB.SAAS_SUSCRIPCIONES S
+        JOIN TESTLIB.SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID
+        JOIN TESTLIB.EMPRESAS E ON S.EMP_ID = E.EMP_ID
+        ORDER BY S.SUS_FECHA_REGISTRO DESC''')
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/saas/suscripciones', methods=['POST'])
+def create_suscripcion():
+    emp_id = get_emp_id()
+    s = request.json
+    from datetime import date, timedelta
+    hoy = date.today()
+    proximo = hoy + timedelta(days=30)
+    execute('''INSERT INTO TESTLIB.SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO, SUS_FECHA_FIN, SUS_FECHA_PROXIMO_COBRO)
+        VALUES (?, ?, 'TRIAL', ?, ?, ?)''',
+        [emp_id, s.get('planId'), hoy.isoformat(), proximo.isoformat(), proximo.isoformat()])
+    return jsonify({'success': True, 'message': 'Suscripción creada'})
+
+@app.route('/api/saas/cobros', methods=['GET'])
+def get_cobros():
+    data = query('''SELECT C.*, P.PLAN_NOMBRE, E.EMP_NOMBRE
+        FROM TESTLIB.SAAS_COBROS C
+        JOIN TESTLIB.SAAS_SUSCRIPCIONES S ON C.SUS_ID = S.SUS_ID
+        JOIN TESTLIB.SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID
+        JOIN TESTLIB.EMPRESAS E ON C.EMP_ID = E.EMP_ID
+        ORDER BY C.COB_FECHA_COBRO DESC FETCH FIRST 20 ROWS ONLY''')
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/saas/cobros/resumen', methods=['GET'])
+def get_cobros_resumen():
+    data = query('''SELECT
+        COUNT(*) as TOTAL_COBROS,
+        COALESCE(SUM(COB_MONTO), 0) as MONTO_TOTAL,
+        COALESCE(SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END), 0) as COBRADO,
+        COALESCE(SUM(CASE WHEN COB_ESTATUS = 'PENDIENTE' THEN COB_MONTO ELSE 0 END), 0) as PENDIENTE,
+        0 as VENCIDO
+        FROM TESTLIB.SAAS_COBROS''')
+    result = data[0] if data else {'TOTAL_COBROS': 0, 'MONTO_TOTAL': 0, 'COBRADO': 0, 'PENDIENTE': 0, 'VENCIDO': 0}
+    return jsonify({'success': True, 'data': result})
+
+@app.route('/api/saas/uso/<int:emp_id>', methods=['GET'])
+def get_uso_recursos(emp_id):
+    data = query('SELECT * FROM TESTLIB.SAAS_USO_RECURSOS WHERE EMP_ID = ? ORDER BY USR_FECHA DESC FETCH FIRST 30 ROWS ONLY', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/saas/uso', methods=['POST'])
+def registrar_uso():
+    emp_id = get_emp_id()
+    u = request.json
+    execute('''INSERT INTO TESTLIB.SAAS_USO_RECURSOS (EMP_ID, USR_FECHA, USR_PEDIDOS_CREADOS, USR_PEDIDOS_ENTREGADOS, USR_ENVIOS_SMS, USR_ENVIOS_EMAIL, USR_API_CALLS)
+        VALUES (?, CURRENT_DATE, ?, ?, ?, ?, ?)''',
+        [emp_id, u.get('pedidosCreados', 0), u.get('pedidosEntregados', 0),
+         u.get('enviosSms', 0), u.get('enviosEmail', 0), u.get('apiCalls', 0)])
+    return jsonify({'success': True, 'message': 'Uso registrado'})
+
+@app.route('/api/saas/dashboard-billing', methods=['GET'])
+def get_billing_dashboard():
+    """ Dashboard principal de billing """
+    empresas = query('SELECT COUNT(*) as TOTAL FROM TESTLIB.EMPRESAS')
+    suscripciones = query('''SELECT SUS_ESTADO, COUNT(*) as TOTAL FROM TESTLIB.SAAS_SUSCRIPCIONES GROUP BY SUS_ESTADO''')
+    cobros = query('''SELECT
+        SUM(COB_MONTO) as TOTAL,
+        SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END) as COBRADO,
+        SUM(CASE WHEN COB_ESTATUS = 'PENDIENTE' THEN COB_MONTO ELSE 0 END) as PENDIENTE
+        FROM TESTLIB.SAAS_COBROS''')
+    uso_hoy = query('''SELECT COALESCE(SUM(USR_PEDIDOS_CREADOS), 0) as PEDIDOS, COALESCE(SUM(USR_API_CALLS), 0) as API_CALLS
+        FROM TESTLIB.SAAS_USO_RECURSOS WHERE USR_FECHA = CURRENT_DATE ''')
+    
+    return jsonify({
+        'success': True,
+        'data': {
+            'empresas_activas': empresas[0]['TOTAL'] if empresas else 0,
+            'suscripciones': {s['SUS_ESTADO']: s['TOTAL'] for s in suscripciones},
+            'cobros': cobros[0] if cobros else {},
+            'uso_hoy': uso_hoy[0] if uso_hoy else {}
+        }
+    })
+
+# ========================================
+# INICIAR SERVIDOR
+# ========================================
+if __name__ == '__main__':
+    print('\n  ========================================')
+    print('  LAST MILE API - Python/Flask v1.0.0')
+    print('  Puerto: 5000')
+    print('  Base de datos: AS/400 (TESTLIB)')
+    print('  Multi-tenant: SI')
+    print('  ========================================\n')
+    print('  Endpoints:')
+    print('    GET  /api/health')
+    print('    GET  /api/empresas')
+    print('    GET  /api/dashboard/<empId>')
+    print('    GET  /api/pedidos')
+    print('    POST /api/pedidos')
+    print('    PUT  /api/pedidos/<id>/estado')
+    print('    GET  /api/choferes')
+    print('    GET  /api/choferes/rendimiento')
+    print('    GET  /api/vehiculos')
+    print('    GET  /api/vehiculos/flota')
+    print('    GET  /api/rutas')
+    print('    GET  /api/entregas')
+    print('    GET  /api/clientes')
+    print('    GET  /api/clientes/top')
+    print('    GET  /api/kpis')
+    print('    GET  /api/incidencias')
+    print('    GET  /api/tracking/<choId>')
+    print('    POST /api/tracking')
+    print('    GET  /api/zonas')
+    print('    GET  /api/tarifas')
+    print('    GET  /api/audit')
+    print('    GET  /api/mantenimiento/unidades')
+    print('    GET  /api/mantenimiento/ots')
+    print('\n  Header: X-Emp-Id: 1|2|3\n')
+    
+    app.run(host='0.0.0.0', port=5000, debug=False)

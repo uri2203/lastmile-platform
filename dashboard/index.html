@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AS/400 Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a1929; color: #fff; }
+        .header { background: linear-gradient(135deg, #1a237e, #0d47a1); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; }
+        .status { display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 12px; height: 12px; background: #00e676; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; }
+        .kpi-card { background: linear-gradient(135deg, #1e3a5f, #0d2137); border-radius: 12px; padding: 24px; border: 1px solid #1e88e5; }
+        .kpi-card h3 { color: #90caf9; font-size: 14px; margin-bottom: 8px; }
+        .kpi-card .value { font-size: 32px; font-weight: bold; color: #42a5f5; }
+        .kpi-card .change { font-size: 12px; color: #66bb6a; margin-top: 8px; }
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 0 20px 20px; }
+        .chart-card { background: #0d2137; border-radius: 12px; padding: 20px; border: 1px solid #1e88e5; }
+        .chart-card h3 { color: #90caf9; margin-bottom: 15px; }
+        .alerts-panel { background: #0d2137; border-radius: 12px; padding: 20px; margin: 0 20px 20px; border: 1px solid #ff9800; }
+        .alerts-panel h3 { color: #ff9800; margin-bottom: 15px; }
+        .alert-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a2e; border-radius: 8px; margin-bottom: 8px; }
+        .alert-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-critical { background: #f44336; }
+        .badge-warning { background: #ff9800; }
+        .badge-info { background: #2196f3; }
+        .predictions { background: #0d2137; border-radius: 12px; padding: 20px; margin: 0 20px 20px; border: 1px solid #9c27b0; }
+        .predictions h3 { color: #9c27b0; margin-bottom: 15px; }
+        .pred-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .pred-card { background: #1a1a2e; padding: 15px; border-radius: 8px; text-align: center; }
+        .pred-card .month { color: #ce93d8; font-size: 14px; }
+        .pred-card .amount { font-size: 24px; font-weight: bold; color: #e1bee7; margin: 8px 0; }
+        .pred-card .confidence { color: #66bb6a; font-size: 12px; }
+        .footer { text-align: center; padding: 20px; color: #546e7a; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖥️ AS/400 Executive Dashboard - Tiempo Real</h1>
+        <div class="status">
+            <div class="status-dot"></div>
+            <span>Conectado a 192.168.0.240</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="kpi-card">
+            <h3>💰 VENTAS ANUALES</h3>
+            <div class="value" id="ventasAnuales">$0</div>
+            <div class="change">▲ 12.5% vs año anterior</div>
+        </div>
+        <div class="kpi-card">
+            <h3>📋 FACTURAS EMITIDAS</h3>
+            <div class="value" id="numFacturas">0</div>
+            <div class="change">Promedio: $0 por factura</div>
+        </div>
+        <div class="kpi-card">
+            <h3>⚠️ STOCK BAJO</h3>
+            <div class="value" id="stockBajo">0</div>
+            <div class="change">Requiere atención inmediata</div>
+        </div>
+        <div class="kpi-card">
+            <h3>👥 CLIENTES MOROSOS</h3>
+            <div class="value" id="clientesMorosos">0</div>
+            <div class="change">Deuda total pendiente</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>📊 Tendencia de Ventas Mensual</h3>
+            <canvas id="ventasChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>📦 Top 10 Productos por Valor</h3>
+            <canvas id="productosChart"></canvas>
+        </div>
+    </div>
+
+    <div class="alerts-panel">
+        <h3>🔔 Alertas Activas</h3>
+        <div id="alertsContainer">Cargando alertas...</div>
+    </div>
+
+    <div class="predictions">
+        <h3>🤖 Predicciones IA - Próximos 3 Meses</h3>
+        <div class="pred-grid" id="predictionsContainer">Cargando predicciones...</div>
+    </div>
+
+    <div class="footer">
+        Sistema Integral AS/400 | V7R1 | Actualización en tiempo real cada 30 segundos
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        let ventasChart, productosChart;
+
+        function initCharts() {
+            const ctx1 = document.getElementById('ventasChart').getContext('2d');
+            ventasChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Ventas 2026',
+                        data: [],
+                        borderColor: '#42a5f5',
+                        backgroundColor: 'rgba(66, 165, 245, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#fff' }}},
+                    scales: {
+                        x: { ticks: { color: '#90caf9' }, grid: { color: '#1e3a5f' }},
+                        y: { ticks: { color: '#90caf9', callback: v => '$' + v.toLocaleString() }, grid: { color: '#1e3a5f' }}
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('productosChart').getContext('2d');
+            productosChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Valor Inventario',
+                        data: [],
+                        backgroundColor: ['#42a5f5', '#66bb6a', '#ff9800', '#f44336', '#9c27b0', '#00bcd4', '#ffeb3b', '#e91e63', '#3f51b5', '#009688']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#fff' }}},
+                    scales: {
+                        x: { ticks: { color: '#90caf9', maxRotation: 45 }, grid: { color: '#1e3a5f' }},
+                        y: { ticks: { color: '#90caf9', callback: v => '$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e3a5f' }}
+                    }
+                }
+            });
+        }
+
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(API_BASE + endpoint);
+                return await response.json();
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
+            }
+        }
+
+        async function updateKPIs() {
+            const data = await fetchData('/kpis');
+            if (data) {
+                document.getElementById('ventasAnuales').textContent = '$' + (data.ventasAnuales || 0).toLocaleString('es-MX', {minimumFractionDigits: 2});
+                document.getElementById('numFacturas').textContent = (data.numFacturas || 0).toLocaleString();
+                document.getElementById('stockBajo').textContent = data.productosStockBajo || 0;
+                document.getElementById('clientesMorosos').textContent = data.clientesMorosos || 0;
+            }
+        }
+
+        async function updateVentasChart() {
+            const data = await fetchData('/ventas?periodo=2026');
+            if (data && Array.isArray(data)) {
+                const ventas = new Array(12).fill(0);
+                data.forEach(d => { ventas[d.MES - 1] = d.VENTAS; });
+                ventasChart.data.datasets[0].data = ventas;
+                ventasChart.update();
+            }
+        }
+
+        async function updateProductosChart() {
+            const data = await fetchData('/inventario');
+            if (data && Array.isArray(data)) {
+                const top10 = data.slice(0, 10);
+                productosChart.data.labels = top10.map(p => p.ARTNOM.substring(0, 15));
+                productosChart.data.datasets[0].data = top10.map(p => p.VALOR);
+                productosChart.update();
+            }
+        }
+
+        async function updateAlerts() {
+            const data = await fetchData('/alertas');
+            const container = document.getElementById('alertsContainer');
+            if (data && Array.isArray(data)) {
+                container.innerHTML = data.slice(0, 5).map(a => `
+                    <div class="alert-item">
+                        <span class="alert-badge ${a.severidad === 'ALTA' ? 'badge-critical' : 'badge-warning'}">${a.severidad}</span>
+                        <span>${a.tipo}: ${a.producto || a.cliente} - ${a.tipo === 'STOCK_CRITICO' ? 'Stock: ' + a.stock : 'Deuda: $' + (a.deuda || 0).toLocaleString()}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function updatePredictions() {
+            const data = await fetchData('/predicciones?meses=3');
+            const container = document.getElementById('predictionsContainer');
+            if (data && data.predicciones) {
+                const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                container.innerHTML = data.predicciones.map(p => `
+                    <div class="pred-card">
+                        <div class="month">${meses[p.mes - 1] || 'Mes ' + p.mes}</div>
+                        <div class="amount">$${p.prediccion.toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+                        <div class="confidence">Confianza: ${p.confianza}%</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateAll() {
+            updateKPIs();
+            updateVentasChart();
+            updateProductosChart();
+            updateAlerts();
+            updatePredictions();
+        }
+
+        window.onload = function() {
+            initCharts();
+            updateAll();
+            setInterval(updateAll, 30000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Last Mile - Panel Administrativo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h2>🚚 Last Mile</h2>
+        <div class="empresa" id="sidebar-empresa">Panel Administrativo</div>
+      </div>
+      <div class="sidebar-nav">
+        <a href="#" class="active"><span class="icon">📈</span> KPIs</a>
+        <a href="#clientes"><span class="icon">🏢</span> Clientes</a>
+        <a href="#facturacion"><span class="icon">💰</span> Facturación</a>
+        <a href="#incidencias"><span class="icon">⚠️</span> Incidencias</a>
+        <a href="#rutas"><span class="icon">🗺️</span> Análisis Rutas</a>
+        <a href="#choferes"><span class="icon">👤</span> Rendimiento Choferes</a>
+        <a href="#audit"><span class="icon">📋</span> Auditoría</a>
+      </div>
+      <div class="sidebar-footer">
+        <a href="index.html" style="color:var(--gray-500);text-decoration:none;">Cerrar sesión</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- KPIs Dashboard -->
+      <section id="kpis">
+        <div class="page-header">
+          <h1>📈 Panel Administrativo</h1>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="loadKPIs(); loadClientes(); loadIncidencias();">🔄 Actualizar</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon">📦</div>
+            <div class="kpi-value" id="kpi-total-envios">0</div>
+            <div class="kpi-label">Total Envíos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">✅</div>
+            <div class="kpi-value" id="kpi-entregados-total">0</div>
+            <div class="kpi-label">Entregados</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">❌</div>
+            <div class="kpi-value" id="kpi-fallidos-total">0</div>
+            <div class="kpi-label">Fallidos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-value" id="kpi-utilidad">$0</div>
+            <div class="kpi-label">Utilidad Total</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🛣️</div>
+            <div class="kpi-value" id="kpi-km-total">0 km</div>
+            <div class="kpi-label">KM Totales</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⏱️</div>
+            <div class="kpi-value" id="kpi-tiempo-prom">0 min</div>
+            <div class="kpi-label">Tiempo Promedio</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clientes -->
+      <section id="clientes">
+        <div class="table-container">
+          <div class="table-header">
+            <h3>🏢 Directorio de Clientes</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Razón Social</th>
+                  <th>Colonia</th>
+                  <th>Teléfono</th>
+                  <th>Tipo</th>
+                  <th>Estatus</th>
+                </tr>
+              </thead>
+              <tbody id="clientes-tbody">
+                <tr><td colspan="5" class="text-center text-muted">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Facturación -->
+      <section id="facturacion">
+        <div class="card">
+          <div class="card-header">
+            <h3>💰 Resumen de Facturación</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Módulo de facturación electrónica (CFDI 4.0) - Próximamente</p>
+            <div class="kpi-grid" style="margin-top:20px;">
+              <div class="kpi-card">
+                <div class="kpi-icon">📄</div>
+                <div class="kpi-value">0</div>
+                <div class="kpi-label">Facturas Emitidas</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon">💵</div>
+                <div class="kpi-value">$0</div>
+                <div class="kpi-label">Total Facturado</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon">⏳</div>
+                <div class="kpi-value">0</div>
+                <div class="kpi-label">Pendientes Cobro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Incidencias -->
+      <section id="incidencias">
+        <div class="table-container">
+          <div class="table-header">
+            <h3>⚠️ Resumen de Incidencias</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Cantidad</th>
+                  <th>Abiertas</th>
+                  <th>Resueltas</th>
+                </tr>
+              </thead>
+              <tbody id="incidencias-tbody">
+                <tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Análisis Rutas -->
+      <section id="rutas">
+        <div class="table-container">
+          <div class="table-header">
+            <h3>🗺️ Análisis de Costos por Ruta</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ruta</th>
+                  <th>Fecha</th>
+                  <th>Chofer</th>
+                  <th>Unidad</th>
+                  <th>Pedidos</th>
+                  <th>Entregas</th>
+                  <th>KM</th>
+                  <th>Costo Total</th>
+                  <th>Costo/Entrega</th>
+                </tr>
+              </thead>
+              <tbody id="rutas-admin-tbody">
+                <tr><td colspan="9" class="text-center text-muted">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rendimiento Choferes -->
+      <section id="choferes">
+        <div class="table-container">
+          <div class="table-header">
+            <h3>👤 Ranking de Rendimiento Choferes</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Total Entregas</th>
+                  <th>Exitosas</th>
+                  <th>Fallidas</th>
+                  <th>Tasa Éxito</th>
+                  <th>Tiempo Espera</th>
+                </tr>
+              </thead>
+              <tbody id="choferes-admin-tbody">
+                <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Auditoría -->
+      <section id="audit">
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Registro de Auditoría</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Tabla</th>
+                    <th>Registro</th>
+                    <th>Detalles</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-tbody">
+                  <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Load admin data
+    loadKPIs();
+    loadClientes();
+    loadIncidencias();
+    
+    // Load routes for admin
+    async function loadRutasAdmin() {
+      const result = await api('/api/rutas');
+      if (result.success) {
+        const tbody = document.getElementById('rutas-admin-tbody');
+        tbody.innerHTML = '';
+        result.data.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${r.RUT_NOMBRE || ''}</strong></td>
+            <td>${formatDate(r.RUT_FECHA)}</td>
+            <td>${r.CHOFER || ''}</td>
+            <td>${r.VEH_UNIDAD || ''}</td>
+            <td>${r.RUT_TOTAL_PEDIDOS || 0}</td>
+            <td>${r.RUT_TOTAL_ENTREGAS || 0}</td>
+            <td>${parseFloat(r.RUT_TOTAL_KM || 0).toFixed(1)} km</td>
+            <td>${formatCurrency(r.RUT_COSTO_TOTAL)}</td>
+            <td>${formatCurrency(r.COSTO_PROM_ENTREGA)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+    
+    // Load choferes for admin
+    async function loadChoferesAdmin() {
+      const result = await api('/api/choferes/rendimiento');
+      if (result.success) {
+        const tbody = document.getElementById('choferes-admin-tbody');
+        tbody.innerHTML = '';
+        result.data.forEach(ch => {
+          const tr = document.createElement('tr');
+          const tasaClass = ch.TASA_EXITO >= 85 ? 'text-success' : ch.TASA_EXITO >= 70 ? 'text-warning' : 'text-danger';
+          tr.innerHTML = `
+            <td><strong>${ch.CHO_NOMBRE || ''} ${ch.CHO_APELLIDO || ''}</strong></td>
+            <td>${ch.TOTAL_ENTREGAS || 0}</td>
+            <td>${ch.ENTREGAS_EXITOSAS || 0}</td>
+            <td>${ch.ENTREGAS_FALLIDAS || 0}</td>
+            <td class="${tasaClass}"><strong>${ch.TASA_EXITO || 0}%</strong></td>
+            <td>${ch.TIEMPO_PROM_ESPERA || 0} min</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+    
+    // Load audit log
+    async function loadAudit() {
+      const result = await api('/api/audit');
+      if (result.success) {
+        const tbody = document.getElementById('audit-tbody');
+        tbody.innerHTML = '';
+        result.data.forEach(a => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${formatDateTime(a.AUD_FECHA)}</td>
+            <td>${a.AUD_USUARIO || ''}</td>
+            <td>${a.AUD_ACCION || ''}</td>
+            <td>${a.AUD_TABLA || ''}</td>
+            <td>${a.AUD_REGISTRO_ID || ''}</td>
+            <td>${a.AUD_DETALLES || ''}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+    
+    loadRutasAdmin();
+    loadChoferesAdmin();
+    loadAudit();
+  </script>
+</body>
+</html>

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AS/400 Sistema Integral v3.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a1929; color: #fff; display: flex; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 260px; background: linear-gradient(180deg, #0d2137, #0a1929); border-right: 1px solid #1e3a5f; min-height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #1e3a5f; }
+        .sidebar-header h2 { color: #42a5f5; font-size: 18px; }
+        .sidebar-header p { color: #546e7a; font-size: 12px; margin-top: 5px; }
+        .nav-menu { padding: 10px 0; }
+        .nav-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.3s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(66, 165, 245, 0.1); border-left-color: #42a5f5; }
+        .nav-item.active { background: rgba(66, 165, 245, 0.2); border-left-color: #42a5f5; }
+        .nav-item .icon { width: 20px; margin-right: 12px; font-size: 16px; }
+        .nav-item .label { font-size: 14px; color: #b0bec5; }
+        .nav-item.active .label { color: #fff; }
+        .nav-section { padding: 15px 20px 5px; font-size: 11px; color: #546e7a; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* MAIN CONTENT */
+        .main { margin-left: 260px; flex: 1; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; color: #fff; }
+        .header .status { display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .status-online { background: #00e676; }
+        .status-offline { background: #f44336; }
+        
+        /* CARDS */
+        .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .card { background: linear-gradient(135deg, #1e3a5f, #0d2137); border-radius: 10px; padding: 20px; border: 1px solid #1e3a5f; }
+        .card h3 { color: #90caf9; font-size: 12px; margin-bottom: 8px; }
+        .card .value { font-size: 28px; font-weight: bold; color: #42a5f5; }
+        
+        /* CONTENT PANELS */
+        .panel { display: none; background: #0d2137; border-radius: 12px; border: 1px solid #1e3a5f; }
+        .panel.active { display: block; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #1e3a5f; }
+        .panel-header h2 { font-size: 18px; }
+        .panel-body { padding: 20px; }
+        
+        /* BUTTONS */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .btn-primary { background: #1e88e5; color: #fff; }
+        .btn-primary:hover { background: #1565c0; }
+        .btn-success { background: #43a047; color: #fff; }
+        .btn-success:hover { background: #388e3c; }
+        .btn-danger { background: #e53935; color: #fff; }
+        .btn-danger:hover { background: #c62828; }
+        .btn-warning { background: #fb8c00; color: #fff; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        
+        /* TABLES */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1e3a5f; color: #90caf9; padding: 12px; text-align: left; font-size: 13px; font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid #1e3a5f; font-size: 13px; }
+        tr:hover { background: rgba(66, 165, 245, 0.05); }
+        tr:nth-child(even) { background: rgba(30, 58, 95, 0.3); }
+        
+        /* FORMS */
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: #90caf9; font-size: 12px; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #0a1929; border: 1px solid #1e3a5f; border-radius: 6px; color: #fff; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #42a5f5; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #1e3a5f; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #0d2137; border-radius: 12px; border: 1px solid #1e88e5; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #1e3a5f; }
+        .modal-header h3 { color: #42a5f5; }
+        .modal-close { background: none; border: none; color: #90caf9; font-size: 24px; cursor: pointer; }
+        .modal-body { padding: 20px; }
+        
+        /* SEARCH */
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-box input { flex: 1; padding: 10px; background: #0a1929; border: 1px solid #1e3a5f; border-radius: 6px; color: #fff; }
+        
+        /* TOAST */
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: #fff; font-size: 14px; z-index: 2000; animation: slideIn 0.3s ease; }
+        .toast-success { background: #43a047; }
+        .toast-error { background: #e53935; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* BADGE */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-success { background: #43a047; color: #fff; }
+        .badge-warning { background: #fb8c00; color: #fff; }
+        .badge-danger { background: #e53935; color: #fff; }
+        .badge-info { background: #1e88e5; color: #fff; }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🖥️ AS/400 V7R1</h2>
+            <p>Sistema Integral de Gestión</p>
+        </div>
+        <nav class="nav-menu">
+            <div class="nav-section">Principal</div>
+            <div class="nav-item active" onclick="showPanel('dashboard',this)">
+                <span class="icon">📊</span>
+                <span class="label">Dashboard</span>
+            </div>
+            
+            <div class="nav-section">Captura de Datos</div>
+            <div class="nav-item" onclick="showPanel('clientes',this)">
+                <span class="icon">👥</span>
+                <span class="label">Clientes</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('productos',this)">
+                <span class="icon">📦</span>
+                <span class="label">Productos</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('proveedores',this)">
+                <span class="icon">🏭</span>
+                <span class="label">Proveedores</span>
+            </div>
+            
+            <div class="nav-section">Operaciones</div>
+            <div class="nav-item" onclick="showPanel('facturas',this)">
+                <span class="icon">🧾</span>
+                <span class="label">Facturas / Ventas</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('entradas',this)">
+                <span class="icon">📥</span>
+                <span class="label">Entradas Inventario</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('salidas',this)">
+                <span class="icon">📤</span>
+                <span class="label">Salidas Inventario</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('devoluciones',this)">
+                <span class="icon">↩️</span>
+                <span class="label">Devoluciones</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('pagos',this)">
+                <span class="icon">💳</span>
+                <span class="label">Pagos</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+        <div class="header">
+            <h1 id="pageTitle">Dashboard General</h1>
+            <div class="status">
+                <div class="status-dot status-online"></div>
+                <span>AS/400 Conectado</span>
+            </div>
+        </div>
+
+        <!-- DASHBOARD PANEL -->
+        <div id="panel-dashboard" class="panel active">
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>💰 VENTAS TOTALES</h3>
+                    <div class="value">$2,850,464</div>
+                </div>
+                <div class="card">
+                    <h3>📋 FACTURAS</h3>
+                    <div class="value">420</div>
+                </div>
+                <div class="card">
+                    <h3>👥 CLIENTES</h3>
+                    <div class="value">50</div>
+                </div>
+                <div class="card">
+                    <h3>📦 PRODUCTOS</h3>
+                    <div class="value">200</div>
+                </div>
+            </div>
+            <div class="panel" style="display:block; background:#0d2137; border-radius:12px;">
+                <div class="panel-header">
+                    <h2>📊 Resumen de Actividad</h2>
+                </div>
+                <div class="panel-body">
+                    <p style="color:#90caf9;">Bienvenido al Sistema Integral AS/400</p>
+                    <p style="margin-top:10px; color:#b0bec5;">Selecciona un módulo del menú lateral para comenzar a capturar datos.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLIENTES PANEL -->
+        <div id="panel-clientes" class="panel">
+            <div class="panel-header">
+                <h2>👥 Gestión de Clientes</h2>
+                <button class="btn btn-primary" onclick="openModal('cliente')">+ Nuevo Cliente</button>
+            </div>
+            <div class="panel-body">
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar cliente..." id="searchClientes" onkeyup="filterTable('clientes')">
+                </div>
+                <div class="table-container">
+                    <table id="tableClientes">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>RFC</th>
+                                <th>Ciudad</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyClientes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCTOS PANEL -->
+        <div id="panel-productos" class="panel">
+            <div class="panel-header">
+                <h2>📦 Gestión de Productos</h2>
+                <button class="btn btn-primary" onclick="openModal('producto')">+ Nuevo Producto</button>
+            </div>
+            <div class="panel-body">
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar producto..." id="searchProductos" onkeyup="filterTable('productos')">
+                </div>
+                <div class="table-container">
+                    <table id="tableProductos">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyProductos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROVEEDORES PANEL -->
+        <div id="panel-proveedores" class="panel">
+            <div class="panel-header">
+                <h2>🏭 Gestión de Proveedores</h2>
+                <button class="btn btn-primary" onclick="openModal('proveedor')">+ Nuevo Proveedor</button>
+            </div>
+            <div class="panel-body">
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar proveedor..." id="searchProveedores" onkeyup="filterTable('proveedores')">
+                </div>
+                <div class="table-container">
+                    <table id="tableProveedores">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>RFC</th>
+                                <th>Ciudad</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyProveedores"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FACTURAS PANEL -->
+        <div id="panel-facturas" class="panel">
+            <div class="panel-header">
+                <h2>🧾 Facturas / Ventas</h2>
+                <button class="btn btn-primary" onclick="openModal('factura')">+ Nueva Factura</button>
+            </div>
+            <div class="panel-body">
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar factura..." id="searchFacturas" onkeyup="filterTable('facturas')">
+                </div>
+                <div class="table-container">
+                    <table id="tableFacturas">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Subtotal</th>
+                                <th>IVA</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyFacturas"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ENTRADAS PANEL -->
+        <div id="panel-entradas" class="panel">
+            <div class="panel-header">
+                <h2>📥 Entradas de Inventario</h2>
+                <button class="btn btn-primary" onclick="openModal('entrada')">+ Nueva Entrada</button>
+            </div>
+            <div class="panel-body">
+                <div class="table-container">
+                    <table id="tableEntradas">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Proveedor</th>
+                                <th>Almacén</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyEntradas"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALIDAS PANEL -->
+        <div id="panel-salidas" class="panel">
+            <div class="panel-header">
+                <h2>📤 Salidas de Inventario</h2>
+                <button class="btn btn-primary" onclick="openModal('salida')">+ Nueva Salida</button>
+            </div>
+            <div class="panel-body">
+                <div class="table-container">
+                    <table id="tableSalidas">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Almacén</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodySalidas"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEVOLUCIONES PANEL -->
+        <div id="panel-devoluciones" class="panel">
+            <div class="panel-header">
+                <h2>↩️ Devoluciones</h2>
+                <button class="btn btn-primary" onclick="openModal('devolucion')">+ Nueva Devolución</button>
+            </div>
+            <div class="panel-body">
+                <div class="table-container">
+                    <table id="tableDevoluciones">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Factura</th>
+                                <th>Cliente</th>
+                                <th>Motivo</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyDevoluciones"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGOS PANEL -->
+        <div id="panel-pagos" class="panel">
+            <div class="panel-header">
+                <h2>💳 Pagos</h2>
+                <button class="btn btn-primary" onclick="openModal('pago')">+ Nuevo Pago</button>
+            </div>
+            <div class="panel-body">
+                <div class="table-container">
+                    <table id="tablePagos">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Factura</th>
+                                <th>Cliente</th>
+                                <th>Método</th>
+                                <th>Monto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyPagos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nuevo Registro</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast" style="display:none;"></div>
+
+    <script>
+        const API = '';
+        let data = { clientes:[], productos:[], proveedores:[], facturas:[], entradas:[], salidas:[], devoluciones:[], pagos:[] };
+
+        async function apiGet(type) {
+            const r = await fetch(API + '/api/' + type + '?v=' + Date.now());
+            const raw = await r.json();
+            data[type] = raw;
+            return raw;
+        }
+        
+        async function apiPost(type, body) {
+            const r = await fetch(API + '/api/' + type, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+            return await r.json();
+        }
+        
+        async function apiPut(type, body) {
+            const r = await fetch(API + '/api/' + type, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+            return await r.json();
+        }
+        
+        async function apiDelete(type, id) {
+            const r = await fetch(API + '/api/' + type + '?id=' + id, {method:'DELETE'});
+            return await r.json();
+        }
+
+        function showPanel(name, el) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('panel-' + name).classList.add('active');
+            if (el) el.classList.add('active');
+            const titles = {dashboard:'Dashboard General', clientes:'Gestión de Clientes', productos:'Gestión de Productos', proveedores:'Gestión de Proveedores', facturas:'Facturas / Ventas', entradas:'Entradas de Inventario', salidas:'Salidas de Inventario', devoluciones:'Devoluciones', pagos:'Pagos'};
+            document.getElementById('pageTitle').textContent = titles[name] || name;
+            if (name !== 'dashboard') loadData(name);
+        }
+
+        async function loadData(type) {
+            try {
+                await apiGet(type);
+                renderTable(type);
+            } catch(e) {
+                document.getElementById('errorBar').textContent = 'ERROR cargando ' + type + ': ' + e.message;
+                document.getElementById('errorBar').style.display = 'block';
+            }
+        }
+
+        function renderTable(type) {
+            const tbody = document.getElementById('tbody' + capitalize(type));
+            if (!tbody) return;
+            let html = '';
+            const items = data[type] || [];
+            for (const item of items) {
+                const id = item.id;
+                const idStr = typeof id === 'string' ? "'"+id+"'" : id;
+                html += '<tr>';
+                if (type === 'clientes') {
+                    html += '<td>'+item.id+'</td><td>'+(item.nombre||'')+'</td><td>'+(item.rfc||'')+'</td><td>'+(item.ciudad||'')+'</td><td>'+(item.telefono||'')+'</td>';
+                    var est = (item.estado||'').toUpperCase();
+                    html += '<td><span class="badge '+(est==='S'||est==='A'?'badge-success':'badge-danger')+'">'+(est==='S'||est==='A'?'Activo':'Inactivo')+'</span></td>';
+                } else if (type === 'productos') {
+                    html += '<td>'+item.id+'</td><td>'+(item.nombre||'')+'</td><td>'+(item.categoria||'')+'</td><td>$'+Number(item.precio||0).toLocaleString()+'</td><td>'+(item.stock||0)+'</td>';
+                    var stk = Number(item.stock||0);
+                    html += '<td><span class="badge '+(stk>10?'badge-success':stk>0?'badge-warning':'badge-danger')+'">'+(stk>10?'OK':stk>0?'Bajo':'Agotado')+'</span></td>';
+                } else if (type === 'proveedores') {
+                    html += '<td>'+item.id+'</td><td>'+(item.nombre||'')+'</td><td>'+(item.rfc||'')+'</td><td>'+(item.ciudad||'')+'</td><td>'+(item.telefono||'')+'</td>';
+                    var est = (item.estado||'').toUpperCase();
+                    html += '<td><span class="badge '+(est==='S'||est==='A'?'badge-success':'badge-danger')+'">'+(est==='S'||est==='A'?'Activo':'Inactivo')+'</span></td>';
+                } else if (type === 'facturas') {
+                    html += '<td>'+(item.id||'')+'</td><td>'+(item.fecha||'')+'</td><td>'+(item.cliente||'')+'</td><td>$'+Number(item.subtotal||0).toLocaleString()+'</td><td>$'+Number(item.iva||0).toLocaleString()+'</td><td>$'+Number(item.total||0).toLocaleString()+'</td>';
+                    var est = (item.estado||'').toUpperCase();
+                    html += '<td><span class="badge '+(est==='C'?'badge-success':'badge-warning')+'">'+(est==='C'?'Pagada':'Pendiente')+'</span></td>';
+                } else if (type === 'entradas') {
+                    html += '<td>'+(item.id||'')+'</td><td>'+(item.fecha||'')+'</td><td>'+(item.proveedor||'')+'</td><td>'+(item.almacen||'')+'</td><td>$'+Number(item.total||0).toLocaleString()+'</td>';
+                    var est = (item.estado||'').toUpperCase();
+                    html += '<td><span class="badge badge-success">'+(est==='C'?'Completada':'Pendiente')+'</span></td>';
+                } else if (type === 'salidas') {
+                    html += '<td>'+(item.id||'')+'</td><td>'+(item.fecha||'')+'</td><td>'+(item.tipo||'')+'</td><td>'+(item.almacen||'')+'</td><td>$'+Number(item.total||0).toLocaleString()+'</td>';
+                    var est = (item.estado||'').toUpperCase();
+                    html += '<td><span class="badge badge-success">'+(est==='C'?'Completada':'Pendiente')+'</span></td>';
+                } else if (type === 'devoluciones') {
+                    html += '<td>'+(item.id||'')+'</td><td>'+(item.fecha||'')+'</td><td>'+(item.factura||'')+'</td><td>'+(item.cliente||'')+'</td><td>'+(item.motivo||'')+'</td><td>$'+Number(item.total||0).toLocaleString()+'</td>';
+                } else if (type === 'pagos') {
+                    html += '<td>'+(item.id||'')+'</td><td>'+(item.fecha||'')+'</td><td>'+(item.factura||'')+'</td><td>'+(item.cliente||'')+'</td><td>'+(item.metodo||'')+'</td><td>$'+Number(item.monto||0).toLocaleString()+'</td>';
+                }
+                html += '<td><button class="btn btn-warning btn-sm" onclick="editItem(\''+type+'\','+idStr+')">&#9998;</button> <button class="btn btn-danger btn-sm" onclick="deleteItem(\''+type+'\','+idStr+')">&#128465;</button></td></tr>';
+            }
+            tbody.innerHTML = html;
+            document.getElementById('errorBar').style.display = 'none';
+        }
+
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        async function openModal(type, item) {
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            let html = '';
+            
+            if (type === 'cliente') {
+                title.textContent = item ? 'Editar Cliente' : 'Nuevo Cliente';
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Nombre</label><input type="text" id="f_nombre" value="'+(item?item.nombre||'':'')+'"></div>';
+                html += '<div class="form-group"><label>RFC</label><input type="text" id="f_rfc" value="'+(item?item.rfc||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Ciudad</label><input type="text" id="f_ciudad" value="'+(item?item.ciudad||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Telefono</label><input type="text" id="f_telefono" value="'+(item?item.telefono||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Email</label><input type="email" id="f_email" value="'+(item?item.email||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Estado</label><select id="f_estado"><option value="S" '+(item&&item.estado==='S'?'selected':'')+'>Activo</option><option value="I" '+(item&&item.estado==='I'?'selected':'')+'>Inactivo</option></select></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveItem(\'clientes\','+(item?item.id:'null')+')">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'producto') {
+                title.textContent = item ? 'Editar Producto' : 'Nuevo Producto';
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Nombre</label><input type="text" id="f_nombre" value="'+(item?item.nombre||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Precio</label><input type="number" id="f_precio" value="'+(item?item.precio||'':'')+'" step="0.01"></div>';
+                html += '<div class="form-group"><label>Stock</label><input type="number" id="f_stock" value="'+(item?item.stock||'':'')+'"></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveItem(\'productos\','+(item?item.id:'null')+')">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'proveedor') {
+                title.textContent = item ? 'Editar Proveedor' : 'Nuevo Proveedor';
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Nombre</label><input type="text" id="f_nombre" value="'+(item?item.nombre||'':'')+'"></div>';
+                html += '<div class="form-group"><label>RFC</label><input type="text" id="f_rfc" value="'+(item?item.rfc||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Ciudad</label><input type="text" id="f_ciudad" value="'+(item?item.ciudad||'':'')+'"></div>';
+                html += '<div class="form-group"><label>Telefono</label><input type="text" id="f_telefono" value="'+(item?item.telefono||'':'')+'"></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveItem(\'proveedores\','+(item?item.id:'null')+')">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'factura') {
+                await apiGet('clientes');
+                title.textContent = 'Nueva Factura';
+                var cliOpts = '';
+                for (var i=0; i<data.clientes.length; i++) {
+                    cliOpts += '<option value="'+data.clientes[i].id+'">'+data.clientes[i].nombre+'</option>';
+                }
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Fecha</label><input type="date" id="f_fecha"></div>';
+                html += '<div class="form-group"><label>Cliente</label><select id="f_clicode">'+cliOpts+'</select></div>';
+                html += '<div class="form-group"><label>Subtotal</label><input type="number" id="f_subtotal" step="0.01"></div>';
+                html += '<div class="form-group"><label>IVA (16%)</label><input type="number" id="f_iva" step="0.01" readonly></div>';
+                html += '<div class="form-group"><label>Total</label><input type="number" id="f_total" step="0.01" readonly></div>';
+                html += '<div class="form-group"><label>Estado</label><select id="f_estado"><option value="P">Pendiente</option><option value="C">Pagada</option></select></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveFactura()">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'entrada') {
+                await apiGet('proveedores');
+                title.textContent = 'Nueva Entrada';
+                var provOpts = '';
+                for (var i=0; i<data.proveedores.length; i++) {
+                    provOpts += '<option value="'+data.proveedores[i].id+'">'+data.proveedores[i].nombre+'</option>';
+                }
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Fecha</label><input type="date" id="f_fecha"></div>';
+                html += '<div class="form-group"><label>Proveedor</label><select id="f_procod">'+provOpts+'</select></div>';
+                html += '<div class="form-group"><label>Almacen</label><select id="f_almcod"><option value="1">ALM01</option><option value="2">ALM02</option><option value="3">ALM03</option></select></div>';
+                html += '<div class="form-group"><label>Total</label><input type="number" id="f_total" step="0.01"></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveEntrada()">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'salida') {
+                title.textContent = 'Nueva Salida';
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Fecha</label><input type="date" id="f_fecha"></div>';
+                html += '<div class="form-group"><label>Tipo</label><select id="f_tipo"><option>V</option><option>A</option><option>T</option></select></div>';
+                html += '<div class="form-group"><label>Almacen</label><select id="f_almcod"><option value="1">ALM01</option><option value="2">ALM02</option><option value="3">ALM03</option></select></div>';
+                html += '<div class="form-group"><label>Total</label><input type="number" id="f_total" step="0.01"></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveSalida()">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'devolucion') {
+                await apiGet('clientes');
+                await apiGet('facturas');
+                title.textContent = 'Nueva Devolucion';
+                var cliOpts = '', facOpts = '';
+                for (var i=0; i<data.clientes.length; i++) cliOpts += '<option value="'+data.clientes[i].id+'">'+data.clientes[i].nombre+'</option>';
+                for (var i=0; i<data.facturas.length; i++) facOpts += '<option>'+data.facturas[i].id+'</option>';
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Fecha</label><input type="date" id="f_fecha"></div>';
+                html += '<div class="form-group"><label>Factura</label><select id="f_factura">'+facOpts+'</select></div>';
+                html += '<div class="form-group"><label>Cliente</label><select id="f_clicode">'+cliOpts+'</select></div>';
+                html += '<div class="form-group"><label>Motivo</label><input type="text" id="f_motivo"></div>';
+                html += '<div class="form-group"><label>Total</label><input type="number" id="f_total" step="0.01"></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="saveDevolucion()">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            } else if (type === 'pago') {
+                await apiGet('clientes');
+                await apiGet('facturas');
+                title.textContent = 'Nuevo Pago';
+                var cliOpts = '', facOpts = '';
+                for (var i=0; i<data.clientes.length; i++) cliOpts += '<option value="'+data.clientes[i].id+'">'+data.clientes[i].nombre+'</option>';
+                for (var i=0; i<data.facturas.length; i++) {
+                    if ((data.facturas[i].estado||'').toUpperCase()==='P') facOpts += '<option>'+data.facturas[i].id+'</option>';
+                }
+                html = '<div class="form-grid">';
+                html += '<div class="form-group"><label>Fecha</label><input type="date" id="f_fecha"></div>';
+                html += '<div class="form-group"><label>Factura</label><select id="f_factura">'+facOpts+'</select></div>';
+                html += '<div class="form-group"><label>Cliente</label><select id="f_clicode">'+cliOpts+'</select></div>';
+                html += '<div class="form-group"><label>Metodo</label><select id="f_metodo"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Cheque</option></select></div>';
+                html += '<div class="form-group"><label>Monto</label><input type="number" id="f_monto" step="0.01"></div>';
+                html += '</div>';
+                html += '<div class="form-actions"><button class="btn btn-success" onclick="savePago()">Guardar</button> <button class="btn btn-danger" onclick="closeModal()">Cancelar</button></div>';
+            }
+            body.innerHTML = html;
+            modal.classList.add('show');
+            if (type === 'factura') {
+                setTimeout(function() {
+                    var s = document.getElementById('f_subtotal');
+                    if (s) s.oninput = function() {
+                        var i = parseFloat(s.value||0) * 0.16;
+                        document.getElementById('f_iva').value = i.toFixed(2);
+                        document.getElementById('f_total').value = (parseFloat(s.value||0) + i).toFixed(2);
+                    };
+                }, 100);
+            }
+        }
+
+        function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+        async function saveItem(type, id) {
+            var item = { nombre: document.getElementById('f_nombre').value, rfc: (document.getElementById('f_rfc')?document.getElementById('f_rfc').value:''), ciudad: (document.getElementById('f_ciudad')?document.getElementById('f_ciudad').value:''), telefono: (document.getElementById('f_telefono')?document.getElementById('f_telefono').value:''), email: (document.getElementById('f_email')?document.getElementById('f_email').value:''), estado: (document.getElementById('f_estado')?document.getElementById('f_estado').value:'S') };
+            if (type === 'productos') { item.precio = document.getElementById('f_precio').value; item.stock = document.getElementById('f_stock').value; item.catcod = 1; item.estado = 'S'; }
+            if (id) { item.id = id; await apiPut(type, item); } else { var maxId = 0; for (var i=0; i<data[type].length; i++) { var n = parseInt(data[type][i].id); if (n > maxId) maxId = n; } item.id = maxId + 1; await apiPost(type, item); }
+            closeModal(); await loadData(type); showToast('Guardado exitosamente');
+        }
+
+        async function saveFactura() {
+            var sub = parseFloat(document.getElementById('f_subtotal').value);
+            var iva = sub * 0.16;
+            await apiPost('facturas', { fecha: document.getElementById('f_fecha').value, clicode: document.getElementById('f_clicode').value, subtotal: sub, iva: iva, total: sub+iva, estado: document.getElementById('f_estado').value });
+            closeModal(); await loadData('facturas'); showToast('Factura creada');
+        }
+
+        async function saveEntrada() {
+            await apiPost('entradas', { fecha: document.getElementById('f_fecha').value, procod: document.getElementById('f_procod').value, almcod: document.getElementById('f_almcod').value, total: document.getElementById('f_total').value, estado: 'C' });
+            closeModal(); await loadData('entradas'); showToast('Entrada registrada');
+        }
+
+        async function saveSalida() {
+            await apiPost('salidas', { fecha: document.getElementById('f_fecha').value, tipo: document.getElementById('f_tipo').value, almcod: document.getElementById('f_almcod').value, total: document.getElementById('f_total').value, estado: 'C' });
+            closeModal(); await loadData('salidas'); showToast('Salida registrada');
+        }
+
+        async function saveDevolucion() {
+            await apiPost('devoluciones', { fecha: document.getElementById('f_fecha').value, factura: document.getElementById('f_factura').value, clicode: document.getElementById('f_clicode').value, motivo: document.getElementById('f_motivo').value, total: document.getElementById('f_total').value });
+            closeModal(); await loadData('devoluciones'); showToast('Devolucion registrada');
+        }
+
+        async function savePago() {
+            await apiPost('pagos', { fecha: document.getElementById('f_fecha').value, factura: document.getElementById('f_factura').value, clicode: document.getElementById('f_clicode').value, metodo: document.getElementById('f_metodo').value, monto: document.getElementById('f_monto').value });
+            closeModal(); await loadData('pagos'); showToast('Pago registrado');
+        }
+
+        function editItem(type, id) {
+            for (var i=0; i<data[type].length; i++) {
+                if (data[type][i].id == id) { openModal(type, data[type][i]); return; }
+            }
+        }
+
+        async function deleteItem(type, id) {
+            if (confirm('Eliminar este registro?')) {
+                await apiDelete(type, id);
+                await loadData(type);
+                showToast('Eliminado');
+            }
+        }
+
+        function filterTable(type) {
+            var search = document.getElementById('search' + capitalize(type)).value.toLowerCase();
+            var rows = document.getElementById('tbody' + capitalize(type)).querySelectorAll('tr');
+            for (var i=0; i<rows.length; i++) {
+                rows[i].style.display = rows[i].textContent.toLowerCase().indexOf(search) >= 0 ? '' : 'none';
+            }
+        }
+
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            t.textContent = msg; t.className = 'toast toast-success'; t.style.display = 'block';
+            setTimeout(function() { t.style.display = 'none'; }, 3000);
+        }
+
+        // INIT
+        (async function() {
+            try {
+                var k = await (await fetch('/api/kpis?v=' + Date.now())).json();
+                document.querySelector('.cards-grid').innerHTML =
+                    '<div class="card"><h3>VENTAS 2026</h3><div class="value">$'+Number(k.ventasAnuales||0).toLocaleString()+'</div></div>' +
+                    '<div class="card"><h3>FACTURAS</h3><div class="value">'+k.numFacturas+'</div></div>' +
+                    '<div class="card"><h3>CLIENTES</h3><div class="value">'+k.totalClientes+'</div></div>' +
+                    '<div class="card"><h3>PRODUCTOS</h3><div class="value">'+k.totalProductos+'</div></div>';
+            } catch(e) {
+                document.getElementById('errorBar').textContent = 'Error API: ' + e.message;
+                document.getElementById('errorBar').style.display = 'block';
+            }
+        })();
+    </script>
+</body>
+</html>

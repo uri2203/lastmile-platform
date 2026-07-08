@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: lastmile
+      POSTGRES_USER: lastmile
+      POSTGRES_PASSWORD: LastMile2026!
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/migrate.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis (cache)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # API Flask
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://lastmile:LastMile2026!@db:5432/lastmile
+      REDIS_URL: redis://redis:6379/0
+      FLASK_SECRET: LastMileSecret2026!
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  # Nginx (frontend + proxy)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./api/web:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
