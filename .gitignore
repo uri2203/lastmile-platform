@@ -14,6 +14,9 @@ build/
 *.log
 server_out.log
 server_err.log
+err.txt
+out.txt
+error.log
 
 # OS
 .DS_Store
@@ -28,3 +31,13 @@ temp_ssh.bat
 ssh_connect.bat
 connect_linux.*
 linux_session.txt
+
+# Reportes generados (se generan desde AS/400, no van en repo)
+reportes/*.xlsx
+reportes/*.pdf
+reportes/~$*
+
+# Archivos locales
+ejecutar.bat
+ejecutar_app.bat
+*.tmp
