@@ -39,13 +39,43 @@
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
-      /* Nash.ai radial gradient depth — clearly visible */
-      background-image:
-        radial-gradient(ellipse 800px 600px at 10% 0%, rgba(249,115,22,0.18) 0%, transparent 50%),
-        radial-gradient(ellipse 600px 500px at 90% 10%, rgba(59,130,246,0.12) 0%, transparent 45%),
-        radial-gradient(ellipse 1000px 700px at 50% 45%, rgba(22,28,40,1) 0%, transparent 50%),
-        radial-gradient(ellipse 700px 500px at 0% 90%, rgba(249,115,22,0.1) 0%, transparent 45%),
-        radial-gradient(ellipse 600px 450px at 100% 85%, rgba(59,130,246,0.08) 0%, transparent 45%);
+    }
+
+    /* ── NASH.AI BACKGROUND ORBS (fixed, visible) ── */
+    .bg-orbs {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .bg-orbs .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px);
+    }
+    .bg-orbs .orb-1 {
+      width: 600px; height: 500px; top: -100px; left: -100px;
+      background: rgba(249, 115, 22, 0.12);
+    }
+    .bg-orbs .orb-2 {
+      width: 500px; height: 400px; top: -50px; right: -80px;
+      background: rgba(59, 130, 246, 0.08);
+    }
+    .bg-orbs .orb-3 {
+      width: 700px; height: 600px; top: 40%; left: 30%;
+      background: rgba(22, 28, 40, 0.9);
+    }
+    .bg-orbs .orb-4 {
+      width: 500px; height: 400px; bottom: -50px; left: -80px;
+      background: rgba(249, 115, 22, 0.07);
+    }
+    .bg-orbs .orb-5 {
+      width: 450px; height: 350px; bottom: -30px; right: -50px;
+      background: rgba(59, 130, 246, 0.06);
+    }
+    /* All content above orbs */
+    .nav, .hero, .ticker, .section, .preview-section, .compare-wrap,
+    .steps-row, .pricing-grid, .faq, .final-cta, .footer, .divider,
+    .hero-trust, .hero-actions, .hero-badge, .section-header,
+    .features-list, .metrics-grid, .preview-window {
+      position: relative; z-index: 1;
     }
 
     /* ── BEAM BORDER ── */
@@ -439,6 +469,15 @@
   </style>
 </head>
 <body>
+
+  <!-- NASH.AI BACKGROUND ORBS -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="orb orb-5"></div>
+  </div>
 
   <!-- NAV -->
   <nav class="nav">
