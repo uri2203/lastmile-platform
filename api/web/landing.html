@@ -37,6 +37,20 @@
       background: var(--lm-bg);
       color: var(--lm-text);
       overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(0,212,170,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0,180,216,0.03) 0%, transparent 50%),
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
+    }
+    [data-theme="light"] body {
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(0,212,170,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0,180,216,0.04) 0%, transparent 50%),
+        linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
     }
     .mono { font-family: 'JetBrains Mono', monospace; }
 
@@ -78,8 +92,14 @@
     .hero::before {
       content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
       width: 1200px; height: 600px;
-      background: radial-gradient(ellipse, var(--lm-glow) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(0,212,170,0.12) 0%, rgba(0,180,216,0.06) 40%, transparent 70%);
       pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 60%);
+      pointer-events: none; filter: blur(60px);
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
@@ -120,23 +140,37 @@
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
     /* METRICS GRID */
-    .metrics { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
+    .metrics {
+      padding: 80px 40px; max-width: 1200px; margin: 0 auto; position: relative;
+    }
+    .metrics::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 80%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
+      opacity: 0.3;
+    }
     .metrics-grid {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
     }
     .metric-card {
       background: var(--lm-surface); border: 1px solid var(--lm-border);
       border-radius: 12px; padding: 28px; text-align: center;
-      transition: border-color 0.3s, transform 0.3s;
+      transition: border-color 0.3s, transform 0.3s; position: relative; overflow: hidden;
+    }
+    .metric-card::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
+      pointer-events: none;
     }
     .metric-card:hover { border-color: var(--lm-accent); transform: translateY(-4px); }
-    .metric-icon { font-size: 24px; color: var(--lm-accent); margin-bottom: 12px; }
+    .metric-icon { font-size: 24px; color: var(--lm-accent); margin-bottom: 12px; position: relative; z-index: 1; }
     .metric-val {
       font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 800;
-      color: var(--lm-text); margin-bottom: 4px;
+      color: var(--lm-text); margin-bottom: 4px; position: relative; z-index: 1;
     }
     .metric-val .unit { font-size: 18px; color: var(--lm-accent); }
-    .metric-label { font-size: 13px; color: var(--lm-text-dim); }
+    .metric-label { font-size: 13px; color: var(--lm-text-dim); position: relative; z-index: 1; }
 
     /* FEATURES */
     .features { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
@@ -253,7 +287,13 @@
     .step p { font-size: 13px; color: var(--lm-text-dim); line-height: 1.5; }
 
     /* PRICING */
-    .pricing { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+    .pricing { padding: 80px 40px; max-width: 1100px; margin: 0 auto; position: relative; }
+    .pricing::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 80%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
+      opacity: 0.3;
+    }
     .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .price-card {
       background: var(--lm-surface); border: 1px solid var(--lm-border);
@@ -262,7 +302,7 @@
     .price-card:hover { transform: translateY(-4px); }
     .price-card.popular {
       border-color: var(--lm-accent);
-      box-shadow: 0 0 60px var(--lm-glow);
+      box-shadow: 0 0 60px rgba(0,212,170,0.15), 0 0 120px rgba(0,212,170,0.05);
     }
     .price-popular-tag {
       position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
@@ -304,13 +344,19 @@
 
     /* FINAL CTA */
     .final-cta {
-      padding: 100px 40px; text-align: center; position: relative;
+      padding: 100px 40px; text-align: center; position: relative; overflow: hidden;
     }
     .final-cta::before {
       content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
       width: 800px; height: 400px;
-      background: radial-gradient(ellipse, var(--lm-glow) 0%, transparent 70%);
-      pointer-events: none;
+      background: radial-gradient(ellipse, rgba(0,212,170,0.12) 0%, rgba(0,180,216,0.06) 40%, transparent 70%);
+      pointer-events: none; filter: blur(40px);
+    }
+    .final-cta::after {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 60%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
+      opacity: 0.3;
     }
     .final-cta h2 {
       font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 16px;
