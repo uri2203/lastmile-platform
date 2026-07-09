@@ -1,694 +1,621 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Last Mile Delivery - Plataforma SaaS de Delivery para Mexico</title>
   <meta name="description" content="Plataforma whitelabel de delivery para micro-paqueterias, restaurantes y e-commerce. IA, CFDI 4.0, GPS en tiempo real. Desde $999/mes.">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/design-system.css">
   <style>
     :root {
-      --lm-bg: #0a0a0f;
-      --lm-surface: #12121a;
-      --lm-surface-2: #1a1a26;
-      --lm-border: #2a2a3a;
-      --lm-accent: #00d4aa;
-      --lm-accent-2: #00b4d8;
-      --lm-amber: #f59e0b;
-      --lm-red: #ef4444;
-      --lm-text: #e8ecf0;
-      --lm-text-dim: #8892a4;
-      --lm-glow: rgba(0, 212, 170, 0.15);
-    }
-    [data-theme="light"] {
-      --lm-bg: #f8f9fc;
-      --lm-surface: #ffffff;
-      --lm-surface-2: #f0f1f5;
-      --lm-border: #e2e4ea;
-      --lm-text: #1a1a2e;
-      --lm-text-dim: #6b7280;
-      --lm-glow: rgba(0, 212, 170, 0.1);
+      --blue-900: #1e3a5f;
+      --blue-700: #1a56db;
+      --blue-600: #2563eb;
+      --blue-500: #3b82f6;
+      --blue-50: #eff6ff;
+      --blue-100: #dbeafe;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --white: #ffffff;
+      --green-500: #22c55e;
+      --green-100: #dcfce7;
+      --amber-500: #f59e0b;
+      --amber-100: #fef3c7;
+      --red-500: #ef4444;
+      --red-100: #fee2e2;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--lm-bg);
-      color: var(--lm-text);
-      overflow-x: hidden;
-      background-image:
-        radial-gradient(circle at 20% 20%, rgba(0,212,170,0.03) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0,180,216,0.03) 0%, transparent 50%);
-      background-size: 100% 100%, 100% 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--white);
+      color: var(--gray-900);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
-    [data-theme="light"] body {
-      background-image:
-        radial-gradient(circle at 20% 20%, rgba(0,212,170,0.04) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0,180,216,0.04) 0%, transparent 50%);
-      background-size: 100% 100%, 100% 100%;
-    }
-
-    /* Neural Constellation Canvas */
-    #neural-canvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      z-index: 0;
-      pointer-events: none;
-    }
-    [data-theme="light"] #neural-canvas {
-      opacity: 0.6;
-    }
-    /* All content above canvas */
-    .lm-nav, .hero, .ticker-bar, .metrics, .features, .compare,
-    .preview, .how, .pricing, .faq, .final-cta, .lm-footer {
-      position: relative;
-      z-index: 1;
-    }
-
-    .mono { font-family: 'JetBrains Mono', monospace; }
 
     /* NAV */
-    .lm-nav {
+    .nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 16px 40px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 40px; height: 64px;
       display: flex; align-items: center; justify-content: space-between;
-      background: rgba(10,10,15,0.8); backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--lm-border);
     }
-    .lm-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .lm-brand-icon {
-      width: 36px; height: 36px; border-radius: 8px;
-      background: linear-gradient(135deg, var(--lm-accent), var(--lm-accent-2));
-      display: flex; align-items: center; justify-content: center; color: #000; font-size: 16px;
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-brand-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--blue-700); color: var(--white);
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
     }
-    .lm-brand span { font-weight: 800; font-size: 18px; color: var(--lm-text); }
-    .lm-nav-links { display: flex; gap: 32px; list-style: none; }
-    .lm-nav-links a { color: var(--lm-text-dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
-    .lm-nav-links a:hover { color: var(--lm-accent); }
-    .lm-nav-cta { display: flex; gap: 10px; }
-    .lm-btn {
+    .nav-brand span { font-weight: 700; font-size: 17px; color: var(--gray-900); }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { color: var(--gray-500); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gray-900); }
+    .nav-cta { display: flex; gap: 10px; align-items: center; }
+    .btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
       border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;
-      border: none; cursor: pointer; transition: all 0.2s;
+      border: none; cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
-    .lm-btn-primary { background: var(--lm-accent); color: #000; }
-    .lm-btn-primary:hover { background: #00e6b8; transform: translateY(-1px); box-shadow: 0 4px 20px var(--lm-glow); }
-    .lm-btn-ghost { background: transparent; color: var(--lm-text-dim); border: 1px solid var(--lm-border); }
-    .lm-btn-ghost:hover { color: var(--lm-text); border-color: var(--lm-text-dim); }
-    .lm-btn-lg { padding: 14px 28px; font-size: 16px; border-radius: 10px; }
+    .btn-primary { background: var(--blue-700); color: var(--white); }
+    .btn-primary:hover { background: var(--blue-600); }
+    .btn-outline { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-300); }
+    .btn-outline:hover { border-color: var(--gray-400); color: var(--gray-900); }
+    .btn-lg { padding: 12px 24px; font-size: 15px; }
 
     /* HERO */
     .hero {
-      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 120px 40px 60px; position: relative; text-align: center;
-    }
-    .hero::before {
-      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 1200px; height: 600px;
-      background: radial-gradient(ellipse, rgba(0,212,170,0.12) 0%, rgba(0,180,216,0.06) 40%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero::after {
-      content: ''; position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 60%);
-      pointer-events: none; filter: blur(60px);
+      padding: 140px 40px 80px; max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 16px; border-radius: 999px;
-      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2);
-      font-size: 13px; font-weight: 500; color: var(--lm-accent); margin-bottom: 24px;
+      padding: 6px 14px; border-radius: 6px;
+      background: var(--blue-50); border: 1px solid var(--blue-100);
+      font-size: 13px; font-weight: 500; color: var(--blue-700); margin-bottom: 20px;
     }
     .hero h1 {
-      font-size: clamp(40px, 6vw, 72px); font-weight: 900; line-height: 1.05;
-      margin-bottom: 20px; max-width: 800px;
+      font-size: clamp(36px, 5vw, 52px); font-weight: 800; line-height: 1.1;
+      color: var(--gray-900); margin-bottom: 20px;
     }
-    .hero h1 .highlight {
-      background: linear-gradient(135deg, var(--lm-accent), var(--lm-accent-2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    .hero h1 span { color: var(--blue-700); }
+    .hero p { font-size: 17px; color: var(--gray-500); line-height: 1.7; margin-bottom: 32px; max-width: 480px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .hero-trust { font-size: 13px; color: var(--gray-400); }
+    .hero-trust i { color: var(--green-500); margin-right: 4px; }
+    .hero-visual {
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 16px; padding: 24px; position: relative;
     }
-    .hero p { font-size: 18px; color: var(--lm-text-dim); max-width: 560px; line-height: 1.6; margin-bottom: 36px; }
-    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
-    .hero-trust { font-size: 13px; color: var(--lm-text-dim); margin-bottom: 48px; }
-    .hero-trust i { color: var(--lm-accent); margin-right: 4px; }
+    .hero-visual img { width: 100%; border-radius: 10px; display: block; }
+    .hero-stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
+    }
+    .hero-stat {
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .hero-stat .val { font-size: 22px; font-weight: 800; color: var(--gray-900); }
+    .hero-stat .label { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
 
-    /* TICKER */
-    .ticker-bar {
-      width: 100%; overflow: hidden; padding: 16px 0;
-      border-top: 1px solid var(--lm-border); border-bottom: 1px solid var(--lm-border);
-      background: var(--lm-surface);
+    /* SECTION COMMON */
+    .section { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-tag {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--blue-700); margin-bottom: 12px;
     }
-    .ticker-content {
-      display: flex; gap: 60px; animation: tickerScroll 30s linear infinite;
-      white-space: nowrap;
-    }
-    .ticker-item {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--lm-text-dim);
-    }
-    .ticker-item .val { color: var(--lm-accent); font-weight: 700; font-size: 16px; }
-    .ticker-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lm-accent); animation: pulse 2s ease-in-out infinite; }
-    @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .section-header h2 { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; color: var(--gray-900); margin-bottom: 12px; }
+    .section-header p { font-size: 16px; color: var(--gray-500); max-width: 520px; margin: 0 auto; }
 
-    /* METRICS GRID */
-    .metrics {
-      padding: 80px 40px; max-width: 1200px; margin: 0 auto; position: relative;
-    }
-    .metrics::before {
-      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 80%; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
-      opacity: 0.3;
-    }
-    .metrics-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
-    }
+    /* TRUST LOGOS */
+    .trust { padding: 60px 40px; border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100); }
+    .trust-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+    .trust-label { font-size: 13px; color: var(--gray-400); font-weight: 500; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1px; }
+    .trust-logos { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
+    .trust-logo { font-size: 18px; font-weight: 700; color: var(--gray-300); letter-spacing: 0.5px; }
+
+    /* METRICS */
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     .metric-card {
-      background: var(--lm-surface); border: 1px solid var(--lm-border);
-      border-radius: 12px; padding: 28px; text-align: center;
-      transition: border-color 0.3s, transform 0.3s; position: relative; overflow: hidden;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 12px; padding: 24px; text-align: center;
     }
-    .metric-card::before {
-      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 100px; height: 100px;
-      background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .metric-card:hover { border-color: var(--lm-accent); transform: translateY(-4px); }
-    .metric-icon { font-size: 24px; color: var(--lm-accent); margin-bottom: 12px; position: relative; z-index: 1; }
-    .metric-val {
-      font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 800;
-      color: var(--lm-text); margin-bottom: 4px; position: relative; z-index: 1;
-    }
-    .metric-val .unit { font-size: 18px; color: var(--lm-accent); }
-    .metric-label { font-size: 13px; color: var(--lm-text-dim); position: relative; z-index: 1; }
+    .metric-icon { font-size: 20px; color: var(--blue-700); margin-bottom: 10px; }
+    .metric-val { font-size: 32px; font-weight: 800; color: var(--gray-900); }
+    .metric-val .unit { font-size: 16px; color: var(--blue-700); }
+    .metric-label { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
 
     /* FEATURES */
-    .features { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
-    .section-header { text-align: center; margin-bottom: 56px; }
-    .section-tag {
-      font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
-      color: var(--lm-accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
-    }
-    .section-header h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 12px; }
-    .section-header p { font-size: 16px; color: var(--lm-text-dim); max-width: 520px; margin: 0 auto; }
-
-    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .feature-card {
-      background: var(--lm-surface); border: 1px solid var(--lm-border);
-      border-radius: 12px; padding: 28px; transition: all 0.3s;
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 12px; padding: 24px; transition: border-color 0.2s;
     }
-    .feature-card:hover { border-color: var(--lm-accent); transform: translateY(-2px); }
+    .feature-card:hover { border-color: var(--blue-500); }
     .feature-card .icon {
       width: 40px; height: 40px; border-radius: 10px;
-      background: rgba(0,212,170,0.1); color: var(--lm-accent);
-      display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 16px;
+      background: var(--blue-50); color: var(--blue-700);
+      display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 14px;
     }
-    .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .feature-card p { font-size: 14px; color: var(--lm-text-dim); line-height: 1.5; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+    .feature-card p { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
 
     /* COMPARISON TABLE */
-    .compare { padding: 80px 40px; max-width: 1000px; margin: 0 auto; }
-    .compare-table {
-      width: 100%; border-collapse: collapse;
-      background: var(--lm-surface); border: 1px solid var(--lm-border);
+    .compare-table-wrap {
+      background: var(--white); border: 1px solid var(--gray-200);
       border-radius: 12px; overflow: hidden;
     }
+    .compare-table { width: 100%; border-collapse: collapse; }
     .compare-table thead th {
-      padding: 16px 20px; text-align: left; font-size: 14px; font-weight: 700;
-      border-bottom: 2px solid var(--lm-border); background: var(--lm-surface-2);
+      padding: 14px 20px; text-align: left; font-size: 13px; font-weight: 700;
+      border-bottom: 2px solid var(--gray-200); background: var(--gray-50);
+      color: var(--gray-600);
     }
-    .compare-table thead th:first-child { color: var(--lm-text-dim); }
-    .compare-table thead th.highlight {
-      color: var(--lm-accent); background: rgba(0,212,170,0.05);
-    }
+    .compare-table thead th.hl { color: var(--blue-700); background: var(--blue-50); }
     .compare-table tbody td {
-      padding: 14px 20px; font-size: 14px; border-bottom: 1px solid var(--lm-border);
+      padding: 12px 20px; font-size: 13px; border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-600);
     }
     .compare-table tbody tr:last-child td { border-bottom: none; }
-    .compare-table tbody td:first-child { color: var(--lm-text-dim); font-weight: 500; }
-    .compare-table tbody td.highlight {
-      background: rgba(0,212,170,0.03); font-weight: 600;
-    }
-    .compare-table .check { color: var(--lm-accent); font-size: 16px; }
-    .compare-table .cross { color: var(--lm-red); font-size: 14px; opacity: 0.5; }
-    .compare-table .partial { color: var(--lm-amber); font-size: 13px; }
+    .compare-table tbody td:first-child { font-weight: 500; color: var(--gray-700); }
+    .compare-table tbody td.hl { background: var(--blue-50); font-weight: 600; color: var(--gray-900); }
+    .compare-table .check { color: var(--green-500); }
+    .compare-table .cross { color: var(--gray-300); }
+    .compare-table .partial { color: var(--amber-500); }
 
     /* DASHBOARD PREVIEW */
-    .preview { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
     .preview-window {
-      background: var(--lm-surface); border: 1px solid var(--lm-border);
-      border-radius: 16px; overflow: hidden;
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 12px; overflow: hidden;
     }
     .preview-topbar {
-      display: flex; align-items: center; gap: 8px; padding: 12px 16px;
-      background: var(--lm-surface-2); border-bottom: 1px solid var(--lm-border);
+      display: flex; align-items: center; gap: 6px; padding: 10px 14px;
+      background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
     }
     .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
     .preview-dot.r { background: #ef4444; }
     .preview-dot.y { background: #f59e0b; }
     .preview-dot.g { background: #22c55e; }
-    .preview-body {
-      padding: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
-    }
+    .preview-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .preview-map {
-      background: var(--lm-surface-2); border-radius: 10px; min-height: 280px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 10px; min-height: 260px;
       display: flex; align-items: center; justify-content: center;
       position: relative; overflow: hidden;
     }
-    .map-icon { font-size: 48px; color: var(--lm-accent); position: relative; z-index: 1; opacity: 0.6; }
-    .preview-stats { display: flex; flex-direction: column; gap: 16px; }
+    .preview-stats { display: flex; flex-direction: column; gap: 12px; }
     .preview-stat {
-      background: var(--lm-surface-2); border-radius: 10px; padding: 16px 20px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 10px; padding: 14px 18px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .preview-stat .label { font-size: 13px; color: var(--lm-text-dim); }
-    .preview-stat .value {
-      font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
-    }
-    .preview-stat .value.green { color: var(--lm-accent); }
-    .preview-stat .value.amber { color: var(--lm-amber); }
-    .preview-stat .value.blue { color: var(--lm-accent-2); }
+    .preview-stat .label { font-size: 12px; color: var(--gray-400); }
+    .preview-stat .value { font-size: 18px; font-weight: 700; }
+    .preview-stat .value.green { color: var(--green-500); }
+    .preview-stat .value.blue { color: var(--blue-700); }
+    .preview-stat .value.amber { color: var(--amber-500); }
     .status-badge {
       display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
-      border-radius: 6px; font-size: 12px; font-weight: 600;
+      border-radius: 6px; font-size: 11px; font-weight: 600;
+      background: var(--green-100); color: var(--green-500);
     }
-    .status-badge.active { background: rgba(34,197,94,0.1); color: #22c55e; }
-    .status-badge.active::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+    .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green-500); }
 
     /* HOW IT WORKS */
-    .how { padding: 80px 40px; max-width: 1000px; margin: 0 auto; }
-    .steps { display: flex; gap: 24px; }
+    .how-intro {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
+      margin-bottom: 48px;
+    }
+    .how-intro img { width: 100%; border-radius: 12px; border: 1px solid var(--gray-200); object-fit: cover; height: 220px; }
+    .how-intro p { font-size: 15px; color: var(--gray-500); line-height: 1.8; }
+    .how-intro strong { color: var(--gray-900); }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .step {
-      flex: 1; background: var(--lm-surface); border: 1px solid var(--lm-border);
-      border-radius: 12px; padding: 28px; text-align: center; position: relative;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 12px; padding: 24px; text-align: center;
     }
     .step-num {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--lm-accent), var(--lm-accent-2));
-      color: #000; display: inline-flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 18px; margin-bottom: 16px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--blue-700); color: var(--white);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; margin-bottom: 14px;
     }
-    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .step p { font-size: 13px; color: var(--lm-text-dim); line-height: 1.5; }
+    .step h3 { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--gray-500); line-height: 1.5; }
 
     /* PRICING */
-    .pricing { padding: 80px 40px; max-width: 1100px; margin: 0 auto; position: relative; }
-    .pricing::before {
-      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 80%; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
-      opacity: 0.3;
-    }
-    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .price-card {
-      background: var(--lm-surface); border: 1px solid var(--lm-border);
-      border-radius: 14px; padding: 32px; position: relative; transition: all 0.3s;
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 12px; padding: 28px; position: relative; transition: border-color 0.2s;
     }
-    .price-card:hover { transform: translateY(-4px); }
-    .price-card.popular {
-      border-color: var(--lm-accent);
-      box-shadow: 0 0 60px rgba(0,212,170,0.15), 0 0 120px rgba(0,212,170,0.05);
-    }
+    .price-card:hover { border-color: var(--gray-300); }
+    .price-card.popular { border-color: var(--blue-700); box-shadow: 0 0 0 1px var(--blue-700); }
     .price-popular-tag {
-      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-      background: var(--lm-accent); color: #000; padding: 4px 14px;
-      border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      background: var(--blue-700); color: var(--white); padding: 4px 12px;
+      border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase;
     }
-    .price-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    .price-card .desc { font-size: 13px; color: var(--lm-text-dim); margin-bottom: 20px; }
-    .price-val {
-      font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800;
-      margin-bottom: 4px;
-    }
-    .price-val .currency { font-size: 24px; vertical-align: top; color: var(--lm-text-dim); }
-    .price-val .period { font-size: 16px; color: var(--lm-text-dim); font-weight: 400; }
-    .price-features { list-style: none; margin: 24px 0; }
+    .price-card h3 { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .price-card .desc { font-size: 13px; color: var(--gray-400); margin-bottom: 16px; }
+    .price-val { font-size: 40px; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
+    .price-val .currency { font-size: 20px; vertical-align: top; color: var(--gray-400); }
+    .price-val .period { font-size: 15px; color: var(--gray-400); font-weight: 400; }
+    .price-features { list-style: none; margin: 20px 0; }
     .price-features li {
-      padding: 8px 0; font-size: 14px; color: var(--lm-text-dim);
+      padding: 6px 0; font-size: 13px; color: var(--gray-600);
       display: flex; align-items: center; gap: 10px;
     }
-    .price-features li i { color: var(--lm-accent); font-size: 14px; width: 16px; }
-    .price-card .lm-btn { width: 100%; justify-content: center; }
+    .price-features li i { color: var(--green-500); font-size: 13px; width: 16px; }
+    .price-card .btn { width: 100%; justify-content: center; }
 
     /* FAQ */
-    .faq { padding: 80px 40px; max-width: 800px; margin: 0 auto; }
-    .faq-item {
-      border-bottom: 1px solid var(--lm-border); padding: 20px 0;
-    }
+    .faq { max-width: 800px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid var(--gray-200); padding: 18px 0; }
     .faq-q {
       display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; font-size: 15px; font-weight: 600; color: var(--lm-text);
+      cursor: pointer; font-size: 14px; font-weight: 600; color: var(--gray-900);
     }
-    .faq-q i { color: var(--lm-text-dim); transition: transform 0.3s; font-size: 14px; }
+    .faq-q i { color: var(--gray-400); transition: transform 0.3s; font-size: 12px; }
     .faq-a {
       max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-      font-size: 14px; color: var(--lm-text-dim); line-height: 1.6;
+      font-size: 13px; color: var(--gray-500); line-height: 1.7;
     }
-    .faq-item.open .faq-a { max-height: 200px; padding-top: 12px; }
+    .faq-item.open .faq-a { max-height: 200px; padding-top: 10px; }
     .faq-item.open .faq-q i { transform: rotate(180deg); }
 
     /* FINAL CTA */
     .final-cta {
-      padding: 100px 40px; text-align: center; position: relative; overflow: hidden;
+      background: var(--blue-700); color: var(--white);
+      padding: 80px 40px; text-align: center;
     }
-    .final-cta::before {
-      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 800px; height: 400px;
-      background: radial-gradient(ellipse, rgba(0,212,170,0.12) 0%, rgba(0,180,216,0.06) 40%, transparent 70%);
-      pointer-events: none; filter: blur(40px);
-    }
-    .final-cta::after {
-      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 60%; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
-      opacity: 0.3;
-    }
-    .final-cta h2 {
-      font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 16px;
-      position: relative; z-index: 1;
-    }
-    .final-cta p { font-size: 16px; color: var(--lm-text-dim); margin-bottom: 32px; position: relative; z-index: 1; }
-    .final-cta .lm-btn { position: relative; z-index: 1; }
+    .final-cta h2 { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; margin-bottom: 12px; }
+    .final-cta p { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 28px; }
+    .final-cta .btn { background: var(--white); color: var(--blue-700); }
+    .final-cta .btn:hover { background: var(--gray-100); }
 
     /* FOOTER */
-    .lm-footer {
-      padding: 40px; border-top: 1px solid var(--lm-border);
-      text-align: center; font-size: 13px; color: var(--lm-text-dim);
+    .footer {
+      padding: 40px; border-top: 1px solid var(--gray-200);
+      text-align: center; font-size: 13px; color: var(--gray-400);
     }
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
-      .lm-nav { padding: 12px 16px; }
-      .lm-nav-links { display: none; }
-      .hero, .metrics, .features, .preview, .how, .pricing, .faq, .final-cta { padding-left: 16px; padding-right: 16px; }
+      .nav-inner { padding: 0 16px; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 100px 16px 40px; gap: 32px; }
+      .hero-visual { display: none; }
+      .section { padding: 48px 16px; }
       .metrics-grid { grid-template-columns: repeat(2, 1fr); }
       .feature-grid { grid-template-columns: 1fr; }
-      .pricing-grid { grid-template-columns: 1fr; }
       .preview-body { grid-template-columns: 1fr; }
-      .steps { flex-direction: column; }
+      .how-intro { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .compare-table-wrap { overflow-x: auto; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Neural Constellation Background -->
-  <canvas id="neural-canvas"></canvas>
-
   <!-- NAV -->
-  <nav class="lm-nav">
-    <a href="/" class="lm-brand">
-      <div class="lm-brand-icon"><i class="fas fa-truck-fast"></i></div>
-      <span>Last Mile</span>
-    </a>
-    <ul class="lm-nav-links">
-      <li><a href="#features">Plataforma</a></li>
-      <li><a href="#how">Como funciona</a></li>
-      <li><a href="#pricing">Precios</a></li>
-      <li><a href="#faq">FAQ</a></li>
-    </ul>
-    <div class="lm-nav-cta">
-      <button onclick="toggleTheme()" style="background:none;border:1px solid var(--lm-border);border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--lm-text-dim);font-size:14px;transition:all 0.2s;" title="Cambiar tema">
-        <i class="fas fa-sun" id="theme-icon"></i>
-      </button>
-      <a href="/login" class="lm-btn lm-btn-ghost">Iniciar sesion</a>
-      <a href="onboarding.html" class="lm-btn lm-btn-primary">Crear empresa</a>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-icon"><i class="fas fa-truck-fast"></i></div>
+        <span>Last Mile</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Plataforma</a></li>
+        <li><a href="#how">Como funciona</a></li>
+        <li><a href="#pricing">Precios</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="/login" class="btn btn-outline">Iniciar sesion</a>
+        <a href="onboarding.html" class="btn btn-primary">Crear empresa</a>
+      </div>
     </div>
   </nav>
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-badge">
-      <div class="ticker-dot"></div> Plataforma de delivery en tiempo real
+    <div>
+      <div class="hero-badge">
+        <i class="fas fa-bolt"></i> Plataforma de delivery para Mexico
+      </div>
+      <h1>La plataforma de delivery <span>que tu empresa necesita</span></h1>
+      <p>Gestiona envios, rutas, facturacion ytracking en un solo lugar. Whitelabel, con IA y Cumplimiento SAT. Sin comisiones por envio.</p>
+      <div class="hero-actions">
+        <a href="onboarding.html" class="btn btn-primary btn-lg">
+          <i class="fas fa-rocket"></i> Comenzar gratis
+        </a>
+        <a href="#preview" class="btn btn-outline btn-lg">
+          <i class="fas fa-play"></i> Ver demo
+        </a>
+      </div>
+      <div class="hero-trust">
+        <i class="fas fa-shield-halved"></i> Sin tarjeta de credito &middot; Configuracion en 5 minutos &middot; Soporte en espanol
+      </div>
     </div>
-    <h1>
-      Tu marca.<br>
-      <span class="highlight">Nuestra inteligencia.</span>
-    </h1>
-    <p>Plataforma whitelabel para delivery en Mexico. GPS en tiempo real, optimizacion con IA, facturacion CFDI 4.0. Desde $999/mes sin comisiones.</p>
-    <div class="hero-actions">
-      <a href="onboarding.html" class="lm-btn lm-btn-primary lm-btn-lg">
-        <i class="fas fa-rocket"></i> Empezar gratis
-      </a>
-      <a href="#preview" class="lm-btn lm-btn-ghost lm-btn-lg">
-        <i class="fas fa-play"></i> Ver demo
-      </a>
-    </div>
-    <div class="hero-trust">
-      <i class="fas fa-shield-halved"></i> Sin tarjeta de credito &middot; Configuracion en 5 minutos &middot; Soporte en espanol
+    <div class="hero-visual">
+      <img src="img/map-tracker.webp" alt="Dashboard de delivery con mapa en tiempo real" style="width:100%;height:240px;object-fit:cover;">
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="val">47</div>
+          <div class="label">Envios activos</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val">12</div>
+          <div class="label">Choferes en ruta</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val">89</div>
+          <div class="label">Entregas hoy</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val">$847K</div>
+          <div class="label">Facturacion mes</div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- TICKER -->
-  <div class="ticker-bar">
-    <div class="ticker-content">
-      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val">2,847</span> envios activos ahora</div>
-      <div class="ticker-item"><span class="val">142</span> choferes en ruta</div>
-      <div class="ticker-item"><span class="val">99.2%</span> entregas a tiempo</div>
-      <div class="ticker-item"><span class="val">38,500</span> km recorridos hoy</div>
-      <div class="ticker-item"><span class="val">45%</span> ahorro en combustible</div>
-      <div class="ticker-item"><span class="val">2.3s</span> tiempo respuesta IA</div>
-      <div class="ticker-item"><span class="val">100%</span> CFDI 4.0 compliant</div>
-      <div class="ticker-item"><span class="val">24/7</span> monitoreo activo</div>
-      <!-- DUPLICATE FOR SEAMLESS LOOP -->
-      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val">2,847</span> envios activos ahora</div>
-      <div class="ticker-item"><span class="val">142</span> choferes en ruta</div>
-      <div class="ticker-item"><span class="val">99.2%</span> entregas a tiempo</div>
-      <div class="ticker-item"><span class="val">38,500</span> km recorridos hoy</div>
-      <div class="ticker-item"><span class="val">45%</span> ahorro en combustible</div>
-      <div class="ticker-item"><span class="val">2.3s</span> tiempo respuesta IA</div>
-      <div class="ticker-item"><span class="val">100%</span> CFDI 4.0 compliant</div>
-      <div class="ticker-item"><span class="val">24/7</span> monitoreo activo</div>
+  <!-- TRUST LOGOS -->
+  <section class="trust">
+    <div class="trust-inner">
+      <div class="trust-label">Empresas que confian en nosotros</div>
+      <div class="trust-logos">
+        <div class="trust-logo">PAQUETEXPRESS</div>
+        <div class="trust-logo">ENVIOS Express</div>
+        <div class="trust-logo">DISTRIBUIDORA MX</div>
+        <div class="trust-logo">LOGISTICA TOTAL</div>
+        <div class="trust-logo">SENTIX</div>
+      </div>
     </div>
-  </div>
+  </section>
 
   <!-- METRICS -->
-  <section class="metrics">
+  <section class="section">
     <div class="section-header">
-      <div class="section-tag mono">// metricas en vivo</div>
-      <h2>Resultados que se miden</h2>
-      <p>Numero reales de operaciones que corren en nuestra plataforma diariamente.</p>
+      <div class="section-tag">Resultados comprobados</div>
+      <h2>Numero que hablan por si solos</h2>
+      <p>Operaciones reales que corren en nuestra plataforma diariamente.</p>
     </div>
     <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-boxes-stacked"></i></div>
-        <div class="metric-val"><span class="counter" data-target="47500">0</span></div>
+        <div class="metric-val">47,500+</div>
         <div class="metric-label">Envios procesados al mes</div>
       </div>
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-gas-pump"></i></div>
-        <div class="metric-val"><span class="counter" data-target="45">0</span><span class="unit">%</span></div>
+        <div class="metric-val">45<span class="unit">%</span></div>
         <div class="metric-label">Ahorro promedio en combustible</div>
       </div>
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-clock"></i></div>
-        <div class="metric-val"><span class="counter" data-target="99" data-decimal="1">0</span><span class="unit">%</span></div>
+        <div class="metric-val">99.2<span class="unit">%</span></div>
         <div class="metric-label">Entregas a tiempo</div>
       </div>
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-file-invoice"></i></div>
-        <div class="metric-val"><span class="counter" data-target="100">0</span><span class="unit">%</span></div>
+        <div class="metric-val">100<span class="unit">%</span></div>
         <div class="metric-label">Cumplimiento CFDI 4.0</div>
       </div>
     </div>
   </section>
 
   <!-- FEATURES -->
-  <section class="features" id="features">
-    <div class="section-header">
-      <div class="section-tag mono">// plataforma completa</div>
-      <h2>Todo en un solo sistema</h2>
-      <p>De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.</p>
-    </div>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="icon"><i class="fas fa-satellite-dish"></i></div>
-        <h3>GPS en tiempo real</h3>
-        <p>Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.</p>
+  <section class="section" id="features" style="background:var(--gray-50);max-width:100%;padding-left:calc((100% - 1120px)/2);padding-right:calc((100% - 1120px)/2);">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div class="section-header">
+        <div class="section-tag">Plataforma completa</div>
+        <h2>Todo lo que necesitas en un solo sistema</h2>
+        <p>De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.</p>
       </div>
-      <div class="feature-card">
-        <div class="icon"><i class="fas fa-brain"></i></div>
-        <h3>IA optimiza rutas</h3>
-        <p>Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
-        <h3>Facturacion CFDI 4.0</h3>
-        <p>Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon"><i class="fas fa-credit-card"></i></div>
-        <h3>Pagos OXXO + MP</h3>
-        <p>Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon"><i class="fas fa-mobile-screen-button"></i></div>
-        <h3>App chofer movil</h3>
-        <p>PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon"><i class="fas fa-palette"></i></div>
-        <h3>100% tu marca</h3>
-        <p>Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon"><i class="fas fa-satellite-dish"></i></div>
+          <h3>GPS en tiempo real</h3>
+          <p>Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon"><i class="fas fa-brain"></i></div>
+          <h3>IA optimiza rutas</h3>
+          <p>Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
+          <h3>Facturacion CFDI 4.0</h3>
+          <p>Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon"><i class="fas fa-credit-card"></i></div>
+          <h3>Pagos OXXO + MercadoPago</h3>
+          <p>Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon"><i class="fas fa-mobile-screen-button"></i></div>
+          <h3>App chofer movil</h3>
+          <p>PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon"><i class="fas fa-palette"></i></div>
+          <h3>100% tu marca</h3>
+          <p>Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.</p>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- COMPARISON TABLE -->
-  <section class="compare">
+  <section class="section">
     <div class="section-header">
-      <div class="section-tag mono">// comparativa</div>
+      <div class="section-tag">Comparativa</div>
       <h2>Por que Last Mile vs la competencia</h2>
       <p>Compara lo que realmente ofrecemos contra las opciones del mercado.</p>
     </div>
-    <table class="compare-table">
-      <thead>
-        <tr>
-          <th>Caracteristica</th>
-          <th class="highlight">Last Mile</th>
-          <th>Rappi Business</th>
-          <th>Uber Direct</th>
-          <th>Solucion propia</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Tu propia marca (whitelabel)</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i> 100%</td>
-          <td><i class="fas fa-times-circle cross"></i></td>
-          <td><i class="fas fa-times-circle cross"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-        </tr>
-        <tr>
-          <td>Sin comision por envio</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i> Cuota fija</td>
-          <td><i class="fas fa-times-circle cross"></i> 15-25% por envio</td>
-          <td><i class="fas fa-times-circle cross"></i> Tarifa dinamica</td>
-          <td><i class="fas fa-check-circle check"></i></td>
-        </tr>
-        <tr>
-          <td>Rastreo GPS en tiempo real</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-minus-circle partial"></i> Desarrollo propio</td>
-        </tr>
-        <tr>
-          <td>Facturacion CFDI 4.0 automatica</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i> Incluida</td>
-          <td><i class="fas fa-minus-circle partial"></i> Limitada</td>
-          <td><i class="fas fa-times-circle cross"></i></td>
-          <td><i class="fas fa-minus-circle partial"></i> Plugin extra</td>
-        </tr>
-        <tr>
-          <td>Optimizacion de rutas con IA</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i> Incluida</td>
-          <td><i class="fas fa-times-circle cross"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-times-circle cross"></i> Costoso</td>
-        </tr>
-        <tr>
-          <td>Pagos OXXO + MercadoPago</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-minus-circle partial"></i> Solo tarjeta</td>
-          <td><i class="fas fa-minus-circle partial"></i> Integracion manual</td>
-        </tr>
-        <tr>
-          <td>App chofer movil</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i> PWA</td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-times-circle cross"></i> Desarrollo propio</td>
-        </tr>
-        <tr>
-          <td>Portal de tracking para clientes</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-minus-circle partial"></i> Solo app Rappi</td>
-          <td><i class="fas fa-minus-circle partial"></i> Solo app Uber</td>
-          <td><i class="fas fa-times-circle cross"></i></td>
-        </tr>
-        <tr>
-          <td>Dashboard con reportes</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-check-circle check"></i></td>
-          <td><i class="fas fa-times-circle cross"></i></td>
-        </tr>
-        <tr>
-          <td>Control total de datos</td>
-          <td class="highlight"><i class="fas fa-check-circle check"></i> Tus datos</td>
-          <td><i class="fas fa-times-circle cross"></i> Ellos controlan</td>
-          <td><i class="fas fa-times-circle cross"></i> Ellos controlan</td>
-          <td><i class="fas fa-check-circle check"></i></td>
-        </tr>
-        <tr>
-          <td>Costo mensual</td>
-          <td class="highlight"><span class="mono" style="color:var(--lm-accent);">$999-$5,999</span></td>
-          <td>Por envio</td>
-          <td>Por envio</td>
-          <td>$50,000-$200,000+ dev</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Caracteristica</th>
+            <th class="hl">Last Mile</th>
+            <th>Rappi Business</th>
+            <th>Uber Direct</th>
+            <th>Solucion propia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tu propia marca (whitelabel)</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> 100%</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+          </tr>
+          <tr>
+            <td>Sin comision por envio</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Cuota fija</td>
+            <td><i class="fas fa-times-circle cross"></i> 15-25%</td>
+            <td><i class="fas fa-times-circle cross"></i> Tarifa dinamica</td>
+            <td><i class="fas fa-check-circle check"></i></td>
+          </tr>
+          <tr>
+            <td>Rastreo GPS en tiempo real</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Desarrollo propio</td>
+          </tr>
+          <tr>
+            <td>Facturacion CFDI 4.0 automatica</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Incluida</td>
+            <td><i class="fas fa-minus-circle partial"></i> Limitada</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Plugin extra</td>
+          </tr>
+          <tr>
+            <td>Optimizacion de rutas con IA</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Incluida</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-times-circle cross"></i> Costoso</td>
+          </tr>
+          <tr>
+            <td>Pagos OXXO + MercadoPago</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Solo tarjeta</td>
+            <td><i class="fas fa-minus-circle partial"></i> Manual</td>
+          </tr>
+          <tr>
+            <td>App chofer movil</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> PWA</td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-times-circle cross"></i> Propio</td>
+          </tr>
+          <tr>
+            <td>Portal de tracking para clientes</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Solo app</td>
+            <td><i class="fas fa-minus-circle partial"></i> Solo app</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+          </tr>
+          <tr>
+            <td>Dashboard con reportes</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+          </tr>
+          <tr>
+            <td>Control total de datos</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Tus datos</td>
+            <td><i class="fas fa-times-circle cross"></i> Ellos controlan</td>
+            <td><i class="fas fa-times-circle cross"></i> Ellos controlan</td>
+            <td><i class="fas fa-check-circle check"></i></td>
+          </tr>
+          <tr>
+            <td>Costo mensual</td>
+            <td class="hl" style="color:var(--blue-700);font-weight:700;">$999 - $5,999</td>
+            <td>Por envio</td>
+            <td>Por envio</td>
+            <td>$50,000 - $200,000+</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- DASHBOARD PREVIEW -->
-  <section class="preview" id="preview">
-    <div class="section-header">
-      <div class="section-tag mono">// producto en accion</div>
-      <h2>Asi se ve tu plataforma</h2>
-      <p>Dashboard en tiempo real con mapa, metricas y control total de operaciones.</p>
-    </div>
-    <div class="preview-window">
-      <div class="preview-topbar">
-        <div class="preview-dot r"></div>
-        <div class="preview-dot y"></div>
-        <div class="preview-dot g"></div>
-        <span class="mono" style="font-size:12px;color:var(--lm-text-dim);margin-left:12px;">lastmile.app/dashboard</span>
+  <section class="section" id="preview" style="background:var(--gray-50);max-width:100%;padding-left:calc((100% - 1120px)/2);padding-right:calc((100% - 1120px)/2);">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div class="section-header">
+        <div class="section-tag">Producto en accion</div>
+        <h2>Asi se ve tu plataforma</h2>
+        <p>Dashboard en tiempo real con mapa, metricas y control total de operaciones.</p>
       </div>
-      <div class="preview-body">
-        <div class="preview-map" style="background-image:url('img/map-tracker.webp'); background-size:cover; background-position:center;">
-          <div style="position:absolute;inset:0;background:rgba(10,10,15,0.3);"></div>
-          <div style="position:relative;z-index:1;text-align:center;">
-            <div style="background:var(--lm-surface);border:1px solid var(--lm-border);border-radius:10px;padding:12px 20px;display:inline-flex;align-items:center;gap:10px;">
-              <div class="ticker-dot"></div>
-              <span class="mono" style="font-size:14px;font-weight:600;color:var(--lm-accent);">12 choferes activos en mapa</span>
-            </div>
-          </div>
+      <div class="preview-window">
+        <div class="preview-topbar">
+          <div class="preview-dot r"></div>
+          <div class="preview-dot y"></div>
+          <div class="preview-dot g"></div>
+          <span style="font-size:12px;color:var(--gray-400);margin-left:10px;font-family:monospace;">lastmile.app/dashboard</span>
         </div>
-        <div class="preview-stats">
-          <div class="preview-stat">
-            <div>
-              <div class="label">Envios activos</div>
-              <div class="value green mono">47</div>
+        <div class="preview-body">
+          <div class="preview-map" style="background-image:url('img/map-tracker.webp');background-size:cover;background-position:center;">
+            <div style="position:absolute;inset:0;background:rgba(255,255,255,0.6);"></div>
+            <div style="position:relative;z-index:1;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--green-500);animation:pulse 2s infinite;"></div>
+              <span style="font-size:13px;font-weight:600;color:var(--gray-700);">12 choferes activos en mapa</span>
             </div>
-            <div class="status-badge active">En curso</div>
           </div>
-          <div class="preview-stat">
-            <div>
-              <div class="label">Choferes en ruta</div>
-              <div class="value blue mono">12</div>
+          <div class="preview-stats">
+            <div class="preview-stat">
+              <div>
+                <div class="label">Envios activos</div>
+                <div class="value green">47</div>
+              </div>
+              <div class="status-badge">En curso</div>
             </div>
-            <div class="status-badge active">GPS activo</div>
-          </div>
-          <div class="preview-stat">
-            <div>
-              <div class="label">Entregas completadas hoy</div>
-              <div class="value amber mono">89</div>
+            <div class="preview-stat">
+              <div>
+                <div class="label">Choferes en ruta</div>
+                <div class="value blue">12</div>
+              </div>
+              <div class="status-badge">GPS activo</div>
             </div>
-            <div style="font-size:12px;color:var(--lm-accent);">+23% vs ayer</div>
-          </div>
-          <div class="preview-stat">
-            <div>
-              <div class="label">Facturacion del mes</div>
-              <div class="value green mono">$847,200</div>
+            <div class="preview-stat">
+              <div>
+                <div class="label">Entregas completadas hoy</div>
+                <div class="value amber">89</div>
+              </div>
+              <div style="font-size:12px;color:var(--green-500);font-weight:500;">+23% vs ayer</div>
             </div>
-            <div style="font-size:12px;color:var(--lm-accent);">CFDI 4.0</div>
+            <div class="preview-stat">
+              <div>
+                <div class="label">Facturacion del mes</div>
+                <div class="value green">$847,200</div>
+              </div>
+              <div style="font-size:12px;color:var(--blue-700);font-weight:500;">CFDI 4.0</div>
+            </div>
           </div>
         </div>
       </div>
@@ -696,19 +623,15 @@
   </section>
 
   <!-- HOW IT WORKS -->
-  <section class="how" id="how">
+  <section class="section" id="how">
     <div class="section-header">
-      <div class="section-tag mono">// en 3 pasos</div>
+      <div class="section-tag">En 3 pasos</div>
       <h2>De cero a operando</h2>
       <p>Configura tu plataforma de delivery en minutos, no en semanas.</p>
     </div>
-    <div style="display:flex;gap:24px;align-items:center;margin-bottom:40px;">
-      <div style="flex:1;">
-        <img src="img/imagen-usuario.png" alt="Flotilla de unidades de delivery" style="width:100%;border-radius:12px;border:1px solid var(--lm-border);object-fit:cover;height:200px;">
-      </div>
-      <div style="flex:1;font-size:15px;color:var(--lm-text-dim);line-height:1.7;">
-        <p>Imagina tener el control completo de tus envios desde un solo lugar. Sin WhatsApp, sin Excel, sin llamadas para rastrear paquetes. <strong style="color:var(--lm-text);">Last Mile te da un dashboard en tiempo real</strong> con GPS, facturacion automatica y optimizacion con inteligencia artificial.</p>
-      </div>
+    <div class="how-intro">
+      <img src="img/imagen-usuario.png" alt="Flotilla de unidades de delivery">
+      <p>Imagina tener el control completo de tus envios desde un solo lugar. Sin WhatsApp, sin Excel, sin llamadas para rastrear paquetes. <strong>Last Mile te da un dashboard en tiempo real</strong> con GPS, facturacion automatica y optimizacion con inteligencia artificial.</p>
     </div>
     <div class="steps">
       <div class="step">
@@ -730,89 +653,93 @@
   </section>
 
   <!-- PRICING -->
-  <section class="pricing" id="pricing">
-    <div class="section-header">
-      <div class="section-tag mono">// precios transparentes</div>
-      <h2>Cuota fija. Sin sorpresas.</h2>
-      <p>Sin comisiones por envio. Cancela cuando quieras.</p>
-    </div>
-    <div class="pricing-grid">
-      <div class="price-card">
-        <h3>Starter</h3>
-        <div class="desc">Micro-paqueterias y emprendedores</div>
-        <div class="price-val"><span class="currency">$</span>999<span class="period">/mes</span></div>
-        <ul class="price-features">
-          <li><i class="fas fa-check"></i> 200 envios/mes</li>
-          <li><i class="fas fa-check"></i> 3 choferes</li>
-          <li><i class="fas fa-check"></i> GPS en tiempo real</li>
-          <li><i class="fas fa-check"></i> Facturacion CFDI 4.0</li>
-          <li><i class="fas fa-check"></i> Portal cliente</li>
-        </ul>
-        <a href="onboarding.html" class="lm-btn lm-btn-ghost" style="width:100%;justify-content:center;">Empezar</a>
+  <section class="section" id="pricing" style="background:var(--gray-50);max-width:100%;padding-left:calc((100% - 1120px)/2);padding-right:calc((100% - 1120px)/2);">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div class="section-header">
+        <div class="section-tag">Precios transparentes</div>
+        <h2>Cuota fija. Sin sorpresas.</h2>
+        <p>Sin comisiones por envio. Cancela cuando quieras.</p>
       </div>
-      <div class="price-card popular">
-        <div class="price-popular-tag">Mas popular</div>
-        <h3>Pro</h3>
-        <div class="desc">Empresas en crecimiento</div>
-        <div class="price-val"><span class="currency">$</span>2,499<span class="period">/mes</span></div>
-        <ul class="price-features">
-          <li><i class="fas fa-check"></i> 1,000 envios/mes</li>
-          <li><i class="fas fa-check"></i> 15 choferes</li>
-          <li><i class="fas fa-check"></i> Todo del Starter</li>
-          <li><i class="fas fa-check"></i> Optimizacion IA rutas</li>
-          <li><i class="fas fa-check"></i> Pagos OXXO + MP</li>
-          <li><i class="fas fa-check"></i> App chofer movil</li>
-          <li><i class="fas fa-check"></i> Dashboard + reportes</li>
-        </ul>
-        <a href="onboarding.html" class="lm-btn lm-btn-primary" style="width:100%;justify-content:center;">Empezar</a>
-      </div>
-      <div class="price-card">
-        <h3>Enterprise</h3>
-        <div class="desc">Flotas grandes y empresas establecidas</div>
-        <div class="price-val"><span class="currency">$</span>5,999<span class="period">/mes</span></div>
-        <ul class="price-features">
-          <li><i class="fas fa-check"></i> Envios ilimitados</li>
-          <li><i class="fas fa-check"></i> Choferes ilimitados</li>
-          <li><i class="fas fa-check"></i> Todo del Pro</li>
-          <li><i class="fas fa-check"></i> Agente IA personalizado</li>
-          <li><i class="fas fa-check"></i> API REST completa</li>
-          <li><i class="fas fa-check"></i> Multi-sucursal</li>
-          <li><i class="fas fa-check"></i> Soporte 24/7</li>
-        </ul>
-        <a href="onboarding.html" class="lm-btn lm-btn-ghost" style="width:100%;justify-content:center;">Contactar ventas</a>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <h3>Starter</h3>
+          <div class="desc">Micro-paqueterias y emprendedores</div>
+          <div class="price-val"><span class="currency">$</span>999<span class="period">/mes</span></div>
+          <ul class="price-features">
+            <li><i class="fas fa-check"></i> 200 envios/mes</li>
+            <li><i class="fas fa-check"></i> 3 choferes</li>
+            <li><i class="fas fa-check"></i> GPS en tiempo real</li>
+            <li><i class="fas fa-check"></i> Facturacion CFDI 4.0</li>
+            <li><i class="fas fa-check"></i> Portal cliente</li>
+          </ul>
+          <a href="onboarding.html" class="btn btn-outline" style="width:100%;justify-content:center;">Empezar</a>
+        </div>
+        <div class="price-card popular">
+          <div class="price-popular-tag">Mas popular</div>
+          <h3>Pro</h3>
+          <div class="desc">Empresas en crecimiento</div>
+          <div class="price-val"><span class="currency">$</span>2,499<span class="period">/mes</span></div>
+          <ul class="price-features">
+            <li><i class="fas fa-check"></i> 1,000 envios/mes</li>
+            <li><i class="fas fa-check"></i> 15 choferes</li>
+            <li><i class="fas fa-check"></i> Todo del Starter</li>
+            <li><i class="fas fa-check"></i> Optimizacion IA rutas</li>
+            <li><i class="fas fa-check"></i> Pagos OXXO + MP</li>
+            <li><i class="fas fa-check"></i> App chofer movil</li>
+            <li><i class="fas fa-check"></i> Dashboard + reportes</li>
+          </ul>
+          <a href="onboarding.html" class="btn btn-primary" style="width:100%;justify-content:center;">Empezar</a>
+        </div>
+        <div class="price-card">
+          <h3>Enterprise</h3>
+          <div class="desc">Flotas grandes y empresas establecidas</div>
+          <div class="price-val"><span class="currency">$</span>5,999<span class="period">/mes</span></div>
+          <ul class="price-features">
+            <li><i class="fas fa-check"></i> Envios ilimitados</li>
+            <li><i class="fas fa-check"></i> Choferes ilimitados</li>
+            <li><i class="fas fa-check"></i> Todo del Pro</li>
+            <li><i class="fas fa-check"></i> Agente IA personalizado</li>
+            <li><i class="fas fa-check"></i> API REST completa</li>
+            <li><i class="fas fa-check"></i> Multi-sucursal</li>
+            <li><i class="fas fa-check"></i> Soporte 24/7</li>
+          </ul>
+          <a href="onboarding.html" class="btn btn-outline" style="width:100%;justify-content:center;">Contactar ventas</a>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="faq" id="faq">
+  <section class="section">
     <div class="section-header">
-      <div class="section-tag mono">// preguntas frecuentes</div>
+      <div class="section-tag">Preguntas frecuentes</div>
       <h2>Resolvemos tus dudas</h2>
     </div>
-    <div class="faq-item">
-      <div class="faq-q">Necesito saber programar para usarla? <i class="fas fa-chevron-down"></i></div>
-      <div class="faq-a">No. La plataforma es 100% visual. Creas envios, asignas choferes y facturas desde el navegador. Sin codigo.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Puedo probarla gratis antes de pagar? <i class="fas fa-chevron-down"></i></div>
-      <div class="faq-a">Si. Puedes configurar tu empresa y probar todas las funcionalidades sin tarjeta de credito. Solo pagas cuando estes listo.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Funciona con mi dominio propio? <i class="fas fa-chevron-down"></i></div>
-      <div class="faq-a">Si. Puedes conectar tu dominio (ej: envios.tuempresa.com) en el plan Pro y Enterprise. Los clientes ven tu marca, no la nuestra.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">La facturacion cumple con el SAT? <i class="fas fa-chevron-down"></i></div>
-      <div class="faq-a">Si. Generamos CFDI 4.0 automaticamente con todas las validaciones del SAT. Sin configuracion adicional.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Que pasa si me paso de los envios de mi plan? <i class="fas fa-chevron-down"></i></div>
-      <div class="faq-a">No bloqueamos envios. Si te pasas, simplemente cobramos un costo adicional por envio extra, o puedes subir de plan.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Puedo cancelar en cualquier momento? <i class="fas fa-chevron-down"></i></div>
-      <div class="faq-a">Si. Sin contratos, sin penalizaciones. Cancelas desde tu panel cuando quieras.</div>
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q">Necesito saber programar para usarla? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a">No. La plataforma es 100% visual. Creas envios, asignas choferes y facturas desde el navegador. Sin codigo.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puedo probarla gratis antes de pagar? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a">Si. Puedes configurar tu empresa y probar todas las funcionalidades sin tarjeta de credito. Solo pagas cuando estes listo.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Funciona con mi dominio propio? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a">Si. Puedes conectar tu dominio (ej: envios.tuempresa.com) en el plan Pro y Enterprise. Los clientes ven tu marca, no la nuestra.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">La facturacion cumple con el SAT? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a">Si. Generamos CFDI 4.0 automaticamente con todas las validaciones del SAT. Sin configuracion adicional.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Que pasa si me paso de los envios de mi plan? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a">No bloqueamos envios. Si te pasas, simplemente cobramos un costo adicional por envio extra, o puedes subir de plan.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puedo cancelar en cualquier momento? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a">Si. Sin contratos, sin penalizaciones. Cancelas desde tu panel cuando quieras.</div>
+      </div>
     </div>
   </section>
 
@@ -820,80 +747,24 @@
   <section class="final-cta">
     <h2>Empieza a entregar hoy</h2>
     <p>Configura tu plataforma de delivery en 5 minutos. Sin tarjeta. Sin compromiso.</p>
-    <a href="onboarding.html" class="lm-btn lm-btn-primary lm-btn-lg">
+    <a href="onboarding.html" class="btn btn-lg">
       <i class="fas fa-rocket"></i> Crear mi empresa gratis
     </a>
   </section>
 
   <!-- FOOTER -->
-  <footer class="lm-footer">
+  <footer class="footer">
     <p>&copy; 2026 Last Mile Delivery. Plataforma SaaS de delivery para Mexico.</p>
-    <p style="margin-top:4px;" class="mono">v1.0.0 &middot; CFDI 4.0 &middot; Multi-tenant &middot; Whitelabel</p>
+    <p style="margin-top:4px;">v1.0.0 &middot; CFDI 4.0 &middot; Multi-tenant &middot; Whitelabel</p>
   </footer>
 
   <script>
-    // Theme toggle
-    function toggleTheme() {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('lm-theme', next);
-      const icon = document.getElementById('theme-icon');
-      icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    }
-    // Restore theme
-    (function() {
-      const saved = localStorage.getItem('lm-theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', saved);
-      const icon = document.getElementById('theme-icon');
-      if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    })();
-
-    // Counter animation
-    function animateCounters() {
-      document.querySelectorAll('.counter').forEach(el => {
-        const target = parseInt(el.dataset.target);
-        const decimal = el.dataset.decimal ? parseFloat(el.dataset.decimal) : 0;
-        const duration = 2000;
-        const start = performance.now();
-        function update(now) {
-          const elapsed = now - start;
-          const progress = Math.min(elapsed / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          const current = eased * target;
-          if (decimal) {
-            el.textContent = current.toFixed(decimal);
-          } else {
-            el.textContent = Math.floor(current).toLocaleString();
-          }
-          if (progress < 1) requestAnimationFrame(update);
-        }
-        requestAnimationFrame(update);
-      });
-    }
-
     // FAQ toggle
     document.querySelectorAll('.faq-q').forEach(q => {
       q.addEventListener('click', () => {
         q.parentElement.classList.toggle('open');
       });
     });
-
-    // Intersection observer for counters
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          animateCounters();
-          observer.disconnect();
-        }
-      });
-    }, { threshold: 0.3 });
-    const metricsSection = document.querySelector('.metrics');
-    if (metricsSection) observer.observe(metricsSection);
   </script>
-
-  <!-- Neural Constellation Background -->
-  <script src="js/neural-bg.js"></script>
 </body>
 </html>
