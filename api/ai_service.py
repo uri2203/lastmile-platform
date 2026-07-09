@@ -1,6 +1,6 @@
 """
 Last Mile Platform - AI Agent Service
-Cascade: Rules → Gemini → OpenAI → Fallback templates
+Cascade: Rules → Groq x N accounts → Gemini → OpenAI → Fallback
 """
 import os
 import json
@@ -9,13 +9,31 @@ import re
 import hashlib
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+try:
+    import requests as _requests
+except ImportError:
+    _requests = None
 
 # Load .env from same directory
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # ============================================================
-# CONFIGURATION
+# CONFIGURATION - Groq Multi-Account Cascade
 # ============================================================
+# Support multiple keys: comma-separated in .env
+# Each key = 14,400 req/day + 30 RPM + 6,000 TPM
+_groq_keys_raw = os.environ.get('GROQ_API_KEYS', '')
+if not _groq_keys_raw:
+    _groq_keys_raw = os.environ.get('GROQ_API_KEY', '')
+
+GROQ_KEYS = [k.strip() for k in _groq_keys_raw.split(',') if k.strip()]
+GROQ_BASE_URL = 'https://api.groq.com/openai/v1'
+GROQ_MODEL = 'llama-3.1-8b-instant'  # Free, fast
+
+# Track which key to use next and error counts
+_groq_key_index = 0
+_groq_key_errors = {}  # key -> consecutive error count
+
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
@@ -143,6 +161,72 @@ FALLBACK_RESPONSE = {
     'response': 'No estoy seguro de como ayudarte con eso. Puedo ayudarte con:\n\n- **Rastrear pedidos** - dime tu numero de guia\n- **Consultas de negocio** - envios, revenue, choferes\n- **Soporte** - pagos, cancelaciones, facturacion\n\nO puedes hablar con un agente humano.',
     'quick_replies': ['Rastrear pedido', 'Hablar con agente']
 }
+
+# ============================================================
+# GROQ API (FREE - 30 RPM, 14,400 req/day)
+# ============================================================
+def call_groq(messages, system_prompt=''):
+    """
+    Call Groq API with multi-account cascade.
+    Rotates through N API keys. Each key = 14,400 req/day.
+    On 429 (rate limit), tries next key automatically.
+    """
+    global _groq_key_index
+    
+    if not GROQ_KEYS or not _requests:
+        return None
+    
+    api_messages = []
+    if system_prompt:
+        api_messages.append({'role': 'system', 'content': system_prompt})
+    api_messages.extend(messages)
+    
+    payload = {
+        'model': GROQ_MODEL,
+        'messages': api_messages,
+        'max_tokens': 500,
+        'temperature': 0.7
+    }
+    
+    # Try each key (max one full rotation)
+    attempts = 0
+    while attempts < len(GROQ_KEYS):
+        key = GROQ_KEYS[_groq_key_index % len(GROQ_KEYS)]
+        _groq_key_index = (_groq_key_index + 1) % len(GROQ_KEYS)
+        attempts += 1
+        
+        try:
+            resp = _requests.post(
+                f'{GROQ_BASE_URL}/chat/completions',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {key}'
+                },
+                json=payload,
+                timeout=15
+            )
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                _groq_key_errors[key] = 0  # Reset errors
+                return data['choices'][0]['message']['content']
+            
+            elif resp.status_code == 429:
+                # Rate limit on this key, try next
+                _groq_key_errors[key] = _groq_key_errors.get(key, 0) + 1
+                print(f'Groq key #{_groq_key_index} rate limited (429), trying next...')
+                continue
+            
+            else:
+                print(f'Groq error {resp.status_code}: {resp.text[:200]}')
+                return None
+                
+        except Exception as e:
+            print(f'Groq error: {e}')
+            return None
+    
+    print(f'Groq: all {len(GROQ_KEYS)} keys exhausted')
+    return None
 
 # ============================================================
 # GEMINI API (FREE TIER)
@@ -316,10 +400,22 @@ def chat(user_message, context=None, chat_history=None):
             cache_set(ckey, response)
             return response
     
-    # 3. Try Gemini (free)
+    # 3. Try Groq (free, fast, no credit card)
     messages = chat_history + [{'role': 'user', 'content': user_message}]
     system = BUSINESS_SYSTEM_PROMPT if is_business else SUPPORT_SYSTEM_PROMPT
     
+    groq_resp = call_groq(messages, system)
+    if groq_resp:
+        response = {
+            'response': groq_resp,
+            'type': 'ai',
+            'provider': 'groq',
+            'quick_replies': []
+        }
+        cache_set(ckey, response)
+        return response
+    
+    # 4. Try Gemini (free)
     gemini_resp = call_gemini(messages, system)
     if gemini_resp:
         response = {
@@ -331,7 +427,7 @@ def chat(user_message, context=None, chat_history=None):
         cache_set(ckey, response)
         return response
     
-    # 4. Try OpenAI (free credit)
+    # 5. Try OpenAI (free credit)
     openai_resp = call_openai(messages, system)
     if openai_resp:
         response = {
@@ -343,7 +439,7 @@ def chat(user_message, context=None, chat_history=None):
         cache_set(ckey, response)
         return response
     
-    # 5. Fallback
+    # 6. Fallback
     response = {
         'response': FALLBACK_RESPONSE['response'],
         'type': 'fallback',
