@@ -90,6 +90,127 @@ def health():
     })
 
 # ========================================
+# AUTH: Login (sin seleccionar empresa)
+# ========================================
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    """
+    Login con usuario + password.
+    El sistema detecta automaticamente la empresa y el rol del usuario.
+    """
+    data = request.get_json() or {}
+    user = (data.get('user') or '').strip()
+    passwd = data.get('pass') or ''
+
+    if not user or not passwd:
+        return jsonify({'success': False, 'error': 'Usuario y contraseña requeridos'})
+
+    # Check USUARIOS table
+    try:
+        rows = query(
+            "SELECT U.USU_ID, U.USU_USUARIO, U.USU_NOMBRE, U.USU_ROL, "
+            "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE "
+            "FROM TESTLIB.USUARIOS U "
+            "LEFT JOIN TESTLIB.EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID "
+            "WHERE UPPER(U.USU_USUARIO) = UPPER(?) AND U.USU_ACTIVO = 'S'",
+            [user]
+        )
+    except Exception:
+        return jsonify({
+            'success': False,
+            'error': 'Tabla USUARIOS no existe. Ejecuta el script de setup.'
+        })
+
+    if not rows:
+        return jsonify({'success': False, 'error': 'Usuario o contraseña incorrectos'})
+
+    u = rows[0]
+
+    # Simple password check (hash in production)
+    db_pass = repr(str(u.get('USU_PASS', '')).strip())
+    in_pass = repr(passwd.strip())
+    print(f'[AUTH] user={user} db_pass={db_pass} in_pass={in_pass} match={db_pass == in_pass}')
+    if db_pass != in_pass:
+        return jsonify({'success': False, 'error': 'Usuario o contraseña incorrectos'})
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'emp_id': u['USU_EMP_ID'],
+            'usuario': u['USU_USUARIO'],
+            'nombre': u['USU_NOMBRE'],
+            'rol': u['USU_ROL'],
+            'empresa': u.get('EMP_NOMBRE', '')
+        }
+    })
+
+# ========================================
+# SETUP: Crear tabla USUARIOS (temporal)
+# ========================================
+@app.route('/api/setup/usuarios', methods=['POST'])
+def setup_usuarios():
+    """Crea la tabla USUARIOS y carga datos de prueba. TEMPORAL - eliminar en produccion."""
+    try:
+        # Drop if exists
+        try:
+            execute("DROP TABLE TESTLIB.USUARIOS")
+        except:
+            pass
+
+        # Create table
+        execute("""
+            CREATE TABLE TESTLIB.USUARIOS (
+                USU_ID         DECIMAL(10,0) NOT NULL GENERATED ALWAYS AS IDENTITY,
+                USU_EMP_ID     DECIMAL(5,0)  NOT NULL,
+                USU_USUARIO    VARCHAR(30)   NOT NULL,
+                USU_PASS       VARCHAR(50)   NOT NULL,
+                USU_NOMBRE     VARCHAR(100)  NOT NULL,
+                USU_EMAIL      VARCHAR(100),
+                USU_TELEFONO   VARCHAR(20),
+                USU_ROL        VARCHAR(20)   NOT NULL DEFAULT 'operacion',
+                USU_ACTIVO     CHAR(1)       NOT NULL DEFAULT 'S',
+                USU_CREATED    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                USU_UPDATED    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (USU_ID)
+            )
+        """)
+
+        # Create indices
+        try:
+            execute("CREATE INDEX TESTLIB.IX_USU_USER ON TESTLIB.USUARIOS (USU_USUARIO)")
+            execute("CREATE INDEX TESTLIB.IX_USU_EMP ON TESTLIB.USUARIOS (USU_EMP_ID)")
+        except:
+            pass
+
+        # Seed users
+        users = [
+            (1, 'admin',     'admin123',  'Administrador',          'admin@delivery.mx',     'admin'),
+            (1, 'operador',  'oper123',   'Operador General',        'ops@delivery.mx',       'operacion'),
+            (1, 'chofer1',   'chof123',   'Carlos Rodriguez',       'carlos@delivery.mx',    'chofer'),
+            (1, 'chofer2',   'chof123',   'Maria Lopez',            'maria@delivery.mx',     'chofer'),
+            (1, 'cliente1',  'clie123',   'Juan Perez Store',       'juan@perez.mx',         'cliente'),
+            (1, 'cliente2',  'clie123',   'Ana Garcia Shop',        'ana@garcia.mx',         'cliente'),
+            (2, 'admin2',    'admin123',  'Admin Transporte Rapido', 'admin@transporte.mx',   'admin'),
+            (2, 'ops2',      'oper123',   'Operador TR',             'ops@transporte.mx',     'operacion'),
+            (2, 'chofer3',   'chof123',   'Pedro Sanchez',          'pedro@transporte.mx',   'chofer'),
+            (2, 'cliente3',  'clie123',   'Tienda Rodriguez',       'tienda@rodriguez.mx',   'cliente'),
+            (3, 'admin3',    'admin123',  'Admin Logistica Integral', 'admin@logistica.mx',    'admin'),
+            (3, 'ops3',      'oper123',   'Operador LI',             'ops@logistica.mx',      'operacion'),
+            (3, 'chofer4',   'chof123',   'Roberto Diaz',           'roberto@logistica.mx',  'chofer'),
+            (3, 'cliente4',  'clie123',   'Comercial Torres',       'torres@comercial.mx',   'cliente'),
+        ]
+
+        for u in users:
+            execute(
+                "INSERT INTO TESTLIB.USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?,?,?,?,?,?)",
+                list(u)
+            )
+
+        return jsonify({'success': True, 'message': f'Tabla USUARIOS creada con {len(users)} usuarios'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ========================================
 # MÓDULO: EMPRESAS
 # ========================================
 @app.route('/api/empresas', methods=['GET'])
