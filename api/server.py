@@ -22,9 +22,14 @@ try:
 except ImportError:
     print('[AI] ai_endpoints.py not found - AI endpoints disabled')
 
-# Ruta raíz → Login
+# Ruta raíz → Landing page
 @app.route('/')
 def root():
+    return send_from_directory('web', 'landing.html')
+
+# Login
+@app.route('/login')
+def login_page():
     return send_from_directory('web', 'index.html')
 
 # Rutas para paneles
