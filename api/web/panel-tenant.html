@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Tenant - Sistema Integral</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/theme.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); }
+    .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s ease; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
+    .sidebar-logo { width: 40px; height: 40px; background: var(--accent-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; }
+    .sidebar-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .sidebar-subtitle { font-size: 11px; color: var(--text-secondary); }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+    .nav-section { padding: 8px 20px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 500; border-left: 3px solid transparent; }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--bg-active); color: var(--accent-primary); border-left-color: var(--accent-primary); }
+    .nav-item i { width: 20px; text-align: center; font-size: 14px; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); }
+    .main-content { margin-left: 260px; min-height: 100vh; }
+    .topbar { height: 60px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .hamburger { display: none; background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; }
+    .page-title { font-size: 18px; font-weight: 600; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .page-content { padding: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .kpi-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .kpi-value { font-size: 28px; font-weight: 700; }
+    .kpi-change { font-size: 11px; margin-top: 4px; }
+    .kpi-change.up { color: var(--color-success); }
+    .kpi-change.down { color: var(--color-danger); }
+    .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: var(--accent-primary); color: #fff; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: var(--bg-hover); }
+    .btn-danger { background: var(--color-danger); color: #fff; }
+    .btn-success { background: var(--color-success); color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .input, .select, .textarea { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; font-family: inherit; }
+    .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--accent-primary); }
+    .textarea { resize: vertical; min-height: 80px; }
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
+    tr:hover { background: var(--bg-hover); }
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--color-success); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
+    .badge-info { background: rgba(59, 130, 246, 0.15); color: var(--color-info); }
+    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; display: none; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px; border-bottom: 1px solid var(--border-color); }
+    .modal-header h3 { font-size: 16px; font-weight: 600; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 8px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .map-container { height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+    .status-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .status-card { padding: 12px; border-radius: 10px; text-align: center; background: var(--bg-card); border: 1px solid var(--border-color); }
+    .status-card .count { font-size: 22px; font-weight: 700; }
+    .status-card .label { font-size: 11px; color: var(--text-secondary); }
+    .driver-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 10px; }
+    .driver-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px; }
+    .driver-info { flex: 1; }
+    .driver-name { font-weight: 600; font-size: 14px; }
+    .driver-detail { font-size: 12px; color: var(--text-secondary); }
+    .driver-stats { display: flex; gap: 16px; }
+    .driver-stat { text-align: center; }
+    .driver-stat .val { font-size: 16px; font-weight: 600; }
+    .driver-stat .lbl { font-size: 10px; color: var(--text-secondary); }
+    .toggle-switch { position: relative; width: 40px; height: 22px; cursor: pointer; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--bg-secondary); border-radius: 11px; transition: 0.3s; border: 1px solid var(--border-color); }
+    .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--text-secondary); left: 2px; top: 2px; transition: 0.3s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: #fff; }
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border-color); }
+    .timeline-item { position: relative; margin-bottom: 16px; }
+    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent-primary); border: 2px solid var(--bg-card); }
+    .timeline-item .time { font-size: 11px; color: var(--text-tertiary); }
+    .timeline-item .desc { font-size: 13px; }
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 16px; }
+    .pagination button { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer; font-size: 12px; }
+    .pagination button.active { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); }
+    .pagination button:hover:not(.active) { background: var(--bg-hover); }
+    .upload-zone { border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .upload-zone:hover { border-color: var(--accent-primary); }
+    .upload-zone i { font-size: 32px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--bg-secondary); color: var(--text-secondary); margin: 2px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.show { display: block; }
+      .main-content { margin-left: 0; }
+      .hamburger { display: block; }
+      .chart-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .filter-bar { flex-direction: column; }
+      .filter-bar .input, .filter-bar .select { width: 100%; }
+      .driver-stats { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">SI</div>
+      <div>
+        <div class="sidebar-title">Sistema Integral</div>
+        <div class="sidebar-subtitle">Panel del Cliente</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" data-section="dashboard"><i class="fas fa-chart-pie"></i>Dashboard</div>
+      <div class="nav-item" data-section="envios"><i class="fas fa-truck"></i>Mis Envios</div>
+      <div class="nav-item" data-section="nuevo-envio"><i class="fas fa-plus-circle"></i>Nuevo Envio</div>
+      <div class="nav-section">Operacion</div>
+      <div class="nav-item" data-section="choferes"><i class="fas fa-users"></i>Choferes</div>
+      <div class="nav-item" data-section="vehiculos"><i class="fas fa-truck-monster"></i>Vehiculos</div>
+      <div class="nav-section">Finanzas</div>
+      <div class="nav-item" data-section="facturacion"><i class="fas fa-file-invoice-dollar"></i>Facturacion</div>
+      <div class="nav-item" data-section="reportes"><i class="fas fa-chart-bar"></i>Reportes</div>
+      <div class="nav-section">Sistema</div>
+      <div class="nav-item" data-section="equipo"><i class="fas fa-user-friends"></i>Mi Equipo</div>
+      <div class="nav-item" data-section="config"><i class="fas fa-cog"></i>Configuracion</div>
+      <div class="nav-item" data-section="cuenta"><i class="fas fa-user-circle"></i>Mi Cuenta</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:12px; color:var(--text-secondary);">Tema</span>
+        <label class="toggle-switch" id="themeToggle">
+          <input type="checkbox" id="themeCheckbox">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <span class="page-title" id="pageTitle">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <span style="font-size:12px; color:var(--text-secondary);">Tenant Demo S.A. de C.V.</span>
+        <div style="width:32px; height:32px; border-radius:50%; background:var(--accent-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:600;">TD</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- SECTION: DASHBOARD -->
+      <div class="section active" id="section-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Envios Hoy</div>
+            <div class="kpi-value" style="color:var(--accent-primary);">24</div>
+            <div class="kpi-change up"><i class="fas fa-arrow-up"></i> 12% vs ayer</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">En Transito</div>
+            <div class="kpi-value" style="color:var(--color-warning);">8</div>
+            <div class="kpi-change down"><i class="fas fa-arrow-down"></i> 3 menos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Entregados</div>
+            <div class="kpi-value" style="color:var(--color-success);">14</div>
+            <div class="kpi-change up"><i class="fas fa-arrow-up"></i> 5 mas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Pendientes</div>
+            <div class="kpi-value" style="color:var(--color-danger);">2</div>
+            <div class="kpi-change up"><i class="fas fa-arrow-down"></i> 1 menos</div>
+          </div>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-card">
+            <h3>Envios por Dia (Ultimos 7 dias)</h3>
+            <canvas id="chartEnvios" height="120"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Pedidos por Estado</h3>
+            <canvas id="chartEstados" height="120"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Pedidos Recientes</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Destinatario</th><th>Direccion</th><th>Estado</th><th>Fecha</th></tr>
+              </thead>
+              <tbody id="recentOrdersBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-map-marked-alt"></i> Mapa de Entregas Activas</h3>
+          <div class="map-container" id="dashboardMap"></div>
+        </div>
+      </div>
+
+      <!-- SECTION: MIS ENV IOS -->
+      <div class="section" id="section-envios">
+        <div class="status-summary" id="statusSummary"></div>
+        <div class="card">
+          <div class="filter-bar">
+            <input class="input" type="text" placeholder="Buscar por ID, destinatario..." id="searchEnvio" style="flex:1; min-width:200px;">
+            <select class="select" id="filterStatus">
+              <option value="">Todos los estados</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Asignado">Asignado</option>
+              <option value="En Transito">En Transito</option>
+              <option value="Entregado">Entregado</option>
+              <option value="No Entregado">No Entregado</option>
+              <option value="Cancelado">Cancelado</option>
+              <option value="Devuelto">Devuelto</option>
+            </select>
+            <input class="input" type="date" id="filterDateFrom">
+            <input class="input" type="date" id="filterDateTo">
+            <button class="btn btn-primary" onclick="showSection('nuevo-envio')"><i class="fas fa-plus"></i> Nuevo Envio</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Destinatario</th><th>Direccion</th><th>Chofer</th><th>Estado</th><th>Fecha</th><th>Costo</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="enviosTableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="enviosPagination"></div>
+        </div>
+      </div>
+
+      <!-- SECTION: NUEVO ENVIO -->
+      <div class="section" id="section-nuevo-envio">
+        <div class="card">
+          <h3><i class="fas fa-plus-circle"></i> Crear Nuevo Envio</h3>
+          <form id="nuevoEnvioForm" onsubmit="submitNewEnvio(event)">
+            <div class="form-grid">
+              <div class="form-group"><label>Destinatario *</label><input class="input" type="text" required id="envDestinatario"></div>
+              <div class="form-group"><label>Telefono *</label><input class="input" type="tel" required id="envTelefono"></div>
+              <div class="form-group full"><label>Direccion *</label><input class="input" type="text" required id="envDireccion"></div>
+              <div class="form-group"><label>Colonia</label><input class="input" type="text" id="envColonia"></div>
+              <div class="form-group"><label>Ciudad *</label><input class="input" type="text" required id="envCiudad"></div>
+              <div class="form-group full"><label>Referencia</label><input class="input" type="text" id="envReferencia"></div>
+            </div>
+            <h3 style="margin-top:20px; margin-bottom:12px;">Informacion del Paquete</h3>
+            <div class="form-grid">
+              <div class="form-group full"><label>Descripcion *</label><input class="input" type="text" required id="envDescripcion"></div>
+              <div class="form-group"><label>Peso (kg) *</label><input class="input" type="number" step="0.1" required id="envPeso"></div>
+              <div class="form-group"><label>Dimensiones (cm)</label><input class="input" type="text" placeholder="L x A x H" id="envDimensiones"></div>
+              <div class="form-group"><label>Valor Declarado ($)</label><input class="input" type="number" step="0.01" id="envValor"></div>
+              <div class="form-group">
+                <label>Prioridad</label>
+                <select class="select" id="envPrioridad">
+                  <option value="Normal">Normal</option>
+                  <option value="Urgente">Urgente (+$50)</option>
+                  <option value="Express">Express (+$120)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group full"><label>Notas / Instrucciones</label><textarea class="textarea" id="envNotas"></textarea></div>
+            <div style="background:var(--bg-secondary); border-radius:10px; padding:16px; margin:16px 0; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:14px; font-weight:600;">Costo Estimado:</span>
+              <span style="font-size:24px; font-weight:700; color:var(--accent-primary);" id="envCostDisplay">$0.00</span>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <button type="button" class="btn btn-secondary" onclick="showSection('envios')">Cancelar</button>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Crear Envio</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SECTION: CHOFERES -->
+      <div class="section" id="section-choferes">
+        <div class="filter-bar">
+          <input class="input" type="text" placeholder="Buscar chofer..." id="searchChofer" style="flex:1; min-width:200px;">
+          <button class="btn btn-primary" onclick="openModal('modalChofer')"><i class="fas fa-plus"></i> Nuevo Chofer</button>
+        </div>
+        <div id="choferesList"></div>
+      </div>
+
+      <!-- SECTION: VEHICULOS -->
+      <div class="section" id="section-vehiculos">
+        <div class="filter-bar">
+          <input class="input" type="text" placeholder="Buscar vehiculo..." style="flex:1; min-width:200px;">
+          <button class="btn btn-primary" onclick="openModal('modalVehiculo')"><i class="fas fa-plus"></i> Nuevo Vehiculo</button>
+        </div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Unidad</th><th>Placas</th><th>Marca/Modelo</th><th>Chofer</th><th>KM</th><th>Prox. Mant.</th><th>Estado</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="vehiculosTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: FACTURACION -->
+      <div class="section" id="section-facturacion">
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Facturadas</div><div class="kpi-value" style="color:var(--color-success);">47</div></div>
+          <div class="kpi-card"><div class="kpi-label">Pendientes</div><div class="kpi-value" style="color:var(--color-warning);">5</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Facturado</div><div class="kpi-value" style="color:var(--accent-primary);">$128,450</div></div>
+          <div class="kpi-card"><div class="kpi-label">Por Cobrar</div><div class="kpi-value" style="color:var(--color-danger);">$12,300</div></div>
+        </div>
+        <div class="filter-bar">
+          <input class="input" type="text" placeholder="Buscar por UUID, serie..." style="flex:1; min-width:200px;">
+          <button class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Factura</button>
+        </div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>UUID</th><th>Serie/Folio</th><th>Fecha</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="facturasTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: REPORTES -->
+      <div class="section" id="section-reportes">
+        <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte de entregas...')">
+            <div style="text-align:center;"><i class="fas fa-truck" style="font-size:28px; color:var(--accent-primary); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Entregas</div><div style="font-size:11px; color:var(--text-secondary);">Historial completo</div></div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte financiero...')">
+            <div style="text-align:center;"><i class="fas fa-dollar-sign" style="font-size:28px; color:var(--color-success); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Financiero</div><div style="font-size:11px; color:var(--text-secondary);">Ingresos y gastos</div></div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte de rendimiento...')">
+            <div style="text-align:center;"><i class="fas fa-chart-line" style="font-size:28px; color:var(--color-warning); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Rendimiento</div><div style="font-size:11px; color:var(--text-secondary);">Metricas de equipo</div></div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte de costos...')">
+            <div style="text-align:center;"><i class="fas fa-calculator" style="font-size:28px; color:var(--color-danger); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Costos</div><div style="font-size:11px; color:var(--text-secondary);">Analisis de costos</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Generar Reporte Personalizado</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Tipo de Reporte</label><select class="select"><option>Entregas</option><option>Financiero</option><option>Rendimiento</option><option>Costos</option></select></div>
+            <div class="form-group"><label>Periodo</label><select class="select"><option>Hoy</option><option>Ultimos 7 dias</option><option>Este mes</option><option>Ultimo trimestre</option><option>Personalizado</option></select></div>
+            <div class="form-group"><label>Desde</label><input class="input" type="date"></div>
+            <div class="form-group"><label>Hasta</label><input class="input" type="date"></div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn btn-primary" onclick="showToast('Reporte generado')"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+            <button class="btn btn-secondary" onclick="showToast('Reporte generado')"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Reportes Recientes</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha</th><th>Acciones</th></tr></thead>
+              <tbody>
+                <tr><td>Entregas Junio 2026</td><td><span class="badge badge-info">Entregas</span></td><td>01/07/2026</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+                <tr><td>Facturacion Q2 2026</td><td><span class="badge badge-success">Financiero</span></td><td>01/07/2026</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+                <tr><td>Rendimiento Choferes Jun</td><td><span class="badge badge-warning">Rendimiento</span></td><td>28/06/2026</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: MI EQUIPO -->
+      <div class="section" id="section-equipo">
+        <div class="filter-bar">
+          <input class="input" type="text" placeholder="Buscar miembro..." style="flex:1; min-width:200px;">
+          <button class="btn btn-primary" onclick="openModal('modalEquipo')"><i class="fas fa-user-plus"></i> Invitar Miembro</button>
+        </div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="equipoTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Permisos por Rol</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Rol</th><th>Envios</th><th>Choferes</th><th>Facturacion</th><th>Config</th><th>Reportes</th></tr></thead>
+              <tbody>
+                <tr><td><span class="badge badge-danger">Administrador</span></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td></tr>
+                <tr><td><span class="badge badge-info">Operador</span></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td></tr>
+                <tr><td><span class="badge badge-success">Chofer</span></td><td><i class="fas fa-eye" style="color:var(--color-warning);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td></tr>
+                <tr><td><span class="badge badge-neutral">Visualizador</span></td><td><i class="fas fa-eye" style="color:var(--color-warning);"></i></td><td><i class="fas fa-eye" style="color:var(--color-warning);"></i></td><td><i class="fas fa-eye" style="color:var(--color-warning);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-eye" style="color:var(--color-warning);"></i></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: CONFIGURACION -->
+      <div class="section" id="section-config">
+        <div class="card">
+          <h3><i class="fas fa-building"></i> Informacion de la Empresa</h3>
+          <div class="form-grid">
+            <div class="form-group full"><label>Nombre de la Empresa</label><input class="input" type="text" value="Tenant Demo S.A. de C.V."></div>
+            <div class="form-group"><label>RFC</label><input class="input" type="text" value="TDM123456789"></div>
+            <div class="form-group"><label>Telefono</label><input class="input" type="tel" value="(55) 1234-5678"></div>
+            <div class="form-group full"><label>Direccion</label><input class="input" type="text" value="Av. Principal 123, Col. Centro, Ciudad de Mexico"></div>
+            <div class="form-group"><label>Email</label><input class="input" type="email" value="admin@tenantdemo.com"></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Informacion guardada')"><i class="fas fa-save"></i> Guardar</button>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-palette"></i> Marca</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Logo de la Empresa</label>
+              <div class="upload-zone"><i class="fas fa-cloud-upload-alt"></i><div style="font-size:13px;">Arrastra tu logo o haz click</div><div style="font-size:11px; color:var(--text-tertiary);">PNG, JPG max 2MB</div></div>
+            </div>
+            <div class="form-group"><label>Color Primario</label><div style="display:flex; gap:8px; align-items:center;"><input type="color" value="#3B82F6" style="width:40px; height:36px; border:none; cursor:pointer;"><input class="input" type="text" value="#3B82F6" style="flex:1;"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;">Notificaciones por Email</div><div style="font-size:11px; color:var(--text-secondary);">Resumen diario y alertas importantes</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;">Notificaciones por SMS</div><div style="font-size:11px; color:var(--text-secondary);">Alertas criticas y cambios de estado</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;">Notificaciones por WhatsApp</div><div style="font-size:11px; color:var(--text-secondary);">Confirmaciones y seguimiento</div></div><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-tags"></i> Tarifas</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Precio Base ($)</label><input class="input" type="number" value="45.00" step="0.01"></div>
+            <div class="form-group"><label>Costo por KM ($)</label><input class="input" type="number" value="8.50" step="0.01"></div>
+            <div class="form-group"><label>Costo por KG ($)</label><input class="input" type="number" value="2.00" step="0.01"></div>
+            <div class="form-group"><label>Recargo Urgente ($)</label><input class="input" type="number" value="50.00" step="0.01"></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Tarifas actualizadas')"><i class="fas fa-save"></i> Guardar Tarifas</button>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-map"></i> Zonas de Entrega</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Zona</th><th>Tarifa</th><th>Tiempo Est.</th><th>Acciones</th></tr></thead>
+              <tbody id="zonasTableBody"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-secondary" style="margin-top:12px;" onclick="showToast('Zona agregada')"><i class="fas fa-plus"></i> Agregar Zona</button>
+        </div>
+      </div>
+
+      <!-- SECTION: MI CUENTA -->
+      <div class="section" id="section-cuenta">
+        <div class="card">
+          <h3><i class="fas fa-user"></i> Mi Perfil</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Nombre</label><input class="input" type="text" value="Carlos Rodriguez"></div>
+            <div class="form-group"><label>Email</label><input class="input" type="email" value="carlos@tenantdemo.com"></div>
+            <div class="form-group"><label>Telefono</label><input class="input" type="tel" value="(55) 9876-5432"></div>
+            <div class="form-group"><label>Cargo</label><input class="input" type="text" value="Gerente de Operaciones"></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Perfil actualizado')"><i class="fas fa-save"></i> Guardar Cambios</button>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-gem"></i> Mi Plan</h3>
+          <div style="background:linear-gradient(135deg, var(--accent-primary), #8B5CF6); border-radius:12px; padding:24px; color:#fff; margin-bottom:16px;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:0.8;">Plan Actual</div>
+            <div style="font-size:28px; font-weight:700; margin:4px 0;">Pro</div>
+            <div style="font-size:13px; opacity:0.9;">$299/mes - Facturacion mensual</div>
+          </div>
+          <div class="form-grid">
+            <div class="kpi-card"><div class="kpi-label">Envios este mes</div><div class="kpi-value">847</div><div style="font-size:11px; color:var(--text-secondary);">de 1,000 incluidos</div>
+              <div style="background:var(--bg-secondary); border-radius:4px; height:6px; margin-top:8px; overflow:hidden;"><div style="background:var(--accent-primary); height:100%; width:84.7%;"></div></div>
+            </div>
+            <div class="kpi-card"><div class="kpi-label">Choferes activos</div><div class="kpi-value">8</div><div style="font-size:11px; color:var(--text-secondary);">de 15 incluidos</div>
+              <div style="background:var(--bg-secondary); border-radius:4px; height:6px; margin-top:8px; overflow:hidden;"><div style="background:var(--color-success); height:100%; width:53.3%;"></div></div>
+            </div>
+            <div class="kpi-card"><div class="kpi-label">Almacenamiento</div><div class="kpi-value">2.1 GB</div><div style="font-size:11px; color:var(--text-secondary);">de 5 GB incluidos</div>
+              <div style="background:var(--bg-secondary); border-radius:4px; height:6px; margin-top:8px; overflow:hidden;"><div style="background:var(--color-warning); height:100%; width:42%;"></div></div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn btn-primary" onclick="showToast('Redirigiendo a planes...')"><i class="fas fa-arrow-up"></i> Upgrade a Enterprise</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-history"></i> Historial de Facturacion</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Fecha</th><th>Descripcion</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody>
+                <tr><td>01/07/2026</td><td>Plan Pro - Julio 2026</td><td>$299.00</td><td><span class="badge badge-success">Pagado</span></td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+                <tr><td>01/06/2026</td><td>Plan Pro - Junio 2026</td><td>$299.00</td><td><span class="badge badge-success">Pagado</span></td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+                <tr><td>01/05/2026</td><td>Plan Pro - Mayo 2026</td><td>$299.00</td><td><span class="badge badge-success">Pagado</span></td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+                <tr><td>01/04/2026</td><td>Plan Starter - Abril 2026</td><td>$149.00</td><td><span class="badge badge-success">Pagado</span></td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-lock"></i> Cambiar Contraseña</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Contraseña Actual</label><input class="input" type="password"></div>
+            <div class="form-group"><label>Nueva Contraseña</label><input class="input" type="password"></div>
+            <div class="form-group"><label>Confirmar Nueva Contraseña</label><input class="input" type="password"></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Contraseña actualizada')"><i class="fas fa-save"></i> Actualizar Contraseña</button>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-key"></i> API Keys</h3>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Usa estas keys para integrar con sistemas externos.</p>
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <input class="input" type="text" value="sk_tenant_demo_a1b2c3d4e5f6g7h8i9j0" style="flex:1;" readonly>
+            <button class="btn btn-secondary" onclick="showToast('API Key copiada')"><i class="fas fa-copy"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="showToast('API Key revocada')"><i class="fas fa-trash"></i></button>
+          </div>
+          <button class="btn btn-secondary" onclick="showToast('Nueva API Key generada')"><i class="fas fa-plus"></i> Generar Nueva Key</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modalChofer">
+    <div class="modal">
+      <div class="modal-header"><h3 id="choferModalTitle">Nuevo Chofer</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalChofer')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group full"><label>Nombre Completo *</label><input class="input" type="text" id="choferNombre"></div>
+          <div class="form-group"><label>Telefono *</label><input class="input" type="tel" id="choferTelefono"></div>
+          <div class="form-group"><label>Licencia</label><input class="input" type="text" id="choferLicencia"></div>
+          <div class="form-group full"><label>Vehiculo Asignado</label><select class="select" id="choferVehiculo"><option value="">Sin asignar</option><option>ABC-123 - Nissan NP300</option><option>DEF-456 - Toyota Hilux</option><option>GHI-789 - Volkswagen Saveiro</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modalChofer')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveChofer()"><i class="fas fa-save"></i> Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalVehiculo">
+    <div class="modal">
+      <div class="modal-header"><h3>Nuevo Vehiculo</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalVehiculo')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label>Numero de Unidad *</label><input class="input" type="text"></div>
+          <div class="form-group"><label>Placas *</label><input class="input" type="text"></div>
+          <div class="form-group"><label>Marca *</label><input class="input" type="text"></div>
+          <div class="form-group"><label>Modelo *</label><input class="input" type="text"></div>
+          <div class="form-group"><label>Ano</label><input class="input" type="number"></div>
+          <div class="form-group"><label>Kilometraje Actual</label><input class="input" type="number"></div>
+          <div class="form-group full"><label>Chofer Asignado</label><select class="select"><option value="">Sin asignar</option><option>Miguel Hernandez</option><option>Juan Perez</option><option>Roberto Sanchez</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modalVehiculo')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modalVehiculo'); showToast('Vehiculo guardado')"><i class="fas fa-save"></i> Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalEquipo">
+    <div class="modal">
+      <div class="modal-header"><h3>Invitar Miembro del Equipo</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalEquipo')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group full"><label>Nombre *</label><input class="input" type="text"></div>
+          <div class="form-group full"><label>Email *</label><input class="input" type="email"></div>
+          <div class="form-group full"><label>Rol *</label><select class="select"><option>Operador</option><option>Chofer</option><option>Visualizador</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modalEquipo')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modalEquipo'); showToast('Invitacion enviada')"><i class="fas fa-paper-plane"></i> Enviar Invitacion</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalEnvioDetalle">
+    <div class="modal" style="max-width:700px;">
+      <div class="modal-header"><h3>Detalle del Envio</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalEnvioDetalle')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body" id="envioDetalleBody"></div>
+    </div>
+  </div>
+
+  <script>
+    // ========== DEMO DATA ==========
+    const enviosData = [
+      { id: 'ENV-001', destinatario: 'Maria Lopez', direccion: 'Calle Reforma 45, Col. Centro', chofer: 'Miguel Hernandez', estado: 'Entregado', fecha: '09/07/2026', costo: 85.00 },
+      { id: 'ENV-002', destinatario: 'Pedro Sanchez', direccion: 'Av. Insurgentes 1234, Del. Coyoacan', chofer: 'Juan Perez', estado: 'En Transito', fecha: '09/07/2026', costo: 120.00 },
+      { id: 'ENV-003', destinatario: 'Ana Garcia', direccion: 'Blvd. Lopez Mateos 678, Guadalajara', chofer: 'Roberto Sanchez', estado: 'En Transito', fecha: '09/07/2026', costo: 95.50 },
+      { id: 'ENV-004', destinatario: 'Carlos Ruiz', direccion: 'Calle Juarez 234, Col. Roma Norte', chofer: 'Miguel Hernandez', estado: 'Pendiente', fecha: '09/07/2026', costo: 72.00 },
+      { id: 'ENV-005', destinatario: 'Laura Diaz', direccion: 'Av. Universidad 567, Del. Tlalpan', chofer: '', estado: 'Pendiente', fecha: '09/07/2026', costo: 65.00 },
+      { id: 'ENV-006', destinatario: 'Fernando Torres', direccion: 'Calle Gante 89, Centro Historico', chofer: 'Juan Perez', estado: 'Entregado', fecha: '09/07/2026', costo: 110.00 },
+      { id: 'ENV-007', destinatario: 'Sofia Martinez', direccion: 'Polanco IV Seccion, Miguel Hidalgo', chofer: 'Roberto Sanchez', estado: 'No Entregado', fecha: '08/07/2026', costo: 88.00 },
+      { id: 'ENV-008', destinatario: 'Roberto Flores', direccion: 'Santa Fe, Cuajimalpa', chofer: 'Miguel Hernandez', estado: 'Entregado', fecha: '08/07/2026', costo: 145.00 },
+      { id: 'ENV-009', destinatario: 'Isabel Morales', direccion: 'Condesa, Hipodromo', chofer: 'Juan Perez', estado: 'Cancelado', fecha: '08/07/2026', costo: 78.00 },
+      { id: 'ENV-010', destinatario: 'Diego Ramirez', direccion: 'San Angel Inn, Álvaro Obregon', chofer: 'Roberto Sanchez', estado: 'Devuelto', fecha: '07/07/2026', costo: 92.00 },
+      { id: 'ENV-011', destinatario: 'Carmen Vargas', direccion: 'Zona Rosa, Juarez', chofer: 'Miguel Hernandez', estado: 'Entregado', fecha: '07/07/2026', costo: 68.50 },
+      { id: 'ENV-012', destinatario: 'Jorge Mendoza', direccion: 'Xochimilco Centro', chofer: 'Juan Perez', estado: 'Asignado', fecha: '09/07/2026', costo: 105.00 }
+    ];
+
+    const choferesData = [
+      { id: 1, nombre: 'Miguel Hernandez', telefono: '(55) 1234-5678', vehiculo: 'ABC-123 Nissan NP300', estado: 'Activo', entregasHoy: 6, rating: 4.8 },
+      { id: 2, nombre: 'Juan Perez', telefono: '(55) 2345-6789', vehiculo: 'DEF-456 Toyota Hilux', estado: 'Activo', entregasHoy: 4, rating: 4.5 },
+      { id: 3, nombre: 'Roberto Sanchez', telefono: '(55) 3456-7890', vehiculo: 'GHI-789 VW Saveiro', estado: 'Activo', entregasHoy: 3, rating: 4.2 },
+      { id: 4, nombre: 'Francisco Lopez', telefono: '(55) 4567-8901', vehiculo: 'JKL-012 Chevrolet Tornado', estado: 'Inactivo', entregasHoy: 0, rating: 3.9 }
+    ];
+
+    const vehiculosData = [
+      { unidad: 'ABC-123', placas: 'ABC-123', marca: 'Nissan NP300', chofer: 'Miguel Hernandez', km: 45230, proxMant: '15/07/2026', estado: 'Operativo' },
+      { unidad: 'DEF-456', placas: 'DEF-456', marca: 'Toyota Hilux', chofer: 'Juan Perez', km: 32100, proxMant: '20/07/2026', estado: 'Operativo' },
+      { unidad: 'GHI-789', placas: 'GHI-789', marca: 'VW Saveiro', chofer: 'Roberto Sanchez', km: 67800, proxMant: '10/07/2026', estado: 'Mantenimiento' },
+      { unidad: 'JKL-012', placas: 'JKL-012', marca: 'Chevrolet Tornado', chofer: 'Sin asignar', km: 28900, proxMant: '01/08/2026', estado: 'Operativo' }
+    ];
+
+    const facturasData = [
+      { uuid: 'a1b2c3d4-1234-5678-9012-abcdef123456', serie: 'A', folio: 1024, fecha: '08/07/2026', subtotal: 8500.00, iva: 1360.00, total: 9860.00, estado: 'Pagada' },
+      { uuid: 'e5f6g7h8-5678-9012-3456-abcdef789012', serie: 'A', folio: 1023, fecha: '05/07/2026', subtotal: 12300.00, iva: 1968.00, total: 14268.00, estado: 'Pagada' },
+      { uuid: 'i9j0k1l2-9012-3456-7890-abcdef345678', serie: 'A', folio: 1022, fecha: '01/07/2026', subtotal: 6750.00, iva: 1080.00, total: 7830.00, estado: 'Pendiente' },
+      { uuid: 'm3n4o5p6-2345-6789-0123-abcdef901234', serie: 'A', folio: 1021, fecha: '28/06/2026', subtotal: 9200.00, iva: 1472.00, total: 10672.00, estado: 'Pagada' }
+    ];
+
+    const equipoData = [
+      { nombre: 'Carlos Rodriguez', email: 'carlos@tenantdemo.com', rol: 'Administrador', estado: 'Activo' },
+      { nombre: 'Maria Santos', email: 'maria@tenantdemo.com', rol: 'Operador', estado: 'Activo' },
+      { nombre: 'Miguel Hernandez', email: 'miguel@tenantdemo.com', rol: 'Chofer', estado: 'Activo' },
+      { nombre: 'Juan Perez', email: 'juan@tenantdemo.com', rol: 'Chofer', estado: 'Activo' },
+      { nombre: 'Roberto Sanchez', email: 'roberto@tenantdemo.com', rol: 'Chofer', estado: 'Activo' },
+      { nombre: 'Laura Torres', email: 'laura@tenantdemo.com', rol: 'Visualizador', estado: 'Activo' }
+    ];
+
+    const zonasData = [
+      { zona: 'Centro', tarifa: '$45.00', tiempoEst: '30-45 min' },
+      { zona: 'Norte', tarifa: '$55.00', tiempoEst: '45-60 min' },
+      { zona: 'Sur', tarifa: '$60.00', tiempoEst: '50-70 min' },
+      { zona: 'Este', tarifa: '$50.00', tiempoEst: '40-55 min' },
+      { zona: 'Oeste', tarifa: '$52.00', tiempoEst: '40-55 min' },
+      { zona: 'Zona Industrial', tarifa: '$40.00', tiempoEst: '25-40 min' }
+    ];
+
+    const recentOrders = [
+      { id: 'ENV-002', destinatario: 'Pedro Sanchez', direccion: 'Av. Insurgentes 1234', estado: 'En Transito', fecha: '09/07/2026' },
+      { id: 'ENV-003', destinatario: 'Ana Garcia', direccion: 'Blvd. Lopez Mateos 678', estado: 'En Transito', fecha: '09/07/2026' },
+      { id: 'ENV-004', destinatario: 'Carlos Ruiz', direccion: 'Calle Juarez 234', estado: 'Pendiente', fecha: '09/07/2026' },
+      { id: 'ENV-005', destinatario: 'Laura Diaz', direccion: 'Av. Universidad 567', estado: 'Pendiente', fecha: '09/07/2026' },
+      { id: 'ENV-001', destinatario: 'Maria Lopez', direccion: 'Calle Reforma 45', estado: 'Entregado', fecha: '09/07/2026' },
+      { id: 'ENV-006', destinatario: 'Fernando Torres', direccion: 'Calle Gante 89', estado: 'Entregado', fecha: '09/07/2026' },
+      { id: 'ENV-007', destinatario: 'Sofia Martinez', direccion: 'Polanco IV Seccion', estado: 'No Entregado', fecha: '08/07/2026' },
+      { id: 'ENV-008', destinatario: 'Roberto Flores', direccion: 'Santa Fe, Cuajimalpa', estado: 'Entregado', fecha: '08/07/2026' },
+      { id: 'ENV-009', destinatario: 'Isabel Morales', direccion: 'Condesa, Hipodromo', estado: 'Cancelado', fecha: '08/07/2026' },
+      { id: 'ENV-012', destinatario: 'Jorge Mendoza', direccion: 'Xochimilco Centro', estado: 'Asignado', fecha: '09/07/2026' }
+    ];
+
+    // ========== NAVIGATION ==========
+    function showSection(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const section = document.getElementById('section-' + name);
+      if (section) section.classList.add('active');
+      const nav = document.querySelector(`.nav-item[data-section="${name}"]`);
+      if (nav) nav.classList.add('active');
+      const titles = {
+        dashboard: 'Dashboard', envios: 'Mis Envios', 'nuevo-envio': 'Nuevo Envio',
+        choferes: 'Choferes', vehiculos: 'Vehiculos', facturacion: 'Facturacion',
+        reportes: 'Reportes', equipo: 'Mi Equipo', config: 'Configuracion', cuenta: 'Mi Cuenta'
+      };
+      document.getElementById('pageTitle').textContent = titles[name] || name;
+      if (name === 'dashboard') initDashboardMap();
+      closeSidebar();
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => showSection(item.dataset.section));
+    });
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('show');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+
+    // ========== THEME ==========
+    const themeCheckbox = document.getElementById('themeCheckbox');
+    const html = document.documentElement;
+
+    function applyTheme(theme) {
+      html.setAttribute('data-theme', theme);
+      themeCheckbox.checked = theme === 'dark';
+      updateChartsTheme();
+    }
+
+    themeCheckbox.addEventListener('change', () => {
+      const newTheme = themeCheckbox.checked ? 'dark' : 'light';
+      applyTheme(newTheme);
+      if (typeof ThemeManager !== 'undefined') ThemeManager.setTheme(newTheme);
+    });
+
+    if (typeof ThemeManager !== 'undefined') {
+      const saved = ThemeManager.getTheme();
+      applyTheme(saved || 'dark');
+    }
+
+    // ========== BADGES ==========
+    function getBadgeClass(estado) {
+      const map = {
+        'Entregado': 'badge-success', 'En Transito': 'badge-info', 'Pendiente': 'badge-warning',
+        'Asignado': 'badge-info', 'No Entregado': 'badge-danger', 'Cancelado': 'badge-danger',
+        'Devuelto': 'badge-danger', 'Activo': 'badge-success', 'Inactivo': 'badge-neutral',
+        'Operativo': 'badge-success', 'Mantenimiento': 'badge-warning', 'Pagada': 'badge-success',
+        'Pendiente': 'badge-warning', 'Administrador': 'badge-danger', 'Operador': 'badge-info',
+        'Chofer': 'badge-success', 'Visualizador': 'badge-neutral'
+      };
+      return map[estado] || 'badge-neutral';
+    }
+
+    // ========== TOAST ==========
+    function showToast(msg) {
+      if (typeof Utils !== 'undefined' && Utils.showToast) {
+        Utils.showToast(msg, 'success');
+      } else {
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed; bottom:24px; right:24px; background:var(--accent-primary); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; z-index:999; box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+      }
+    }
+
+    // ========== MODALS ==========
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+    });
+
+    // ========== RENDER FUNCTIONS ==========
+    function renderRecentOrders() {
+      const tbody = document.getElementById('recentOrdersBody');
+      tbody.innerHTML = recentOrders.map(o => `<tr><td style="font-weight:600;">${o.id}</td><td>${o.destinatario}</td><td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${o.direccion}</td><td><span class="badge ${getBadgeClass(o.estado)}">${o.estado}</span></td><td>${o.fecha}</td></tr>`).join('');
+    }
+
+    function renderEnvios() {
+      const tbody = document.getElementById('enviosTableBody');
+      tbody.innerHTML = enviosData.map(e => `<tr>
+        <td style="font-weight:600;">${e.id}</td><td>${e.destinatario}</td>
+        <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.direccion}</td>
+        <td>${e.chofer || '<span style="color:var(--text-tertiary);">Sin asignar</span>'}</td>
+        <td><span class="badge ${getBadgeClass(e.estado)}">${e.estado}</span></td>
+        <td>${e.fecha}</td><td>$${e.costo.toFixed(2)}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="showEnvioDetalle('${e.id}')"><i class="fas fa-eye"></i></button></td>
+      </tr>`).join('');
+
+      const statusCounts = {};
+      enviosData.forEach(e => { statusCounts[e.estado] = (statusCounts[e.estado] || 0) + 1; });
+      const statuses = ['Pendiente', 'Asignado', 'En Transito', 'Entregado', 'No Entregado', 'Cancelado', 'Devuelto'];
+      document.getElementById('statusSummary').innerHTML = statuses.map(s => `
+        <div class="status-card"><div class="count">${statusCounts[s] || 0}</div><div class="label">${s}</div></div>
+      `).join('');
+    }
+
+    function showEnvioDetalle(id) {
+      const envio = enviosData.find(e => e.id === id);
+      if (!envio) return;
+      document.getElementById('envioDetalleBody').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+          <div><div style="font-size:11px; color:var(--text-secondary);">ID</div><div style="font-weight:600;">${envio.id}</div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Estado</div><div><span class="badge ${getBadgeClass(envio.estado)}">${envio.estado}</span></div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Destinatario</div><div style="font-weight:500;">${envio.destinatario}</div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Telefono</div><div>(55) 9876-5432</div></div>
+          <div style="grid-column:1/-1;"><div style="font-size:11px; color:var(--text-secondary);">Direccion</div><div>${envio.direccion}</div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Chofer</div><div>${envio.chofer || 'Sin asignar'}</div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Costo</div><div style="font-weight:600;">$${envio.costo.toFixed(2)}</div></div>
+        </div>
+        <h4 style="font-size:13px; font-weight:600; margin-bottom:12px;">Historial</h4>
+        <div class="timeline">
+          <div class="timeline-item"><div class="time">${envio.fecha} 09:15</div><div class="desc">Envio creado</div></div>
+          ${envio.estado !== 'Pendiente' ? `<div class="timeline-item"><div class="time">${envio.fecha} 09:30</div><div class="desc">Asignado a ${envio.chofer || 'chofer'}</div></div>` : ''}
+          ${envio.estado === 'En Transito' || envio.estado === 'Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 10:00</div><div class="desc">Recogido - En camino</div></div>` : ''}
+          ${envio.estado === 'Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 11:30</div><div class="desc">Entregado exitosamente</div></div>` : ''}
+          ${envio.estado === 'No Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 11:00</div><div class="desc">Intento fallido - No se encontro destinatario</div></div>` : ''}
+          ${envio.estado === 'Cancelado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 09:45</div><div class="desc">Envio cancelado por el cliente</div></div>` : ''}
+        </div>
+      `;
+      openModal('modalEnvioDetalle');
+    }
+
+    function renderChoferes() {
+      document.getElementById('choferesList').innerHTML = choferesData.map(c => `
+        <div class="driver-card">
+          <div class="driver-avatar">${c.nombre.split(' ').map(n => n[0]).join('')}</div>
+          <div class="driver-info">
+            <div class="driver-name">${c.nombre}</div>
+            <div class="driver-detail"><i class="fas fa-phone" style="width:14px;"></i> ${c.telefono}</div>
+            <div class="driver-detail"><i class="fas fa-truck" style="width:14px;"></i> ${c.vehiculo}</div>
+          </div>
+          <div class="driver-stats">
+            <div class="driver-stat"><div class="val">${c.entregasHoy}</div><div class="lbl">Entregas Hoy</div></div>
+            <div class="driver-stat"><div class="val" style="color:var(--color-warning);">${c.rating}</div><div class="lbl">Rating</div></div>
+          </div>
+          <div style="display:flex; gap:6px; flex-direction:column;">
+            <span class="badge ${getBadgeClass(c.estado)}">${c.estado}</span>
+            <button class="btn btn-sm btn-secondary" onclick="openModal('modalChofer')"><i class="fas fa-edit"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderVehiculos() {
+      document.getElementById('vehiculosTableBody').innerHTML = vehiculosData.map(v => `<tr>
+        <td style="font-weight:600;">${v.unidad}</td><td>${v.placas}</td><td>${v.marca}</td>
+        <td>${v.chofer}</td><td>${v.km.toLocaleString()} km</td><td>${v.proxMant}</td>
+        <td><span class="badge ${getBadgeClass(v.estado)}">${v.estado}</span></td>
+        <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+      </tr>`).join('');
+    }
+
+    function renderFacturas() {
+      document.getElementById('facturasTableBody').innerHTML = facturasData.map(f => `<tr>
+        <td style="font-size:11px; font-family:monospace; max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.uuid}</td>
+        <td>${f.serie}-${f.folio}</td><td>${f.fecha}</td>
+        <td>$${f.subtotal.toLocaleString('en', {minimumFractionDigits:2})}</td>
+        <td>$${f.iva.toLocaleString('en', {minimumFractionDigits:2})}</td>
+        <td style="font-weight:600;">$${f.total.toLocaleString('en', {minimumFractionDigits:2})}</td>
+        <td><span class="badge ${getBadgeClass(f.estado)}">${f.estado}</span></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="showToast('Descargando PDF...')"><i class="fas fa-file-pdf"></i></button></td>
+      </tr>`).join('');
+    }
+
+    function renderEquipo() {
+      document.getElementById('equipoTableBody').innerHTML = equipoData.map(u => `<tr>
+        <td style="font-weight:500;">${u.nombre}</td><td>${u.email}</td>
+        <td><span class="badge ${getBadgeClass(u.rol)}">${u.rol}</span></td>
+        <td><span class="badge ${getBadgeClass(u.estado)}">${u.estado}</span></td>
+        <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+      </tr>`).join('');
+    }
+
+    function renderZonas() {
+      document.getElementById('zonasTableBody').innerHTML = zonasData.map(z => `<tr>
+        <td style="font-weight:500;">${z.zona}</td><td>${z.tarifa}</td><td>${z.tiempoEst}</td>
+        <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+      </tr>`).join('');
+    }
+
+    // ========== CHARTS ==========
+    let chartEnvios, chartEstados;
+
+    function getChartColors() {
+      const style = getComputedStyle(document.documentElement);
+      return {
+        text: style.getPropertyValue('--text-secondary').trim() || '#9CA3AF',
+        grid: style.getPropertyValue('--border-color').trim() || '#374151',
+        accent: style.getPropertyValue('--accent-primary').trim() || '#3B82F6',
+        success: '#10B981', warning: '#F59E0B', danger: '#EF4444', info: '#3B82F6',
+        purple: '#8B5CF6', pink: '#EC4899'
+      };
+    }
+
+    function initCharts() {
+      const c = getChartColors();
+      const ctxEnvios = document.getElementById('chartEnvios').getContext('2d');
+      chartEnvios = new Chart(ctxEnvios, {
+        type: 'line',
+        data: {
+          labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
+          datasets: [{
+            label: 'Envios',
+            data: [18, 22, 15, 28, 24, 12, 20],
+            borderColor: c.accent,
+            backgroundColor: c.accent + '20',
+            fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: c.accent
+          }]
+        },
+        options: {
+          responsive: true, plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: c.text }, grid: { color: c.grid + '40' } },
+            y: { ticks: { color: c.text }, grid: { color: c.grid + '40' } }
+          }
+        }
+      });
+
+      const ctxEstados = document.getElementById('chartEstados').getContext('2d');
+      chartEstados = new Chart(ctxEstados, {
+        type: 'doughnut',
+        data: {
+          labels: ['Entregado', 'En Transito', 'Pendiente', 'No Entregado', 'Cancelado'],
+          datasets: [{ data: [14, 8, 2, 1, 1], backgroundColor: [c.success, c.info, c.warning, c.danger, c.text] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: c.text, padding: 12 } } } }
+      });
+    }
+
+    function updateChartsTheme() {
+      if (!chartEnvios) return;
+      const c = getChartColors();
+      chartEnvios.data.datasets[0].borderColor = c.accent;
+      chartEnvios.data.datasets[0].backgroundColor = c.accent + '20';
+      chartEnvios.data.datasets[0].pointBackgroundColor = c.accent;
+      chartEnvios.options.scales.x.ticks.color = c.text;
+      chartEnvios.options.scales.y.ticks.color = c.text;
+      chartEnvios.options.scales.x.grid.color = c.grid + '40';
+      chartEnvios.options.scales.y.grid.color = c.grid + '40';
+      chartEnvios.update();
+      chartEstados.data.datasets[0].backgroundColor = [c.success, c.info, c.warning, c.danger, c.text];
+      chartEstados.options.plugins.legend.labels.color = c.text;
+      chartEstados.update();
+    }
+
+    // ========== MAP ==========
+    let dashboardMap, markers = [];
+
+    function initDashboardMap() {
+      if (dashboardMap) { dashboardMap.invalidateSize(); return; }
+      dashboardMap = L.map('dashboardMap').setView([19.4326, -99.1332], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(dashboardMap);
+      const locations = [
+        { lat: 19.4326, lng: -99.1332, name: 'Pedro Sanchez', status: 'En Transito' },
+        { lat: 19.4195, lng: -99.1620, name: 'Ana Garcia', status: 'En Transito' },
+        { lat: 19.4516, lng: -99.1524, name: 'Maria Lopez', status: 'Entregado' },
+        { lat: 19.3890, lng: -99.1760, name: 'Carlos Ruiz', status: 'Pendiente' },
+        { lat: 19.4026, lng: -99.1890, name: 'Fernando Torres', status: 'Entregado' },
+        { lat: 19.3620, lng: -99.1520, name: 'Jorge Mendoza', status: 'Asignado' }
+      ];
+      locations.forEach(loc => {
+        const color = loc.status === 'Entregado' ? '#10B981' : loc.status === 'En Transito' ? '#3B82F6' : loc.status === 'Pendiente' ? '#F59E0B' : '#8B5CF6';
+        const icon = L.divIcon({ html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`, className: '', iconSize: [14, 14] });
+        L.marker([loc.lat, loc.lng], { icon }).addTo(dashboardMap).bindPopup(`<b>${loc.name}</b><br><span style="color:${color};">${loc.status}</span>`);
+      });
+    }
+
+    // ========== COST CALCULATION ==========
+    function updateCostDisplay() {
+      const peso = parseFloat(document.getElementById('envPeso').value) || 0;
+      const prioridad = document.getElementById('envPrioridad').value;
+      let costo = 45 + (peso * 2);
+      if (prioridad === 'Urgente') costo += 50;
+      if (prioridad === 'Express') costo += 120;
+      document.getElementById('envCostDisplay').textContent = '$' + costo.toFixed(2);
+    }
+
+    ['envPeso', 'envPrioridad'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', updateCostDisplay);
+      if (el) el.addEventListener('input', updateCostDisplay);
+    });
+
+    // ========== FORM SUBMIT ==========
+    function submitNewEnvio(e) {
+      e.preventDefault();
+      showToast('Envio creado exitosamente');
+      e.target.reset();
+      document.getElementById('envCostDisplay').textContent = '$0.00';
+      showSection('envios');
+    }
+
+    function saveChofer() {
+      closeModal('modalChofer');
+      showToast('Chofer guardado exitosamente');
+    }
+
+    // ========== SEARCH FILTERS ==========
+    document.getElementById('searchEnvio').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('#enviosTableBody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    document.getElementById('filterStatus').addEventListener('change', function() {
+      const val = this.value;
+      document.querySelectorAll('#enviosTableBody tr').forEach(row => {
+        if (!val) { row.style.display = ''; return; }
+        row.style.display = row.textContent.includes(val) ? '' : 'none';
+      });
+    });
+
+    // ========== INIT ==========
+    renderRecentOrders();
+    renderEnvios();
+    renderChoferes();
+    renderVehiculos();
+    renderFacturas();
+    renderEquipo();
+    renderZonas();
+    initCharts();
+    setTimeout(initDashboardMap, 300);
+  </script>
+</body>
+</html>
