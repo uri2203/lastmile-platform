@@ -593,10 +593,13 @@
         <span class="mono" style="font-size:12px;color:var(--lm-text-dim);margin-left:12px;">lastmile.app/dashboard</span>
       </div>
       <div class="preview-body">
-        <div class="preview-map">
+        <div class="preview-map" style="background-image:url('img/delivery-tracking.jpg'); background-size:cover; background-position:center;">
+          <div style="position:absolute;inset:0;background:rgba(10,10,15,0.5);backdrop-filter:blur(2px);"></div>
           <div style="position:relative;z-index:1;text-align:center;">
-            <i class="fas fa-map-location-dot map-icon"></i>
-            <div style="font-size:13px;color:var(--lm-text-dim);margin-top:12px;">Mapa en tiempo real</div>
+            <div style="background:var(--lm-surface);border:1px solid var(--lm-border);border-radius:10px;padding:12px 20px;display:inline-flex;align-items:center;gap:10px;">
+              <div class="ticker-dot"></div>
+              <span class="mono" style="font-size:14px;font-weight:600;color:var(--lm-accent);">12 choferes activos en mapa</span>
+            </div>
           </div>
         </div>
         <div class="preview-stats">
@@ -639,6 +642,14 @@
       <div class="section-tag mono">// en 3 pasos</div>
       <h2>De cero a operando</h2>
       <p>Configura tu plataforma de delivery en minutos, no en semanas.</p>
+    </div>
+    <div style="display:flex;gap:24px;align-items:center;margin-bottom:40px;">
+      <div style="flex:1;">
+        <img src="img/delivery-van.jpg" alt="Delivery van" style="width:100%;border-radius:12px;border:1px solid var(--lm-border);object-fit:cover;height:200px;">
+      </div>
+      <div style="flex:1;font-size:15px;color:var(--lm-text-dim);line-height:1.7;">
+        <p>Imagina tener el control completo de tus envios desde un solo lugar. Sin WhatsApp, sin Excel, sin llamadas para rastrear paquetes. <strong style="color:var(--lm-text);">Last Mile te da un dashboard en tiempo real</strong> con GPS, facturacion automatica y optimizacion con inteligencia artificial.</p>
+      </div>
     </div>
     <div class="steps">
       <div class="step">
