@@ -14,6 +14,14 @@ from datetime import datetime
 app = Flask(__name__, static_folder='web', static_url_path='')
 CORS(app)
 
+# Register AI Blueprint
+try:
+    from ai_endpoints import ai_bp
+    app.register_blueprint(ai_bp)
+    print('[AI] Agent endpoints registered at /api/ai/*')
+except ImportError:
+    print('[AI] ai_endpoints.py not found - AI endpoints disabled')
+
 # Ruta raíz → Login
 @app.route('/')
 def root():
