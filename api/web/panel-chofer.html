@@ -4,420 +4,637 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Last Mile - App Chofer</title>
-  <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#e94560">
+  <meta name="theme-color" content="#0a0a0f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/theme.js"></script>
   <style>
-    /* Mobile-first chofer app styles */
-    body { background: var(--gray-50); }
-    .main-content { padding: 10px; }
-    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .kpi-card { padding: 12px; }
-    .kpi-value { font-size: 1.5rem; }
-    
-    .entrega-card {
-      background: white;
-      border-radius: 12px;
+    /* Mobile-first chofer app overrides */
+    body { padding-bottom: 0; }
+
+    .app-header {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+    [data-theme="dark"] .app-header { background: rgba(13,13,18,0.9); }
+    [data-theme="light"] .app-header { background: rgba(255,255,255,0.9); }
+    .app-header-brand { display: flex; align-items: center; gap: 10px; }
+    .app-header-brand .logo-icon {
+      width: 34px; height: 34px; border-radius: var(--radius-md);
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: var(--font-sm);
+    }
+    .app-header-brand h1 { font-size: var(--font-md); font-weight: 600; }
+    .app-header-brand small { font-size: var(--font-xs); color: var(--text-muted); display: block; margin-top: 1px; }
+    .app-header-right { display: flex; align-items: center; gap: 10px; }
+    .gps-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: var(--radius-full);
+      font-size: var(--font-xs); font-weight: 500;
+    }
+    .gps-badge.online { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+    .gps-badge.offline { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+
+    .app-content {
+      padding: 16px 16px 90px 16px;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* Sections */
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+
+    /* KPI Row */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* Delivery Cards */
+    .delivery-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
       padding: 16px;
       margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-left: 4px solid var(--primary);
+      transition: border-color var(--transition-fast);
     }
-    .entrega-card.urgente { border-left-color: var(--danger); }
-    .entrega-card.completada { border-left-color: var(--success); }
-    
-    .entrega-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .entrega-numero { font-weight: 700; font-size: 1.1rem; color: var(--primary); }
-    .entrega-destino { font-size: 0.9rem; color: var(--gray-700); margin-bottom: 6px; }
-    .entrega-cliente { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 10px; }
-    
-    .entrega-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-action {
-      flex: 1;
-      min-width: 100px;
-      padding: 12px 8px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      text-align: center;
+    .delivery-card:hover { border-color: var(--border-secondary); }
+    .delivery-card.urgente { border-left: 3px solid var(--danger); }
+    .delivery-card.en-ruta { border-left: 3px solid var(--info); }
+    .delivery-card.completada { border-left: 3px solid var(--success); }
+    .delivery-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
     }
-    .btn-entregar { background: var(--success); color: white; }
-    .btn-fallido { background: var(--danger); color: white; }
-    .btn-navegar { background: var(--info); color: white; }
-    .btn-llamar { background: var(--warning); color: white; }
-    
+    .delivery-number { font-weight: 600; font-size: var(--font-md); color: var(--text-primary); }
+    .delivery-address { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 4px; }
+    .delivery-client { font-size: var(--font-xs); color: var(--text-muted); margin-bottom: 4px; }
+    .delivery-meta {
+      font-size: var(--font-xs); color: var(--text-muted); margin-bottom: 12px;
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .delivery-meta span { display: flex; align-items: center; gap: 4px; }
+    .delivery-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .delivery-actions .btn {
+      flex: 1; min-width: 80px; justify-content: center;
+      min-height: 44px; font-size: var(--font-sm);
+    }
+
+    /* Bottom Navigation */
     .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-primary);
       display: flex;
-      border-top: 1px solid var(--gray-200);
-      padding: 8px 0;
+      padding: 6px 0 env(safe-area-inset-bottom, 6px);
       z-index: 100;
+      backdrop-filter: blur(12px);
     }
+    [data-theme="dark"] .bottom-nav { background: rgba(13,13,18,0.95); }
+    [data-theme="light"] .bottom-nav { background: rgba(255,255,255,0.95); }
     .bottom-nav-item {
-      flex: 1;
+      flex: 1; text-align: center; padding: 8px 4px;
+      font-size: var(--font-xs); color: var(--text-muted);
+      text-decoration: none; cursor: pointer;
+      transition: color var(--transition-fast);
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .bottom-nav-item i { font-size: 18px; }
+    .bottom-nav-item.active { color: var(--accent); font-weight: 600; }
+    .bottom-nav-item:hover { color: var(--text-primary); }
+
+    /* Map */
+    #chofer-map {
+      width: 100%; height: 60vh;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-primary);
+      overflow: hidden;
+    }
+
+    /* Rendimiento */
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
       text-align: center;
-      padding: 8px;
-      font-size: 0.75rem;
-      color: var(--gray-500);
-      text-decoration: none;
     }
-    .bottom-nav-item.active { color: var(--primary); font-weight: 600; }
-    .bottom-nav-item .icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
-    
-    .status-bar {
-      background: white;
-      padding: 10px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--gray-200);
-      margin: -10px -10px 10px -10px;
+    .stat-card .stat-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+      font-size: 16px;
     }
-    .status-online { color: var(--success); font-weight: 600; }
-    .status-offline { color: var(--danger); font-weight: 600; }
+    .stat-card .stat-value {
+      font-size: var(--font-xl); font-weight: 700; color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .stat-card .stat-label {
+      font-size: var(--font-xs); color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    /* Historial */
+    .history-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      transition: border-color var(--transition-fast);
+    }
+    .history-item:hover { border-color: var(--border-secondary); }
+    .history-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .history-info { flex: 1; min-width: 0; }
+    .history-info .history-num { font-weight: 600; font-size: var(--font-sm); }
+    .history-info .history-addr { font-size: var(--font-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-right { text-align: right; flex-shrink: 0; }
+    .history-right .history-date { font-size: var(--font-xs); color: var(--text-muted); }
+    .history-right .history-cost { font-size: var(--font-sm); font-weight: 600; color: var(--text-primary); }
+
+    /* Section Headers */
+    .section-title {
+      font-size: var(--font-md); font-weight: 600;
+      color: var(--text-primary); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Photo / Evidence Modal */
+    .modal-overlay { display: none; }
+    .modal-overlay.active { display: flex; }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- Status Bar -->
-    <div class="status-bar">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="app-header-brand">
+      <div class="logo-icon">LM</div>
       <div>
-        <strong>🚚 Last Mile</strong>
-        <span class="text-muted" style="font-size:0.8rem;margin-left:8px;">Chofer</span>
-      </div>
-      <div>
-        <span class="status-online" id="gps-status">● GPS Activo</span>
+        <h1>Last Mile</h1>
+        <small>Chofer</small>
       </div>
     </div>
+    <div class="app-header-right">
+      <span class="gps-badge online" id="gps-status">
+        <i class="fas fa-satellite-dish"></i> GPS Activo
+      </span>
+      <button class="theme-toggle" title="Cambiar tema">
+        <i class="fas fa-sun"></i>
+      </button>
+    </div>
+  </header>
 
-    <main class="main-content" style="padding-bottom:70px;">
-      <!-- Resumen del Día -->
-      <section id="resumen">
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-value" id="mis-pedidos">0</div>
-            <div class="kpi-label">Mis Pedidos</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-value" id="mis-entregados">0</div>
-            <div class="kpi-label">Entregados</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-value" id="mis-pendientes">0</div>
-            <div class="kpi-label">Pendientes</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-value" id="mis-km">0</div>
-            <div class="kpi-label">KM Recorridos</div>
-          </div>
+  <main class="app-content">
+
+    <!-- SECTION: Entregas -->
+    <section id="panel-entregas" class="section-panel active">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon accent"><i class="fas fa-box"></i></div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <div class="kpi-label">Mis Pedidos</div>
         </div>
-      </section>
-
-      <!-- Mis Entregas -->
-      <section id="mis-entregas">
-        <h3 style="margin-bottom:12px;">📦 Mis Entregas de Hoy</h3>
-        <div id="entregas-list">
-          <p class="text-center text-muted">Cargando entregas...</p>
+        <div class="kpi-card">
+          <div class="kpi-icon success"><i class="fas fa-check-circle"></i></div>
+          <div class="kpi-value" id="kpi-entregados">0</div>
+          <div class="kpi-label">Entregados</div>
         </div>
-      </section>
-
-      <!-- Mi Rendimiento -->
-      <section id="mi-rendimiento" style="margin-top:20px;">
-        <div class="card">
-          <div class="card-header">
-            <h3>📊 Mi Rendimiento</h3>
-          </div>
-          <div class="card-body" id="mi-rendimiento-body">
-            <p class="text-muted">Cargando...</p>
-          </div>
+        <div class="kpi-card">
+          <div class="kpi-icon warning"><i class="fas fa-clock"></i></div>
+          <div class="kpi-value" id="kpi-pendientes">0</div>
+          <div class="kpi-label">Pendientes</div>
         </div>
-      </section>
-    </main>
+        <div class="kpi-card">
+          <div class="kpi-icon info"><i class="fas fa-road"></i></div>
+          <div class="kpi-value" id="kpi-km">0</div>
+          <div class="kpi-label">KM Hoy</div>
+        </div>
+      </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-      <a href="#resumen" class="bottom-nav-item active">
-        <span class="icon">📊</span> Resumen
-      </a>
-      <a href="#mis-entregas" class="bottom-nav-item">
-        <span class="icon">📦</span> Entregas
-      </a>
-      <a href="#tracking" class="bottom-nav-item" onclick="enviarUbicacion()">
-        <span class="icon">📍</span> GPS
-      </a>
-      <a href="#mi-rendimiento" class="bottom-nav-item">
-        <span class="icon">⭐</span> Mi Rendimiento
-      </a>
-    </nav>
+      <div class="section-title">
+        <i class="fas fa-box"></i> Mis Entregas de Hoy
+      </div>
+      <div id="entregas-list">
+        <div class="empty-state">
+          <i class="fas fa-truck-loading"></i>
+          <h3>Cargando entregas...</h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: Mapa -->
+    <section id="panel-mapa" class="section-panel">
+      <div class="section-title">
+        <i class="fas fa-map-marked-alt"></i> Mapa en Vivo
+      </div>
+      <div id="chofer-map"></div>
+    </section>
+
+    <!-- SECTION: Rendimiento -->
+    <section id="panel-rendimiento" class="section-panel">
+      <div class="section-title">
+        <i class="fas fa-chart-line"></i> Mi Rendimiento
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--accent-bg);color:var(--accent);">
+            <i class="fas fa-percentage"></i>
+          </div>
+          <div class="stat-value" id="rnd-tasa">0%</div>
+          <div class="stat-label">Tasa de Exito</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--success-bg);color:var(--success);">
+            <i class="fas fa-check-double"></i>
+          </div>
+          <div class="stat-value" id="rnd-exitosas">0</div>
+          <div class="stat-label">Exitosas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--danger-bg);color:var(--danger);">
+            <i class="fas fa-times-circle"></i>
+          </div>
+          <div class="stat-value" id="rnd-fallidas">0</div>
+          <div class="stat-label">Fallidas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--warning-bg);color:var(--warning);">
+            <i class="fas fa-stopwatch"></i>
+          </div>
+          <div class="stat-value" id="rnd-espera">0m</div>
+          <div class="stat-label">Tiempo Espera</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-star"></i> Calificacion Promedio</h3></div>
+        <div class="card-body" id="rnd-calificacion" style="text-align:center;">
+          <div style="font-size:3rem;font-weight:800;color:var(--warning);" id="rnd-stars">--</div>
+          <div style="font-size:var(--font-xs);color:var(--text-muted);">ESTRELLAS</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: Historial -->
+    <section id="panel-historial" class="section-panel">
+      <div class="section-title">
+        <i class="fas fa-history"></i> Historial
+      </div>
+      <div id="historial-list">
+        <div class="empty-state">
+          <i class="fas fa-clipboard-list"></i>
+          <h3>Cargando historial...</h3>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a class="bottom-nav-item active" data-section="panel-entregas">
+      <i class="fas fa-box"></i> Entregas
+    </a>
+    <a class="bottom-nav-item" data-section="panel-mapa" id="nav-mapa">
+      <i class="fas fa-map"></i> Mapa
+    </a>
+    <a class="bottom-nav-item" data-section="panel-rendimiento">
+      <i class="fas fa-chart-pie"></i> Rendimiento
+    </a>
+    <a class="bottom-nav-item" data-section="panel-historial">
+      <i class="fas fa-history"></i> Historial
+    </a>
+  </nav>
+
+  <!-- Evidence Modal -->
+  <div class="modal-overlay" id="evidence-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-camera"></i> Capturar Evidencia</h3>
+        <button class="modal-close" onclick="closeEvidenceModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;">
+          <video id="camera-preview" autoplay playsinline style="width:100%;max-height:300px;border-radius:var(--radius-lg);background:var(--bg-input);"></video>
+          <canvas id="camera-canvas" style="display:none;"></canvas>
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
+            <button class="btn btn-primary btn-lg" onclick="capturePhoto()"><i class="fas fa-camera"></i> Capturar</button>
+          </div>
+          <img id="captured-photo" style="display:none;width:100%;border-radius:var(--radius-lg);margin-top:12px;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeEvidenceModal()">Cancelar</button>
+        <button class="btn btn-success" onclick="submitEvidence()"><i class="fas fa-check"></i> Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signature Modal -->
+  <div class="modal-overlay" id="signature-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-signature"></i> Firma del Cliente</h3>
+        <button class="modal-close" onclick="closeSignatureModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="border:1px solid var(--border-primary);border-radius:var(--radius-lg);background:var(--bg-input);padding:8px;">
+          <canvas id="signature-canvas" width="400" height="200" style="width:100%;height:200px;cursor:crosshair;border-radius:var(--radius-md);"></canvas>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="clearSignature()"><i class="fas fa-eraser"></i> Limpiar</button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeSignatureModal()">Cancelar</button>
+        <button class="btn btn-success" onclick="submitSignature()"><i class="fas fa-check"></i> Guardar Firma</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/app.js"></script>
   <script>
-    const CHOFER_ACTUAL_ID = 1; // Simular chofer logueado
-    
+    const CHOFER_ACTUAL_ID = 1;
+    let map = null;
+    let currentDeliveryId = null;
+    let cameraStream = null;
+
+    /* ---- Navigation ---- */
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('active'));
+        item.classList.add('active');
+        const section = document.getElementById(item.dataset.section);
+        if (section) section.classList.add('active');
+        if (item.dataset.section === 'panel-mapa') initMap();
+      });
+    });
+
+    /* ---- Load Entregas ---- */
     async function loadMisEntregas() {
-      const result = await api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}`);
+      const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}`);
       if (result.success) {
+        let pendientes = 0, entregados = 0;
         const container = document.getElementById('entregas-list');
         container.innerHTML = '';
-        
-        let pendientes = 0, entregados = 0;
-        
+
         result.data.forEach(e => {
           if (e.ENT_ESTADO === 'PENDIENTE' || e.ENT_ESTADO === 'ASIGNADO') pendientes++;
           if (e.ENT_ESTADO === 'ENTREGADO') entregados++;
-          
+
           const esUrgente = e.PED_PRIORIDAD === 'URGENTE';
+          const esEnRuta = e.ENT_ESTADO === 'EN_RUTA';
           const esCompletada = e.ENT_ESTADO === 'ENTREGADO';
-          
+          const cardClass = esCompletada ? 'completada' : esUrgente ? 'urgente' : esEnRuta ? 'en-ruta' : '';
+
           const div = document.createElement('div');
-          div.className = `entrega-card ${esUrgente ? 'urgente' : ''} ${esCompletada ? 'completada' : ''}`;
+          div.className = `delivery-card ${cardClass}`;
           div.innerHTML = `
-            <div class="entrega-header">
-              <span class="entrega-numero">${e.PED_NUMERO || ''}</span>
-              ${getBadgeEstado(e.ENT_ESTADO)}
+            <div class="delivery-header">
+              <span class="delivery-number">${e.PED_NUMERO || ''}</span>
+              ${Utils.badge(e.ENT_ESTADO)}
             </div>
-            <div class="entrega-destino">📍 ${e.PED_DESTINO_DIR || ''}, ${e.PED_DESTINO_COL || ''}</div>
-            <div class="entrega-cliente">👤 ${e.PED_CLIENTE_NOMBRE || ''} | 📞 ${e.PED_CLIENTE_TELEFONO || ''}</div>
-            <div style="font-size:0.8rem;color:var(--gray-500);margin-bottom:8px;">
-              📦 ${e.PED_BULTOS || 0} bultos | 💰 ${formatCurrency(e.PED_COSTO_TOTAL)}
-              ${e.ENT_EVIDENCIA ? ' | 📷 Evidencia' : ''}
-              ${e.ENT_FIRMA ? ' | ✍️ Firmado' : ''}
+            <div class="delivery-address"><i class="fas fa-map-marker-alt" style="color:var(--accent);margin-right:4px;"></i>${e.PED_DESTINO_DIR || ''}, ${e.PED_DESTINO_COL || ''}</div>
+            <div class="delivery-client"><i class="fas fa-user" style="margin-right:4px;"></i>${e.PED_CLIENTE_NOMBRE || ''} &middot; <a href="tel:${e.PED_CLIENTE_TELEFONO}" style="color:var(--accent);">${e.PED_CLIENTE_TELEFONO || ''}</a></div>
+            <div class="delivery-meta">
+              <span><i class="fas fa-box"></i> ${e.PED_BULTOS || 0} bultos</span>
+              <span><i class="fas fa-dollar-sign"></i> ${Utils.$(e.PED_COSTO_TOTAL)}</span>
+              ${e.ENT_EVIDENCIA ? '<span><i class="fas fa-camera"></i> Evidencia</span>' : ''}
+              ${e.ENT_FIRMA ? '<span><i class="fas fa-signature"></i> Firmado</span>' : ''}
             </div>
             ${!esCompletada ? `
-            <div class="entrega-actions">
-              <button class="btn-action btn-entregar" onclick="marcarEntregado(${e.ENT_ID})">✅ Entregado</button>
-              <button class="btn-action btn-fallido" onclick="marcarFallido(${e.ENT_ID})">❌ Fallido</button>
-              <button class="btn-action btn-navegar" onclick="navegar('${e.PED_DESTINO_DIR}')">🗺️ Navegar</button>
-              <button class="btn-action btn-llamar" onclick="llamar('${e.PED_CLIENTE_TELEFONO}')">📞 Llamar</button>
+            <div class="delivery-actions">
+              <button class="btn btn-success" onclick="markDelivered(${e.ENT_ID})"><i class="fas fa-check"></i> Entregar</button>
+              <button class="btn btn-danger" onclick="markFailed(${e.ENT_ID})"><i class="fas fa-times"></i> Fallido</button>
+              <button class="btn btn-primary" onclick="openEvidenceModal(${e.ENT_ID})"><i class="fas fa-camera"></i> Foto</button>
+              <button class="btn btn-warning" onclick="openSignatureModal(${e.ENT_ID})"><i class="fas fa-signature"></i> Firma</button>
+              <button class="btn btn-ghost" onclick="navigate('${e.PED_DESTINO_DIR}')"><i class="fas fa-directions"></i> Ruta</button>
             </div>
             ` : `
-            <div style="font-size:0.85rem;color:var(--success);font-weight:600;">
-              ✅ Entregado - ${e.ENT_HORA_ENTREGA ? formatDateTime(e.ENT_HORA_ENTREGA) : ''}
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--font-sm);color:var(--success);font-weight:600;">
+              <i class="fas fa-check-circle"></i> Entregado ${e.ENT_HORA_ENTREGA ? Utils.datetime(e.ENT_HORA_ENTREGA) : ''}
             </div>
             `}
           `;
           container.appendChild(div);
         });
-        
-        document.getElementById('mis-pedidos').textContent = result.data.length;
-        document.getElementById('mis-entregados').textContent = entregados;
-        document.getElementById('mis-pendientes').textContent = pendientes;
+
+        document.getElementById('kpi-total').textContent = result.data.length;
+        document.getElementById('kpi-entregados').textContent = entregados;
+        document.getElementById('kpi-pendientes').textContent = pendientes;
       }
     }
-    
-    async function loadMiRendimiento() {
-      const result = await api('/api/choferes/rendimiento');
+
+    /* ---- Rendimiento ---- */
+    async function loadRendimiento() {
+      const result = await Utils.api('/api/choferes/rendimiento');
       if (result.success && result.data.length > 0) {
-        const ch = result.data[0]; // Primer chofer como ejemplo
-        const body = document.getElementById('mi-rendimiento-body');
-        body.innerHTML = `
-          <div style="text-align:center;margin-bottom:16px;">
-            <div style="font-size:3rem;font-weight:800;color:var(--primary);">${ch.TASA_EXITO || 0}%</div>
-            <div style="font-size:0.9rem;color:var(--gray-500);">Tasa de Éxito</div>
-          </div>
-          <div class="kpi-grid" style="grid-template-columns:1fr 1fr;">
-            <div style="text-align:center;padding:10px;background:var(--gray-50);border-radius:8px;">
-              <div style="font-size:1.5rem;font-weight:700;color:var(--success);">${ch.ENTREGAS_EXITOSAS || 0}</div>
-              <div style="font-size:0.8rem;color:var(--gray-500);">Exitosas</div>
+        const ch = result.data[0];
+        document.getElementById('rnd-tasa').textContent = (ch.TASA_EXITO || 0) + '%';
+        document.getElementById('rnd-exitosas').textContent = ch.ENTREGAS_EXITOSAS || 0;
+        document.getElementById('rnd-fallidas').textContent = ch.ENTREGAS_FALLIDAS || 0;
+        document.getElementById('rnd-espera').textContent = (ch.TIEMPO_PROM_ESPERA || 0) + 'm';
+        document.getElementById('rnd-stars').textContent = '★'.repeat(Math.round((ch.TASA_EXITO || 0) / 20));
+        document.getElementById('kpi-km').textContent = parseFloat(ch.KM_TOTAL || 0).toFixed(1);
+      }
+    }
+
+    /* ---- Historial ---- */
+    async function loadHistorial() {
+      const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}?estado=ENTREGADO`);
+      const container = document.getElementById('historial-list');
+      container.innerHTML = '';
+      if (result.success && result.data.length > 0) {
+        result.data.forEach(e => {
+          const div = document.createElement('div');
+          div.className = 'history-item';
+          div.innerHTML = `
+            <div class="history-icon" style="background:var(--success-bg);color:var(--success);">
+              <i class="fas fa-check"></i>
             </div>
-            <div style="text-align:center;padding:10px;background:var(--gray-50);border-radius:8px;">
-              <div style="font-size:1.5rem;font-weight:700;color:var(--danger);">${ch.ENTREGAS_FALLIDAS || 0}</div>
-              <div style="font-size:0.8rem;color:var(--gray-500);">Fallidas</div>
+            <div class="history-info">
+              <div class="history-num">${e.PED_NUMERO || ''}</div>
+              <div class="history-addr">${e.PED_DESTINO_DIR || ''}, ${e.PED_DESTINO_COL || ''}</div>
             </div>
-          </div>
-          <div style="margin-top:12px;font-size:0.85rem;color:var(--gray-600);">
-            ⏱️ Tiempo promedio espera: <strong>${ch.TIEMPO_PROM_ESPERA || 0} min</strong>
-          </div>
-        `;
-        document.getElementById('mis-km').textContent = parseFloat(ch.KM_TOTAL || 0).toFixed(1);
-      }
-    }
-    
-    // Acciones del chofer
-    async function marcarEntregado(entId) {
-      if (confirm('¿Confirmar entrega exitosa?')) {
-        const result = await api(`/api/entregas/${entId}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            estado: 'ENTREGADO',
-            hora: new Date().toISOString(),
-            evidencia: 'EVID_' + Date.now()
-          })
-        });
-        if (result.success) {
-          loadMisEntregas();
-          alert('✅ Entrega registrada exitosamente');
-        }
-      }
-    }
-    
-    async function marcarFallido(entId) {
-      const motivo = prompt('Motivo de falla:');
-      if (motivo) {
-        const result = await api(`/api/entregas/${entId}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            estado: 'NO_ENTREGADO',
-            motivo: motivo
-          })
-        });
-        if (result.success) {
-          loadMisEntregas();
-          alert('❌ Incidencia registrada');
-        }
-      }
-    }
-    
-    function navegar(direccion) {
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`, '_blank');
-    }
-    
-    function llamar(telefono) {
-      window.location.href = `tel:${telefono}`;
-    }
-    
-    function enviarUbicacion() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          api(`/api/tracking/${CHOFER_ACTUAL_ID}`, {
-            method: 'POST',
-            body: JSON.stringify({
-              latitud: pos.coords.latitude,
-              longitud: pos.coords.longitude,
-              velocidad: pos.coords.speed || 0,
-              bateria: 85
-            })
-          });
-          alert('📍 Ubicación enviada: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
+            <div class="history-right">
+              <div class="history-date">${Utils.date(e.ENT_HORA_ENTREGA || e.PED_FECHA_PEDIDO)}</div>
+              <div class="history-cost">${Utils.$(e.PED_COSTO_TOTAL)}</div>
+            </div>
+          `;
+          container.appendChild(div);
         });
       } else {
-        alert('GPS no disponible');
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>Sin historial</h3><p>No hay entregas completadas aun.</p></div>';
       }
     }
-    
-    // ========================================
-    // PWA: Register Service Worker
-    // ========================================
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registrado:', reg.scope))
-        .catch(err => console.log('SW error:', err));
+
+    /* ---- Acciones ---- */
+    async function markDelivered(entId) {
+      if (!confirm('Confirmar entrega exitosa?')) return;
+      const result = await Utils.api(`/api/entregas/${entId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ estado: 'ENTREGADO', hora: new Date().toISOString(), evidencia: 'EVID_' + Date.now() })
+      });
+      if (result.success) {
+        loadMisEntregas();
+        Utils.toast('Entrega registrada exitosamente', 'success');
+      }
     }
 
-    // ========================================
-    // GPS: Tracking continuo en background
-    // ========================================
-    let gpsWatchId = null;
-    let gpsActivo = false;
+    async function markFailed(entId) {
+      const motivo = prompt('Motivo de falla:');
+      if (!motivo) return;
+      const result = await Utils.api(`/api/entregas/${entId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ estado: 'NO_ENTREGADO', motivo })
+      });
+      if (result.success) {
+        loadMisEntregas();
+        Utils.toast('Incidencia registrada', 'warning');
+      }
+    }
 
+    function navigate(direccion) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`, '_blank');
+    }
+
+    /* ---- Evidence Modal ---- */
+    function openEvidenceModal(deliveryId) {
+      currentDeliveryId = deliveryId;
+      document.getElementById('evidence-modal').classList.add('active');
+      document.getElementById('captured-photo').style.display = 'none';
+      const video = document.getElementById('camera-preview');
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then(stream => { cameraStream = stream; video.srcObject = stream; })
+          .catch(() => Utils.toast('No se pudo acceder a la camara', 'error'));
+      }
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('camera-preview');
+      const canvas = document.getElementById('camera-canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      document.getElementById('captured-photo').src = dataUrl;
+      document.getElementById('captured-photo').style.display = 'block';
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+    }
+
+    function closeEvidenceModal() {
+      document.getElementById('evidence-modal').classList.remove('active');
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+    }
+
+    function submitEvidence() {
+      Utils.toast('Evidencia capturada correctamente', 'success');
+      closeEvidenceModal();
+    }
+
+    /* ---- Signature Modal ---- */
+    let sigCtx = null;
+    let sigDrawing = false;
+
+    function openSignatureModal(deliveryId) {
+      currentDeliveryId = deliveryId;
+      document.getElementById('signature-modal').classList.add('active');
+      const canvas = document.getElementById('signature-canvas');
+      sigCtx = canvas.getContext('2d');
+      sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+      sigCtx.strokeStyle = ThemeManager.get() === 'dark' ? '#e8e8ed' : '#111827';
+      sigCtx.lineWidth = 2;
+      sigCtx.lineCap = 'round';
+
+      canvas.onmousedown = e => { sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX, e.offsetY); };
+      canvas.onmousemove = e => { if (sigDrawing) { sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke(); } };
+      canvas.onmouseup = () => sigDrawing = false;
+      canvas.onmouseleave = () => sigDrawing = false;
+      canvas.ontouchstart = e => { e.preventDefault(); const t = e.touches[0]; const r = canvas.getBoundingClientRect(); sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(t.clientX - r.left, t.clientY - r.top); };
+      canvas.ontouchmove = e => { e.preventDefault(); if (sigDrawing) { const t = e.touches[0]; const r = canvas.getBoundingClientRect(); sigCtx.lineTo(t.clientX - r.left, t.clientY - r.top); sigCtx.stroke(); } };
+      canvas.ontouchend = () => sigDrawing = false;
+    }
+
+    function clearSignature() {
+      const canvas = document.getElementById('signature-canvas');
+      sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function closeSignatureModal() {
+      document.getElementById('signature-modal').classList.remove('active');
+    }
+
+    function submitSignature() {
+      Utils.toast('Firma capturada correctamente', 'success');
+      closeSignatureModal();
+    }
+
+    /* ---- Map ---- */
+    function initMap() {
+      if (map) return;
+      map = L.map('chofer-map').setView([19.4326, -99.1332], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+      setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    /* ---- GPS ---- */
+    let gpsWatchId = null;
     function iniciarGPS() {
       if (!navigator.geolocation) {
-        document.getElementById('gps-status').textContent = '❌ Sin GPS';
-        document.getElementById('gps-status').className = 'status-offline';
+        document.getElementById('gps-status').className = 'gps-badge offline';
+        document.getElementById('gps-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sin GPS';
         return;
       }
-
       gpsWatchId = navigator.geolocation.watchPosition(
         pos => {
-          gpsActivo = true;
-          document.getElementById('gps-status').textContent = '● GPS Activo';
-          document.getElementById('gps-status').className = 'status-online';
-          
-          // Enviar al servidor cada 30 segundos
-          if (Date.now() % 30000 < 1000) {
-            api('/api/tracking', {
-              method: 'POST',
-              body: JSON.stringify({
-                choId: CHOFER_ACTUAL_ID,
-                latitud: pos.coords.latitude,
-                longitud: pos.coords.longitude,
-                velocidad: pos.coords.speed || 0,
-                bateria: getBatteryLevel()
-              })
-            });
+          document.getElementById('gps-status').className = 'gps-badge online';
+          document.getElementById('gps-status').innerHTML = '<i class="fas fa-satellite-dish"></i> GPS Activo';
+          if (map) {
+            L.marker([pos.coords.latitude, pos.coords.longitude])
+              .addTo(map).bindPopup('Mi ubicacion').openPopup();
+            map.setView([pos.coords.latitude, pos.coords.longitude], 15);
           }
         },
-        err => {
-          document.getElementById('gps-status').textContent = '⚠️ GPS Error';
-          document.getElementById('gps-status').className = 'status-offline';
+        () => {
+          document.getElementById('gps-status').className = 'gps-badge offline';
+          document.getElementById('gps-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> GPS Error';
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
       );
     }
 
-    async function getBatteryLevel() {
-      if (navigator.getBattery) {
-        const battery = await navigator.getBattery();
-        return Math.round(battery.level * 100);
-      }
-      return 100;
+    /* ---- PWA Service Worker ---- */
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
-    // ========================================
-    // PUSH: Solicitar permiso notificaciones
-    // ========================================
-    async function solicitarPermisos() {
-      if ('Notification' in window) {
-        const permiso = await Notification.requestPermission();
-        if (permiso === 'granted') {
-          console.log('Notificaciones habilitadas');
-        }
-      }
-    }
-
-    // ========================================
-    // OFFLINE: Detectar conexión
-    // ========================================
-    function updateOnlineStatus() {
-      const status = document.getElementById('gps-status');
-      if (navigator.onLine) {
-        status.textContent = '● En línea';
-        status.className = 'status-online';
-      } else {
-        status.textContent = '● Sin conexión';
-        status.className = 'status-offline';
-      }
-    }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    // ========================================
-    // INSTALL: Prompt de instalación PWA
-    // ========================================
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      // Mostrar botón de instalación
-      if (confirm('📱 ¿Instalar app en tu celular?')) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(choice => {
-          if (choice.outcome === 'accepted') {
-            console.log('App instalada');
-          }
-          deferredPrompt = null;
-        });
-      }
-    });
-
-    // ========================================
-    // INIT
-    // ========================================
+    /* ---- Init ---- */
     loadMisEntregas();
-    loadMiRendimiento();
+    loadRendimiento();
+    loadHistorial();
     iniciarGPS();
-    solicitarPermisos();
-    updateOnlineStatus();
   </script>
 </body>
 </html>

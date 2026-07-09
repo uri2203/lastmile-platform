@@ -1,148 +1,407 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mi Envio - Tracking</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#e94560">
+  <title>Tracking - Mi Envio</title>
+  <meta name="theme-color" content="#6366f1">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/theme.js"></script>
   <style>
-    :root{--primary:#e94560;--dark:#1a1a2e;--light:#f5f5f7;--success:#27ae60;--warning:#f39c12;--danger:#e74c3c;--gray:#6c757d;--gray-light:#e9ecef}
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--light);color:#333;min-height:100vh}
+    /* --- Public Tracking Page Overrides --- */
+    body { margin: 0; overflow-x: hidden; }
 
     /* HEADER */
-    .header{background:var(--dark);color:white;padding:16px 20px;text-align:center}
-    .header h1{font-size:1.2rem;font-weight:700}
-    .header p{font-size:0.8rem;color:#aaa;margin-top:4px}
+    .pub-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--bg-primary); border-bottom: 1px solid var(--border-primary);
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+    [data-theme="dark"] .pub-header { background: rgba(10,10,15,0.88); }
+    [data-theme="light"] .pub-header { background: rgba(248,249,252,0.88); }
+    .pub-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .pub-logo-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: var(--font-sm);
+    }
+    .pub-logo-text { font-weight: 600; font-size: var(--font-md); color: var(--text-primary); }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
 
-    /* LOGIN */
-    .login-screen{display:flex;align-items:center;justify-content:center;min-height:80vh;padding:20px}
-    .login-box{background:white;border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.1);text-align:center}
-    .login-box h2{margin-bottom:8px}
-    .login-box p{color:var(--gray);margin-bottom:24px;font-size:0.9rem}
-    .login-input{width:100%;padding:16px;border:2px solid var(--gray-light);border-radius:12px;font-size:1.1rem;text-align:center;letter-spacing:2px;margin-bottom:16px}
-    .login-input:focus{border-color:var(--primary);outline:none}
-    .login-btn{width:100%;padding:16px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer}
-    .login-btn:hover{opacity:0.9}
+    /* MAP HERO */
+    .map-hero {
+      position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+      z-index: 1;
+    }
+    #trackingMap { width: 100%; height: 100%; }
 
-    /* TRACKING SCREEN */
-    .tracking-screen{display:none;padding:16px;max-width:500px;margin:0 auto}
+    /* BOTTOM SHEET */
+    .bottom-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      background: var(--bg-card); border-top: 1px solid var(--border-primary);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      max-height: 65vh; overflow-y: auto;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+    }
+    .sheet-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border-secondary); margin: 10px auto 0;
+    }
+    .sheet-content { padding: 16px 20px 32px; }
 
-    /* PEDIDO CARD */
-    .pedido-card{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
-    .pedido-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .pedido-num{font-size:1.1rem;font-weight:700;color:var(--primary)}
-    .pedido-estado{padding:6px 12px;border-radius:20px;font-size:0.75rem;font-weight:700;text-transform:uppercase}
-    .estado-pendiente{background:#fff3cd;color:#856404}
-    .estado-asignado{background:#cce5ff;color:#004085}
-    .estado-ruta{background:#d4edda;color:#155724}
-    .estado-entregado{background:#d1ecf1;color:#0c5460}
-    .estado-fallido{background:#f8d7da;color:#721c24}
+    /* STATUS BAR */
+    .status-hero {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .status-badge-lg {
+      padding: 6px 14px; border-radius: var(--radius-full);
+      font-size: var(--font-xs); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .status-badge-lg.transit { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+    .status-badge-lg.delivered { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+    .status-badge-lg.pending { background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border); }
+    .status-badge-lg.picked { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
 
-    .pedido-destino{font-size:0.95rem;color:#555;margin-bottom:4px}
-    .pedido-info{display:flex;gap:16px;font-size:0.85rem;color:var(--gray);margin-top:8px}
-
-    /* CHOFER CARD */
-    .chofer-card{background:white;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
-    .chofer-row{display:flex;align-items:center;gap:12px}
-    .chofer-avatar{width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700}
-    .chofer-info h4{font-size:0.95rem}
-    .chofer-info p{font-size:0.8rem;color:var(--gray)}
-    .chofer-actions{display:flex;gap:8px;margin-top:12px}
-    .chofer-btn{flex:1;padding:10px;border-radius:10px;border:none;font-weight:600;font-size:0.85rem;cursor:pointer;text-align:center}
-    .btn-call{background:var(--success);color:white}
-    .btn-sms{background:#25d366;color:white}
-    .btn-whatsapp{background:#25d366;color:white}
+    .eta-text { font-size: var(--font-sm); color: var(--text-secondary); }
+    .eta-text strong { color: var(--text-primary); font-weight: 600; }
 
     /* TIMELINE */
-    .timeline{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
-    .timeline h3{font-size:1rem;margin-bottom:16px}
-    .tl-item{display:flex;gap:12px;padding-bottom:16px;position:relative}
-    .tl-item:not(:last-child)::after{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--gray-light)}
-    .tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0}
-    .tl-dot.active{background:var(--success);color:white}
-    .tl-dot.pending{background:var(--gray-light);color:var(--gray)}
-    .tl-content h4{font-size:0.9rem;margin-bottom:2px}
-    .tl-content p{font-size:0.8rem;color:var(--gray)}
+    .timeline-steps {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin: 20px 0; position: relative;
+      padding: 0 8px;
+    }
+    .timeline-steps::before {
+      content: ''; position: absolute; top: 16px; left: 32px; right: 32px;
+      height: 2px; background: var(--border-primary);
+    }
+    .timeline-progress {
+      position: absolute; top: 16px; left: 32px;
+      height: 2px; background: var(--accent);
+      transition: width 0.6s ease;
+    }
+    .tl-step {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px; z-index: 2; min-width: 0; flex: 1;
+    }
+    .tl-step-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; border: 2px solid var(--border-primary);
+      background: var(--bg-card); color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+    .tl-step.done .tl-step-dot {
+      background: var(--accent); border-color: var(--accent); color: white;
+    }
+    .tl-step.current .tl-step-dot {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-bg);
+    }
+    .tl-step-label {
+      font-size: 10px; font-weight: 500; color: var(--text-muted);
+      text-align: center; white-space: nowrap;
+    }
+    .tl-step.done .tl-step-label,
+    .tl-step.current .tl-step-label { color: var(--text-primary); }
 
-    /* MAP PLACEHOLDER */
-    .map-card{background:white;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);height:200px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e8f4f8,#d4edda)}
-    .map-card p{color:var(--gray);font-size:0.9rem}
+    /* DRIVER CARD */
+    .driver-card {
+      background: var(--bg-input); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); padding: 14px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .driver-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent-bg); color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; flex-shrink: 0;
+      border: 2px solid var(--accent-border);
+    }
+    .driver-info { flex: 1; min-width: 0; }
+    .driver-name { font-size: var(--font-sm); font-weight: 600; color: var(--text-primary); }
+    .driver-label { font-size: var(--font-xs); color: var(--text-muted); }
+    .driver-actions { display: flex; gap: 6px; }
+    .driver-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; border: none; cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .driver-btn.call { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+    .driver-btn.call:hover { background: var(--success); color: white; }
+    .driver-btn.whatsapp { background: rgba(37,211,102,0.1); color: #25d366; border: 1px solid rgba(37,211,102,0.2); }
+    .driver-btn.whatsapp:hover { background: #25d366; color: white; }
 
-    /* BOTTOM NAV */
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;border-top:1px solid var(--gray-light);padding:8px 0;z-index:100}
-    .bottom-nav a{flex:1;text-align:center;padding:6px;font-size:0.7rem;color:var(--gray);text-decoration:none}
-    .bottom-nav a.active{color:var(--primary);font-weight:600}
-    .bottom-nav a .icon{font-size:1.2rem;display:block;margin-bottom:2px}
+    /* DETAILS GRID */
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .detail-item {
+      background: var(--bg-input); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md); padding: 10px 12px;
+    }
+    .detail-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .detail-value { font-size: var(--font-sm); font-weight: 500; color: var(--text-primary); }
 
-    /* HIDDEN */
-    .hidden{display:none!important}
+    /* ADDRESS */
+    .address-block {
+      background: var(--bg-input); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); padding: 14px;
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .address-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      background: var(--accent-bg); color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; margin-top: 2px;
+    }
+    .address-text { font-size: var(--font-sm); color: var(--text-primary); line-height: 1.5; }
+    .address-text span { display: block; color: var(--text-muted); font-size: var(--font-xs); }
+
+    /* SHARE BUTTON */
+    .share-btn {
+      width: 100%; padding: 12px; border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); background: var(--bg-input);
+      color: var(--text-primary); font-size: var(--font-sm); font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all var(--transition-fast);
+      font-family: var(--font-family);
+    }
+    .share-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* LOGIN SCREEN */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--bg-primary);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .login-overlay.hidden { display: none; }
+    .login-card {
+      width: 100%; max-width: 400px; text-align: center;
+    }
+    .login-card h2 { font-size: var(--font-xl); font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .login-card p { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 28px; }
+    .login-input-group { position: relative; margin-bottom: 12px; }
+    .login-input-group i {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 14px;
+    }
+    .login-input {
+      width: 100%; padding: 14px 14px 14px 42px;
+      background: var(--bg-input); border: 1px solid var(--border-input);
+      border-radius: var(--radius-lg); color: var(--text-primary);
+      font-size: var(--font-md); font-family: var(--font-family);
+      outline: none; transition: border-color var(--transition-fast);
+      text-align: center; letter-spacing: 1.5px;
+    }
+    .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+    .login-input::placeholder { letter-spacing: 0; color: var(--text-muted); }
+    .login-btn {
+      width: 100%; padding: 14px; background: var(--accent); color: white;
+      border: none; border-radius: var(--radius-lg); font-size: var(--font-md);
+      font-weight: 600; cursor: pointer; font-family: var(--font-family);
+      transition: background var(--transition-fast);
+    }
+    .login-btn:hover { background: var(--accent-hover); }
+    .login-alt {
+      margin-top: 16px; font-size: var(--font-xs); color: var(--text-muted);
+    }
+    .login-alt-row { display: flex; gap: 8px; margin-top: 8px; }
+    .login-alt-row .login-input { flex: 1; letter-spacing: 1px; font-size: var(--font-sm); text-align: center; }
+    .login-alt-btn {
+      padding: 14px 20px; background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); color: var(--text-primary); font-size: var(--font-sm);
+      font-weight: 500; cursor: pointer; font-family: var(--font-family);
+      transition: all var(--transition-fast); white-space: nowrap;
+    }
+    .login-alt-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .bottom-sheet { max-height: 70vh; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .timeline-steps { padding: 0 4px; }
+      .tl-step-label { font-size: 9px; }
+    }
+    @media (min-width: 768px) {
+      .map-hero { bottom: auto; height: calc(100vh - 56px); }
+      .bottom-sheet {
+        left: auto; right: 20px; bottom: 20px;
+        width: 400px; max-height: calc(100vh - 96px);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-primary);
+      }
+      .sheet-handle { display: none; }
+    }
   </style>
 </head>
 <body>
-  <!-- HEADER -->
-  <div class="header">
-    <h1>📦 Mi Envio</h1>
-    <p>Rastrea tu paquete en tiempo real</p>
-  </div>
 
-  <!-- LOGIN -->
-  <div class="login-screen" id="loginScreen">
-    <div class="login-box">
-      <h2>🔍 Rastrear mi paquete</h2>
-      <p>Ingresa el token que recibiste por SMS o email</p>
-      <input type="text" class="login-input" id="tokenInput" placeholder="tk_xxxxxxxxxxxx" value="tk_abc123def456">
-      <button class="login-btn" onclick="buscarPedido()">Rastrear</button>
-      <p style="margin-top:16px;font-size:0.8rem;color:var(--gray)">También puedes usar tu número de pedido</p>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <input type="text" class="login-input" id="pedidoInput" placeholder="PED-XXXXXXX" style="flex:1;letter-spacing:1px;font-size:0.9rem">
-        <button class="login-btn" style="width:auto;padding:16px 24px;font-size:0.9rem" onclick="buscarPorPedido()">Buscar</button>
+  <!-- LOGIN SCREEN -->
+  <div class="login-overlay" id="loginScreen">
+    <div class="login-card">
+      <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 20px;border:1px solid var(--accent-border)">
+        <i class="fas fa-location-dot"></i>
+      </div>
+      <h2>Rastrea tu envio</h2>
+      <p>Ingresa el token que recibiste por SMS o email para ver el estado de tu paquete en tiempo real.</p>
+      <div class="login-input-group">
+        <i class="fas fa-key"></i>
+        <input type="text" class="login-input" id="tokenInput" placeholder="tk_xxxxxxxxxxxx" value="tk_abc123def456">
+      </div>
+      <button class="login-btn" onclick="buscarPedido()">
+        <i class="fas fa-search" style="margin-right:6px"></i>Rastrear envio
+      </button>
+      <p class="login-alt">Tambien puedes usar tu numero de pedido</p>
+      <div class="login-alt-row">
+        <input type="text" class="login-input" id="pedidoInput" placeholder="PED-XXXXXXX">
+        <button class="login-alt-btn" onclick="buscarPorPedido()">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <div style="margin-top:24px">
+        <a href="ayuda-cliente.html" style="font-size:var(--font-xs);color:var(--text-muted)">
+          <i class="fas fa-circle-question" style="margin-right:4px"></i>Necesitas ayuda?
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- TRACKING -->
-  <div class="tracking-screen" id="trackingScreen">
-    <!-- Pedido -->
-    <div class="pedido-card" id="pedidoCard"></div>
-
-    <!-- Mapa -->
-    <div class="map-card" id="mapCard">
-      <p>📍 Mapa de ubicacion en tiempo real</p>
+  <!-- HEADER -->
+  <header class="pub-header" id="appHeader" style="display:none">
+    <a href="#" class="pub-logo">
+      <div class="pub-logo-icon"><i class="fas fa-cube"></i></div>
+      <span class="pub-logo-text">Mi Envio</span>
+    </a>
+    <div class="header-actions">
+      <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
     </div>
+  </header>
 
-    <!-- Chofer -->
-    <div class="chofer-card hidden" id="choferCard"></div>
-
-    <!-- Timeline -->
-    <div class="timeline" id="timelineCard">
-      <h3>📋 Historial del envio</h3>
-      <div id="timelineBody"></div>
-    </div>
-
-    <!-- Compartir -->
-    <div style="text-align:center;margin:16px 0">
-      <button style="padding:12px 24px;background:var(--dark);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer" onclick="compartir()">📤 Compartir estado del envio</button>
-    </div>
+  <!-- MAP -->
+  <div class="map-hero" id="mapHero" style="display:none">
+    <div id="trackingMap"></div>
   </div>
 
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav" id="bottomNav" style="display:none">
-    <a href="#" class="active" onclick="showSection('pedido')"><span class="icon">📦</span>Mi Envio</a>
-    <a href="#" onclick="showSection('chofer')"><span class="icon">🚚</span>Chofer</a>
-    <a href="#" onclick="showSection('ayuda')"><span class="icon">❓</span>Ayuda</a>
-  </nav>
+  <!-- BOTTOM SHEET -->
+  <div class="bottom-sheet" id="bottomSheet" style="display:none">
+    <div class="sheet-handle"></div>
+    <div class="sheet-content">
+
+      <!-- Status -->
+      <div class="status-hero">
+        <div>
+          <div id="pedNum" style="font-size:var(--font-lg);font-weight:700;color:var(--text-primary)"></div>
+          <div id="pedEstado" class="status-badge-lg transit" style="margin-top:6px"></div>
+        </div>
+        <div class="eta-text" style="text-align:right">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Llegada estimada</div>
+          <div id="etaValue" style="font-size:var(--font-md);font-weight:600;color:var(--accent)"></div>
+        </div>
+      </div>
+
+      <!-- Timeline Steps -->
+      <div class="timeline-steps">
+        <div class="timeline-progress" id="timelineProgress" style="width:0%"></div>
+        <div class="tl-step" id="step1">
+          <div class="tl-step-dot"><i class="fas fa-box"></i></div>
+          <div class="tl-step-label">Creado</div>
+        </div>
+        <div class="tl-step" id="step2">
+          <div class="tl-step-dot"><i class="fas fa-handshake"></i></div>
+          <div class="tl-step-label">Recogido</div>
+        </div>
+        <div class="tl-step" id="step3">
+          <div class="tl-step-dot"><i class="fas fa-truck"></i></div>
+          <div class="tl-step-label">En camino</div>
+        </div>
+        <div class="tl-step" id="step4">
+          <div class="tl-step-dot"><i class="fas fa-check"></i></div>
+          <div class="tl-step-label">Entregado</div>
+        </div>
+      </div>
+
+      <!-- Driver -->
+      <div class="driver-card" id="driverCard" style="display:none">
+        <div class="driver-avatar" id="driverAvatar">?</div>
+        <div class="driver-info">
+          <div class="driver-name" id="driverName">-</div>
+          <div class="driver-label">Chofer asignado</div>
+        </div>
+        <div class="driver-actions">
+          <button class="driver-btn call" onclick="llamar()" title="Llamar"><i class="fas fa-phone"></i></button>
+          <button class="driver-btn whatsapp" onclick="whatsapp()" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+        </div>
+      </div>
+
+      <!-- Details Grid -->
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Bultos</div>
+          <div class="detail-value" id="detBultos">-</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Fecha pedido</div>
+          <div class="detail-value" id="detFecha">-</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Peso</div>
+          <div class="detail-value" id="detPeso">-</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Referencia</div>
+          <div class="detail-value" id="detRef">-</div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="address-block">
+        <div class="address-icon"><i class="fas fa-location-dot"></i></div>
+        <div class="address-text">
+          <span>Direccion de entrega</span>
+          <div id="detDireccion">-</div>
+        </div>
+      </div>
+
+      <!-- Share -->
+      <button class="share-btn" onclick="compartir()">
+        <i class="fas fa-share-nodes"></i>Compartir estado del envio
+      </button>
+
+      <!-- Footer link -->
+      <div style="text-align:center;margin-top:16px">
+        <a href="ayuda-cliente.html" style="font-size:var(--font-xs);color:var(--text-muted)">
+          <i class="fas fa-circle-question" style="margin-right:4px"></i>Necesitas ayuda?
+        </a>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API = 'http://localhost:5000';
     let trackingData = null;
+    let map = null;
 
     async function buscarPedido() {
       const token = document.getElementById('tokenInput').value.trim();
-      if (!token) { alert('Ingresa un token'); return; }
-
+      if (!token) { Utils.toast('Ingresa un token', 'warning'); return; }
       try {
         const r = await fetch(`${API}/api/cliente-final/${token}`);
         const d = await r.json();
@@ -150,121 +409,117 @@
           trackingData = d.data;
           mostrarTracking(d.data);
         } else {
-          alert('Token no encontrado. Verifica el token.');
+          Utils.toast('Token no encontrado. Verifica el token.', 'error');
         }
-      } catch(e) { alert('Error de conexion'); }
+      } catch(e) { Utils.toast('Error de conexion', 'error'); }
     }
 
     async function buscarPorPedido() {
       const ped = document.getElementById('pedidoInput').value.trim();
-      if (!ped) { alert('Ingresa un numero de pedido'); return; }
-      alert('Buscando pedido: ' + ped);
+      if (!ped) { Utils.toast('Ingresa un numero de pedido', 'warning'); return; }
+      Utils.toast('Buscando pedido: ' + ped, 'info');
     }
 
     function mostrarTracking(d) {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('trackingScreen').style.display = 'block';
-      document.getElementById('bottomNav').style.display = 'flex';
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appHeader').style.display = 'flex';
+      document.getElementById('mapHero').style.display = 'block';
+      document.getElementById('bottomSheet').style.display = 'block';
 
-      // Pedido card
-      const estadoClass = getEstadoClass(d.PED_ESTADO);
-      document.getElementById('pedidoCard').innerHTML = `
-        <div class="pedido-header">
-          <span class="pedido-num">${d.PED_NUMERO || 'N/A'}</span>
-          <span class="pedido-estado ${estadoClass}">${d.PED_ESTADO || 'PENDIENTE'}</span>
-        </div>
-        <div class="pedido-destino">📍 ${d.PED_DESTINO_DIR || ''}, ${d.PED_DESTINO_COL || ''}</div>
-        <div class="pedido-info">
-          <span>📦 ${d.PED_BULTOS || 0} bultos</span>
-          <span>📅 ${formatDate(d.PED_FECHA_PEDIDO)}</span>
-        </div>
-      `;
+      // Header badge
+      document.getElementById('pedNum').textContent = d.PED_NUMERO || 'Sin numero';
+      const estado = (d.PED_ESTADO || 'PENDIENTE').replace('_', ' ');
+      document.getElementById('pedEstado').textContent = estado;
+      setEstadoBadge(d.PED_ESTADO);
 
-      // Mapa con ubicacion actual
+      // ETA
+      const eta = d.ETA_ENTREGA ? Utils.datetime(d.ETA_ENTREGA) : 'Calculando...';
+      document.getElementById('etaValue').textContent = eta;
+
+      // Details
+      document.getElementById('detBultos').textContent = (d.PED_BULTOS || 0) + ' bultos';
+      document.getElementById('detFecha').textContent = Utils.date(d.PED_FECHA_PEDIDO);
+      document.getElementById('detPeso').textContent = d.PED_PESO ? d.PED_PESO + ' kg' : '-';
+      document.getElementById('detRef').textContent = d.PED_REF_CLIENTE || '-';
+      document.getElementById('detDireccion').textContent =
+        `${d.PED_DESTINO_DIR || ''}, ${d.PED_DESTINO_COL || ''}, ${d.PED_DESTINO_CIUDAD || ''}`;
+
+      // Driver
+      if (d.CHO_NOMBRE) {
+        document.getElementById('driverCard').style.display = 'flex';
+        document.getElementById('driverAvatar').textContent = (d.CHO_NOMBRE || '?')[0];
+        document.getElementById('driverName').textContent = `${d.CHO_NOMBRE} ${d.CHO_APELLIDO || ''}`;
+      }
+
+      // Timeline progress
+      setTimelineStep(d.PED_ESTADO);
+
+      // Map
+      initMap(d);
+    }
+
+    function setEstadoBadge(estado) {
+      const el = document.getElementById('pedEstado');
+      el.className = 'status-badge-lg';
+      const map = {
+        'PENDIENTE': 'pending', 'ASIGNADO': 'pending',
+        'RECOGIDO': 'picked', 'EN_RUTA': 'transit',
+        'ENTREGADO': 'delivered', 'FALLIDO': 'pending', 'CANCELADO': 'pending'
+      };
+      el.classList.add(map[estado] || 'pending');
+    }
+
+    function setTimelineStep(estado) {
+      const steps = {1:'PENDIENTE', 2:'ASIGNADO', 3:'RECOGIDO', 4:'EN_RUTA', 5:'ENTREGADO'};
+      const currentState = { 'PENDIENTE':1, 'ASIGNADO':2, 'RECOGIDO':3, 'EN_RUTA':4, 'ENTREGADO':5 };
+      const current = currentState[estado] || 1;
+
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('step' + i);
+        el.classList.remove('done', 'current');
+        if (i < current) el.classList.add('done');
+        else if (i === current) el.classList.add('current');
+      }
+
+      const pct = ((current - 1) / 3) * 100;
+      document.getElementById('timelineProgress').style.width = pct + '%';
+    }
+
+    function initMap(d) {
+      let lat = 19.4326, lng = -99.1332;
       if (d.UBICACION_ACTUAL) {
         const coords = d.UBICACION_ACTUAL.split(',');
-        document.getElementById('mapCard').innerHTML = `
-          <div style="text-align:center;padding:20px">
-            <p style="font-size:2rem;margin-bottom:8px">📍</p>
-            <p style="font-weight:600">Chofer en camino</p>
-            <p style="font-size:0.8rem;color:var(--gray)">Lat: ${coords[0]} | Lng: ${coords[1]}</p>
-            <a href="https://www.google.com/maps?q=${d.UBICACION_ACTUAL}" target="_blank" style="display:inline-block;margin-top:12px;color:var(--primary);font-weight:600;text-decoration:none">Abrir en Google Maps →</a>
-          </div>
-        `;
+        lat = parseFloat(coords[0]) || lat;
+        lng = parseFloat(coords[1]) || lng;
       }
 
-      // Chofer card
-      if (d.CHO_NOMBRE) {
-        document.getElementById('choferCard').classList.remove('hidden');
-        document.getElementById('choferCard').innerHTML = `
-          <div class="chofer-row">
-            <div class="chofer-avatar">${(d.CHO_NOMBRE||'?')[0]}</div>
-            <div class="chofer-info">
-              <h4>${d.CHO_NOMBRE} ${d.CHO_APELLIDO || ''}</h4>
-              <p>Tu chofer asignado</p>
-            </div>
-          </div>
-          <div class="chofer-actions">
-            <button class="chofer-btn btn-call" onclick="llamar()">📞 Llamar</button>
-            <button class="chofer-btn btn-whatsapp" onclick="whatsapp()">💬 WhatsApp</button>
-          </div>
-        `;
+      map = L.map('trackingMap', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([lat, lng], 14);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      const marker = L.marker([lat, lng]).addTo(map)
+        .bindPopup(`<b>${d.CHO_NOMBRE || 'Chofer'}</b><br>Ubicacion actual`).openPopup();
+
+      // Add delivery destination
+      if (d.PED_DESTINO_LAT && d.PED_DESTINO_LNG) {
+        const destMarker = L.marker([d.PED_DESTINO_LAT, d.PED_DESTINO_LNG], {
+          icon: L.divIcon({
+            className: 'custom-dest-icon',
+            html: '<div style="width:24px;height:24px;border-radius:50%;background:#10b981;border:3px solid white;display:flex;align-items:center;justify-content:center"><i class="fas fa-home" style="color:white;font-size:10px"></i></div>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          })
+        }).addTo(map).bindPopup('Destino de entrega');
       }
 
-      // Timeline
-      cargarTimeline(d.CLIF_TOKEN_TRACKING);
-    }
-
-    async function cargarTimeline(token) {
-      try {
-        const r = await fetch(`${API}/api/cliente-final/${token}/timeline`);
-        const d = await r.json();
-        const body = document.getElementById('timelineBody');
-        body.innerHTML = '';
-
-        const pasos = [
-          {estado:'Pedido creado', icono:'📦', completado:true},
-          {estado:'Asignado a chofer', icono:'👤', completado:d.data && d.data.length > 0},
-          {estado:'En camino', icono:'🚚', completado:trackingData?.PED_ESTADO === 'EN_RUTA' || trackingData?.PED_ESTADO === 'ENTREGADO'},
-          {estado:'Entregado', icono:'✅', completado:trackingData?.PED_ESTADO === 'ENTREGADO'}
-        ];
-
-        pasos.forEach(p => {
-          body.innerHTML += `
-            <div class="tl-item">
-              <div class="tl-dot ${p.completado ? 'active' : 'pending'}">${p.icono}</div>
-              <div class="tl-content">
-                <h4>${p.estado}</h4>
-                <p>${p.completado ? 'Completado' : 'Pendiente'}</p>
-              </div>
-            </div>
-          `;
-        });
-
-        if (d.data) {
-          d.data.forEach(h => {
-            body.innerHTML += `
-              <div class="tl-item">
-                <div class="tl-dot active">📋</div>
-                <div class="tl-content">
-                  <h4>${h.estado || 'Evento'}</h4>
-                  <p>${h.fecha || ''} ${h.usuario ? '- ' + h.usuario : ''}</p>
-                </div>
-              </div>
-            `;
-          });
-        }
-      } catch(e) {}
-    }
-
-    function getEstadoClass(estado) {
-      const map = {'PENDIENTE':'estado-pendiente','ASIGNADO':'estado-asignado','EN_RUTA':'estado-ruta','ENTREGADO':'estado-entregado','FALLIDO':'estado-fallido','CANCELADO':'estado-fallido'};
-      return map[estado] || 'estado-pendiente';
-    }
-
-    function formatDate(s) {
-      if (!s) return '';
-      return new Date(s).toLocaleDateString('es-MX');
+      setTimeout(() => map.invalidateSize(), 100);
     }
 
     function llamar() {
@@ -282,14 +537,11 @@
         navigator.share({title:'Mi Envio', text:'Rastrea mi paquete', url:window.location.href});
       } else {
         navigator.clipboard.writeText(window.location.href);
-        alert('Link copiado al portapapeles');
+        Utils.toast('Link copiado al portapapeles', 'success');
       }
     }
 
-    function showSection(s) {
-      document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-    }
+    document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
   </script>
 </body>
 </html>
