@@ -9,35 +9,34 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
-      --blue-900: #1e3a5f;
-      --blue-700: #1a56db;
-      --blue-600: #2563eb;
-      --blue-500: #3b82f6;
-      --blue-50: #eff6ff;
-      --blue-100: #dbeafe;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-300: #d1d5db;
-      --gray-400: #9ca3af;
-      --gray-500: #6b7280;
-      --gray-600: #4b5563;
-      --gray-700: #374151;
-      --gray-800: #1f2937;
-      --gray-900: #111827;
+      --navy-950: #020617;
+      --navy-900: #0a1628;
+      --navy-800: #0f1f3d;
+      --navy-700: #162550;
+      --navy-600: #1e3a5f;
+      --navy-500: #2563eb;
+      --orange-500: #f97316;
+      --orange-400: #fb923c;
+      --orange-600: #ea580c;
       --white: #ffffff;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-600: #475569;
       --green-500: #22c55e;
-      --green-100: #dcfce7;
-      --amber-500: #f59e0b;
-      --amber-100: #fef3c7;
+      --green-400: #4ade80;
+      --blue-500: #3b82f6;
+      --blue-400: #60a5fa;
       --red-500: #ef4444;
-      --red-100: #fee2e2;
+      --amber-500: #f59e0b;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--white);
-      color: var(--gray-900);
+      background: var(--navy-950);
+      color: var(--white);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
@@ -45,8 +44,8 @@
     /* NAV */
     .nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: var(--white);
-      border-bottom: 1px solid var(--gray-200);
+      background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .nav-inner {
       max-width: 1200px; margin: 0 auto;
@@ -56,23 +55,23 @@
     .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-brand-icon {
       width: 32px; height: 32px; border-radius: 8px;
-      background: var(--blue-700); color: var(--white);
-      display: flex; align-items: center; justify-content: center; font-size: 14px;
+      background: var(--orange-500); color: var(--navy-950);
+      display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
     }
-    .nav-brand span { font-weight: 700; font-size: 17px; color: var(--gray-900); }
+    .nav-brand span { font-weight: 700; font-size: 17px; color: var(--white); }
     .nav-links { display: flex; gap: 32px; list-style: none; }
-    .nav-links a { color: var(--gray-500); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
-    .nav-links a:hover { color: var(--gray-900); }
+    .nav-links a { color: var(--gray-400); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--white); }
     .nav-cta { display: flex; gap: 10px; align-items: center; }
     .btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
       border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;
       border: none; cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
-    .btn-primary { background: var(--blue-700); color: var(--white); }
-    .btn-primary:hover { background: var(--blue-600); }
-    .btn-outline { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-300); }
-    .btn-outline:hover { border-color: var(--gray-400); color: var(--gray-900); }
+    .btn-orange { background: var(--orange-500); color: var(--white); }
+    .btn-orange:hover { background: var(--orange-400); }
+    .btn-ghost { background: transparent; color: var(--gray-300); border: 1px solid rgba(255,255,255,0.12); }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
     .btn-lg { padding: 12px 24px; font-size: 15px; }
 
     /* HERO */
@@ -83,107 +82,107 @@
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 6px 14px; border-radius: 6px;
-      background: var(--blue-50); border: 1px solid var(--blue-100);
-      font-size: 13px; font-weight: 500; color: var(--blue-700); margin-bottom: 20px;
+      background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2);
+      font-size: 13px; font-weight: 500; color: var(--orange-400); margin-bottom: 20px;
     }
     .hero h1 {
       font-size: clamp(36px, 5vw, 52px); font-weight: 800; line-height: 1.1;
-      color: var(--gray-900); margin-bottom: 20px;
+      color: var(--white); margin-bottom: 20px;
     }
-    .hero h1 span { color: var(--blue-700); }
-    .hero p { font-size: 17px; color: var(--gray-500); line-height: 1.7; margin-bottom: 32px; max-width: 480px; }
+    .hero h1 span { color: var(--orange-500); }
+    .hero p { font-size: 17px; color: var(--gray-400); line-height: 1.7; margin-bottom: 32px; max-width: 480px; }
     .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
-    .hero-trust { font-size: 13px; color: var(--gray-400); }
+    .hero-trust { font-size: 13px; color: var(--gray-500); }
     .hero-trust i { color: var(--green-500); margin-right: 4px; }
     .hero-visual {
-      background: var(--gray-50); border: 1px solid var(--gray-200);
-      border-radius: 16px; padding: 24px; position: relative;
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 20px; position: relative;
     }
     .hero-visual img { width: 100%; border-radius: 10px; display: block; }
-    .hero-stats {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
-    }
+    .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
     .hero-stat {
-      background: var(--white); border: 1px solid var(--gray-200);
-      border-radius: 10px; padding: 14px 16px;
+      background: var(--navy-800); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px; padding: 12px 14px;
     }
-    .hero-stat .val { font-size: 22px; font-weight: 800; color: var(--gray-900); }
-    .hero-stat .label { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+    .hero-stat .val { font-size: 20px; font-weight: 800; color: var(--white); }
+    .hero-stat .label { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
 
     /* SECTION COMMON */
     .section { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
     .section-header { text-align: center; margin-bottom: 48px; }
     .section-tag {
       font-size: 12px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1.5px; color: var(--blue-700); margin-bottom: 12px;
+      letter-spacing: 1.5px; color: var(--orange-500); margin-bottom: 12px;
     }
-    .section-header h2 { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; color: var(--gray-900); margin-bottom: 12px; }
-    .section-header p { font-size: 16px; color: var(--gray-500); max-width: 520px; margin: 0 auto; }
+    .section-header h2 { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; color: var(--white); margin-bottom: 12px; }
+    .section-header p { font-size: 16px; color: var(--gray-400); max-width: 520px; margin: 0 auto; }
 
     /* TRUST LOGOS */
-    .trust { padding: 60px 40px; border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100); }
+    .trust { padding: 48px 40px; border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); }
     .trust-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
-    .trust-label { font-size: 13px; color: var(--gray-400); font-weight: 500; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1px; }
+    .trust-label { font-size: 12px; color: var(--gray-500); font-weight: 500; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
     .trust-logos { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
-    .trust-logo { font-size: 18px; font-weight: 700; color: var(--gray-300); letter-spacing: 0.5px; }
+    .trust-logo { font-size: 16px; font-weight: 700; color: var(--gray-600); letter-spacing: 0.5px; }
 
     /* METRICS */
     .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     .metric-card {
-      background: var(--gray-50); border: 1px solid var(--gray-200);
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px; padding: 24px; text-align: center;
+      transition: border-color 0.2s;
     }
-    .metric-icon { font-size: 20px; color: var(--blue-700); margin-bottom: 10px; }
-    .metric-val { font-size: 32px; font-weight: 800; color: var(--gray-900); }
-    .metric-val .unit { font-size: 16px; color: var(--blue-700); }
-    .metric-label { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+    .metric-card:hover { border-color: rgba(249, 115, 22, 0.3); }
+    .metric-icon { font-size: 20px; color: var(--orange-500); margin-bottom: 10px; }
+    .metric-val { font-size: 30px; font-weight: 800; color: var(--white); }
+    .metric-val .unit { font-size: 16px; color: var(--orange-500); }
+    .metric-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
 
     /* FEATURES */
     .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .feature-card {
-      background: var(--white); border: 1px solid var(--gray-200);
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px; padding: 24px; transition: border-color 0.2s;
     }
-    .feature-card:hover { border-color: var(--blue-500); }
+    .feature-card:hover { border-color: rgba(249, 115, 22, 0.3); }
     .feature-card .icon {
       width: 40px; height: 40px; border-radius: 10px;
-      background: var(--blue-50); color: var(--blue-700);
+      background: rgba(249, 115, 22, 0.1); color: var(--orange-500);
       display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 14px;
     }
-    .feature-card h3 { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
-    .feature-card p { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .feature-card p { font-size: 13px; color: var(--gray-400); line-height: 1.6; }
 
     /* COMPARISON TABLE */
     .compare-table-wrap {
-      background: var(--white); border: 1px solid var(--gray-200);
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px; overflow: hidden;
     }
     .compare-table { width: 100%; border-collapse: collapse; }
     .compare-table thead th {
       padding: 14px 20px; text-align: left; font-size: 13px; font-weight: 700;
-      border-bottom: 2px solid var(--gray-200); background: var(--gray-50);
-      color: var(--gray-600);
+      border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--navy-800);
+      color: var(--gray-400);
     }
-    .compare-table thead th.hl { color: var(--blue-700); background: var(--blue-50); }
+    .compare-table thead th.hl { color: var(--orange-500); background: rgba(249, 115, 22, 0.08); }
     .compare-table tbody td {
-      padding: 12px 20px; font-size: 13px; border-bottom: 1px solid var(--gray-100);
-      color: var(--gray-600);
+      padding: 12px 20px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--gray-400);
     }
     .compare-table tbody tr:last-child td { border-bottom: none; }
-    .compare-table tbody td:first-child { font-weight: 500; color: var(--gray-700); }
-    .compare-table tbody td.hl { background: var(--blue-50); font-weight: 600; color: var(--gray-900); }
-    .compare-table .check { color: var(--green-500); }
-    .compare-table .cross { color: var(--gray-300); }
+    .compare-table tbody td:first-child { font-weight: 500; color: var(--gray-300); }
+    .compare-table tbody td.hl { background: rgba(249, 115, 22, 0.05); font-weight: 600; color: var(--white); }
+    .compare-table .check { color: var(--green-400); }
+    .compare-table .cross { color: var(--gray-600); }
     .compare-table .partial { color: var(--amber-500); }
 
     /* DASHBOARD PREVIEW */
     .preview-window {
-      background: var(--white); border: 1px solid var(--gray-200);
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px; overflow: hidden;
     }
     .preview-topbar {
       display: flex; align-items: center; gap: 6px; padding: 10px 14px;
-      background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
+      background: var(--navy-800); border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
     .preview-dot.r { background: #ef4444; }
@@ -191,106 +190,111 @@
     .preview-dot.g { background: #22c55e; }
     .preview-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .preview-map {
-      background: var(--gray-50); border: 1px solid var(--gray-200);
+      background: var(--navy-800); border: 1px solid rgba(255,255,255,0.05);
       border-radius: 10px; min-height: 260px;
       display: flex; align-items: center; justify-content: center;
       position: relative; overflow: hidden;
     }
     .preview-stats { display: flex; flex-direction: column; gap: 12px; }
     .preview-stat {
-      background: var(--gray-50); border: 1px solid var(--gray-200);
+      background: var(--navy-800); border: 1px solid rgba(255,255,255,0.05);
       border-radius: 10px; padding: 14px 18px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .preview-stat .label { font-size: 12px; color: var(--gray-400); }
-    .preview-stat .value { font-size: 18px; font-weight: 700; }
-    .preview-stat .value.green { color: var(--green-500); }
-    .preview-stat .value.blue { color: var(--blue-700); }
-    .preview-stat .value.amber { color: var(--amber-500); }
+    .preview-stat .label { font-size: 12px; color: var(--gray-500); }
+    .preview-stat .value { font-size: 18px; font-weight: 700; color: var(--white); }
+    .preview-stat .value.green { color: var(--green-400); }
+    .preview-stat .value.orange { color: var(--orange-400); }
+    .preview-stat .value.blue { color: var(--blue-400); }
     .status-badge {
       display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
       border-radius: 6px; font-size: 11px; font-weight: 600;
-      background: var(--green-100); color: var(--green-500);
+      background: rgba(34, 197, 94, 0.1); color: var(--green-400);
     }
-    .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green-500); }
+    .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green-400); }
 
     /* HOW IT WORKS */
     .how-intro {
       display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
       margin-bottom: 48px;
     }
-    .how-intro img { width: 100%; border-radius: 12px; border: 1px solid var(--gray-200); object-fit: cover; height: 220px; }
-    .how-intro p { font-size: 15px; color: var(--gray-500); line-height: 1.8; }
-    .how-intro strong { color: var(--gray-900); }
+    .how-intro img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); object-fit: cover; height: 220px; }
+    .how-intro p { font-size: 15px; color: var(--gray-400); line-height: 1.8; }
+    .how-intro strong { color: var(--white); }
     .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .step {
-      background: var(--gray-50); border: 1px solid var(--gray-200);
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px; padding: 24px; text-align: center;
     }
     .step-num {
       width: 36px; height: 36px; border-radius: 50%;
-      background: var(--blue-700); color: var(--white);
+      background: var(--orange-500); color: var(--navy-950);
       display: inline-flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 16px; margin-bottom: 14px;
     }
-    .step h3 { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
-    .step p { font-size: 13px; color: var(--gray-500); line-height: 1.5; }
+    .step h3 { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--gray-400); line-height: 1.5; }
 
     /* PRICING */
     .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .price-card {
-      background: var(--white); border: 1px solid var(--gray-200);
+      background: var(--navy-900); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px; padding: 28px; position: relative; transition: border-color 0.2s;
     }
-    .price-card:hover { border-color: var(--gray-300); }
-    .price-card.popular { border-color: var(--blue-700); box-shadow: 0 0 0 1px var(--blue-700); }
+    .price-card:hover { border-color: rgba(255,255,255,0.12); }
+    .price-card.popular { border-color: var(--orange-500); box-shadow: 0 0 40px rgba(249, 115, 22, 0.1); }
     .price-popular-tag {
       position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-      background: var(--blue-700); color: var(--white); padding: 4px 12px;
-      border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+      background: var(--orange-500); color: var(--navy-950); padding: 4px 12px;
+      border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase;
     }
-    .price-card h3 { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
-    .price-card .desc { font-size: 13px; color: var(--gray-400); margin-bottom: 16px; }
-    .price-val { font-size: 40px; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
-    .price-val .currency { font-size: 20px; vertical-align: top; color: var(--gray-400); }
-    .price-val .period { font-size: 15px; color: var(--gray-400); font-weight: 400; }
+    .price-card h3 { font-size: 17px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+    .price-card .desc { font-size: 13px; color: var(--gray-500); margin-bottom: 16px; }
+    .price-val { font-size: 40px; font-weight: 800; color: var(--white); margin-bottom: 4px; }
+    .price-val .currency { font-size: 20px; vertical-align: top; color: var(--gray-500); }
+    .price-val .period { font-size: 15px; color: var(--gray-500); font-weight: 400; }
     .price-features { list-style: none; margin: 20px 0; }
     .price-features li {
-      padding: 6px 0; font-size: 13px; color: var(--gray-600);
+      padding: 6px 0; font-size: 13px; color: var(--gray-400);
       display: flex; align-items: center; gap: 10px;
     }
-    .price-features li i { color: var(--green-500); font-size: 13px; width: 16px; }
+    .price-features li i { color: var(--green-400); font-size: 13px; width: 16px; }
     .price-card .btn { width: 100%; justify-content: center; }
 
     /* FAQ */
     .faq { max-width: 800px; margin: 0 auto; }
-    .faq-item { border-bottom: 1px solid var(--gray-200); padding: 18px 0; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 18px 0; }
     .faq-q {
       display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; font-size: 14px; font-weight: 600; color: var(--gray-900);
+      cursor: pointer; font-size: 14px; font-weight: 600; color: var(--white);
     }
-    .faq-q i { color: var(--gray-400); transition: transform 0.3s; font-size: 12px; }
+    .faq-q i { color: var(--gray-500); transition: transform 0.3s; font-size: 12px; }
     .faq-a {
       max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-      font-size: 13px; color: var(--gray-500); line-height: 1.7;
+      font-size: 13px; color: var(--gray-400); line-height: 1.7;
     }
     .faq-item.open .faq-a { max-height: 200px; padding-top: 10px; }
     .faq-item.open .faq-q i { transform: rotate(180deg); }
 
     /* FINAL CTA */
     .final-cta {
-      background: var(--blue-700); color: var(--white);
+      background: var(--navy-800); border-top: 1px solid rgba(255,255,255,0.06);
       padding: 80px 40px; text-align: center;
     }
     .final-cta h2 { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; margin-bottom: 12px; }
-    .final-cta p { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 28px; }
-    .final-cta .btn { background: var(--white); color: var(--blue-700); }
-    .final-cta .btn:hover { background: var(--gray-100); }
+    .final-cta p { font-size: 16px; color: var(--gray-400); margin-bottom: 28px; }
 
     /* FOOTER */
     .footer {
-      padding: 40px; border-top: 1px solid var(--gray-200);
-      text-align: center; font-size: 13px; color: var(--gray-400);
+      padding: 40px; border-top: 1px solid rgba(255,255,255,0.04);
+      text-align: center; font-size: 13px; color: var(--gray-600);
+    }
+
+    /* DIVIDER LINE */
+    .divider {
+      max-width: 1200px; margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(249,115,22,0.2), transparent);
     }
 
     /* RESPONSIVE */
@@ -326,8 +330,8 @@
         <li><a href="#faq">FAQ</a></li>
       </ul>
       <div class="nav-cta">
-        <a href="/login" class="btn btn-outline">Iniciar sesion</a>
-        <a href="onboarding.html" class="btn btn-primary">Crear empresa</a>
+        <a href="/login" class="btn btn-ghost">Iniciar sesion</a>
+        <a href="onboarding.html" class="btn btn-orange">Crear empresa</a>
       </div>
     </div>
   </nav>
@@ -339,12 +343,12 @@
         <i class="fas fa-bolt"></i> Plataforma de delivery para Mexico
       </div>
       <h1>La plataforma de delivery <span>que tu empresa necesita</span></h1>
-      <p>Gestiona envios, rutas, facturacion ytracking en un solo lugar. Whitelabel, con IA y Cumplimiento SAT. Sin comisiones por envio.</p>
+      <p>Gestiona envios, rutas, facturacion y tracking en un solo lugar. Whitelabel, con IA y Cumplimiento SAT. Sin comisiones por envio.</p>
       <div class="hero-actions">
-        <a href="onboarding.html" class="btn btn-primary btn-lg">
+        <a href="onboarding.html" class="btn btn-orange btn-lg">
           <i class="fas fa-rocket"></i> Comenzar gratis
         </a>
-        <a href="#preview" class="btn btn-outline btn-lg">
+        <a href="#preview" class="btn btn-ghost btn-lg">
           <i class="fas fa-play"></i> Ver demo
         </a>
       </div>
@@ -389,11 +393,14 @@
     </div>
   </section>
 
+  <!-- DIVIDER -->
+  <div class="divider"></div>
+
   <!-- METRICS -->
   <section class="section">
     <div class="section-header">
       <div class="section-tag">Resultados comprobados</div>
-      <h2>Numero que hablan por si solos</h2>
+      <h2>Numeros que hablan por si solos</h2>
       <p>Operaciones reales que corren en nuestra plataforma diariamente.</p>
     </div>
     <div class="metrics-grid">
@@ -421,47 +428,48 @@
   </section>
 
   <!-- FEATURES -->
-  <section class="section" id="features" style="background:var(--gray-50);max-width:100%;padding-left:calc((100% - 1120px)/2);padding-right:calc((100% - 1120px)/2);">
-    <div style="max-width:1200px;margin:0 auto;">
-      <div class="section-header">
-        <div class="section-tag">Plataforma completa</div>
-        <h2>Todo lo que necesitas en un solo sistema</h2>
-        <p>De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.</p>
+  <section class="section" id="features">
+    <div class="section-header">
+      <div class="section-tag">Plataforma completa</div>
+      <h2>Todo lo que necesitas en un solo sistema</h2>
+      <p>De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon"><i class="fas fa-satellite-dish"></i></div>
+        <h3>GPS en tiempo real</h3>
+        <p>Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.</p>
       </div>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="icon"><i class="fas fa-satellite-dish"></i></div>
-          <h3>GPS en tiempo real</h3>
-          <p>Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon"><i class="fas fa-brain"></i></div>
-          <h3>IA optimiza rutas</h3>
-          <p>Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
-          <h3>Facturacion CFDI 4.0</h3>
-          <p>Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon"><i class="fas fa-credit-card"></i></div>
-          <h3>Pagos OXXO + MercadoPago</h3>
-          <p>Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon"><i class="fas fa-mobile-screen-button"></i></div>
-          <h3>App chofer movil</h3>
-          <p>PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon"><i class="fas fa-palette"></i></div>
-          <h3>100% tu marca</h3>
-          <p>Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.</p>
-        </div>
+      <div class="feature-card">
+        <div class="icon"><i class="fas fa-brain"></i></div>
+        <h3>IA optimiza rutas</h3>
+        <p>Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
+        <h3>Facturacion CFDI 4.0</h3>
+        <p>Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="fas fa-credit-card"></i></div>
+        <h3>Pagos OXXO + MercadoPago</h3>
+        <p>Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="fas fa-mobile-screen-button"></i></div>
+        <h3>App chofer movil</h3>
+        <p>PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="fas fa-palette"></i></div>
+        <h3>100% tu marca</h3>
+        <p>Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.</p>
       </div>
     </div>
   </section>
+
+  <!-- DIVIDER -->
+  <div class="divider"></div>
 
   <!-- COMPARISON TABLE -->
   <section class="section">
@@ -554,7 +562,7 @@
           </tr>
           <tr>
             <td>Costo mensual</td>
-            <td class="hl" style="color:var(--blue-700);font-weight:700;">$999 - $5,999</td>
+            <td class="hl" style="color:var(--orange-500);font-weight:700;">$999 - $5,999</td>
             <td>Por envio</td>
             <td>Por envio</td>
             <td>$50,000 - $200,000+</td>
@@ -565,62 +573,63 @@
   </section>
 
   <!-- DASHBOARD PREVIEW -->
-  <section class="section" id="preview" style="background:var(--gray-50);max-width:100%;padding-left:calc((100% - 1120px)/2);padding-right:calc((100% - 1120px)/2);">
-    <div style="max-width:1200px;margin:0 auto;">
-      <div class="section-header">
-        <div class="section-tag">Producto en accion</div>
-        <h2>Asi se ve tu plataforma</h2>
-        <p>Dashboard en tiempo real con mapa, metricas y control total de operaciones.</p>
+  <section class="section" id="preview">
+    <div class="section-header">
+      <div class="section-tag">Producto en accion</div>
+      <h2>Asi se ve tu plataforma</h2>
+      <p>Dashboard en tiempo real con mapa, metricas y control total de operaciones.</p>
+    </div>
+    <div class="preview-window">
+      <div class="preview-topbar">
+        <div class="preview-dot r"></div>
+        <div class="preview-dot y"></div>
+        <div class="preview-dot g"></div>
+        <span style="font-size:12px;color:var(--gray-500);margin-left:10px;font-family:monospace;">lastmile.app/dashboard</span>
       </div>
-      <div class="preview-window">
-        <div class="preview-topbar">
-          <div class="preview-dot r"></div>
-          <div class="preview-dot y"></div>
-          <div class="preview-dot g"></div>
-          <span style="font-size:12px;color:var(--gray-400);margin-left:10px;font-family:monospace;">lastmile.app/dashboard</span>
-        </div>
-        <div class="preview-body">
-          <div class="preview-map" style="background-image:url('img/map-tracker.webp');background-size:cover;background-position:center;">
-            <div style="position:absolute;inset:0;background:rgba(255,255,255,0.6);"></div>
-            <div style="position:relative;z-index:1;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;">
-              <div style="width:6px;height:6px;border-radius:50%;background:var(--green-500);animation:pulse 2s infinite;"></div>
-              <span style="font-size:13px;font-weight:600;color:var(--gray-700);">12 choferes activos en mapa</span>
-            </div>
+      <div class="preview-body">
+        <div class="preview-map" style="background-image:url('img/map-tracker.webp');background-size:cover;background-position:center;">
+          <div style="position:absolute;inset:0;background:rgba(2,6,23,0.5);"></div>
+          <div style="position:relative;z-index:1;background:var(--navy-900);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--orange-500);"></div>
+            <span style="font-size:13px;font-weight:600;color:var(--orange-400);">12 choferes activos en mapa</span>
           </div>
-          <div class="preview-stats">
-            <div class="preview-stat">
-              <div>
-                <div class="label">Envios activos</div>
-                <div class="value green">47</div>
-              </div>
-              <div class="status-badge">En curso</div>
+        </div>
+        <div class="preview-stats">
+          <div class="preview-stat">
+            <div>
+              <div class="label">Envios activos</div>
+              <div class="value green">47</div>
             </div>
-            <div class="preview-stat">
-              <div>
-                <div class="label">Choferes en ruta</div>
-                <div class="value blue">12</div>
-              </div>
-              <div class="status-badge">GPS activo</div>
+            <div class="status-badge">En curso</div>
+          </div>
+          <div class="preview-stat">
+            <div>
+              <div class="label">Choferes en ruta</div>
+              <div class="value blue">12</div>
             </div>
-            <div class="preview-stat">
-              <div>
-                <div class="label">Entregas completadas hoy</div>
-                <div class="value amber">89</div>
-              </div>
-              <div style="font-size:12px;color:var(--green-500);font-weight:500;">+23% vs ayer</div>
+            <div class="status-badge">GPS activo</div>
+          </div>
+          <div class="preview-stat">
+            <div>
+              <div class="label">Entregas completadas hoy</div>
+              <div class="value orange">89</div>
             </div>
-            <div class="preview-stat">
-              <div>
-                <div class="label">Facturacion del mes</div>
-                <div class="value green">$847,200</div>
-              </div>
-              <div style="font-size:12px;color:var(--blue-700);font-weight:500;">CFDI 4.0</div>
+            <div style="font-size:12px;color:var(--green-400);font-weight:500;">+23% vs ayer</div>
+          </div>
+          <div class="preview-stat">
+            <div>
+              <div class="label">Facturacion del mes</div>
+              <div class="value green">$847,200</div>
             </div>
+            <div style="font-size:12px;color:var(--orange-400);font-weight:500;">CFDI 4.0</div>
           </div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- DIVIDER -->
+  <div class="divider"></div>
 
   <!-- HOW IT WORKS -->
   <section class="section" id="how">
@@ -653,58 +662,56 @@
   </section>
 
   <!-- PRICING -->
-  <section class="section" id="pricing" style="background:var(--gray-50);max-width:100%;padding-left:calc((100% - 1120px)/2);padding-right:calc((100% - 1120px)/2);">
-    <div style="max-width:1200px;margin:0 auto;">
-      <div class="section-header">
-        <div class="section-tag">Precios transparentes</div>
-        <h2>Cuota fija. Sin sorpresas.</h2>
-        <p>Sin comisiones por envio. Cancela cuando quieras.</p>
+  <section class="section" id="pricing">
+    <div class="section-header">
+      <div class="section-tag">Precios transparentes</div>
+      <h2>Cuota fija. Sin sorpresas.</h2>
+      <p>Sin comisiones por envio. Cancela cuando quieras.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>Starter</h3>
+        <div class="desc">Micro-paqueterias y emprendedores</div>
+        <div class="price-val"><span class="currency">$</span>999<span class="period">/mes</span></div>
+        <ul class="price-features">
+          <li><i class="fas fa-check"></i> 200 envios/mes</li>
+          <li><i class="fas fa-check"></i> 3 choferes</li>
+          <li><i class="fas fa-check"></i> GPS en tiempo real</li>
+          <li><i class="fas fa-check"></i> Facturacion CFDI 4.0</li>
+          <li><i class="fas fa-check"></i> Portal cliente</li>
+        </ul>
+        <a href="onboarding.html" class="btn btn-ghost" style="width:100%;justify-content:center;">Empezar</a>
       </div>
-      <div class="pricing-grid">
-        <div class="price-card">
-          <h3>Starter</h3>
-          <div class="desc">Micro-paqueterias y emprendedores</div>
-          <div class="price-val"><span class="currency">$</span>999<span class="period">/mes</span></div>
-          <ul class="price-features">
-            <li><i class="fas fa-check"></i> 200 envios/mes</li>
-            <li><i class="fas fa-check"></i> 3 choferes</li>
-            <li><i class="fas fa-check"></i> GPS en tiempo real</li>
-            <li><i class="fas fa-check"></i> Facturacion CFDI 4.0</li>
-            <li><i class="fas fa-check"></i> Portal cliente</li>
-          </ul>
-          <a href="onboarding.html" class="btn btn-outline" style="width:100%;justify-content:center;">Empezar</a>
-        </div>
-        <div class="price-card popular">
-          <div class="price-popular-tag">Mas popular</div>
-          <h3>Pro</h3>
-          <div class="desc">Empresas en crecimiento</div>
-          <div class="price-val"><span class="currency">$</span>2,499<span class="period">/mes</span></div>
-          <ul class="price-features">
-            <li><i class="fas fa-check"></i> 1,000 envios/mes</li>
-            <li><i class="fas fa-check"></i> 15 choferes</li>
-            <li><i class="fas fa-check"></i> Todo del Starter</li>
-            <li><i class="fas fa-check"></i> Optimizacion IA rutas</li>
-            <li><i class="fas fa-check"></i> Pagos OXXO + MP</li>
-            <li><i class="fas fa-check"></i> App chofer movil</li>
-            <li><i class="fas fa-check"></i> Dashboard + reportes</li>
-          </ul>
-          <a href="onboarding.html" class="btn btn-primary" style="width:100%;justify-content:center;">Empezar</a>
-        </div>
-        <div class="price-card">
-          <h3>Enterprise</h3>
-          <div class="desc">Flotas grandes y empresas establecidas</div>
-          <div class="price-val"><span class="currency">$</span>5,999<span class="period">/mes</span></div>
-          <ul class="price-features">
-            <li><i class="fas fa-check"></i> Envios ilimitados</li>
-            <li><i class="fas fa-check"></i> Choferes ilimitados</li>
-            <li><i class="fas fa-check"></i> Todo del Pro</li>
-            <li><i class="fas fa-check"></i> Agente IA personalizado</li>
-            <li><i class="fas fa-check"></i> API REST completa</li>
-            <li><i class="fas fa-check"></i> Multi-sucursal</li>
-            <li><i class="fas fa-check"></i> Soporte 24/7</li>
-          </ul>
-          <a href="onboarding.html" class="btn btn-outline" style="width:100%;justify-content:center;">Contactar ventas</a>
-        </div>
+      <div class="price-card popular">
+        <div class="price-popular-tag">Mas popular</div>
+        <h3>Pro</h3>
+        <div class="desc">Empresas en crecimiento</div>
+        <div class="price-val"><span class="currency">$</span>2,499<span class="period">/mes</span></div>
+        <ul class="price-features">
+          <li><i class="fas fa-check"></i> 1,000 envios/mes</li>
+          <li><i class="fas fa-check"></i> 15 choferes</li>
+          <li><i class="fas fa-check"></i> Todo del Starter</li>
+          <li><i class="fas fa-check"></i> Optimizacion IA rutas</li>
+          <li><i class="fas fa-check"></i> Pagos OXXO + MP</li>
+          <li><i class="fas fa-check"></i> App chofer movil</li>
+          <li><i class="fas fa-check"></i> Dashboard + reportes</li>
+        </ul>
+        <a href="onboarding.html" class="btn btn-orange" style="width:100%;justify-content:center;">Empezar</a>
+      </div>
+      <div class="price-card">
+        <h3>Enterprise</h3>
+        <div class="desc">Flotas grandes y empresas establecidas</div>
+        <div class="price-val"><span class="currency">$</span>5,999<span class="period">/mes</span></div>
+        <ul class="price-features">
+          <li><i class="fas fa-check"></i> Envios ilimitados</li>
+          <li><i class="fas fa-check"></i> Choferes ilimitados</li>
+          <li><i class="fas fa-check"></i> Todo del Pro</li>
+          <li><i class="fas fa-check"></i> Agente IA personalizado</li>
+          <li><i class="fas fa-check"></i> API REST completa</li>
+          <li><i class="fas fa-check"></i> Multi-sucursal</li>
+          <li><i class="fas fa-check"></i> Soporte 24/7</li>
+        </ul>
+        <a href="onboarding.html" class="btn btn-ghost" style="width:100%;justify-content:center;">Contactar ventas</a>
       </div>
     </div>
   </section>
@@ -747,7 +754,7 @@
   <section class="final-cta">
     <h2>Empieza a entregar hoy</h2>
     <p>Configura tu plataforma de delivery en 5 minutos. Sin tarjeta. Sin compromiso.</p>
-    <a href="onboarding.html" class="btn btn-lg">
+    <a href="onboarding.html" class="btn btn-orange btn-lg">
       <i class="fas fa-rocket"></i> Crear mi empresa gratis
     </a>
   </section>
