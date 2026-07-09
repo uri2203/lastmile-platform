@@ -8,6 +8,10 @@ import time
 import re
 import hashlib
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Load .env from same directory
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # ============================================================
 # CONFIGURATION
