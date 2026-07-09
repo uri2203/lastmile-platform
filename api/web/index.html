@@ -76,9 +76,23 @@
       margin-bottom: 6px;
     }
 
-    .login-card .input,
-    .login-card select {
+    .login-card .input {
       height: 40px;
+    }
+
+    .login-error {
+      background: #dc262615;
+      border: 1px solid #dc262640;
+      color: #ef4444;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: var(--font-sm);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .login-error i {
+      margin-right: 6px;
     }
 
     .remember-row {
@@ -117,6 +131,11 @@
       border-radius: var(--radius-md);
     }
 
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .login-footer {
       text-align: center;
       margin-top: 24px;
@@ -153,44 +172,30 @@
         <p>Sistema de Gestión de Entregas</p>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Empresa</label>
-        <select id="login-empresa">
-          <option value="1">DELIVERY EXPRESS MX</option>
-          <option value="2">TRANSPORTE RAPIDO SA</option>
-          <option value="3">LOGISTICA INTEGRAL MX</option>
-        </select>
+      <div class="login-error" id="login-error">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="login-error-text"></span>
       </div>
 
       <div class="form-group">
         <label class="form-label">Usuario</label>
-        <input type="text" id="login-user" value="admin" placeholder="Tu usuario">
+        <input type="text" id="login-user" placeholder="Tu usuario" autocomplete="username">
       </div>
 
       <div class="form-group">
         <label class="form-label">Contraseña</label>
-        <input type="password" id="login-pass" value="admin123" placeholder="Tu contraseña">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Panel</label>
-        <select id="login-panel">
-          <option value="panel-operacion.html">Panel de Operación</option>
-          <option value="panel-admin.html">Panel Administrativo</option>
-          <option value="panel-chofer.html">Panel Chofer</option>
-          <option value="panel-cliente.html">Portal Cliente</option>
-        </select>
+        <input type="password" id="login-pass" placeholder="Tu contraseña" autocomplete="current-password">
       </div>
 
       <div class="remember-row">
         <label>
-          <input type="checkbox" id="remember-me" checked>
+          <input type="checkbox" id="remember-me">
           Recordarme
         </label>
         <a href="#">¿Olvidaste tu contraseña?</a>
       </div>
 
-      <button class="btn btn-primary btn-login" onclick="doLogin()">
+      <button class="btn btn-primary btn-login" id="btn-login" onclick="doLogin()">
         <i class="fas fa-arrow-right-to-bracket"></i>
         Iniciar Sesión
       </button>
@@ -202,29 +207,89 @@
   </div>
 
   <script>
+    function showError(msg) {
+      const el = document.getElementById('login-error');
+      document.getElementById('login-error-text').textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('login-error').style.display = 'none';
+    }
+
     function doLogin() {
-      const empId = document.getElementById('login-empresa').value;
-      const user = document.getElementById('login-user').value;
+      hideError();
+      const user = document.getElementById('login-user').value.trim();
       const pass = document.getElementById('login-pass').value;
-      const panel = document.getElementById('login-panel').value;
       const remember = document.getElementById('remember-me').checked;
 
       if (!user || !pass) {
-        Utils.toast('Por favor ingresa tu usuario y contraseña', 'warning');
+        showError('Ingresa tu usuario y contraseña');
         return;
       }
 
-      localStorage.setItem('empId', empId);
-      localStorage.setItem('user', user);
-      if (remember) {
-        localStorage.setItem('lm-emp-id', empId);
-      }
-      window.location.href = panel;
+      const btn = document.getElementById('btn-login');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: user, pass: pass })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const d = data.data;
+          localStorage.setItem('empId', d.emp_id);
+          localStorage.setItem('empNombre', d.empresa || '');
+          localStorage.setItem('user', d.usuario || user);
+          localStorage.setItem('rol', d.rol || 'operacion');
+          localStorage.setItem('empId_ts', Date.now());
+
+          if (remember) {
+            localStorage.setItem('lm_remember_user', user);
+          } else {
+            localStorage.removeItem('lm_remember_user');
+          }
+
+          // Redirect based on role
+          const panels = {
+            'admin': 'panel-admin.html',
+            'operacion': 'panel-operacion.html',
+            'chofer': 'panel-chofer.html',
+            'cliente': 'panel-cliente.html'
+          };
+          const redirect = panels[d.rol] || 'panel-operacion.html';
+          window.location.href = redirect;
+        } else {
+          showError(data.error || 'Usuario o contraseña incorrectos');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Iniciar Sesión';
+        }
+      })
+      .catch(err => {
+        showError('Error de conexion con el servidor');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Iniciar Sesión';
+      });
     }
 
-    document.getElementById('login-pass').addEventListener('keydown', function(e) {
+    // Enter to login
+    document.getElementById('login-pass').addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
     });
+    document.getElementById('login-user').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('login-pass').focus();
+    });
+
+    // Restore remembered user
+    const savedUser = localStorage.getItem('lm_remember_user');
+    if (savedUser) {
+      document.getElementById('login-user').value = savedUser;
+      document.getElementById('remember-me').checked = true;
+      document.getElementById('login-pass').focus();
+    }
   </script>
 </body>
 </html>
