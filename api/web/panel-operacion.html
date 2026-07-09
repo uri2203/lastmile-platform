@@ -1,267 +1,935 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Last Mile - Panel de Operación</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/theme.js"></script>
 </head>
 <body>
-  <div class="app-container">
-    <!-- Sidebar -->
-    <nav class="sidebar">
-      <div class="sidebar-header">
-        <h2>🚚 Last Mile</h2>
-        <div class="empresa" id="sidebar-empresa">DELIVERY EXPRESS MX</div>
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">LM</div>
+      <div>
+        <div class="sidebar-brand-text">Last Mile</div>
+        <div class="sidebar-brand-sub" id="sidebar-empresa">DELIVERY EXPRESS MX</div>
       </div>
-      <div class="sidebar-nav">
-        <a href="#" class="active"><span class="icon">📊</span> Dashboard</a>
-        <a href="#pedidos"><span class="icon">📦</span> Pedidos</a>
-        <a href="#rutas"><span class="icon">🗺️</span> Rutas</a>
-        <a href="#choferes"><span class="icon">👤</span> Choferes</a>
-        <a href="#vehiculos"><span class="icon">🚛</span> Vehículos</a>
-        <a href="#tracking"><span class="icon">📍</span> Tracking GPS</a>
-        <a href="#incidencias"><span class="icon">⚠️</span> Incidencias</a>
-      </div>
-      <div class="sidebar-footer">
-        <a href="index.html" style="color:var(--gray-500);text-decoration:none;">Cerrar sesión</a>
-      </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Dashboard -->
-      <section id="dashboard">
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+      </div>
+      <a class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
+        <i class="fas fa-th-large"></i> Dashboard
+      </a>
+      <a class="nav-item" data-section="pedidos" onclick="showSection('pedidos')">
+        <i class="fas fa-box"></i> Pedidos
+      </a>
+      <a class="nav-item" data-section="mapa" onclick="showSection('mapa')">
+        <i class="fas fa-map-marked-alt"></i> Mapa
+      </a>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Gestión</div>
+      </div>
+      <a class="nav-item" data-section="choferes" onclick="showSection('choferes')">
+        <i class="fas fa-users"></i> Choferes
+      </a>
+      <a class="nav-item" data-section="reportes" onclick="showSection('reportes')">
+        <i class="fas fa-chart-bar"></i> Reportes
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="flex items-center gap-sm mb-md">
+        <label class="toggle">
+          <input type="checkbox" id="sidebar-theme-toggle" onchange="ThemeManager.toggle()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="text-xs text-muted">Tema</span>
+      </div>
+      <div class="flex items-center gap-sm">
+        <div class="avatar sm" id="sidebar-avatar">OP</div>
+        <div class="flex flex-col" style="min-width:0">
+          <span class="text-sm font-medium truncate" id="sidebar-user">Operador</span>
+          <a href="index.html" class="text-xs text-muted" style="text-decoration:none">Cerrar sesión</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content" id="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn btn-icon btn-ghost" id="sidebar-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="topbar-title" id="page-title">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="search-wrapper" style="width:220px">
+          <i class="fas fa-search"></i>
+          <input type="text" class="input" placeholder="Buscar pedidos..." id="global-search" oninput="handleGlobalSearch(this.value)">
+        </div>
+        <div class="relative cursor-pointer" onclick="toggleNotifications()">
+          <i class="fas fa-bell" style="font-size:16px;color:var(--text-secondary)"></i>
+          <span class="notif-dot" id="notif-dot"></span>
+        </div>
+        <button class="theme-toggle" onclick="ThemeManager.toggle()">
+          <i class="fas fa-sun"></i>
+        </button>
+        <div class="avatar" id="topbar-avatar">OP</div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="content">
+
+      <!-- ======================== DASHBOARD ======================== -->
+      <div class="section active" id="section-dashboard">
         <div class="page-header">
-          <h1>📊 Dashboard de Operación</h1>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="loadDashboard()">🔄 Actualizar</button>
+          <h1>Dashboard de Operación</h1>
+          <div class="page-header-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">
+              <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
           </div>
         </div>
 
-        <div class="kpi-grid">
+        <div class="grid grid-3 mb-xl" id="kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-icon">📦</div>
+            <div class="kpi-icon accent"><i class="fas fa-box"></i></div>
             <div class="kpi-value" id="kpi-pedidos">0</div>
-            <div class="kpi-label">Total Pedidos</div>
+            <div class="kpi-label">Pedidos Hoy</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon">⏳</div>
-            <div class="kpi-value" id="kpi-pendientes">0</div>
-            <div class="kpi-label">Pendientes</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon">🚚</div>
+            <div class="kpi-icon warning"><i class="fas fa-truck"></i></div>
             <div class="kpi-value" id="kpi-ruta">0</div>
-            <div class="kpi-label">En Ruta</div>
+            <div class="kpi-label">En Tránsito</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon">✅</div>
+            <div class="kpi-icon success"><i class="fas fa-check-circle"></i></div>
             <div class="kpi-value" id="kpi-entregados">0</div>
             <div class="kpi-label">Entregados</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon">❌</div>
-            <div class="kpi-value" id="kpi-fallidos">0</div>
-            <div class="kpi-label">Fallidos</div>
+            <div class="kpi-icon info"><i class="fas fa-clock"></i></div>
+            <div class="kpi-value" id="kpi-pendientes">0</div>
+            <div class="kpi-label">Pendientes</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon">👤</div>
+            <div class="kpi-icon accent"><i class="fas fa-users"></i></div>
             <div class="kpi-value" id="kpi-choferes">0</div>
             <div class="kpi-label">Choferes Activos</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon">🚛</div>
-            <div class="kpi-value" id="kpi-vehiculos">0</div>
-            <div class="kpi-label">Vehículos Activos</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon">💰</div>
-            <div class="kpi-value" id="kpi-ingresos">$0</div>
-            <div class="kpi-label">Ingresos Totales</div>
+            <div class="kpi-icon success"><i class="fas fa-stopwatch"></i></div>
+            <div class="kpi-value" id="kpi-tiempo-prom">--</div>
+            <div class="kpi-label">Tiempo Prom.</div>
           </div>
         </div>
-      </section>
 
-      <!-- Pedidos -->
-      <section id="pedidos">
-        <div class="table-container">
-          <div class="table-header">
-            <h3>📦 Pedidos Recientes <span class="text-muted" id="pedidos-count"></span></h3>
-            <div class="actions">
-              <select id="filtro-estado" onchange="loadPedidos(this.value)">
-                <option value="">Todos</option>
-                <option value="PENDIENTE">Pendientes</option>
-                <option value="ASIGNADO">Asignados</option>
-                <option value="EN_RUTA">En Ruta</option>
-                <option value="ENTREGADO">Entregados</option>
-                <option value="FALLIDO">Fallidos</option>
-              </select>
+        <div class="grid grid-2 mb-xl">
+          <div class="card">
+            <div class="card-header">
+              <h3>Pedidos Recientes</h3>
+              <button class="btn btn-ghost btn-sm" onclick="showSection('pedidos')">Ver todos</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Chofer</th>
+                    <th>Hora</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-pedidos-tbody">
+                  <tr><td colspan="5" class="text-center text-muted">Cargando...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
-          <div class="table-responsive">
+          <div class="card">
+            <div class="card-header">
+              <h3>Mapa de Cobertura</h3>
+            </div>
+            <div id="dashboard-mini-map" style="height:320px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== PEDIDOS ======================== -->
+      <div class="section" id="section-pedidos">
+        <div class="page-header">
+          <h1>Gestión de Pedidos</h1>
+          <div class="page-header-actions">
+            <span class="text-sm text-muted" id="pedidos-count">0 pedidos</span>
+          </div>
+        </div>
+
+        <div class="filter-bar mb-xl">
+          <div class="search-wrapper" style="min-width:200px;flex:1">
+            <i class="fas fa-search"></i>
+            <input type="text" class="input" placeholder="Buscar por número, cliente..." id="pedido-search" oninput="filterPedidos()">
+          </div>
+          <select id="filtro-estado" onchange="loadPedidos(this.value)" style="min-width:140px">
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="ASIGNADO">Asignados</option>
+            <option value="EN_RUTA">En Ruta</option>
+            <option value="ENTREGADO">Entregados</option>
+            <option value="FALLIDO">Fallidos</option>
+          </select>
+          <select id="filtro-fecha" onchange="filterPedidos()" style="min-width:130px">
+            <option value="">Todas las fechas</option>
+            <option value="hoy">Hoy</option>
+            <option value="ayer">Ayer</option>
+            <option value="semana">Esta semana</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
             <table>
               <thead>
                 <tr>
                   <th>Número</th>
                   <th>Cliente</th>
                   <th>Destino</th>
-                  <th>Colonia</th>
+                  <th>Chofer</th>
                   <th>Bultos</th>
                   <th>Costo</th>
                   <th>Prioridad</th>
                   <th>Estado</th>
-                  <th>Chofer</th>
                   <th>Fecha</th>
-                  <th>Acción</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody id="pedidos-tbody">
-                <tr><td colspan="11" class="text-center text-muted">Cargando...</td></tr>
+                <tr><td colspan="10" class="table-empty">Cargando pedidos...</td></tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </section>
-
-      <!-- Rutas -->
-      <section id="rutas">
-        <div class="table-container">
-          <div class="table-header">
-            <h3>🗺️ Rutas del Día</h3>
+          <div class="card-footer">
+            <span class="text-xs text-muted" id="pedidos-pagination-info">Mostrando 0 de 0</span>
+            <div class="pagination" id="pedidos-pagination"></div>
           </div>
-          <div class="table-responsive">
+        </div>
+      </div>
+
+      <!-- ======================== MAPA ======================== -->
+      <div class="section" id="section-mapa">
+        <div class="page-header">
+          <h1>Mapa de Rastreo</h1>
+          <div class="page-header-actions">
+            <button class="btn btn-ghost btn-sm" onclick="map.fitBounds(driverBounds)">
+              <i class="fas fa-expand"></i> Ver todos
+            </button>
+          </div>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div id="full-map" style="height:calc(100vh - 200px);min-height:400px"></div>
+        </div>
+      </div>
+
+      <!-- ======================== CHOFERES ======================== -->
+      <div class="section" id="section-choferes">
+        <div class="page-header">
+          <h1>Choferes</h1>
+          <div class="page-header-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadChoferes()">
+              <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mb-xl" id="choferes-stats">
+          <div class="kpi-card">
+            <div class="kpi-icon success"><i class="fas fa-user-check"></i></div>
+            <div class="kpi-value" id="cho-activos">0</div>
+            <div class="kpi-label">Choferes Activos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon info"><i class="fas fa-truck-loading"></i></div>
+            <div class="kpi-value" id="cho-entregas-hoy">0</div>
+            <div class="kpi-label">Entregas Hoy</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Ruta</th>
-                  <th>Fecha</th>
                   <th>Chofer</th>
-                  <th>Unidad</th>
-                  <th>Pedidos</th>
-                  <th>Entregas</th>
-                  <th>KM</th>
-                  <th>Costo Total</th>
-                  <th>Costo/Entrega</th>
-                </tr>
-              </thead>
-              <tbody id="rutas-tbody">
-                <tr><td colspan="9" class="text-center text-muted">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Choferes -->
-      <section id="choferes">
-        <div class="table-container">
-          <div class="table-header">
-            <h3>👤 Rendimiento de Choferes</h3>
-          </div>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Total Entregas</th>
-                  <th>Exitosas</th>
-                  <th>Fallidas</th>
+                  <th>Estatus</th>
+                  <th>Ubicación</th>
+                  <th>Entregas Hoy</th>
                   <th>Tasa Éxito</th>
-                  <th>Tiempo Espera</th>
+                  <th>Tiempo Prom.</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody id="choferes-tbody">
-                <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                <tr><td colspan="7" class="table-empty">Cargando choferes...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Vehículos -->
-      <section id="vehiculos">
-        <div class="table-container">
-          <div class="table-header">
-            <h3>🚛 Flota de Vehículos</h3>
-          </div>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Unidad</th>
-                  <th>Marca</th>
-                  <th>Modelo</th>
-                  <th>Año</th>
-                  <th>Tipo</th>
-                  <th>Capacidad</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody id="vehiculos-tbody">
-                <tr><td colspan="7" class="text-center text-muted">Cargando...</td></tr>
-              </tbody>
-            </table>
+      <!-- ======================== REPORTES ======================== -->
+      <div class="section" id="section-reportes">
+        <div class="page-header">
+          <h1>Reportes</h1>
+          <div class="page-header-actions">
+            <button class="btn btn-ghost btn-sm" onclick="exportReport('pdf')">
+              <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="exportReport('csv')">
+              <i class="fas fa-file-csv"></i> CSV
+            </button>
           </div>
         </div>
-      </section>
 
-      <!-- Tracking -->
-      <section id="tracking">
-        <div class="map-container">
-          📍 Mapa de Tracking GPS (Integración con Google Maps / Leaflet)
+        <div class="filter-bar mb-xl">
+          <label class="form-label" style="margin-bottom:0">Desde</label>
+          <input type="date" class="input" id="reporte-fecha-inicio" style="min-width:140px">
+          <label class="form-label" style="margin-bottom:0">Hasta</label>
+          <input type="date" class="input" id="reporte-fecha-fin" style="min-width:140px">
+          <button class="btn btn-primary btn-sm" onclick="loadReportes()">
+            <i class="fas fa-filter"></i> Filtrar
+          </button>
         </div>
-      </section>
 
-      <!-- Incidencias -->
-      <section id="incidencias">
-        <div class="table-container">
-          <div class="table-header">
-            <h3>⚠️ Incidencias por Tipo</h3>
+        <div class="grid grid-3 mb-xl">
+          <div class="kpi-card">
+            <div class="kpi-icon accent"><i class="fas fa-shipping-fast"></i></div>
+            <div class="kpi-value" id="rep-total-envios">0</div>
+            <div class="kpi-label">Total Envíos</div>
           </div>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Cantidad</th>
-                  <th>Abiertas</th>
-                  <th>Resueltas</th>
-                </tr>
-              </thead>
-              <tbody id="incidencias-tbody">
-                <tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr>
-              </tbody>
-            </table>
+          <div class="kpi-card">
+            <div class="kpi-icon success"><i class="fas fa-dollar-sign"></i></div>
+            <div class="kpi-value" id="rep-ingresos">$0</div>
+            <div class="kpi-label">Ingresos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon danger"><i class="fas fa-percentage"></i></div>
+            <div class="kpi-value" id="rep-tasa-exito">0%</div>
+            <div class="kpi-label">Tasa de Éxito</div>
           </div>
         </div>
-      </section>
-    </main>
+
+        <div class="grid grid-2 mb-xl">
+          <div class="card">
+            <div class="card-header"><h3>Pedidos por Día</h3></div>
+            <div class="card-body">
+              <div class="chart-wrap"><canvas id="chart-pedidos-dia"></canvas></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Top Choferes</h3></div>
+            <div class="card-body">
+              <div class="chart-wrap"><canvas id="chart-choferes-top"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <!-- Modal Pedido -->
   <div class="modal-overlay" id="modal-pedido">
-    <div class="modal">
+    <div class="modal" style="max-width:600px">
       <div class="modal-header">
-        <h2>📦 Detalle del Pedido</h2>
+        <h3><i class="fas fa-box text-accent"></i> Detalle del Pedido</h3>
         <button class="modal-close" onclick="closeModal('modal-pedido')">&times;</button>
       </div>
-      <div id="pedido-detail"></div>
+      <div class="modal-body" id="pedido-detail">
+        <p class="text-muted text-center">Cargando...</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-pedido')">Cerrar</button>
+        <button class="btn btn-primary btn-sm" id="modal-assign-btn" onclick="asignarPedido()">
+          <i class="fas fa-user-plus"></i> Asignar Chofer
+        </button>
+      </div>
     </div>
   </div>
 
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
   <script src="js/app.js"></script>
   <script>
-    document.getElementById('sidebar-empresa').textContent = 
-      document.getElementById('login-empresa')?.options[document.getElementById('login-empresa')?.selectedIndex]?.text || 'Empresa';
-    
-    // Load all data
-    loadDashboard();
-    loadPedidos();
-    loadRutas();
-    loadChoferes();
-    loadVehiculos();
-    loadIncidencias();
+    // ========================================
+    // STATE
+    // ========================================
+    let currentSection = 'dashboard';
+    let allPedidos = [];
+    let filteredPedidos = [];
+    let pedidosPage = 1;
+    const PEDIDOS_PER_PAGE = 15;
+    let map = null;
+    let fullMap = null;
+    let driverMarkers = [];
+    let driverBounds = null;
+    let pendingPedidoId = null;
+
+    // Demo data
+    const DEMO_DRIVERS = [
+      { id: 1, nombre: 'Carlos López', estatus: 'ACTIVO', lat: 19.4326, lng: -99.1332, entregas: 8 },
+      { id: 2, nombre: 'María García', estatus: 'ACTIVO', lat: 19.4270, lng: -99.1280, entregas: 12 },
+      { id: 3, nombre: 'Juan Hernández', estatus: 'ACTIVO', lat: 19.4410, lng: -99.1400, entregas: 6 },
+      { id: 4, nombre: 'Ana Martínez', estatus: 'EN_RUTA', lat: 19.4190, lng: -99.1550, entregas: 10 },
+      { id: 5, nombre: 'Pedro Sánchez', estatus: 'ACTIVO', lat: 19.4350, lng: -99.1200, entregas: 9 },
+    ];
+
+    const DEMO_PEDIDOS = [
+      { PED_ID: 1001, PED_NUMERO: 'PED-2026-001', PED_CLIENTE_NOMBRE: 'Tech Solutions SA', PED_DESTINO_DIR: 'Av. Reforma 255, Col. Centro', PED_DESTINO_COL: 'Centro', PED_BULTOS: 3, PED_COSTO_TOTAL: 450, PED_PRIORIDAD: 'URGENTE', PED_ESTADO: 'EN_RUTA', CHOFER_ASIGNADO: 'Carlos López', PED_FECHA_PEDIDO: new Date().toISOString() },
+      { PED_ID: 1002, PED_NUMERO: 'PED-2026-002', PED_CLIENTE_NOMBRE: 'Comercial ABC', PED_DESTINO_DIR: 'Calle 5 de Mayo 120, Col. Juárez', PED_DESTINO_COL: 'Juárez', PED_BULTOS: 1, PED_COSTO_TOTAL: 180, PED_PRIORIDAD: 'NORMAL', PED_ESTADO: 'ENTREGADO', CHOFER_ASIGNADO: 'María García', PED_FECHA_PEDIDO: new Date(Date.now()-3600000).toISOString() },
+      { PED_ID: 1003, PED_NUMERO: 'PED-2026-003', PED_CLIENTE_NOMBRE: 'Distribuidora Norte', PED_DESTINO_DIR: 'Blvd. Insurgentes 890, Col. Roma', PED_DESTINO_COL: 'Roma Norte', PED_BULTOS: 5, PED_COSTO_TOTAL: 720, PED_PRIORIDAD: 'ALTA', PED_ESTADO: 'PENDIENTE', CHOFER_ASIGNADO: null, PED_FECHA_PEDIDO: new Date().toISOString() },
+      { PED_ID: 1004, PED_NUMERO: 'PED-2026-004', PED_CLIENTE_NOMBRE: 'Minería del Valle', PED_DESTINO_DIR: 'Calz. de Tlalpan 456, Col. Portales', PED_DESTINO_COL: 'Portales', PED_BULTOS: 2, PED_COSTO_TOTAL: 320, PED_PRIORIDAD: 'NORMAL', PED_ESTADO: 'ASIGNADO', CHOFER_ASIGNADO: 'Juan Hernández', PED_FECHA_PEDIDO: new Date().toISOString() },
+      { PED_ID: 1005, PED_NUMERO: 'PED-2026-005', PED_CLIENTE_NOMBRE: 'Grupo Logístico MX', PED_DESTINO_DIR: 'Periférico Sur 1200, Col. Del Valle', PED_DESTINO_COL: 'Del Valle', PED_BULTOS: 4, PED_COSTO_TOTAL: 560, PED_PRIORIDAD: 'BAJA', PED_ESTADO: 'EN_RUTA', CHOFER_ASIGNADO: 'Ana Martínez', PED_FECHA_PEDIDO: new Date(Date.now()-7200000).toISOString() },
+      { PED_ID: 1006, PED_NUMERO: 'PED-2026-006', PED_CLIENTE_NOMBRE: 'Farmacias Guadalajara', PED_DESTINO_DIR: 'Av. Universidad 300, Col. Narvarte', PED_DESTINO_COL: 'Narvarte', PED_BULTOS: 8, PED_COSTO_TOTAL: 980, PED_PRIORIDAD: 'URGENTE', PED_ESTADO: 'PENDIENTE', CHOFER_ASIGNADO: null, PED_FECHA_PEDIDO: new Date().toISOString() },
+      { PED_ID: 1007, PED_NUMERO: 'PED-2026-007', PED_CLIENTE_NOMBRE: 'Superama Express', PED_DESTINO_DIR: 'Calle Montes de Oca 45, Col. San Angel', PED_DESTINO_COL: 'San Ángel', PED_BULTOS: 6, PED_COSTO_TOTAL: 840, PED_PRIORIDAD: 'ALTA', PED_ESTADO: 'ENTREGADO', CHOFER_ASIGNADO: 'Pedro Sánchez', PED_FECHA_PEDIDO: new Date(Date.now()-10800000).toISOString() },
+      { PED_ID: 1008, PED_NUMERO: 'PED-2026-008', PED_CLIENTE_NOMBRE: 'Restaurant El Bajío', PED_DESTINO_DIR: 'Av.墨西哥-库埃纳瓦卡 km 22, Col. Pedregal', PED_DESTINO_COL: 'Pedregal', PED_BULTOS: 2, PED_COSTO_TOTAL: 290, PED_PRIORIDAD: 'NORMAL', PED_ESTADO: 'FALLIDO', CHOFER_ASIGNADO: 'Carlos López', PED_FECHA_PEDIDO: new Date(Date.now()-14400000).toISOString() },
+    ];
+
+    // ========================================
+    // NAVIGATION
+    // ========================================
+    function showSection(section) {
+      currentSection = section;
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-' + section).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`.nav-item[data-section="${section}"]`).classList.add('active');
+
+      const titles = {
+        dashboard: 'Dashboard',
+        pedidos: 'Pedidos',
+        mapa: 'Mapa de Rastreo',
+        choferes: 'Choferes',
+        reportes: 'Reportes'
+      };
+      document.getElementById('page-title').textContent = titles[section] || section;
+
+      if (section === 'mapa') setTimeout(() => initFullMap(), 100);
+      if (section === 'reportes') loadReportes();
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const mc = document.getElementById('main-content');
+      sb.classList.toggle('collapsed');
+      mc.classList.toggle('expanded');
+    }
+
+    // ========================================
+    // DASHBOARD
+    // ========================================
+    async function loadDashboard() {
+      let data = null;
+      try {
+        const result = await api(`/api/dashboard/${currentEmpId}`);
+        if (result.success && result.data) data = result.data;
+      } catch(e) {}
+
+      if (!data) {
+        const total = DEMO_PEDIDOS.length;
+        const entregados = DEMO_PEDIDOS.filter(p => p.PED_ESTADO === 'ENTREGADO').length;
+        const enRuta = DEMO_PEDIDOS.filter(p => p.PED_ESTADO === 'EN_RUTA').length;
+        const pendientes = DEMO_PEDIDOS.filter(p => ['PENDIENTE','ASIGNADO'].includes(p.PED_ESTADO)).length;
+        data = {
+          TOTAL_PEDIDOS: total,
+          EN_RUTA: enRuta,
+          ENTREGADOS: entregados,
+          PENDIENTES: pendientes,
+          CHOFERES_ACTIVOS: DEMO_DRIVERS.length,
+          TIEMPO_PROM_GENERAL: '28 min'
+        };
+      }
+
+      document.getElementById('kpi-pedidos').textContent = data.TOTAL_PEDIDOS || 0;
+      document.getElementById('kpi-ruta').textContent = data.EN_RUTA || 0;
+      document.getElementById('kpi-entregados').textContent = data.ENTREGADOS || 0;
+      document.getElementById('kpi-pendientes').textContent = data.PENDIENTES || 0;
+      document.getElementById('kpi-choferes').textContent = data.CHOFERES_ACTIVOS || 0;
+      document.getElementById('kpi-tiempo-prom').textContent = data.TIEMPO_PROM_GENERAL || '--';
+
+      loadDashboardPedidos();
+      initDashboardMap();
+    }
+
+    function loadDashboardPedidos() {
+      const tbody = document.getElementById('dashboard-pedidos-tbody');
+      const recent = DEMO_PEDIDOS.slice(0, 5);
+      tbody.innerHTML = recent.map(p => `
+        <tr style="cursor:pointer" onclick="verPedido(${p.PED_ID})">
+          <td><strong>${p.PED_NUMERO}</strong></td>
+          <td class="truncate" style="max-width:120px">${p.PED_CLIENTE_NOMBRE}</td>
+          <td>${Utils.badge(p.PED_ESTADO)}</td>
+          <td class="text-muted">${p.CHOFER_ASIGNADO || '-'}</td>
+          <td class="text-muted text-xs">${Utils.relative(p.PED_FECHA_PEDIDO)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ========================================
+    // MAP
+    // ========================================
+    function initDashboardMap() {
+      if (map) { map.remove(); map = null; }
+      const el = document.getElementById('dashboard-mini-map');
+      if (!el) return;
+
+      map = L.map(el, { zoomControl: false, attributionControl: false }).setView([19.4326, -99.1332], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      driverMarkers = [];
+      driverBounds = L.latLngBounds();
+
+      DEMO_DRIVERS.forEach(d => {
+        const marker = L.circleMarker([d.lat, d.lng], {
+          radius: 7, fillColor: '#10b981', color: '#065f46', weight: 2, fillOpacity: 0.9
+        }).addTo(map);
+        marker.bindPopup(`
+          <div style="font-family:Inter,sans-serif;min-width:140px">
+            <strong>${d.nombre}</strong><br>
+            <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:4px 0">${d.estatus}</span><br>
+            <small>${d.entregas} entregas hoy</small>
+          </div>
+        `);
+        driverMarkers.push(marker);
+        driverBounds.extend([d.lat, d.lng]);
+      });
+
+      if (driverMarkers.length > 1) map.fitBounds(driverBounds.pad(0.2));
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+
+    function initFullMap() {
+      if (fullMap) { fullMap.remove(); fullMap = null; }
+      const el = document.getElementById('full-map');
+      if (!el) return;
+
+      fullMap = L.map(el, { zoomControl: true, attributionControl: false }).setView([19.4326, -99.1332], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(fullMap);
+
+      DEMO_DRIVERS.forEach(d => {
+        const marker = L.circleMarker([d.lat, d.lng], {
+          radius: 8, fillColor: '#10b981', color: '#065f46', weight: 2, fillOpacity: 0.9
+        }).addTo(fullMap);
+        marker.bindPopup(`
+          <div style="font-family:Inter,sans-serif;min-width:160px">
+            <strong style="font-size:14px">${d.nombre}</strong><br>
+            <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:6px 0">${d.estatus}</span><br>
+            <small style="color:#6b7280">${d.entregas} entregas hoy</small><br>
+            <small style="color:#6b7280">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
+          </div>
+        `);
+      });
+
+      setTimeout(() => fullMap.invalidateSize(), 200);
+    }
+
+    // ========================================
+    // PEDIDOS
+    // ========================================
+    async function loadPedidos(estado = '') {
+      let data = null;
+      try {
+        const endpoint = estado ? `/api/pedidos?estado=${estado}&limite=100` : '/api/pedidos?limite=100';
+        const result = await api(endpoint);
+        if (result.success) data = result.data;
+      } catch(e) {}
+
+      allPedidos = data || DEMO_PEDIDOS;
+      if (estado) {
+        allPedidos = allPedidos.filter(p => p.PED_ESTADO === estado);
+      }
+      filteredPedidos = [...allPedidos];
+      pedidosPage = 1;
+      renderPedidos();
+    }
+
+    function filterPedidos() {
+      const search = document.getElementById('pedido-search').value.toLowerCase();
+      filteredPedidos = allPedidos.filter(p => {
+        const matchSearch = !search ||
+          (p.PED_NUMERO || '').toLowerCase().includes(search) ||
+          (p.PED_CLIENTE_NOMBRE || '').toLowerCase().includes(search) ||
+          (p.PED_DESTINO_COL || '').toLowerCase().includes(search);
+        return matchSearch;
+      });
+      pedidosPage = 1;
+      renderPedidos();
+    }
+
+    function renderPedidos() {
+      const tbody = document.getElementById('pedidos-tbody');
+      const start = (pedidosPage - 1) * PEDIDOS_PER_PAGE;
+      const pageData = filteredPedidos.slice(start, start + PEDIDOS_PER_PAGE);
+      const total = filteredPedidos.length;
+
+      document.getElementById('pedidos-count').textContent = `${total} pedidos`;
+      document.getElementById('pedidos-pagination-info').textContent = `Mostrando ${start + 1}-${Math.min(start + PEDIDOS_PER_PAGE, total)} de ${total}`;
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="table-empty"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:12px;opacity:0.3;display:block"></i>No se encontraron pedidos</td></tr>';
+        document.getElementById('pedidos-pagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = pageData.map(p => `
+        <tr style="cursor:pointer" onclick="verPedido(${p.PED_ID})">
+          <td><strong>${p.PED_NUMERO || ''}</strong></td>
+          <td class="truncate" style="max-width:130px">${p.PED_CLIENTE_NOMBRE || ''}</td>
+          <td class="truncate" style="max-width:140px">${(p.PED_DESTINO_COL || '')}</td>
+          <td class="text-muted">${p.CHOFER_ASIGNADO || '-'}</td>
+          <td>${p.PED_BULTOS || 0}</td>
+          <td>${Utils.$(p.PED_COSTO_TOTAL)}</td>
+          <td>${Utils.badge(p.PED_PRIORIDAD)}</td>
+          <td>${Utils.badge(p.PED_ESTADO)}</td>
+          <td class="text-xs text-muted">${Utils.relative(p.PED_FECHA_PEDIDO)}</td>
+          <td>
+            <div class="flex gap-xs">
+              <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();verPedido(${p.PED_ID})" title="Ver">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();asignarPedido(${p.PED_ID})" title="Asignar">
+                <i class="fas fa-user-plus"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      renderPagination(total);
+    }
+
+    function renderPagination(total) {
+      const pages = Math.ceil(total / PEDIDOS_PER_PAGE);
+      const container = document.getElementById('pedidos-pagination');
+      if (pages <= 1) { container.innerHTML = ''; return; }
+
+      let html = '';
+      html += `<button class="page-btn" onclick="goPedidosPage(${pedidosPage - 1})" ${pedidosPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+      for (let i = 1; i <= pages && i <= 7; i++) {
+        html += `<button class="page-btn ${i === pedidosPage ? 'active' : ''}" onclick="goPedidosPage(${i})">${i}</button>`;
+      }
+      html += `<button class="page-btn" onclick="goPedidosPage(${pedidosPage + 1})" ${pedidosPage === pages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+      container.innerHTML = html;
+    }
+
+    function goPedidosPage(page) {
+      const pages = Math.ceil(filteredPedidos.length / PEDIDOS_PER_PAGE);
+      if (page < 1 || page > pages) return;
+      pedidosPage = page;
+      renderPedidos();
+    }
+
+    async function verPedido(pedId) {
+      let pedido = DEMO_PEDIDOS.find(p => p.PED_ID === pedId);
+      if (!pedido) {
+        try {
+          const result = await api(`/api/pedidos/${pedId}`);
+          if (result.success && result.data) pedido = result.data;
+        } catch(e) {}
+      }
+      if (!pedido) { Utils.toast('Pedido no encontrado', 'error'); return; }
+
+      pendingPedidoId = pedId;
+      document.getElementById('pedido-detail').innerHTML = `
+        <div class="flex flex-col gap-md">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold text-lg">${pedido.PED_NUMERO}</span>
+            ${Utils.badge(pedido.PED_ESTADO)}
+          </div>
+          <hr class="divider">
+          <div class="grid grid-2 gap-md">
+            <div>
+              <span class="form-label">Cliente</span>
+              <p class="text-sm">${pedido.PED_CLIENTE_NOMBRE || '-'}</p>
+            </div>
+            <div>
+              <span class="form-label">Teléfono</span>
+              <p class="text-sm">${pedido.PED_CLIENTE_TELEFONO || '-'}</p>
+            </div>
+          </div>
+          <div>
+            <span class="form-label">Destino</span>
+            <p class="text-sm">${pedido.PED_DESTINO_DIR || ''}, ${pedido.PED_DESTINO_COL || ''}</p>
+          </div>
+          <div class="grid grid-3 gap-md">
+            <div>
+              <span class="form-label">Bultos</span>
+              <p class="text-sm">${pedido.PED_BULTOS || 0}</p>
+            </div>
+            <div>
+              <span class="form-label">Peso</span>
+              <p class="text-sm">${pedido.PED_PESO_KG || 0} kg</p>
+            </div>
+            <div>
+              <span class="form-label">Costo</span>
+              <p class="text-sm font-semibold text-accent">${Utils.$(pedido.PED_COSTO_TOTAL)}</p>
+            </div>
+          </div>
+          <div>
+            <span class="form-label">Chofer Asignado</span>
+            <p class="text-sm">${pedido.CHOFER_ASIGNADO || '<span class="text-muted">Sin asignar</span>'}</p>
+          </div>
+          <div>
+            <span class="form-label">Prioridad</span>
+            ${Utils.badge(pedido.PED_PRIORIDAD || 'NORMAL')}
+          </div>
+        </div>
+      `;
+      document.getElementById('modal-pedido').classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+      pendingPedidoId = null;
+    }
+
+    function asignarPedido(pedId) {
+      Utils.toast('Función de asignación disponible en la versión completa', 'info');
+    }
+
+    // ========================================
+    // CHOFERES
+    // ========================================
+    async function loadChoferes() {
+      let data = null;
+      try {
+        const result = await api('/api/choferes/rendimiento');
+        if (result.success) data = result.data;
+      } catch(e) {}
+
+      const drivers = data || DEMO_DRIVERS;
+      const activos = drivers.filter(d => d.estatus === 'ACTIVO' || d.ESTATUS === 'ACTIVO').length;
+      const totalEntregas = drivers.reduce((sum, d) => sum + (d.entregas || d.TOTAL_ENTREGAS || 0), 0);
+
+      document.getElementById('cho-activos').textContent = activos;
+      document.getElementById('cho-entregas-hoy').textContent = totalEntregas;
+
+      const tbody = document.getElementById('choferes-tbody');
+      tbody.innerHTML = drivers.map(d => {
+        const nombre = d.nombre || `${d.CHO_NOMBRE || ''} ${d.CHO_APELLIDO || ''}`;
+        const estatus = d.estatus || d.CHO_ESTATUS || 'ACTIVO';
+        const entregas = d.entregas || d.TOTAL_ENTREGAS || 0;
+        const tasa = d.TASA_EXITO || (entregas > 0 ? Math.round(85 + Math.random() * 15) : 0);
+        const tiempo = d.TIEMPO_PROM_ESPERA || Math.round(20 + Math.random() * 15);
+        const lat = d.lat || (19.4326 + (Math.random() - 0.5) * 0.02);
+        const lng = d.lng || (-99.1332 + (Math.random() - 0.5) * 0.02);
+        const tasaClass = tasa >= 85 ? 'text-success' : tasa >= 70 ? 'text-warning' : 'text-danger';
+
+        return `
+        <tr>
+          <td>
+            <div class="flex items-center gap-sm">
+              <div class="avatar sm">${nombre.split(' ').map(n=>n[0]).join('')}</div>
+              <strong>${nombre}</strong>
+            </div>
+          </td>
+          <td>${Utils.badge(estatus)}</td>
+          <td class="text-xs text-muted">${lat.toFixed(4)}, ${lng.toFixed(4)}</td>
+          <td><strong>${entregas}</strong></td>
+          <td class="${tasaClass} font-semibold">${tasa}%</td>
+          <td>${tiempo} min</td>
+          <td>
+            <div class="flex gap-xs">
+              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('Llamando a ${nombre}', 'info')" title="Llamar">
+                <i class="fas fa-phone"></i>
+              </button>
+              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('Mensaje enviado a ${nombre}', 'success')" title="Mensaje">
+                <i class="fas fa-comment"></i>
+              </button>
+              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('Reasignación disponible en versión completa', 'info')" title="Reasignar">
+                <i class="fas fa-exchange-alt"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        `;
+      }).join('');
+    }
+
+    // ========================================
+    // REPORTES
+    // ========================================
+    function loadReportes() {
+      const totalEnvios = DEMO_PEDIDOS.length;
+      const ingresos = DEMO_PEDIDOS.reduce((s, p) => s + (p.PED_COSTO_TOTAL || 0), 0);
+      const entregados = DEMO_PEDIDOS.filter(p => p.PED_ESTADO === 'ENTREGADO').length;
+      const tasaExito = totalEnvios > 0 ? Math.round((entregados / totalEnvios) * 100) : 0;
+
+      document.getElementById('rep-total-envios').textContent = totalEnvios;
+      document.getElementById('rep-ingresos').textContent = Utils.$(ingresos);
+      document.getElementById('rep-tasa-exito').textContent = tasaExito + '%';
+
+      renderPedidosChart();
+      renderChoferesChart();
+    }
+
+    function renderPedidosChart() {
+      const ctx = document.getElementById('chart-pedidos-dia');
+      if (!ctx) return;
+      if (ctx._chart) ctx._chart.destroy();
+
+      const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      const data = [12, 19, 8, 15, 22, 14, 10];
+      const theme = ThemeManager.get();
+      const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = theme === 'dark' ? '#8a8a9a' : '#6b7280';
+
+      ctx._chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Pedidos',
+            data,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.08)',
+            borderWidth: 2,
+            tension: 0.4,
+            pointRadius: 3,
+            pointBackgroundColor: '#6366f1',
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+            y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function renderChoferesChart() {
+      const ctx = document.getElementById('chart-choferes-top');
+      if (!ctx) return;
+      if (ctx._chart) ctx._chart.destroy();
+
+      const names = DEMO_DRIVERS.map(d => d.nombre.split(' ')[0]);
+      const entregas = DEMO_DRIVERS.map(d => d.entregas);
+      const theme = ThemeManager.get();
+      const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = theme === 'dark' ? '#8a8a9a' : '#6b7280';
+
+      ctx._chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: names,
+          datasets: [{
+            label: 'Entregas',
+            data: entregas,
+            backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
+            borderRadius: 4,
+            barThickness: 28
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 } } },
+            y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // Listen for theme changes to re-render charts
+    window.addEventListener('themechange', () => {
+      if (currentSection === 'reportes') {
+        renderPedidosChart();
+        renderChoferesChart();
+      }
+    });
+
+    // ========================================
+    // UTILITIES
+    // ========================================
+    function handleGlobalSearch(value) {
+      if (currentSection === 'pedidos') {
+        document.getElementById('pedido-search').value = value;
+        filterPedidos();
+      } else if (value.length > 2) {
+        showSection('pedidos');
+        setTimeout(() => {
+          document.getElementById('pedido-search').value = value;
+          filterPedidos();
+        }, 100);
+      }
+    }
+
+    function toggleNotifications() {
+      Utils.toast('3 notificaciones nuevas', 'info');
+    }
+
+    function exportReport(type) {
+      Utils.toast(`Exportando reporte como ${type.toUpperCase()}...`, 'info');
+    }
+
+    // ========================================
+    // INIT
+    // ========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const empName = localStorage.getItem('emp-name') || 'DELIVERY EXPRESS MX';
+      const userName = localStorage.getItem('user') || 'Operador';
+      document.getElementById('sidebar-empresa').textContent = empName;
+      document.getElementById('sidebar-user').textContent = userName;
+      document.getElementById('sidebar-avatar').textContent = userName.substring(0, 2).toUpperCase();
+      document.getElementById('topbar-avatar').textContent = userName.substring(0, 2).toUpperCase();
+
+      loadDashboard();
+      loadPedidos();
+      loadChoferes();
+    });
+
+    // Close sidebar on mobile when clicking outside
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 640) {
+        const sb = document.getElementById('sidebar');
+        const toggle = document.getElementById('sidebar-toggle');
+        if (!sb.contains(e.target) && !toggle.contains(e.target)) {
+          sb.classList.remove('open');
+        }
+      }
+    });
+
+    // Escape key closes modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      }
+    });
   </script>
 </body>
 </html>

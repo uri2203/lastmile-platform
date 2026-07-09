@@ -1,79 +1,634 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Envio - Ayuda</title>
+  <title>Ayuda - Mi Envio</title>
+  <meta name="theme-color" content="#6366f1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <script src="js/theme.js"></script>
   <style>
-    :root{--primary:#e94560;--dark:#1a1a2e;--gray:#6c757d;--gray-light:#e9ecef;--success:#27ae60}
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f7;color:#333}
-    .header{background:var(--dark);color:white;padding:16px 20px;text-align:center}
-    .header h1{font-size:1.2rem}
-    .content{max-width:500px;margin:16px auto;padding:0 16px}
-    .help-card{background:white;border-radius:12px;padding:20px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-    .help-card h3{color:var(--primary);margin-bottom:8px;font-size:1rem}
-    .help-card p{font-size:0.9rem;color:#555;line-height:1.5}
-    .help-card a{color:var(--primary);font-weight:600;text-decoration:none}
-    .faq-item{border-bottom:1px solid var(--gray-light);padding:12px 0}
-    .faq-item h4{font-size:0.9rem;cursor:pointer}
-    .faq-item p{font-size:0.85rem;color:var(--gray);margin-top:4px;display:none}
-    .faq-item.open p{display:block}
-    .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    .contact-btn{display:block;padding:14px;border-radius:10px;text-align:center;text-decoration:none;font-weight:600;font-size:0.85rem}
-    .btn-phone{background:var(--success);color:white}
-    .btn-email{background:var(--primary);color:white}
-    .btn-wa{background:#25d366;color:white}
-    .btn-help{background:var(--dark);color:white}
+    /* --- Help Page Overrides --- */
+    body { margin: 0; }
+
+    /* HEADER */
+    .help-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-primary); border-bottom: 1px solid var(--border-primary);
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+    [data-theme="dark"] .help-header { background: rgba(10,10,15,0.88); }
+    [data-theme="light"] .help-header { background: rgba(248,249,252,0.88); }
+    .help-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .help-logo-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: var(--font-sm);
+    }
+    .help-logo-text { font-weight: 600; font-size: var(--font-md); color: var(--text-primary); }
+    .header-center { flex: 1; max-width: 400px; margin: 0 20px; }
+    .header-search {
+      position: relative; width: 100%;
+    }
+    .header-search i {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 13px;
+    }
+    .header-search input {
+      width: 100%; padding: 8px 12px 8px 36px;
+      background: var(--bg-input); border: 1px solid var(--border-input);
+      border-radius: var(--radius-full); color: var(--text-primary);
+      font-size: var(--font-sm); font-family: var(--font-family);
+      outline: none; transition: border-color var(--transition-fast);
+    }
+    .header-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+    .header-search input::placeholder { color: var(--text-muted); }
+
+    /* HERO */
+    .help-hero {
+      text-align: center; padding: 48px 20px 32px;
+    }
+    .help-hero h1 {
+      font-size: var(--font-2xl); font-weight: 700; color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .help-hero p {
+      font-size: var(--font-md); color: var(--text-secondary); max-width: 500px; margin: 0 auto;
+    }
+
+    /* MAIN LAYOUT */
+    .help-layout {
+      max-width: 1100px; margin: 0 auto; padding: 0 20px 60px;
+      display: grid; grid-template-columns: 1fr 320px; gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .help-layout { grid-template-columns: 1fr; }
+      .header-center { display: none; }
+    }
+
+    /* FAQ SECTION */
+    .faq-category {
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .faq-category-header {
+      padding: 16px 20px; display: flex; align-items: center; gap: 10px;
+      cursor: pointer; transition: background var(--transition-fast);
+    }
+    .faq-category-header:hover { background: var(--bg-card-hover); }
+    .faq-cat-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .faq-cat-icon.pedidos { background: var(--info-bg); color: var(--info); }
+    .faq-cat-icon.pagos { background: var(--success-bg); color: var(--success); }
+    .faq-cat-icon.cuenta { background: var(--warning-bg); color: var(--warning); }
+    .faq-cat-icon.tecnico { background: var(--danger-bg); color: var(--danger); }
+    .faq-cat-title { font-size: var(--font-md); font-weight: 600; color: var(--text-primary); flex: 1; }
+    .faq-cat-count {
+      font-size: var(--font-xs); color: var(--text-muted);
+      background: var(--bg-input); padding: 2px 8px; border-radius: var(--radius-full);
+    }
+    .faq-cat-arrow {
+      color: var(--text-muted); font-size: 12px;
+      transition: transform 0.2s ease;
+    }
+    .faq-category.open .faq-cat-arrow { transform: rotate(180deg); }
+    .faq-category-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .faq-category.open .faq-category-body { max-height: 1000px; }
+
+    .faq-item {
+      border-top: 1px solid var(--border-primary);
+      padding: 14px 20px 14px 62px;
+    }
+    .faq-question {
+      font-size: var(--font-sm); font-weight: 500; color: var(--text-primary);
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    }
+    .faq-question i { color: var(--text-muted); font-size: 11px; transition: transform 0.2s; flex-shrink: 0; margin-left: 12px; }
+    .faq-item.open .faq-question i { transform: rotate(180deg); }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .faq-item.open .faq-answer { max-height: 200px; }
+    .faq-answer p {
+      font-size: var(--font-sm); color: var(--text-secondary); line-height: 1.6;
+      padding-top: 10px;
+    }
+
+    /* SIDEBAR */
+    .help-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .contact-card {
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); padding: 20px;
+    }
+    .contact-card h3 {
+      font-size: var(--font-md); font-weight: 600; color: var(--text-primary);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .contact-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-primary);
+    }
+    .contact-item:last-child { border-bottom: none; }
+    .contact-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .contact-icon.phone { background: var(--success-bg); color: var(--success); }
+    .contact-icon.email { background: var(--info-bg); color: var(--info); }
+    .contact-icon.hours { background: var(--warning-bg); color: var(--warning); }
+    .contact-icon.chat { background: var(--accent-bg); color: var(--accent); }
+    .contact-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .contact-value { font-size: var(--font-sm); color: var(--text-primary); font-weight: 500; }
+
+    /* CONTACT FORM */
+    .form-card {
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); padding: 20px;
+    }
+    .form-card h3 {
+      font-size: var(--font-md); font-weight: 600; color: var(--text-primary);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 10px; font-weight: 500;
+      color: var(--text-secondary); margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%; padding: 10px 12px;
+      background: var(--bg-input); border: 1px solid var(--border-input);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: var(--font-sm); font-family: var(--font-family);
+      outline: none; transition: border-color var(--transition-fast);
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7280' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+    }
+    .submit-btn {
+      width: 100%; padding: 12px; background: var(--accent); color: white;
+      border: none; border-radius: var(--radius-lg); font-size: var(--font-sm);
+      font-weight: 600; cursor: pointer; font-family: var(--font-family);
+      transition: background var(--transition-fast);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .submit-btn:hover { background: var(--accent-hover); }
+
+    /* BACK LINK */
+    .back-link {
+      text-align: center; padding: 20px;
+      font-size: var(--font-sm);
+    }
+    .back-link a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .back-link a:hover { text-decoration: underline; }
+
+    /* LIVE CHAT */
+    .chat-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 200;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--accent); color: white;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; box-shadow: var(--shadow-lg);
+      transition: all var(--transition-fast);
+    }
+    .chat-fab:hover { background: var(--accent-hover); transform: scale(1.05); }
+    .chat-fab .notif-dot {
+      position: absolute; top: 4px; right: 4px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--success); border: 2px solid var(--bg-primary);
+    }
+
+    .chat-popup {
+      position: fixed; bottom: 90px; right: 24px; z-index: 201;
+      width: 340px; max-height: 460px;
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-xl); overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      display: none;
+    }
+    .chat-popup.open { display: block; }
+    .chat-popup-header {
+      padding: 16px; background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chat-popup-header h4 { font-size: var(--font-md); font-weight: 600; }
+    .chat-popup-close {
+      background: none; border: none; color: white; cursor: pointer;
+      font-size: 16px; opacity: 0.8;
+    }
+    .chat-popup-close:hover { opacity: 1; }
+    .chat-popup-body {
+      padding: 16px; height: 280px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .chat-msg {
+      max-width: 80%; padding: 10px 14px;
+      border-radius: var(--radius-lg); font-size: var(--font-sm);
+    }
+    .chat-msg.bot {
+      background: var(--bg-input); color: var(--text-primary);
+      border: 1px solid var(--border-primary);
+      align-self: flex-start;
+    }
+    .chat-msg.user {
+      background: var(--accent); color: white;
+      align-self: flex-end;
+    }
+    .chat-popup-footer {
+      padding: 12px; border-top: 1px solid var(--border-primary);
+      display: flex; gap: 8px;
+    }
+    .chat-popup-footer input {
+      flex: 1; padding: 10px 12px;
+      background: var(--bg-input); border: 1px solid var(--border-input);
+      border-radius: var(--radius-full); color: var(--text-primary);
+      font-size: var(--font-sm); font-family: var(--font-family); outline: none;
+    }
+    .chat-popup-footer input:focus { border-color: var(--accent); }
+    .chat-send-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--accent); color: white; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; flex-shrink: 0;
+    }
+    .chat-send-btn:hover { background: var(--accent-hover); }
+
+    /* MOBILE CHAT */
+    @media (max-width: 480px) {
+      .chat-popup {
+        right: 8px; left: 8px; bottom: 80px;
+        width: auto;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>❓ Centro de Ayuda</h1>
+
+  <!-- HEADER -->
+  <header class="help-header">
+    <a href="tracking-cliente.html" class="help-logo">
+      <div class="help-logo-icon"><i class="fas fa-cube"></i></div>
+      <span class="help-logo-text">Mi Envio</span>
+    </a>
+    <div class="header-center">
+      <div class="header-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="faqSearch" placeholder="Buscar en preguntas frecuentes..." oninput="filterFAQ(this.value)">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="help-hero">
+    <h1>Centro de Ayuda</h1>
+    <p>Encuentra respuestas a tus preguntas o contacta a nuestro equipo de soporte.</p>
   </div>
-  <div class="content">
-    <div class="help-card">
-      <h3>📞 Contacto directo</h3>
-      <p>Si tienes un problema con tu envio, contacta al equipo de soporte:</p>
-      <div class="contact-grid">
-        <a href="tel:5512345678" class="contact-btn btn-phone">📞 Llamar</a>
-        <a href="mailto:soporte@lastmile.mx" class="contact-btn btn-email">📧 Email</a>
-        <a href="https://wa.me/5215512345678" class="contact-btn btn-wa" target="_blank">💬 WhatsApp</a>
-        <a href="#" class="contact-btn btn-help" onclick="alert('Ticket creado')">🎫 Abrir Ticket</a>
+
+  <!-- MAIN LAYOUT -->
+  <div class="help-layout">
+
+    <!-- LEFT: FAQ -->
+    <div class="faq-left">
+
+      <!-- Pedidos -->
+      <div class="faq-category open" data-category="pedidos">
+        <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
+          <div class="faq-cat-icon pedidos"><i class="fas fa-box"></i></div>
+          <div class="faq-cat-title">Pedidos</div>
+          <span class="faq-cat-count">5</span>
+          <i class="fas fa-chevron-down faq-cat-arrow"></i>
+        </div>
+        <div class="faq-category-body">
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Como creo un pedido?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Puedes crear un pedido desde la app o sitio web. Selecciona origen, destino, tipo de paquete y horario de recogida. Recibiras un token para rastrear tu envio.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Como rastreo mi paquete?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Ingresa el token que recibiste por SMS o email en la pantalla de tracking. Tambien puedes usar tu numero de pedido para buscarlo.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Puedo cancelar mi pedido?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Si el pedido aun no ha sido asignado a un chofer, puedes cancelarlo desde la app. Si ya esta en curso, contacta a soporte para asistencia.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Puedo cambiar la direccion de entrega?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Contacta a soporte lo antes posible. Si el paquete aun no salio, podemos cambiar la direccion. Una vez en camino, no se garantiza el cambio.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Cuanto tarda mi envio?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Los envios locales se entregan en 2-4 horas. Los foraneos en 24-48 horas. El tiempo exacto se muestra al crear el pedido.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagos -->
+      <div class="faq-category" data-category="pagos">
+        <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
+          <div class="faq-cat-icon pagos"><i class="fas fa-credit-card"></i></div>
+          <div class="faq-cat-title">Pagos</div>
+          <span class="faq-cat-count">3</span>
+          <i class="fas fa-chevron-down faq-cat-arrow"></i>
+        </div>
+        <div class="faq-category-body">
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Que metodos de pago aceptan?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Aceptamos tarjeta de credito/debito, transferencia bancaria, OXXO y efectivo contra entrega segun la zona.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Como obtengo mi factura?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Solicita tu factura al correo facturacion@lastmile.mx con tu numero de pedido y datos fiscales. Se emite en maximo 72 horas.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Cuanto cuesta el envio?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>El costo depende de la zona, peso y dimensiones. Consulta el desglose en tu confirmacion de pedido antes de confirmar.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cuenta -->
+      <div class="faq-category" data-category="cuenta">
+        <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
+          <div class="faq-cat-icon cuenta"><i class="fas fa-user-gear"></i></div>
+          <div class="faq-cat-title">Cuenta</div>
+          <span class="faq-cat-count">3</span>
+          <i class="fas fa-chevron-down faq-cat-arrow"></i>
+        </div>
+        <div class="faq-category-body">
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Como cambio mi contrasena?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Ve a Configuracion > Seguridad en tu perfil. Se te enviara un codigo de verificacion para confirmar el cambio.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Como actualizo mis datos?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Puedes actualizar nombre, telefono y direccion desde la seccion de Perfil en la app o sitio web.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Como elimino mi cuenta?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Contacta a soporte para solicitar la eliminacion de tu cuenta. Se procesara en un plazo de 48 horas.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tecnico -->
+      <div class="faq-category" data-category="tecnico">
+        <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
+          <div class="faq-cat-icon tecnico"><i class="fas fa-wrench"></i></div>
+          <div class="faq-cat-title">Tecnico</div>
+          <span class="faq-cat-count">3</span>
+          <i class="fas fa-chevron-down faq-cat-arrow"></i>
+        </div>
+        <div class="faq-category-body">
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>La app no carga, que hago?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Verifica tu conexion a internet, cierra la app completamente y vuelve a abrirla. Si persiste, reinstala la ultima version.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>No recibo notificaciones</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Revisa que las notificaciones esten activadas en la configuracion de tu telefono y en la app. Verifica que no estes en modo silencio.</p></div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>El mapa no muestra mi ubicacion</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer"><p>Asegurate de tener el GPS activado y haber dado permisos de ubicacion a la app. Si el problema persiste, contacta a soporte.</p></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="help-card">
-      <h3>❓ Preguntas frecuentes</h3>
-      <div class="faq-item" onclick="this.classList.toggle('open')">
-        <h4>🕐 Cuanto tarda mi envio?</h4>
-        <p>Los envios locales se entregan en 2-4 horas. Los foraneos en 24-48 horas.</p>
-      </div>
-      <div class="faq-item" onclick="this.classList.toggle('open')">
-        <h4>📍 Como rastreo mi paquete?</h4>
-        <p>Ingresa el token que recibiste en la pantalla principal. Tambien puedes usar tu numero de pedido.</p>
-      </div>
-      <div class="faq-item" onclick="this.classList.toggle('open')">
-        <h4>🔄 Puedo cambiar la direccion?</h4>
-        <p>Contacta a soporte lo antes posible. Si el paquete aun no salio, podemos cambiarlo.</p>
-      </div>
-      <div class="faq-item" onclick="this.classList.toggle('open')">
-        <h4>❌ Que hago si no estoy en casa?</h4>
-        <p>El chofer dejara un aviso. Puedes reprogramar la entrega llamando a soporte.</p>
-      </div>
-      <div class="faq-item" onclick="this.classList.toggle('open')">
-        <h4>📄 Como obtengo mi factura?</h4>
-        <p>Solicita tu factura al correo facturacion@tuempresa.com con tu numero de pedido.</p>
-      </div>
-      <div class="faq-item" onclick="this.classList.toggle('open')">
-        <h4>💰 Cuanto cuesta el envio?</h4>
-        <p>El costo depende de la zona y peso. Consulta el desglose en tu confirmacion de pedido.</p>
-      </div>
-    </div>
+    <!-- RIGHT: SIDEBAR -->
+    <div class="help-sidebar">
 
-    <div style="text-align:center;margin:20px 0">
-      <a href="tracking-cliente.html" style="color:var(--primary);font-weight:600;text-decoration:none">← Volver a rastrear mi envio</a>
+      <!-- Contact Info -->
+      <div class="contact-card">
+        <h3><i class="fas fa-headset" style="color:var(--accent)"></i>Contacto</h3>
+        <div class="contact-item">
+          <div class="contact-icon phone"><i class="fas fa-phone"></i></div>
+          <div>
+            <div class="contact-label">Telefono</div>
+            <div class="contact-value"><a href="tel:5512345678" style="color:var(--text-primary);text-decoration:none">55 1234 5678</a></div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon email"><i class="fas fa-envelope"></i></div>
+          <div>
+            <div class="contact-label">Email</div>
+            <div class="contact-value"><a href="mailto:soporte@lastmile.mx" style="color:var(--text-primary);text-decoration:none">soporte@lastmile.mx</a></div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon hours"><i class="fas fa-clock"></i></div>
+          <div>
+            <div class="contact-label">Horario</div>
+            <div class="contact-value">Lun-Vie 8:00 - 18:00</div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon chat"><i class="fab fa-whatsapp"></i></div>
+          <div>
+            <div class="contact-label">WhatsApp</div>
+            <div class="contact-value"><a href="https://wa.me/5215512345678" target="_blank" style="color:var(--text-primary);text-decoration:none">55 1234 5678</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="form-card">
+        <h3><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Enviar mensaje</h3>
+        <form onsubmit="enviarFormulario(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-input" placeholder="Tu nombre" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" placeholder="correo@ejemplo.com" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asunto</label>
+            <select class="form-select" required>
+              <option value="">Seleccionar asunto</option>
+              <option>Problema con envio</option>
+              <option>Facturacion</option>
+              <option>Estado de pedido</option>
+              <option>Sugerencia</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prioridad</label>
+            <select class="form-select" required>
+              <option value="MEDIA">Media</option>
+              <option value="BAJA">Baja</option>
+              <option value="ALTA">Alta</option>
+              <option value="CRITICA">Critica</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mensaje</label>
+            <textarea class="form-textarea" placeholder="Describe tu problema o pregunta..." required></textarea>
+          </div>
+          <button type="submit" class="submit-btn">
+            <i class="fas fa-paper-plane"></i>Enviar mensaje
+          </button>
+        </form>
+      </div>
+
+      <!-- Back link -->
+      <div class="back-link">
+        <a href="tracking-cliente.html"><i class="fas fa-arrow-left" style="margin-right:6px"></i>Volver a rastrear mi envio</a>
+      </div>
     </div>
   </div>
+
+  <!-- LIVE CHAT FAB -->
+  <button class="chat-fab" onclick="toggleChat()" title="Chat en vivo">
+    <i class="fas fa-comment-dots"></i>
+    <div class="notif-dot"></div>
+  </button>
+
+  <!-- CHAT POPUP -->
+  <div class="chat-popup" id="chatPopup">
+    <div class="chat-popup-header">
+      <div>
+        <h4>Chat en vivo</h4>
+        <div style="font-size:10px;opacity:0.8"><span class="status-dot online"></span>En linea</div>
+      </div>
+      <button class="chat-popup-close" onclick="toggleChat()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="chat-popup-body" id="chatBody">
+      <div class="chat-msg bot">Hola! Como puedo ayudarte hoy?</div>
+    </div>
+    <div class="chat-popup-footer">
+      <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send-btn" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script>
+    function toggleCategory(el) {
+      el.classList.toggle('open');
+    }
+
+    function toggleFaq(el) {
+      el.classList.toggle('open');
+    }
+
+    function filterFAQ(query) {
+      const q = query.toLowerCase().trim();
+      document.querySelectorAll('.faq-category').forEach(cat => {
+        let anyVisible = false;
+        cat.querySelectorAll('.faq-item').forEach(item => {
+          const text = item.textContent.toLowerCase();
+          if (!q || text.includes(q)) {
+            item.style.display = '';
+            anyVisible = true;
+          } else {
+            item.style.display = 'none';
+          }
+        });
+        if (anyVisible && q) cat.classList.add('open');
+        cat.style.display = anyVisible ? '' : 'none';
+      });
+    }
+
+    function enviarFormulario(e) {
+      e.preventDefault();
+      Utils.toast('Mensaje enviado. Te responderemos pronto.', 'success');
+      e.target.reset();
+    }
+
+    function toggleChat() {
+      document.getElementById('chatPopup').classList.toggle('open');
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+      const body = document.getElementById('chatBody');
+      body.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+      input.value = '';
+      body.scrollTop = body.scrollHeight;
+
+      setTimeout(() => {
+        body.innerHTML += `<div class="chat-msg bot">Gracias por tu mensaje. Un agente te atendera en breve.</div>`;
+        body.scrollTop = body.scrollHeight;
+      }, 1200);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
+  </script>
 </body>
 </html>
