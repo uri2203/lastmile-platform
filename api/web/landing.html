@@ -22,8 +22,11 @@
       --orange-dim: rgba(249, 115, 22, 0.08);
       --orange-glow: rgba(249, 115, 22, 0.35);
       --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.08);
       --blue: #3b82f6;
+      --blue-dim: rgba(59, 130, 246, 0.08);
       --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.08);
       --amber: #f59e0b;
       --card-from: rgba(22, 28, 40, 0.9);
       --card-to: rgba(16, 20, 30, 0.95);
@@ -38,7 +41,7 @@
       overflow-x: hidden;
     }
 
-    /* ── BEAM BORDER (Nash.ai signature) ── */
+    /* ── BEAM BORDER ── */
     @property --beam-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
     @keyframes beamSpin { to { --beam-angle: 360deg; } }
     .beam-border { position: relative; }
@@ -55,6 +58,14 @@
       -webkit-mask-composite: xor; mask-composite: exclude;
       animation: beamSpin 6s linear infinite;
       pointer-events: none; z-index: 1;
+    }
+
+    /* ── GLASS CARD ── */
+    .glass {
+      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px -20px rgba(0,0,0,.5), 0 0 0 1px var(--border);
     }
 
     /* ── NAV ── */
@@ -86,10 +97,7 @@
     }
     .btn-orange { background: var(--orange); color: var(--bg); }
     .btn-orange:hover { background: #fb923c; transform: translateY(-1px); box-shadow: 0 0 24px var(--orange-glow); }
-    .btn-ghost {
-      background: transparent; color: var(--text-2);
-      border: 1px solid var(--border-2);
-    }
+    .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border-2); }
     .btn-ghost:hover { border-color: var(--orange); background: var(--orange-dim); color: var(--text); }
     .btn-lg { padding: 14px 28px; font-size: 15px; }
 
@@ -97,7 +105,7 @@
     .hero {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 120px 48px 80px; text-align: center;
+      padding: 120px 48px 60px; text-align: center;
       position: relative;
     }
     .hero::before {
@@ -133,6 +141,29 @@
     }
     .hero-trust i { color: var(--green); margin-right: 4px; }
 
+    /* ── TICKER BAR ── */
+    .ticker {
+      width: 100%; overflow: hidden; padding: 16px 0;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: rgba(16, 24, 40, 0.4);
+    }
+    .ticker-content {
+      display: flex; gap: 60px; animation: tickerScroll 40s linear infinite;
+      white-space: nowrap;
+    }
+    .ticker-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; color: var(--text-muted);
+    }
+    .ticker-item .val { color: var(--orange); font-weight: 700; font-size: 15px; }
+    .ticker-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 0 8px var(--orange);
+      animation: livePulse 1.6s ease-in-out infinite;
+    }
+    @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
     /* ── SECTION ── */
     .section { padding: 120px 48px; max-width: 1200px; margin: 0 auto; }
     .section-header { text-align: center; margin-bottom: 64px; }
@@ -155,83 +186,24 @@
       background: linear-gradient(90deg, transparent, rgba(249,115,22,0.15), transparent);
     }
 
-    /* ── GLASS CARD (Nash.ai style) ── */
-    .glass-card {
+    /* ── METRICS (animated counters) ── */
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .metric-card {
       background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px -20px rgba(0,0,0,.5), 0 0 0 1px var(--border);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px; text-align: center;
+      transition: border-color 0.3s, transform 0.3s;
     }
+    .metric-card:hover { border-color: rgba(249,115,22,0.2); transform: translateY(-2px); }
+    .metric-icon { font-size: 20px; color: var(--orange); margin-bottom: 10px; }
+    .metric-val {
+      font-size: 36px; font-weight: 800; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .metric-val .unit { font-size: 18px; color: var(--orange); }
+    .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.05em; }
 
-    /* ── DASHBOARD PREVIEW (Nash.ai glass style) ── */
-    .preview-section { padding: 120px 48px; max-width: 1200px; margin: 0 auto; }
-    .preview-window {
-      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 40px 80px -20px rgba(0,0,0,.6), 0 0 0 1px var(--border);
-    }
-    .preview-topbar {
-      display: flex; align-items: center; gap: 6px; padding: 14px 18px;
-      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
-    }
-    .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .preview-dot.r { background: #ef4444; }
-    .preview-dot.y { background: #f59e0b; }
-    .preview-dot.g { background: #22c55e; }
-    .preview-body {
-      padding: 32px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px;
-    }
-    .preview-map {
-      background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 14px; min-height: 340px;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
-    }
-    .preview-map img {
-      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-      opacity: 0.5;
-    }
-    .preview-map-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(1,5,30,0.2) 0%, rgba(1,5,30,0.7) 100%);
-    }
-    .preview-map-badge {
-      position: relative; z-index: 1;
-      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
-      border: 1px solid rgba(249,115,22,0.2);
-      border-radius: 10px; padding: 12px 20px;
-      display: inline-flex; align-items: center; gap: 10px;
-      box-shadow: 0 8px 32px -8px rgba(249,115,22,0.2);
-    }
-    .preview-map-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--orange); box-shadow: 0 0 12px var(--orange-glow);
-      animation: livePulse 1.6s ease-in-out infinite;
-    }
-    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-    .preview-map-text { font-size: 13px; font-weight: 600; color: #fb923c; }
-    .preview-stats { display: flex; flex-direction: column; gap: 12px; }
-    .preview-stat {
-      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
-      border: 1px solid var(--border);
-      border-radius: 12px; padding: 18px 20px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .preview-stat .label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
-    .preview-stat .value { font-size: 22px; font-weight: 700; color: var(--text); }
-    .preview-stat .value.green { color: var(--green); }
-    .preview-stat .value.orange { color: #fb923c; }
-    .preview-stat .value.blue { color: var(--blue); }
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
-      border-radius: 6px; font-size: 11px; font-weight: 600;
-      background: rgba(34, 197, 94, 0.08); color: var(--green);
-    }
-    .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
-
-    /* ── FEATURES (glass list) ── */
+    /* ── FEATURES ── */
     .features-list {
       display: grid; grid-template-columns: 1fr 1fr; gap: 0;
       border-top: 1px solid var(--border);
@@ -251,14 +223,106 @@
     .feature-text h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .feature-text p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
 
+    /* ── COMPARISON TABLE ── */
+    .compare-wrap {
+      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
+      border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden;
+    }
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-table thead th {
+      padding: 16px 20px; text-align: left; font-size: 13px; font-weight: 700;
+      border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+      color: var(--text-muted); letter-spacing: 0.03em;
+    }
+    .compare-table thead th.hl {
+      color: var(--orange); background: var(--orange-dim);
+      border-bottom: 2px solid rgba(249,115,22,0.3);
+    }
+    .compare-table tbody td {
+      padding: 14px 20px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text-2);
+    }
+    .compare-table tbody tr:last-child td { border-bottom: none; }
+    .compare-table tbody tr:hover { background: rgba(255,255,255,0.01); }
+    .compare-table tbody td:first-child { font-weight: 500; color: var(--text); }
+    .compare-table tbody td.hl {
+      background: rgba(249,115,22,0.04); font-weight: 600; color: var(--text);
+      border-left: 1px solid rgba(249,115,22,0.1);
+    }
+    .compare-table .check { color: var(--green); }
+    .compare-table .cross { color: rgba(255,255,255,0.15); }
+    .compare-table .partial { color: var(--amber); }
+
+    /* ── DASHBOARD PREVIEW ── */
+    .preview-section { padding: 120px 48px; max-width: 1200px; margin: 0 auto; }
+    .preview-window {
+      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
+      border: 1px solid var(--border); border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px -20px rgba(0,0,0,.6), 0 0 0 1px var(--border);
+    }
+    .preview-topbar {
+      display: flex; align-items: center; gap: 6px; padding: 14px 18px;
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+    }
+    .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .preview-dot.r { background: #ef4444; }
+    .preview-dot.y { background: #f59e0b; }
+    .preview-dot.g { background: #22c55e; }
+    .preview-body { padding: 32px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+    .preview-map {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 14px; min-height: 340px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .preview-map img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;
+    }
+    .preview-map-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(1,5,30,0.2) 0%, rgba(1,5,30,0.7) 100%);
+    }
+    .preview-map-badge {
+      position: relative; z-index: 1;
+      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
+      border: 1px solid rgba(249,115,22,0.2);
+      border-radius: 10px; padding: 12px 20px;
+      display: inline-flex; align-items: center; gap: 10px;
+      box-shadow: 0 8px 32px -8px rgba(249,115,22,0.2);
+    }
+    .preview-map-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 0 12px var(--orange-glow);
+      animation: livePulse 1.6s ease-in-out infinite;
+    }
+    .preview-map-text { font-size: 13px; font-weight: 600; color: #fb923c; }
+    .preview-stats { display: flex; flex-direction: column; gap: 12px; }
+    .preview-stat {
+      background: linear-gradient(to bottom right, var(--card-from), var(--card-to));
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .preview-stat .label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .preview-stat .value { font-size: 22px; font-weight: 700; color: var(--text); }
+    .preview-stat .value.green { color: var(--green); }
+    .preview-stat .value.orange { color: #fb923c; }
+    .preview-stat .value.blue { color: var(--blue); }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+      border-radius: 6px; font-size: 11px; font-weight: 600;
+      background: var(--green-dim); color: var(--green);
+    }
+    .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+
     /* ── HOW IT WORKS ── */
     .steps-row {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
       background: var(--border); border-radius: 16px; overflow: hidden;
     }
-    .step-cell {
-      background: var(--bg); padding: 48px 32px; text-align: center;
-    }
+    .step-cell { background: var(--bg); padding: 48px 32px; text-align: center; }
     .step-num {
       width: 44px; height: 44px; border-radius: 50%;
       background: var(--orange); color: var(--bg);
@@ -336,8 +400,7 @@
     }
     .final-cta h2 {
       font-size: clamp(30px, 4vw, 44px); font-weight: 800;
-      margin-bottom: 16px; position: relative; z-index: 1;
-      letter-spacing: -0.5px;
+      margin-bottom: 16px; position: relative; z-index: 1; letter-spacing: -0.5px;
     }
     .final-cta p {
       font-size: 17px; color: var(--text-2); margin-bottom: 36px;
@@ -357,9 +420,11 @@
       .nav-links { display: none; }
       .hero { padding: 100px 20px 60px; }
       .section, .preview-section { padding-left: 20px; padding-right: 20px; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
       .features-list { grid-template-columns: 1fr; }
       .feature-item:nth-child(odd) { padding-right: 0; border-right: none; }
       .feature-item:nth-child(even) { padding-left: 0; }
+      .compare-wrap { overflow-x: auto; }
       .preview-body { grid-template-columns: 1fr; }
       .steps-row { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: 1fr; }
@@ -377,6 +442,7 @@
       </a>
       <ul class="nav-links">
         <li><a href="#features">Plataforma</a></li>
+        <li><a href="#compare">Comparativa</a></li>
         <li><a href="#how">Como funciona</a></li>
         <li><a href="#pricing">Precios</a></li>
         <li><a href="#faq">FAQ</a></li>
@@ -392,10 +458,10 @@
   <section class="hero">
     <div class="hero-badge">
       <div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 8px var(--orange);"></div>
-      Autonomic Logistics Platform
+      Plataforma de delivery para Mexico
     </div>
     <h1>Inteligencia que mueve tu negocio</h1>
-    <p>Unifica decisiones y ejecucion en tus flotas, transportistas y redes de fulfillment. GPS en tiempo real, IA y facturacion CFDI 4.0.</p>
+    <p>Unifica decisiones y ejecucion en tus flotas, transportistas y redes de fulfillment. GPS en tiempo real, IA y facturacion CFDI 4.0. Sin comisiones por envio.</p>
     <div class="hero-actions">
       <a href="onboarding.html" class="btn btn-orange btn-lg">
         <i class="fas fa-rocket"></i> Comenzar gratis
@@ -409,19 +475,59 @@
     </div>
   </section>
 
-  <!-- TRUST LOGOS -->
-  <div style="padding:48px 48px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-    <div style="max-width:1000px;margin:0 auto;text-align:center;">
-      <div style="font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:24px;text-transform:uppercase;letter-spacing:1.5px;">Empresas que confian en nosotros</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:56px;flex-wrap:wrap;">
-        <div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.15);letter-spacing:1px;">PAQUETEXPRESS</div>
-        <div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.15);letter-spacing:1px;">ENVIOS Express</div>
-        <div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.15);letter-spacing:1px;">DISTRIBUIDORA MX</div>
-        <div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.15);letter-spacing:1px;">LOGISTICA TOTAL</div>
-        <div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.15);letter-spacing:1px;">SENTIX</div>
-      </div>
+  <!-- TICKER BAR -->
+  <div class="ticker">
+    <div class="ticker-content">
+      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val" data-counter="2847">0</span> envios activos ahora</div>
+      <div class="ticker-item"><span class="val" data-counter="142">0</span> choferes en ruta</div>
+      <div class="ticker-item"><span class="val">99.2%</span> entregas a tiempo</div>
+      <div class="ticker-item"><span class="val" data-counter="38500">0</span> km recorridos hoy</div>
+      <div class="ticker-item"><span class="val">45%</span> ahorro en combustible</div>
+      <div class="ticker-item"><span class="val">2.3s</span> tiempo respuesta IA</div>
+      <div class="ticker-item"><span class="val">100%</span> CFDI 4.0</div>
+      <div class="ticker-item"><span class="val">24/7</span> monitoreo activo</div>
+      <!-- DUPLICATE FOR SEAMLESS LOOP -->
+      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val" data-counter="2847">0</span> envios activos ahora</div>
+      <div class="ticker-item"><span class="val" data-counter="142">0</span> choferes en ruta</div>
+      <div class="ticker-item"><span class="val">99.2%</span> entregas a tiempo</div>
+      <div class="ticker-item"><span class="val" data-counter="38500">0</span> km recorridos hoy</div>
+      <div class="ticker-item"><span class="val">45%</span> ahorro en combustible</div>
+      <div class="ticker-item"><span class="val">2.3s</span> tiempo respuesta IA</div>
+      <div class="ticker-item"><span class="val">100%</span> CFDI 4.0</div>
+      <div class="ticker-item"><span class="val">24/7</span> monitoreo activo</div>
     </div>
   </div>
+
+  <!-- METRICS (animated counters) -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-tag">Resultados comprobados</div>
+      <h2>Numeros que hablan por si solos</h2>
+      <p>Operaciones reales que corren en nuestra plataforma diariamente.</p>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon"><i class="fas fa-boxes-stacked"></i></div>
+        <div class="metric-val"><span class="counter" data-target="47500">0</span></div>
+        <div class="metric-label">Envios procesados al mes</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon"><i class="fas fa-gas-pump"></i></div>
+        <div class="metric-val"><span class="counter" data-target="45">0</span><span class="unit">%</span></div>
+        <div class="metric-label">Ahorro promedio en combustible</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon"><i class="fas fa-clock"></i></div>
+        <div class="metric-val"><span class="counter" data-target="99" data-decimal="1">0</span><span class="unit">%</span></div>
+        <div class="metric-label">Entregas a tiempo</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon"><i class="fas fa-file-invoice"></i></div>
+        <div class="metric-val"><span class="counter" data-target="100">0</span><span class="unit">%</span></div>
+        <div class="metric-label">Cumplimiento CFDI 4.0</div>
+      </div>
+    </div>
+  </section>
 
   <!-- FEATURES -->
   <section class="section" id="features">
@@ -476,7 +582,108 @@
     </div>
   </section>
 
-  <!-- DASHBOARD PREVIEW (Nash.ai glass style with beam border) -->
+  <!-- COMPARISON TABLE -->
+  <section class="section" id="compare">
+    <div class="section-header">
+      <div class="section-tag">Comparativa</div>
+      <h2>Por que Last Mile vs la competencia</h2>
+      <p>Compara lo que realmente ofrecemos contra las opciones del mercado.</p>
+    </div>
+    <div class="compare-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Caracteristica</th>
+            <th class="hl">Last Mile</th>
+            <th>Rappi Business</th>
+            <th>Uber Direct</th>
+            <th>Solucion propia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tu propia marca (whitelabel)</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> 100%</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+          </tr>
+          <tr>
+            <td>Sin comision por envio</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Cuota fija</td>
+            <td><i class="fas fa-times-circle cross"></i> 15-25%</td>
+            <td><i class="fas fa-times-circle cross"></i> Tarifa dinamica</td>
+            <td><i class="fas fa-check-circle check"></i></td>
+          </tr>
+          <tr>
+            <td>Rastreo GPS en tiempo real</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Desarrollo propio</td>
+          </tr>
+          <tr>
+            <td>Facturacion CFDI 4.0 automatica</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Incluida</td>
+            <td><i class="fas fa-minus-circle partial"></i> Limitada</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Plugin extra</td>
+          </tr>
+          <tr>
+            <td>Optimizacion de rutas con IA</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Incluida</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-times-circle cross"></i> Costoso</td>
+          </tr>
+          <tr>
+            <td>Pagos OXXO + MercadoPago</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Solo tarjeta</td>
+            <td><i class="fas fa-minus-circle partial"></i> Manual</td>
+          </tr>
+          <tr>
+            <td>App chofer movil</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> PWA</td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-times-circle cross"></i> Propio</td>
+          </tr>
+          <tr>
+            <td>Portal de tracking para clientes</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-minus-circle partial"></i> Solo app</td>
+            <td><i class="fas fa-minus-circle partial"></i> Solo app</td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+          </tr>
+          <tr>
+            <td>Dashboard con reportes</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-check-circle check"></i></td>
+            <td><i class="fas fa-times-circle cross"></i></td>
+          </tr>
+          <tr>
+            <td>Control total de datos</td>
+            <td class="hl"><i class="fas fa-check-circle check"></i> Tus datos</td>
+            <td><i class="fas fa-times-circle cross"></i> Ellos controlan</td>
+            <td><i class="fas fa-times-circle cross"></i> Ellos controlan</td>
+            <td><i class="fas fa-check-circle check"></i></td>
+          </tr>
+          <tr>
+            <td>Costo mensual</td>
+            <td class="hl" style="color:var(--orange);font-weight:700;">$999 - $5,999</td>
+            <td>Por envio</td>
+            <td>Por envio</td>
+            <td>$50,000 - $200,000+</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DASHBOARD PREVIEW -->
   <section class="preview-section" id="preview">
     <div class="section-header">
       <div class="section-tag">Producto en accion</div>
@@ -664,8 +871,59 @@
   </footer>
 
   <script>
+    // FAQ toggle
     document.querySelectorAll('.faq-q').forEach(q => {
       q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+    });
+
+    // Animated counters (scroll-triggered)
+    function animateCounters() {
+      document.querySelectorAll('.counter').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        const decimal = el.dataset.decimal ? parseFloat(el.dataset.decimal) : 0;
+        const duration = 2000;
+        const start = performance.now();
+        function update(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = eased * target;
+          if (decimal) {
+            el.textContent = current.toFixed(decimal);
+          } else {
+            el.textContent = Math.floor(current).toLocaleString();
+          }
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+      });
+    }
+
+    // Intersection observer for counters
+    const counterObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounters();
+          counterObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+    const metricsSection = document.querySelector('.metrics-grid');
+    if (metricsSection) counterObserver.observe(metricsSection);
+
+    // Ticker counter animation (immediate on load)
+    document.querySelectorAll('.ticker .val[data-counter]').forEach(el => {
+      const target = parseInt(el.dataset.counter);
+      const duration = 2500;
+      const start = performance.now();
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(eased * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
     });
   </script>
 </body>
