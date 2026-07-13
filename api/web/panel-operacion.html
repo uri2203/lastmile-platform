@@ -11,6 +11,16 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/theme.js"></script>
+  <style>
+    /* Theme toggle button */
+    .theme-toggle-btn {
+      background: var(--bg-card-hover); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-full); width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-secondary); font-size: 14px;
+    }
+    .theme-toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
+  </style>
 </head>
 <body>
   <!-- Sidebar -->
@@ -85,7 +95,7 @@
           <i class="fas fa-bell" style="font-size:16px;color:var(--text-secondary)"></i>
           <span class="notif-dot" id="notif-dot"></span>
         </div>
-        <button class="theme-toggle" onclick="ThemeManager.toggle()">
+        <button class="theme-toggle" id="theme-toggle-btn">
           <i class="fas fa-sun"></i>
         </button>
         <div class="avatar" id="topbar-avatar">OP</div>
