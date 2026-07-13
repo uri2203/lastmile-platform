@@ -601,6 +601,10 @@
 
     /* ---- GPS ---- */
     let gpsWatchId = null;
+    let lastGpsSend = 0;
+    const GPS_SEND_INTERVAL = 30000; // Send to server every 30 seconds
+    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
+
     function iniciarGPS() {
       if (!navigator.geolocation) {
         document.getElementById('gps-status').className = 'gps-badge offline';
@@ -609,20 +613,77 @@
       }
       gpsWatchId = navigator.geolocation.watchPosition(
         pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const speed = pos.coords.speed || 0;
+          const heading = pos.coords.heading || 0;
+          const battery = 'N/A';
+
+          // Update UI
           document.getElementById('gps-status').className = 'gps-badge online';
           document.getElementById('gps-status').innerHTML = '<i class="fas fa-satellite-dish"></i> GPS Activo';
+
+          // Update map marker
           if (map) {
-            L.marker([pos.coords.latitude, pos.coords.longitude])
-              .addTo(map).bindPopup('Mi ubicacion').openPopup();
-            map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+            if (!window._gpsMarker) {
+              window._gpsMarker = L.marker([lat, lng]).addTo(map).bindPopup('Mi ubicacion');
+            } else {
+              window._gpsMarker.setLatLng([lat, lng]);
+            }
+            map.setView([lat, lng], 15);
+          }
+
+          // Send to server (throttled to every 30 seconds)
+          const now = Date.now();
+          if (now - lastGpsSend > GPS_SEND_INTERVAL) {
+            lastGpsSend = now;
+            sendGpsToServer(lat, lng, speed, heading);
           }
         },
-        () => {
+        err => {
           document.getElementById('gps-status').className = 'gps-badge offline';
-          document.getElementById('gps-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> GPS Error';
+          const msg = err.code === 1 ? 'Permiso denegado' :
+                      err.code === 2 ? 'Senal debil' : 'Timeout GPS';
+          document.getElementById('gps-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + msg;
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
       );
+    }
+
+    function sendGpsToServer(lat, lng, speed, heading) {
+      // Get user info from localStorage
+      const user = localStorage.getItem('user') || 'chofer1';
+      const empId = localStorage.getItem('empId') || '1';
+
+      fetch(API_BASE + '/api/tracking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Emp-Id': empId
+        },
+        body: JSON.stringify({
+          choId: 1,  // TODO: map from user to chofer ID
+          vehId: 1,  // TODO: map from user to vehicle ID
+          latitud: lat,
+          longitud: lng,
+          velocidad: Math.round(speed * 3.6), // m/s to km/h
+          rumbo: Math.round(heading),
+          bateria: 100
+        })
+      }).then(r => r.json())
+        .then(d => {
+          if (d.success) console.log('[GPS] Enviado:', lat.toFixed(5), lng.toFixed(5));
+        })
+        .catch(() => console.warn('[GPS] Error al enviar'));
+    }
+
+    function detenerGPS() {
+      if (gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+      }
+      document.getElementById('gps-status').className = 'gps-badge offline';
+      document.getElementById('gps-status').innerHTML = '<i class="fas fa-pause"></i> GPS Pausado';
     }
 
     /* ---- PWA Service Worker ---- */
