@@ -219,6 +219,321 @@ def setup_usuarios():
         return jsonify({'success': False, 'error': str(e)})
 
 # ========================================
+# SETUP: Crear tablas ZONAS y ZONA_TARIFAS
+# ========================================
+@app.route('/api/setup/zonas', methods=['POST'])
+def setup_zonas():
+    """Crea las tablas de zonas y tarifas. Multi-tenant por EMP_ID."""
+    try:
+        # Drop existing
+        try: execute("DROP TABLE TESTLIB.ZONA_TARIFAS")
+        except: pass
+        try: execute("DROP TABLE TESTLIB.ZONAS")
+        except: pass
+
+        # ZONAS: master zone definition per tenant
+        execute("""
+            CREATE TABLE TESTLIB.ZONAS (
+                ZON_ID          DECIMAL(10,0) NOT NULL GENERATED ALWAYS AS IDENTITY,
+                ZON_EMP_ID      DECIMAL(5,0)  NOT NULL,
+                ZON_NOMBRE      VARCHAR(100)  NOT NULL,
+                ZON_DESCRIPCION VARCHAR(300),
+                ZON_COLOR       VARCHAR(10)   DEFAULT '#6366f1',
+                ZON_RADIO_KM    DECIMAL(6,1)  DEFAULT 5.0,
+                ZON_CENTRO_LAT  DECIMAL(10,7),
+                ZON_CENTRO_LNG  DECIMAL(10,7),
+                ZON_ACTIVO      CHAR(1)       NOT NULL DEFAULT 'S',
+                ZON_CREATED     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                ZON_UPDATED     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (ZON_ID)
+            )
+        """)
+
+        # ZONA_TARIFAS: per-zone per-service-level pricing
+        execute("""
+            CREATE TABLE TESTLIB.ZONA_TARIFAS (
+                ZTA_ID              DECIMAL(10,0) NOT NULL GENERATED ALWAYS AS IDENTITY,
+                ZTA_ZON_ID          DECIMAL(10,0) NOT NULL,
+                ZTA_EMP_ID          DECIMAL(5,0)  NOT NULL,
+                ZTA_SERVICIO        VARCHAR(20)   NOT NULL DEFAULT 'ESTANDAR',
+                ZTA_MONTO_BASE      DECIMAL(10,2) DEFAULT 0,
+                ZTA_MONTO_POR_KG    DECIMAL(10,2) DEFAULT 0,
+                ZTA_MONTO_POR_KM    DECIMAL(10,2) DEFAULT 0,
+                ZTA_MONTO_POR_M3    DECIMAL(10,2) DEFAULT 0,
+                ZTA_PESO_MIN_KG     DECIMAL(8,2)  DEFAULT 0.5,
+                ZTA_PESO_MAX_KG     DECIMAL(8,2)  DEFAULT 30.0,
+                ZTA_DISTANCIA_MAX_KM DECIMAL(8,1) DEFAULT 50.0,
+                ZTA_MONTO_MINIMO    DECIMAL(10,2) DEFAULT 35.0,
+                ZTA_SEGURO_PCT      DECIMAL(5,2)  DEFAULT 0,
+                ZTA_ACTIVO          CHAR(1)       NOT NULL DEFAULT 'S',
+                ZTA_CREATED         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (ZTA_ID)
+            )
+        """)
+
+        # Indices
+        try: execute("CREATE INDEX TESTLIB.IX_ZON_EMP ON TESTLIB.ZONAS (ZON_EMP_ID)")
+        except: pass
+        try: execute("CREATE INDEX TESTLIB.IX_ZTA_EMP ON TESTLIB.ZONA_TARIFAS (ZTA_EMP_ID)")
+        except: pass
+        try: execute("CREATE INDEX TESTLIB.IX_ZTA_ZON ON TESTLIB.ZONA_TARIFAS (ZTA_ZON_ID)")
+        except: pass
+
+        # Seed demo zones for emp 1
+        zones = [
+            (1, 'Centro Historico', 'Zona centro historico de CDMX', '#6366f1', 3.0, 19.4326, -99.1332),
+            (1, 'Polanco / Reforma', 'Zona premium Polanco y Paseo Reforma', '#10b981', 4.0, 19.4350, -99.1950),
+            (1, 'Roma / Condesa', 'Zonas populares Roma Norte y Condesa', '#f59e0b', 3.5, 19.4126, -99.1600),
+            (1, 'Coyoacan / San Angel', 'Zona sur artistica y residencial', '#8b5cf6', 5.0, 19.3500, -99.1550),
+            (1, 'Santa Fe / Cuajimalpa', 'Zona corporativa y comercial', '#ef4444', 6.0, 19.3600, -99.2700),
+            (1, 'Del Valle / Narvarte', 'Zona residencial sur', '#06b6d4', 3.0, 19.3900, -99.1700),
+            (1, 'Escandon / Tacubaya', 'Zona mixta poniente', '#ec4899', 2.5, 19.4050, -99.2000),
+        ]
+
+        for z in zones:
+            execute(
+                "INSERT INTO TESTLIB.ZONAS (ZON_EMP_ID, ZON_NOMBRE, ZON_DESCRIPCION, ZON_COLOR, ZON_RADIO_KM, ZON_CENTRO_LAT, ZON_CENTRO_LNG) VALUES (?,?,?,?,?,?,?)",
+                [z[0], z[1], z[2], z[3], z[4], z[5], z[6]]
+            )
+
+        # Seed tarifas for each zone (3 service levels each)
+        tariffs = [
+            # Centro Historico (zone 1)
+            (1, 1, 'EXPRESS',   45.00, 8.00, 5.00, 0, 0.5, 15.0, 20.0, 45.00, 2.0),
+            (1, 1, 'ESTANDAR',  35.00, 5.00, 3.50, 0, 0.5, 30.0, 50.0, 35.00, 0),
+            (1, 1, 'ECONOMICO', 25.00, 3.00, 2.00, 0, 1.0, 30.0, 50.0, 25.00, 0),
+            # Polanco (zone 2)
+            (2, 1, 'EXPRESS',   55.00, 10.00, 6.00, 0, 0.5, 15.0, 25.0, 55.00, 3.0),
+            (2, 1, 'ESTANDAR',  45.00, 7.00, 4.00, 0, 0.5, 30.0, 50.0, 45.00, 0),
+            (2, 1, 'ECONOMICO', 35.00, 4.00, 2.50, 0, 1.0, 30.0, 50.0, 35.00, 0),
+            # Roma/Condesa (zone 3)
+            (3, 1, 'EXPRESS',   50.00, 9.00, 5.50, 0, 0.5, 15.0, 20.0, 50.00, 2.5),
+            (3, 1, 'ESTANDAR',  40.00, 6.00, 3.50, 0, 0.5, 30.0, 50.0, 40.00, 0),
+            (3, 1, 'ECONOMICO', 30.00, 3.50, 2.00, 0, 1.0, 30.0, 50.0, 30.00, 0),
+            # Coyoacan (zone 4)
+            (4, 1, 'EXPRESS',   60.00, 12.00, 7.00, 0, 0.5, 15.0, 25.0, 60.00, 3.0),
+            (4, 1, 'ESTANDAR',  50.00, 8.00, 5.00, 0, 0.5, 30.0, 50.0, 50.00, 0),
+            (4, 1, 'ECONOMICO', 38.00, 5.00, 3.00, 0, 1.0, 30.0, 50.0, 38.00, 0),
+            # Santa Fe (zone 5)
+            (5, 1, 'EXPRESS',   70.00, 14.00, 8.00, 0, 0.5, 15.0, 30.0, 70.00, 3.0),
+            (5, 1, 'ESTANDAR',  60.00, 10.00, 6.00, 0, 0.5, 30.0, 50.0, 60.00, 0),
+            (5, 1, 'ECONOMICO', 45.00, 6.00, 4.00, 0, 1.0, 30.0, 50.0, 45.00, 0),
+            # Del Valle (zone 6)
+            (6, 1, 'EXPRESS',   50.00, 9.00, 5.50, 0, 0.5, 15.0, 20.0, 50.00, 2.5),
+            (6, 1, 'ESTANDAR',  42.00, 6.00, 3.50, 0, 0.5, 30.0, 50.0, 42.00, 0),
+            (6, 1, 'ECONOMICO', 30.00, 3.50, 2.00, 0, 1.0, 30.0, 50.0, 30.00, 0),
+            # Escandon (zone 7)
+            (7, 1, 'EXPRESS',   48.00, 8.50, 5.00, 0, 0.5, 15.0, 20.0, 48.00, 2.0),
+            (7, 1, 'ESTANDAR',  38.00, 5.50, 3.00, 0, 0.5, 30.0, 50.0, 38.00, 0),
+            (7, 1, 'ECONOMICO', 28.00, 3.00, 2.00, 0, 1.0, 30.0, 50.0, 28.00, 0),
+        ]
+
+        for t in tariffs:
+            execute(
+                "INSERT INTO TESTLIB.ZONA_TARIFAS (ZTA_ZON_ID, ZTA_EMP_ID, ZTA_SERVICIO, ZTA_MONTO_BASE, ZTA_MONTO_POR_KG, ZTA_MONTO_POR_KM, ZTA_MONTO_POR_M3, ZTA_PESO_MIN_KG, ZTA_PESO_MAX_KG, ZTA_DISTANCIA_MAX_KM, ZTA_MONTO_MINIMO, ZTA_SEGURO_PCT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                [t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11]]
+            )
+
+        return jsonify({'success': True, 'message': f'Zonas creadas: {len(zones)} zonas, {len(tariffs)} tarifas'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ========================================
+# CRUD: ZONAS DE COBERTURA
+# ========================================
+@app.route('/api/zonas', methods=['GET'])
+def get_zonas():
+    """Lista zonas de una empresa con sus tarifas."""
+    emp_id = get_emp_id()
+    zonas = query(
+        "SELECT * FROM TESTLIB.ZONAS WHERE ZON_EMP_ID = ? AND ZON_ACTIVO = 'S' ORDER BY ZON_NOMBRE",
+        [emp_id]
+    )
+    for z in zonas:
+        zonas_id = z.get('ZON_ID')
+        tarifas = query(
+            "SELECT * FROM TESTLIB.ZONA_TARIFAS WHERE ZTA_ZON_ID = ? AND ZTA_EMP_ID = ? AND ZTA_ACTIVO = 'S' ORDER BY ZTA_MONTO_BASE",
+            [zonas_id, emp_id]
+        )
+        z['tarifas'] = tarifas
+    return jsonify({'success': True, 'data': zonas})
+
+@app.route('/api/zonas', methods=['POST'])
+def create_zona():
+    """Crea una zona nueva con sus tarifas."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    nombre = data.get('nombre', '').strip()
+    if not nombre:
+        return jsonify({'success': False, 'error': 'Nombre de zona requerido'})
+
+    try:
+        # Insert zona
+        execute(
+            "INSERT INTO TESTLIB.ZONAS (ZON_EMP_ID, ZON_NOMBRE, ZON_DESCRIPCION, ZON_COLOR, ZON_RADIO_KM, ZON_CENTRO_LAT, ZON_CENTRO_LNG) VALUES (?,?,?,?,?,?,?)",
+            [emp_id, nombre, data.get('descripcion', ''), data.get('color', '#6366f1'),
+             data.get('radio_km', 5.0), data.get('centro_lat', 19.4326), data.get('centro_lng', -99.1332)]
+        )
+        # Get the new ID
+        rows = query("SELECT ZON_ID FROM TESTLIB.ZONAS WHERE ZON_EMP_ID = ? AND ZON_NOMBRE = ? ORDER BY ZON_ID DESC FETCH FIRST 1 ROWS ONLY", [emp_id, nombre])
+        zon_id = rows[0]['ZON_ID'] if rows else None
+
+        # Insert tarifas
+        tarifas = data.get('tarifas', [])
+        for t in tarifas:
+            servicio = t.get('servicio', 'ESTANDAR')
+            execute(
+                "INSERT INTO TESTLIB.ZONA_TARIFAS (ZTA_ZON_ID, ZTA_EMP_ID, ZTA_SERVICIO, ZTA_MONTO_BASE, ZTA_MONTO_POR_KG, ZTA_MONTO_POR_KM, ZTA_MONTO_POR_M3, ZTA_PESO_MIN_KG, ZTA_PESO_MAX_KG, ZTA_DISTANCIA_MAX_KM, ZTA_MONTO_MINIMO, ZTA_SEGURO_PCT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                [zon_id, emp_id, servicio,
+                 t.get('monto_base', 0), t.get('monto_por_kg', 0), t.get('monto_por_km', 0),
+                 t.get('monto_por_m3', 0), t.get('peso_min_kg', 0.5), t.get('peso_max_kg', 30.0),
+                 t.get('distancia_max_km', 50.0), t.get('monto_minimo', 35.0), t.get('seguro_pct', 0)]
+            )
+
+        return jsonify({'success': True, 'message': f'Zona "{nombre}" creada con {len(tarifas)} tarifas', 'zon_id': zon_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/zonas/<int:zon_id>', methods=['GET'])
+def get_zona(zon_id):
+    """Detalle de una zona con todas sus tarifas."""
+    emp_id = get_emp_id()
+    rows = query("SELECT * FROM TESTLIB.ZONAS WHERE ZON_ID = ? AND ZON_EMP_ID = ?", [zon_id, emp_id])
+    if not rows:
+        return jsonify({'success': False, 'error': 'Zona no encontrada'}), 404
+    zona = rows[0]
+    zona['tarifas'] = query(
+        "SELECT * FROM TESTLIB.ZONA_TARIFAS WHERE ZTA_ZON_ID = ? AND ZTA_EMP_ID = ? ORDER BY ZTA_SERVICIO",
+        [zon_id, emp_id]
+    )
+    return jsonify({'success': True, 'data': zona})
+
+@app.route('/api/zonas/<int:zon_id>', methods=['PUT'])
+def update_zona(zon_id):
+    """Actualiza zona y sus tarifas."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+
+    try:
+        # Update zona
+        execute(
+            "UPDATE TESTLIB.ZONAS SET ZON_NOMBRE=?, ZON_DESCRIPCION=?, ZON_COLOR=?, ZON_RADIO_KM=?, ZON_CENTRO_LAT=?, ZON_CENTRO_LNG=?, ZON_UPDATED=CURRENT_TIMESTAMP WHERE ZON_ID=? AND ZON_EMP_ID=?",
+            [data.get('nombre', ''), data.get('descripcion', ''), data.get('color', '#6366f1'),
+             data.get('radio_km', 5.0), data.get('centro_lat', 19.4326), data.get('centro_lng', -99.1332),
+             zon_id, emp_id]
+        )
+
+        # Update or insert tarifas
+        tarifas = data.get('tarifas', [])
+        for t in tarifas:
+            zta_id = t.get('id')
+            if zta_id:
+                execute(
+                    "UPDATE TESTLIB.ZONA_TARIFAS SET ZTA_SERVICIO=?, ZTA_MONTO_BASE=?, ZTA_MONTO_POR_KG=?, ZTA_MONTO_POR_KM=?, ZTA_MONTO_POR_M3=?, ZTA_PESO_MIN_KG=?, ZTA_PESO_MAX_KG=?, ZTA_DISTANCIA_MAX_KM=?, ZTA_MONTO_MINIMO=?, ZTA_SEGURO_PCT=? WHERE ZTA_ID=? AND ZTA_EMP_ID=?",
+                    [t.get('servicio', 'ESTANDAR'), t.get('monto_base', 0), t.get('monto_por_kg', 0),
+                     t.get('monto_por_km', 0), t.get('monto_por_m3', 0), t.get('peso_min_kg', 0.5),
+                     t.get('peso_max_kg', 30.0), t.get('distancia_max_km', 50.0), t.get('monto_minimo', 35.0),
+                     t.get('seguro_pct', 0), zta_id, emp_id]
+                )
+            else:
+                execute(
+                    "INSERT INTO TESTLIB.ZONA_TARIFAS (ZTA_ZON_ID, ZTA_EMP_ID, ZTA_SERVICIO, ZTA_MONTO_BASE, ZTA_MONTO_POR_KG, ZTA_MONTO_POR_KM, ZTA_MONTO_POR_M3, ZTA_PESO_MIN_KG, ZTA_PESO_MAX_KG, ZTA_DISTANCIA_MAX_KM, ZTA_MONTO_MINIMO, ZTA_SEGURO_PCT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    [zon_id, emp_id, t.get('servicio', 'ESTANDAR'), t.get('monto_base', 0), t.get('monto_por_kg', 0),
+                     t.get('monto_por_km', 0), t.get('monto_por_m3', 0), t.get('peso_min_kg', 0.5),
+                     t.get('peso_max_kg', 30.0), t.get('distancia_max_km', 50.0), t.get('monto_minimo', 35.0),
+                     t.get('seguro_pct', 0)]
+                )
+
+        return jsonify({'success': True, 'message': 'Zona actualizada'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/zonas/<int:zon_id>', methods=['DELETE'])
+def delete_zona(zon_id):
+    """Soft delete: marca zona y tarifas como inactivas."""
+    emp_id = get_emp_id()
+    try:
+        execute("UPDATE TESTLIB.ZONAS SET ZON_ACTIVO='N', ZON_UPDATED=CURRENT_TIMESTAMP WHERE ZON_ID=? AND ZON_EMP_ID=?", [zon_id, emp_id])
+        execute("UPDATE TESTLIB.ZONA_TARIFAS SET ZTA_ACTIVO='N' WHERE ZTA_ZON_ID=? AND ZTA_EMP_ID=?", [zon_id, emp_id])
+        return jsonify({'success': True, 'message': 'Zona eliminada'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/zonas/cotizar', methods=['POST'])
+def cotizar_envio():
+    """Calcula el costo de envío según parámetros de zona + paquete."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    zon_id = data.get('zona_id')
+    servicio = data.get('servicio', 'ESTANDAR')
+    peso_kg = float(data.get('peso_kg', 1.0))
+    largo_cm = float(data.get('largo_cm', 0))
+    ancho_cm = float(data.get('ancho_cm', 0))
+    alto_cm = float(data.get('alto_cm', 0))
+    distancia_km = float(data.get('distancia_km', 0))
+    valor_declarado = float(data.get('valor_declarado', 0))
+
+    if not zon_id:
+        return jsonify({'success': False, 'error': 'zona_id requerido'})
+
+    rows = query(
+        "SELECT * FROM TESTLIB.ZONA_TARIFAS WHERE ZTA_ZON_ID=? AND ZTA_EMP_ID=? AND ZTA_SERVICIO=? AND ZTA_ACTIVO='S'",
+        [zon_id, emp_id, servicio]
+    )
+    if not rows:
+        return jsonify({'success': False, 'error': f'No hay tarifa para servicio {servicio} en esta zona'})
+
+    t = rows[0]
+
+    # Calcular peso volumetrico (L×A×H / 5000 = kg volumétricos)
+    peso_vol = 0
+    if largo_cm > 0 and ancho_cm > 0 and alto_cm > 0:
+        peso_vol = (largo_cm * ancho_cm * alto_cm) / 5000.0
+
+    peso_cobrar = max(peso_kg, peso_vol)  # Se cobra el mayor entre real y volumétrico
+
+    # Calcular costo
+    monto_base = float(t.get('ZTA_MONTO_BASE', 0))
+    costo_kg = peso_cobrar * float(t.get('ZTA_MONTO_POR_KG', 0))
+    costo_km = distancia_km * float(t.get('ZTA_MONTO_POR_KM', 0))
+    costo_vol = 0
+    if peso_vol > peso_kg:
+        # Si peso volumétrico domina, cobrar adicional
+        m3 = (largo_cm * ancho_cm * alto_cm) / 1000000.0
+        costo_vol = m3 * float(t.get('ZTA_MONTO_POR_M3', 0))
+
+    subtotal = monto_base + costo_kg + costo_km + costo_vol
+
+    # Seguro
+    seguro = 0
+    if valor_declarado > 0:
+        seguro = valor_declarado * float(t.get('ZTA_SEGURO_PCT', 0)) / 100.0
+
+    total = subtotal + seguro
+
+    # Mínimo
+    monto_min = float(t.get('ZTA_MONTO_MINIMO', 0))
+    if total < monto_min:
+        total = monto_min
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'peso_real_kg': peso_kg,
+            'peso_volumetrico_kg': round(peso_vol, 2),
+            'peso_cobrar_kg': round(peso_cobrar, 2),
+            'monto_base': monto_base,
+            'costo_peso': round(costo_kg, 2),
+            'costo_distancia': round(costo_km, 2),
+            'costo_volumen': round(costo_vol, 2),
+            'seguro': round(seguro, 2),
+            'subtotal': round(subtotal, 2),
+            'monto_minimo': monto_min,
+            'total': round(max(total, monto_min), 2)
+        }
+    })
+
+# ========================================
 # MÓDULO: EMPRESAS
 # ========================================
 @app.route('/api/empresas', methods=['GET'])
@@ -423,24 +738,6 @@ def post_tracking():
          t.get('velocidad', 0), t.get('rumbo', 0), t.get('bateria', 100)]
     )
     return jsonify({'success': True, 'message': 'Tracking registrado'})
-
-# ========================================
-# MÓDULO: ZONAS
-# ========================================
-@app.route('/api/zonas', methods=['GET'])
-def get_zonas():
-    emp_id = get_emp_id()
-    data = query('SELECT * FROM TESTLIB.ZONAS WHERE EMP_ID = ? ORDER BY ZON_NOMBRE', [emp_id])
-    return jsonify({'success': True, 'data': data})
-
-# ========================================
-# MÓDULO: TARIFAS
-# ========================================
-@app.route('/api/tarifas', methods=['GET'])
-def get_tarifas():
-    emp_id = get_emp_id()
-    data = query('SELECT * FROM TESTLIB.TARIFAS_LM WHERE EMP_ID = ? ORDER BY TAR_NOMBRE', [emp_id])
-    return jsonify({'success': True, 'data': data})
 
 # ========================================
 # MÓDULO: AUDITORÍA
