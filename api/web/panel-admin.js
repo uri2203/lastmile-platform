@@ -44,3 +44,12 @@ window.addEventListener('load',()=>{loadDashboard();renderPedidos();renderChofer
 /* Theme toggle - uses ThemeManager from theme.js */
 function toggleTheme(){ThemeManager.toggle();const icon=document.getElementById('theme-icon');if(icon)icon.className=ThemeManager.get()==='dark'?'fas fa-moon':'fas fa-sun'}
 window.addEventListener('DOMContentLoaded',()=>{if(typeof ThemeManager!=='undefined')ThemeManager.init()});
+/* Re-render charts + map on theme change */
+window.addEventListener('themechange',()=>{
+  const t=ThemeManager.get();
+  const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
+  const tickC=t==='dark'?'#4a4a5a':'#6b7280';
+  if(pedidosChart){pedidosChart.options.scales.x.grid.color=gridC;pedidosChart.options.scales.y.grid.color=gridC;pedidosChart.options.scales.x.ticks.color=tickC;pedidosChart.options.scales.y.ticks.color=tickC;pedidosChart.update()}
+  if(revenueChart){revenueChart.options.scales.x.grid.color=gridC;revenueChart.options.scales.y.grid.color=gridC;revenueChart.options.scales.x.ticks.color=tickC;revenueChart.options.scales.y.ticks.color=tickC;revenueChart.update()}
+  if(dashboardMap){dashboardMap.eachLayer(l=>{if(l._url)l.setUrl(t==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png')})}
+});

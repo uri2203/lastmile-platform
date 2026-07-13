@@ -145,9 +145,11 @@ html[data-theme="dark"]{color-scheme:dark}
     <div class="nav-section"><div class="nav-section-title">Admin</div><div class="nav-item" data-section="usuarios"><i class="fas fa-users-gear"></i> Usuarios y Roles</div><div class="nav-item" data-section="soporte"><i class="fas fa-headset"></i> Soporte</div><div class="nav-item" data-section="auditoria"><i class="fas fa-clipboard-list"></i> Auditoria</div></div>
   </nav>
   <div style="padding:16px 20px;border-top:1px solid var(--border-primary);margin-top:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
       <div style="width:30px;height:30px;background:var(--border-primary);border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-user-shield" style="color:var(--text-muted);font-size:11px;"></i></div>
       <div style="flex:1;"><div style="font-size:12px;font-weight:500;">Admin</div><div style="font-size:10px;color:var(--text-muted);">admin@lastmile.mx</div></div>
+    </div>
+    <a href="index.html" onclick="localStorage.clear()" style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);text-decoration:none;padding:4px 0;"><i class="fas fa-sign-out-alt"></i> Cerrar sesion</a>
     </div>
   </div>
 </aside>
