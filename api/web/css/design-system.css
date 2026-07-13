@@ -349,7 +349,7 @@ tr:hover td { background: var(--bg-card-hover); }
 .input, input[type="text"], input[type="email"], input[type="password"],
 input[type="number"], input[type="tel"], input[type="date"],
 textarea, select {
-  background: var(--bg-input);
+  background-color: var(--bg-input);
   border: 1px solid var(--border-input);
   border-radius: var(--radius-md);
   padding: 8px 12px; color: var(--text-primary);
@@ -363,6 +363,7 @@ textarea, select {
 }
 select {
   appearance: none;
+  background-color: var(--bg-input);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7280' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
