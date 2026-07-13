@@ -45,6 +45,7 @@
 
 /* ---------- DARK THEME ---------- */
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-primary: #0a0a0f;
   --bg-secondary: #0d0d12;
   --bg-card: #141419;
@@ -93,6 +94,7 @@
 
 /* ---------- LIGHT THEME ---------- */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-primary: #f8f9fc;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
@@ -367,10 +369,12 @@ select {
   padding-right: 30px;
 }
 select option {
-  background: var(--bg-input);
+  background-color: var(--bg-input);
   color: var(--text-primary);
-  padding: 8px 12px;
+  background-image: none;
+  padding: 6px 12px;
 }
+select option[value=""] { color: var(--text-muted); }
 textarea { resize: vertical; min-height: 80px; }
 
 /* ---------- BADGES ---------- */
