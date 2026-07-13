@@ -2,20 +2,20 @@
   "name": "Last Mile - Chofer",
   "short_name": "LastMile",
   "description": "App de entregas para choferes",
-  "start_url": "/panel-chofer.html",
+  "start_url": "panel-chofer.html",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#e94560",
+  "background_color": "#0a0a0f",
+  "theme_color": "#f97316",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/img/icon-192.png",
+      "src": "img/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/img/icon-512.png",
+      "src": "img/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -23,5 +23,5 @@
   ],
   "categories": ["business", "utilities"],
   "lang": "es-MX",
-  "scope": "/"
+  "scope": "./"
 }

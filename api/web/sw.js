@@ -5,10 +5,10 @@
 
 const CACHE_NAME = 'lastmile-v1';
 const urlsToCache = [
-  '/panel-chofer.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/manifest.json'
+  'panel-chofer.html',
+  'css/design-system.css',
+  'js/app.js',
+  'manifest.json'
 ];
 
 // Install - cache assets
