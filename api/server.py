@@ -134,7 +134,7 @@ def auth_login():
     # Simple password check (hash in production)
     db_pass = repr(str(u.get('USU_PASS', '')).strip())
     in_pass = repr(passwd.strip())
-    print(f'[AUTH] user={user} db_pass={db_pass} in_pass={in_pass} match={db_pass == in_pass}')
+    print(f'[AUTH] user={user} match={db_pass == in_pass}')
     if db_pass != in_pass:
         return jsonify({'success': False, 'error': 'Usuario o contraseña incorrectos'})
 
@@ -245,6 +245,12 @@ def get_pedidos():
     estado = request.args.get('estado')
     limite = request.args.get('limite', '100')
     
+    # Sanitize limite to prevent SQL injection
+    try:
+        limite_int = min(int(limite), 500)
+    except (ValueError, TypeError):
+        limite_int = 100
+    
     sql = 'SELECT * FROM TESTLIB.V_PEDIDOS_COMPLETO WHERE EMP_ID = ?'
     params = [emp_id]
     
@@ -252,7 +258,7 @@ def get_pedidos():
         sql += ' AND PED_ESTADO = ?'
         params.append(estado)
     
-    sql += f' ORDER BY PED_FECHA_PEDIDO DESC FETCH FIRST {limite} ROWS ONLY'
+    sql += f' ORDER BY PED_FECHA_PEDIDO DESC FETCH FIRST {limite_int} ROWS ONLY'
     
     data = query(sql, params)
     return jsonify({'success': True, 'data': data, 'total': len(data)})
