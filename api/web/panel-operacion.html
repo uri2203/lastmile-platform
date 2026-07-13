@@ -71,7 +71,7 @@
         <div class="avatar sm" id="sidebar-avatar">OP</div>
         <div class="flex flex-col" style="min-width:0">
           <span class="text-sm font-medium truncate" id="sidebar-user">Operador</span>
-          <a href="index.html" class="text-xs text-muted" style="text-decoration:none">Cerrar sesión</a>
+          <a href="index.html" class="text-xs text-muted" style="text-decoration:none" onclick="localStorage.clear()">Cerrar sesión</a>
         </div>
       </div>
     </div>
@@ -504,15 +504,19 @@
     // ========================================
     // MAP
     // ========================================
+    function getTileUrl() {
+      return ThemeManager.get() === 'dark'
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    }
+
     function initDashboardMap() {
       if (map) { map.remove(); map = null; }
       const el = document.getElementById('dashboard-mini-map');
       if (!el) return;
 
       map = L.map(el, { zoomControl: false, attributionControl: false }).setView([19.4326, -99.1332], 12);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
-      }).addTo(map);
+      map._tileLayer = L.tileLayer(getTileUrl(), { maxZoom: 19 }).addTo(map);
 
       driverMarkers = [];
       driverBounds = L.latLngBounds();
@@ -542,9 +546,7 @@
       if (!el) return;
 
       fullMap = L.map(el, { zoomControl: true, attributionControl: false }).setView([19.4326, -99.1332], 12);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
-      }).addTo(fullMap);
+      fullMap._tileLayer = L.tileLayer(getTileUrl(), { maxZoom: 19 }).addTo(fullMap);
 
       DEMO_DRIVERS.forEach(d => {
         const marker = L.circleMarker([d.lat, d.lng], {
@@ -881,6 +883,13 @@
         renderPedidosChart();
         renderChoferesChart();
       }
+      // Swap map tiles on theme change
+      const url = getTileUrl();
+      [map, fullMap].forEach(m => {
+        if (m && m._tileLayer) {
+          m._tileLayer.setUrl(url);
+        }
+      });
     });
 
     // ========================================

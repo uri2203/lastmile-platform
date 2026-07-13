@@ -7,6 +7,7 @@ Multi-tenant: cada request lleva X-Emp-Id
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import jaydebeapi
+import hashlib
 import os
 from datetime import datetime
 
@@ -42,10 +43,10 @@ def serve_static(filename):
 # ========================================
 DB_CONFIG = {
     'driver_path': os.path.join(os.path.dirname(__file__), '..', '..', 'BOOT-INF', 'lib', 'jt400-21.0.6.jar'),
-    'driver_class': 'com.ibm.as400.access.AS400JDBCDriver',
-    'url': 'jdbc:as400://192.168.0.240;errors=full',
-    'user': 'AYUDATX',
-    'password': 'MXTAC23'
+    'driver_class': os.environ.get('DB_DRIVER_CLASS', 'com.ibm.as400.access.AS400JDBCDriver'),
+    'url': os.environ.get('DB_URL', 'jdbc:as400://192.168.0.240;errors=full'),
+    'user': os.environ.get('DB_USER', 'AYUDATX'),
+    'password': os.environ.get('DB_PASS', '')
 }
 
 # ========================================
@@ -110,6 +111,9 @@ def auth_login():
     if not user or not passwd:
         return jsonify({'success': False, 'error': 'Usuario y contraseña requeridos'})
 
+    # Hash password with SHA-256
+    pass_hash = hashlib.sha256(passwd.strip().encode()).hexdigest()
+
     # Check USUARIOS table
     try:
         rows = query(
@@ -131,11 +135,9 @@ def auth_login():
 
     u = rows[0]
 
-    # Simple password check (hash in production)
-    db_pass = repr(str(u.get('USU_PASS', '')).strip())
-    in_pass = repr(passwd.strip())
-    print(f'[AUTH] user={user} match={db_pass == in_pass}')
-    if db_pass != in_pass:
+    # Password check with SHA-256 hash
+    db_pass = str(u.get('USU_PASS', '')).strip()
+    if db_pass != pass_hash:
         return jsonify({'success': False, 'error': 'Usuario o contraseña incorrectos'})
 
     return jsonify({
@@ -206,9 +208,10 @@ def setup_usuarios():
         ]
 
         for u in users:
+            hashed_pass = hashlib.sha256(u[2].strip().encode()).hexdigest()
             execute(
                 "INSERT INTO TESTLIB.USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?,?,?,?,?,?)",
-                list(u)
+                [u[0], u[1], hashed_pass, u[3], u[4], u[5]]
             )
 
         return jsonify({'success': True, 'message': f'Tabla USUARIOS creada con {len(users)} usuarios'})
