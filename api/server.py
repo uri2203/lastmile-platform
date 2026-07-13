@@ -170,7 +170,7 @@ def setup_usuarios():
                 USU_ID         DECIMAL(10,0) NOT NULL GENERATED ALWAYS AS IDENTITY,
                 USU_EMP_ID     DECIMAL(5,0)  NOT NULL,
                 USU_USUARIO    VARCHAR(30)   NOT NULL,
-                USU_PASS       VARCHAR(50)   NOT NULL,
+                USU_PASS       VARCHAR(100)  NOT NULL,
                 USU_NOMBRE     VARCHAR(100)  NOT NULL,
                 USU_EMAIL      VARCHAR(100),
                 USU_TELEFONO   VARCHAR(20),
