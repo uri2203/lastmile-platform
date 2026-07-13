@@ -117,21 +117,22 @@ function guardarNuevaZona() {
     tarifas: tarifas
   };
 
-  fetch(API_BASE + '/api/zonas', {
-    method: 'POST',
-    headers: HEADERS,
-    body: JSON.stringify(payload)
-  }).then(r => r.json()).then(res => {
-    if (res.success) {
-      showToast('Zona "' + nombre + '" creada con 3 tarifas', 'success');
-      closeModal('modalNuevaZona');
-      document.getElementById('zon-nombre').value = '';
-      document.getElementById('zon-descripcion').value = '';
-      loadZonas();
-    } else {
-      showToast(res.error || 'Error al crear zona', 'error');
-    }
-  }).catch(() => showToast('Error de conexion', 'error'));
+  const editingId = document.getElementById('modalNuevaZona').getAttribute('data-editing');
+  const isEdit = editingId && editingId !== '';
+  const url = isEdit ? API_BASE + '/api/zonas/' + editingId : API_BASE + '/api/zonas';
+  const method = isEdit ? 'PUT' : 'POST';
+
+  fetch(url, { method, headers: HEADERS, body: JSON.stringify(payload) })
+    .then(r => r.json()).then(res => {
+      if (res.success) {
+        showToast(isEdit ? 'Zona actualizada' : 'Zona "' + nombre + '" creada con 3 tarifas', 'success');
+        closeModal('modalNuevaZona');
+        resetModalZona();
+        loadZonas();
+      } else {
+        showToast(res.error || 'Error al guardar zona', 'error');
+      }
+    }).catch(() => showToast('Error de conexion', 'error'));
 }
 
 function loadZonas() {
@@ -201,20 +202,94 @@ function renderZonasList() {
       '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:var(--bg-tertiary);border:1px solid var(--border-primary);color:var(--text-muted);">' + t.ZTA_SERVICIO + ' $' + parseFloat(t.ZTA_MONTO_BASE || 0).toFixed(0) + '</span>'
     ).join(' ');
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-primary);">' +
-      '<div style="display:flex;align-items:center;gap:10px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
         '<div style="width:10px;height:10px;border-radius:50%;background:' + z.ZON_COLOR + ';flex-shrink:0;"></div>' +
-        '<div>' +
+        '<div style="min-width:0;">' +
           '<div style="font-size:12px;font-weight:500;">' + z.ZON_NOMBRE + '</div>' +
           '<div style="font-size:10px;color:var(--text-muted);">Radio: ' + z.ZON_RADIO_KM + 'km</div>' +
           '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">' + servicios + '</div>' +
         '</div>' +
       '</div>' +
-      '<div style="text-align:right;">' +
-        '<div style="font-size:14px;font-weight:600;color:var(--text-primary);">' + precio + '</div>' +
-        '<div style="font-size:9px;color:var(--text-muted);">base envio</div>' +
+      '<div style="text-align:right;display:flex;align-items:center;gap:12px;">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:600;color:var(--text-primary);">' + precio + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);">base envio</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px;">' +
+          '<button class="btn btn-ghost btn-sm" onclick="editarZona(' + z.ZON_ID + ')" title="Editar" style="padding:4px 8px;"><i class="fas fa-pen" style="font-size:10px;"></i></button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarZona(' + z.ZON_ID + ',\'' + z.ZON_NOMBRE.replace(/'/g,"\\'") + '\')" title="Eliminar" style="padding:4px 8px;color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join('');
+}
+
+/* ==========================================
+   EDITAR ZONA: abre modal con datos cargados
+   ========================================== */
+function editarZona(zonId) {
+  const zona = DB_ZONAS.find(z => z.ZON_ID == zonId);
+  if (!zona) { showToast('Zona no encontrada','error'); return; }
+
+  // Llenar campos basicos
+  document.getElementById('zon-nombre').value = zona.ZON_NOMBRE || '';
+  document.getElementById('zon-descripcion').value = zona.ZON_DESCRIPCION || '';
+  document.getElementById('zon-color').value = zona.ZON_COLOR || '#6366f1';
+  document.getElementById('zon-color-hex').textContent = zona.ZON_COLOR || '#6366f1';
+  document.getElementById('zon-radio').value = zona.ZON_RADIO_KM || 5;
+  document.getElementById('zon-lat').value = zona.ZON_CENTRO_LAT || 19.4326;
+  document.getElementById('zon-lng').value = zona.ZON_CENTRO_LNG || -99.1332;
+
+  // Llenar tarifas
+  ['EXPRESS','ESTANDAR','ECONOMICO'].forEach(serv => {
+    const t = (zona.tarifas||[]).find(x => x.ZTA_SERVICIO === serv);
+    document.querySelectorAll('.tarifa-input[data-serv="'+serv+'"]').forEach(inp => {
+      const field = inp.getAttribute('data-field');
+      if (t && t[field] !== undefined && t[field] !== null) inp.value = t[field];
+    });
+    calcularEjemploTarifa(serv);
+  });
+
+  // Marcar modo edicion
+  document.getElementById('modalNuevaZona').setAttribute('data-editing', zonId);
+  const hdr = document.querySelector('#modalNuevaZona .modal-header h3');
+  if (hdr) hdr.innerHTML = '<i class="fas fa-edit" style="margin-right:8px;color:var(--accent);"></i> Editar Zona: ' + zona.ZON_NOMBRE;
+  const btn = document.querySelector('#modalNuevaZona .modal-footer .btn-primary');
+  if (btn) btn.innerHTML = '<i class="fas fa-save" style="font-size:10px;"></i> Actualizar Zona';
+
+  switchServicioTab('EXPRESS');
+  openModal('modalNuevaZona');
+}
+
+/* ==========================================
+   ELIMINAR ZONA: DELETE con confirmacion
+   ========================================== */
+function eliminarZona(zonId, nombre) {
+  if (!confirm('Eliminar la zona "' + nombre + '"?\n\nSe eliminaran todas sus tarifas.')) return;
+  fetch(API_BASE+'/api/zonas/'+zonId, { method:'DELETE', headers:HEADERS })
+    .then(r=>r.json()).then(res=>{
+      if (res.success) { showToast('Zona "'+nombre+'" eliminada','success'); loadZonas(); }
+      else showToast(res.error||'Error al eliminar','error');
+    }).catch(()=>showToast('Error de conexion','error'));
+}
+
+/* ==========================================
+   RESET MODAL: volver a modo "Nueva Zona"
+   ========================================== */
+function resetModalZona() {
+  document.getElementById('modalNuevaZona').removeAttribute('data-editing');
+  const hdr = document.querySelector('#modalNuevaZona .modal-header h3');
+  if (hdr) hdr.innerHTML = '<i class="fas fa-map-marked-alt" style="margin-right:8px;color:var(--accent);"></i> Nueva Zona de Cobertura';
+  const btn = document.querySelector('#modalNuevaZona .modal-footer .btn-primary');
+  if (btn) btn.innerHTML = '<i class="fas fa-save" style="font-size:10px;"></i> Guardar Zona';
+  document.getElementById('zon-nombre').value = '';
+  document.getElementById('zon-descripcion').value = '';
+  document.getElementById('zon-color').value = '#6366f1';
+  document.getElementById('zon-color-hex').textContent = '#6366f1';
+  document.getElementById('zon-radio').value = 5;
+  document.getElementById('zon-lat').value = 19.4326;
+  document.getElementById('zon-lng').value = -99.1332;
+  switchServicioTab('EXPRESS');
 }
 
 function initRutasMap() {
