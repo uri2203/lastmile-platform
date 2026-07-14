@@ -58,6 +58,11 @@ package-lock.json
 # Backups
 api/backups/
 
+# SQLite database (migrated from AS/400)
+api/lastmile.db
+api/lastmile.db-wal
+api/lastmile.db-shm
+
 # Test cache
 tests/__pycache__/
 .pytest_cache/
