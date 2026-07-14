@@ -50,6 +50,9 @@
   --color-warning: var(--warning, #f59e0b);
   --color-danger: var(--danger, #ef4444);
   --color-info: var(--info, #3b82f6);
+  --purple: #8b5cf6;
+  --purple-bg: rgba(139,92,246,0.1);
+  --purple-bg-light: rgba(139,92,246,0.08);
 }
 
 /* ---------- DARK THEME ---------- */
