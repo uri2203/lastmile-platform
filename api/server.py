@@ -1164,7 +1164,7 @@ def create_usuario():
     u = request.json
     if not u:
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
-    usuario = (u.get('usuario') or u.get('USU_USUARIO') or '').strip()
+    usuario = (u.get('usuario') or u.get('USU_USUARIO') or u.get('email', '') or '').strip()
     nombre = (u.get('nombre') or u.get('USU_NOMBRE') or '').strip()
     password = u.get('password', u.get('USU_PASS', ''))
     if not usuario or not nombre:
