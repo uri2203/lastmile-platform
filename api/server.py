@@ -79,15 +79,29 @@ request_logger.addHandler(console_handler)
 DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(DATA_DIR, 'lastmile.db')
 
-# Auto-initialize database on first run
+# Auto-initialize database on first run (tables + demo data via seed.py)
 if not os.path.exists(DB_PATH):
     print(f'[DB] First run - initializing database at {DB_PATH}')
-    from database import init_db
-    init_db()
-    # Try to migrate data from backup if available
     try:
-        from migrate import migrate
-        migrate()
+        from seed import seed
+        seed()
+    except Exception as e:
+        print(f'[DB] Seed failed ({e}), falling back to schema only')
+        from database import init_db
+        init_db()
+else:
+    # DB exists but might be empty (e.g. Render persistent disk reset)
+    try:
+        import sqlite3 as _chk
+        _conn = _chk.connect(DB_PATH)
+        _c = _conn.cursor()
+        _c.execute("SELECT COUNT(*) FROM EMPRESAS")
+        _count = _c.fetchone()[0]
+        _conn.close()
+        if _count == 0:
+            print('[DB] Database exists but is empty - running seed...')
+            from seed import seed
+            seed()
     except Exception:
         pass
 
