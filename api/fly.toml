@@ -1,0 +1,28 @@
+# fly.toml - Last Mile Delivery (Free Tier)
+# flyctl launch --copy-config --name lastmile-delivery
+
+app = 'lastmile-delivery'
+primary_region = 'iad'
+
+[build]
+
+[env]
+  FLASK_ENV = 'production'
+  PYTHON_VERSION = '3.11'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 50
+    soft_limit = 25
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
