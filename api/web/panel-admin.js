@@ -1,4 +1,4 @@
-const API_BASE='http://localhost:5000';
+const API_BASE=window.location.origin;
 const HEADERS={'X-Emp-Id':'1','Content-Type':'application/json'};
 
 /* ==========================================

@@ -388,6 +388,16 @@
   <script src="js/app.js"></script>
   <script>
     // ========================================
+    // API HELPER
+    // ========================================
+    const API_BASE = window.location.origin;
+    const HEADERS = { 'Content-Type': 'application/json', 'X-Emp-Id': localStorage.getItem('lm-emp-id') || '1' };
+    async function api(path, opts = {}) {
+      const resp = await fetch(API_BASE + path, { headers: HEADERS, ...opts });
+      return resp.json();
+    }
+
+    // ========================================
     // STATE
     // ========================================
     let currentSection = 'dashboard';
