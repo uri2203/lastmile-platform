@@ -1,17 +1,22 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev && \
-    rm -rf /var/lib/apt/lists/*
-
+# Install dependencies
 COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application
 COPY api/ .
 
-EXPOSE 5000
+# Create data directory
+RUN mkdir -p /data
 
-CMD ["python", "server.py"]
+# Set environment
+ENV DATA_DIR=/data
+ENV FLASK_ENV=production
+ENV PORT=8080
+
+EXPOSE 8080
+
+CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120"]

@@ -634,6 +634,53 @@ def update_estado_pedido(ped_id):
     return jsonify({'success': True, 'message': f'Estado actualizado a {estado}'})
 
 
+@app.route('/api/pedidos/<int:ped_id>', methods=['PUT'])
+def update_pedido(ped_id):
+    emp_id = get_emp_id()
+    p = request.json
+    if not p:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    try:
+        execute(
+            "UPDATE PEDIDOS SET PED_CLIENTE_NOMBRE=?, PED_CLIENTE_TELEFONO=?, PED_DESTINO_DIR=?, PED_DESTINO_COL=?, PED_DESTINO_CIUDAD=?, PED_PESO_KG=?, PED_BULTOS=?, PED_COSTO_TOTAL=?, PED_FORMA_PAGO=?, PED_ESTADO=?, PED_PRIORIDAD=? WHERE PED_ID=? AND EMP_ID=?",
+            [p.get('clienteNombre', p.get('PED_CLIENTE_NOMBRE', '')),
+             p.get('clienteTelefono', p.get('PED_CLIENTE_TELEFONO', '')),
+             p.get('destinoDir', p.get('PED_DESTINO_DIR', '')),
+             p.get('destinoCol', p.get('PED_DESTINO_COL', '')),
+             p.get('destinoCiudad', p.get('PED_DESTINO_CIUDAD', '')),
+             p.get('pesoKg', p.get('PED_PESO_KG', 0)),
+             p.get('bultos', p.get('PED_BULTOS', 1)),
+             p.get('costoTotal', p.get('PED_COSTO_TOTAL', 0)),
+             p.get('formaPago', p.get('PED_FORMA_PAGO', 'EFECTIVO')),
+             p.get('estado', p.get('PED_ESTADO', 'PENDIENTE')),
+             p.get('prioridad', p.get('PED_PRIORIDAD', 'NORMAL')),
+             ped_id, emp_id]
+        )
+        return jsonify({'success': True, 'message': 'Pedido actualizado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/pedidos/estadisticas', methods=['GET'])
+def get_pedidos_estadisticas():
+    emp_id = get_emp_id()
+    data = query(
+        "SELECT COUNT(*) as total, SUM(CASE WHEN PED_ESTADO = 'PENDIENTE' THEN 1 ELSE 0 END) as pendientes, "
+        "SUM(CASE WHEN PED_ESTADO = 'EN_RUTA' THEN 1 ELSE 0 END) as en_ruta, "
+        "SUM(CASE WHEN PED_ESTADO = 'ENTREGADO' THEN 1 ELSE 0 END) as entregados, "
+        "SUM(CASE WHEN PED_ESTADO = 'CANCELADO' THEN 1 ELSE 0 END) as cancelados, "
+        "COALESCE(SUM(PED_COSTO_TOTAL), 0) as ingresos_totales "
+        "FROM PEDIDOS WHERE EMP_ID = ?", [emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else {}})
+
+
+@app.route('/api/tarifas', methods=['GET'])
+def get_tarifas():
+    emp_id = get_emp_id()
+    data = query("SELECT * FROM ZONA_TARIFAS WHERE ZTA_EMP_ID = ? AND ZTA_ACTIVO = 'S' ORDER BY ZTA_SERVICIO", [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+
 # ========================================
 # MODULO: CHOFERES
 # ========================================
@@ -655,6 +702,47 @@ def delete_chofer(cho_id):
     try:
         execute("DELETE FROM CHOFERES WHERE CHO_ID = ? AND EMP_ID = ?", [cho_id, emp_id])
         return jsonify({'success': True, 'message': 'Chofer eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/choferes', methods=['POST'])
+def create_chofer():
+    emp_id = get_emp_id()
+    c = request.json
+    if not c:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    nombre = (c.get('nombre') or c.get('CHO_NOMBRE') or '').strip()
+    if not nombre:
+        return jsonify({'success': False, 'error': 'Nombre del chofer requerido'}), 400
+    try:
+        execute(
+            "INSERT INTO CHOFERES (EMP_ID, CHO_NOMBRE, CHO_APELLIDO, CHO_TELEFONO, CHO_LICENCIA, CHO_EMAIL, CHO_ESTATUS, CHO_RFC) VALUES (?,?,?,?,?,?,?,?)",
+            [emp_id, nombre, c.get('apellido', c.get('CHO_APELLIDO', '')),
+             c.get('telefono', c.get('CHO_TELEFONO', '')), c.get('licencia', c.get('CHO_LICENCIA', '')),
+             c.get('email', c.get('CHO_EMAIL', '')), c.get('estatus', c.get('CHO_ESTATUS', 'ACTIVO')),
+             c.get('rfc', c.get('CHO_RFC', ''))]
+        )
+        return jsonify({'success': True, 'message': 'Chofer creado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/choferes/<int:cho_id>', methods=['PUT'])
+def update_chofer(cho_id):
+    emp_id = get_emp_id()
+    c = request.json
+    if not c:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    try:
+        execute(
+            "UPDATE CHOFERES SET CHO_NOMBRE=?, CHO_APELLIDO=?, CHO_TELEFONO=?, CHO_LICENCIA=?, CHO_EMAIL=?, CHO_ESTATUS=?, CHO_RFC=? WHERE CHO_ID=? AND EMP_ID=?",
+            [c.get('nombre', c.get('CHO_NOMBRE', '')), c.get('apellido', c.get('CHO_APELLIDO', '')),
+             c.get('telefono', c.get('CHO_TELEFONO', '')), c.get('licencia', c.get('CHO_LICENCIA', '')),
+             c.get('email', c.get('CHO_EMAIL', '')), c.get('estatus', c.get('CHO_ESTATUS', 'ACTIVO')),
+             c.get('rfc', c.get('CHO_RFC', '')), cho_id, emp_id]
+        )
+        return jsonify({'success': True, 'message': 'Chofer actualizado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -684,6 +772,49 @@ def delete_vehiculo(veh_id):
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/api/vehiculos', methods=['POST'])
+def create_vehiculo():
+    emp_id = get_emp_id()
+    v = request.json
+    if not v:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    unidad = (v.get('unidad') or v.get('VEH_UNIDAD') or '').strip()
+    if not unidad:
+        return jsonify({'success': False, 'error': 'Nombre de unidad requerido'}), 400
+    try:
+        execute(
+            "INSERT INTO VEHICULOS (EMP_ID, VEH_UNIDAD, VEH_MARCA, VEH_MODELO, VEH_ANIO, VEH_PLACAS, VEH_TIPO, VEH_COLOR, VEH_ESTATUS, VEH_CAPACIDAD_KG) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            [emp_id, unidad, v.get('marca', v.get('VEH_MARCA', '')),
+             v.get('modelo', v.get('VEH_MODELO', '')), v.get('anio', v.get('VEH_ANIO', '')),
+             v.get('placas', v.get('VEH_PLACAS', '')), v.get('tipo', v.get('VEH_TIPO', 'CAMIONETA')),
+             v.get('color', v.get('VEH_COLOR', '')), v.get('estatus', v.get('VEH_ESTATUS', 'DISPONIBLE')),
+             v.get('capacidad_kg', v.get('VEH_CAPACIDAD_KG', 0))]
+        )
+        return jsonify({'success': True, 'message': 'Vehiculo creado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/vehiculos/<int:veh_id>', methods=['PUT'])
+def update_vehiculo(veh_id):
+    emp_id = get_emp_id()
+    v = request.json
+    if not v:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    try:
+        execute(
+            "UPDATE VEHICULOS SET VEH_UNIDAD=?, VEH_MARCA=?, VEH_MODELO=?, VEH_ANIO=?, VEH_PLACAS=?, VEH_TIPO=?, VEH_COLOR=?, VEH_ESTATUS=?, VEH_CAPACIDAD_KG=? WHERE VEH_ID=? AND EMP_ID=?",
+            [v.get('unidad', v.get('VEH_UNIDAD', '')), v.get('marca', v.get('VEH_MARCA', '')),
+             v.get('modelo', v.get('VEH_MODELO', '')), v.get('anio', v.get('VEH_ANIO', '')),
+             v.get('placas', v.get('VEH_PLACAS', '')), v.get('tipo', v.get('VEH_TIPO', 'CAMIONETA')),
+             v.get('color', v.get('VEH_COLOR', '')), v.get('estatus', v.get('VEH_ESTATUS', 'DISPONIBLE')),
+             v.get('capacidad_kg', v.get('VEH_CAPACIDAD_KG', 0)), veh_id, emp_id]
+        )
+        return jsonify({'success': True, 'message': 'Vehiculo actualizado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 # ========================================
 # MODULO: CLIENTES
 # ========================================
@@ -705,6 +836,51 @@ def delete_cliente(cli_id):
     try:
         execute("DELETE FROM CLIENTES_LM WHERE CLI_ID = ? AND EMP_ID = ?", [cli_id, emp_id])
         return jsonify({'success': True, 'message': 'Cliente eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/clientes', methods=['POST'])
+def create_cliente():
+    emp_id = get_emp_id()
+    c = request.json
+    if not c:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    razon = (c.get('razon_social') or c.get('nombre') or c.get('CLI_RAZON_SOCIAL') or '').strip()
+    if not razon:
+        return jsonify({'success': False, 'error': 'Razon social requerida'}), 400
+    try:
+        execute(
+            "INSERT INTO CLIENTES_LM (EMP_ID, CLI_RAZON_SOCIAL, CLI_RFC, CLI_CONTACTO, CLI_TELEFONO, CLI_EMAIL, CLI_ESTATUS) VALUES (?,?,?,?,?,?,?)",
+            [emp_id, razon, c.get('rfc', c.get('CLI_RFC', '')),
+             c.get('contacto', c.get('CLI_CONTACTO', '')),
+             c.get('telefono', c.get('CLI_TELEFONO', '')),
+             c.get('email', c.get('CLI_EMAIL', '')),
+             c.get('estatus', c.get('CLI_ESTATUS', 'ACTIVO'))]
+        )
+        return jsonify({'success': True, 'message': 'Cliente creado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/clientes/<int:cli_id>', methods=['PUT'])
+def update_cliente(cli_id):
+    emp_id = get_emp_id()
+    c = request.json
+    if not c:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    try:
+        execute(
+            "UPDATE CLIENTES_LM SET CLI_RAZON_SOCIAL=?, CLI_RFC=?, CLI_CONTACTO=?, CLI_TELEFONO=?, CLI_EMAIL=?, CLI_ESTATUS=? WHERE CLI_ID=? AND EMP_ID=?",
+            [c.get('razon_social', c.get('CLI_RAZON_SOCIAL', '')),
+             c.get('rfc', c.get('CLI_RFC', '')),
+             c.get('contacto', c.get('CLI_CONTACTO', '')),
+             c.get('telefono', c.get('CLI_TELEFONO', '')),
+             c.get('email', c.get('CLI_EMAIL', '')),
+             c.get('estatus', c.get('CLI_ESTATUS', 'ACTIVO')),
+             cli_id, emp_id]
+        )
+        return jsonify({'success': True, 'message': 'Cliente actualizado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -981,6 +1157,72 @@ def delete_usuario(usu_id):
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/api/usuarios', methods=['POST'])
+def create_usuario():
+    emp_id = get_emp_id()
+    import hashlib
+    u = request.json
+    if not u:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    usuario = (u.get('usuario') or u.get('USU_USUARIO') or '').strip()
+    nombre = (u.get('nombre') or u.get('USU_NOMBRE') or '').strip()
+    password = u.get('password', u.get('USU_PASS', ''))
+    if not usuario or not nombre:
+        return jsonify({'success': False, 'error': 'Usuario y nombre requeridos'}), 400
+    if not password:
+        return jsonify({'success': False, 'error': 'Password requerido'}), 400
+    pass_hash = hashlib.sha256(password.encode()).hexdigest()
+    try:
+        execute(
+            "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_TELEFONO, USU_ROL, USU_ACTIVO) VALUES (?,?,?,?,?,?,?,?)",
+            [emp_id, usuario, pass_hash, nombre,
+             u.get('email', u.get('USU_EMAIL', '')),
+             u.get('telefono', u.get('USU_TELEFONO', '')),
+             u.get('rol', u.get('USU_ROL', 'operacion')),
+             u.get('activo', u.get('USU_ACTIVO', 'S'))]
+        )
+        return jsonify({'success': True, 'message': 'Usuario creado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/usuarios/<int:usu_id>', methods=['PUT'])
+def update_usuario(usu_id):
+    emp_id = get_emp_id()
+    import hashlib
+    u = request.json
+    if not u:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    password = u.get('password', u.get('USU_PASS', ''))
+    try:
+        if password:
+            pass_hash = hashlib.sha256(password.encode()).hexdigest()
+            execute(
+                "UPDATE USUARIOS SET USU_USUARIO=?, USU_PASS=?, USU_NOMBRE=?, USU_EMAIL=?, USU_TELEFONO=?, USU_ROL=?, USU_ACTIVO=? WHERE USU_ID=? AND USU_EMP_ID=?",
+                [u.get('usuario', u.get('USU_USUARIO', '')), pass_hash,
+                 u.get('nombre', u.get('USU_NOMBRE', '')),
+                 u.get('email', u.get('USU_EMAIL', '')),
+                 u.get('telefono', u.get('USU_TELEFONO', '')),
+                 u.get('rol', u.get('USU_ROL', 'operacion')),
+                 u.get('activo', u.get('USU_ACTIVO', 'S')),
+                 usu_id, emp_id]
+            )
+        else:
+            execute(
+                "UPDATE USUARIOS SET USU_USUARIO=?, USU_NOMBRE=?, USU_EMAIL=?, USU_TELEFONO=?, USU_ROL=?, USU_ACTIVO=? WHERE USU_ID=? AND USU_EMP_ID=?",
+                [u.get('usuario', u.get('USU_USUARIO', '')),
+                 u.get('nombre', u.get('USU_NOMBRE', '')),
+                 u.get('email', u.get('USU_EMAIL', '')),
+                 u.get('telefono', u.get('USU_TELEFONO', '')),
+                 u.get('rol', u.get('USU_ROL', 'operacion')),
+                 u.get('activo', u.get('USU_ACTIVO', 'S')),
+                 usu_id, emp_id]
+            )
+        return jsonify({'success': True, 'message': 'Usuario actualizado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 # ========================================
 # MODULO: WHITELABEL
 # ========================================
@@ -1013,11 +1255,11 @@ def get_saas_tenants():
 @app.route('/api/saas/plan-usage/<int:emp_id>', methods=['GET'])
 def get_plan_usage(emp_id):
     data = query('''SELECT E.EMP_ID, E.EMP_NOMBRE,
-        (SELECT COUNT(*) FROM PEDIDOS WHERE EMP_ID = ? AND PED_FECHA_PEDIDO >= date('now', '-30 days')) as PEDIDOS_MES,
-        (SELECT COUNT(*) FROM CHOFERES WHERE EMP_ID = ?) as CHOFERES,
-        (SELECT COUNT(*) FROM CLIENTES_LM WHERE EMP_ID = ?) as CLIENTES,
-        (SELECT COUNT(*) FROM VEHICULOS WHERE EMP_ID = ?) as VEHICULOS
-        FROM EMPRESAS E WHERE E.EMP_ID = ?''', [emp_id]*5)
+        (SELECT COUNT(*) FROM PEDIDOS P WHERE P.EMP_ID = E.EMP_ID AND P.PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days') as PEDIDOS_MES,
+        (SELECT COUNT(*) FROM CHOFERES C WHERE C.EMP_ID = E.EMP_ID) as CHOFERES,
+        (SELECT COUNT(*) FROM CLIENTES_LM CL WHERE CL.EMP_ID = E.EMP_ID) as CLIENTES,
+        (SELECT COUNT(*) FROM VEHICULOS V WHERE V.EMP_ID = E.EMP_ID) as VEHICULOS
+        FROM EMPRESAS E WHERE E.EMP_ID = ?''', [emp_id])
     return jsonify({'success': True, 'data': data[0] if data else {}})
 
 
@@ -1100,7 +1342,7 @@ def get_billing_dashboard():
         SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END) as COBRADO,
         SUM(CASE WHEN COB_ESTATUS = 'PENDIENTE' THEN COB_MONTO ELSE 0 END) as PENDIENTE
         FROM SAAS_COBROS''')
-    uso_hoy = query("SELECT COALESCE(SUM(USR_PEDIDOS_CREADOS), 0) as PEDIDOS, COALESCE(SUM(USR_API_CALLS), 0) as API_CALLS FROM SAAS_USO_RECURSOS WHERE USR_FECHA = date('now')")
+    uso_hoy = query("SELECT COALESCE(SUM(USR_PEDIDOS_CREADOS), 0) as PEDIDOS, COALESCE(SUM(USR_API_CALLS), 0) as API_CALLS FROM SAAS_USO_RECURSOS WHERE USR_FECHA = CURRENT_DATE")
 
     return jsonify({
         'success': True,
