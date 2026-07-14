@@ -1,463 +1,831 @@
 const API_BASE='http://localhost:5000';
 const HEADERS={'X-Emp-Id':'1','Content-Type':'application/json'};
-const DEMO={choferes:[{id:1,nombre:'Carlos Lopez',telefono:'55 1234 5678',vehiculo:'ABC-123 T-Max',entregas:12,rating:4.8,estado:'activo'},{id:2,nombre:'Maria Garcia',telefono:'55 2345 6789',vehiculo:'DEF-456 Van',entregas:9,rating:4.6,estado:'activo'},{id:3,nombre:'Juan Hernandez',telefono:'55 3456 7890',vehiculo:'GHI-789 Camioneta',entregas:15,rating:4.9,estado:'activo'},{id:4,nombre:'Ana Martinez',telefono:'55 4567 8901',vehiculo:'JKL-012 T-Max',entregas:8,rating:4.5,estado:'activo'},{id:5,nombre:'Pedro Sanchez',telefono:'55 5678 9012',vehiculo:'MNO-345 Van',entregas:11,rating:4.7,estado:'activo'},{id:6,nombre:'Laura Rodriguez',telefono:'55 6789 0123',vehiculo:'PQR-678 Auto',entregas:0,rating:4.3,estado:'inactivo'},{id:7,nombre:'Miguel Torres',telefono:'55 7890 1234',vehiculo:'STU-901 T-Max',entregas:14,rating:4.8,estado:'activo'},{id:8,nombre:'Sofia Flores',telefono:'55 8901 2345',vehiculo:'VWX-234 Camioneta',entregas:7,rating:4.4,estado:'activo'}],vehiculos:[{placa:'ABC-123',tipo:'Motocicleta',marca:'Yamaha T-Max 560',chofer:'Carlos Lopez',km:23450,ultimoServicio:'2026-06-15',estado:'activo'},{placa:'DEF-456',tipo:'Van',marca:'Nissan NV200',chofer:'Maria Garcia',km:45200,ultimoServicio:'2026-06-20',estado:'activo'},{placa:'GHI-789',tipo:'Camioneta',marca:'VW Saveiro',chofer:'Juan Hernandez',km:67800,ultimoServicio:'2026-05-10',estado:'mantenimiento'},{placa:'JKL-012',tipo:'Motocicleta',marca:'Honda ADV 160',chofer:'Ana Martinez',km:12300,ultimoServicio:'2026-07-01',estado:'activo'},{placa:'MNO-345',tipo:'Van',marca:'Ford Transit',chofer:'Pedro Sanchez',km:78900,ultimoServicio:'2026-06-28',estado:'activo'},{placa:'PQR-678',tipo:'Auto',marca:'Chevrolet Beat',chofer:'Laura Rodriguez',km:34500,ultimoServicio:'2026-04-20',estado:'inactivo'},{placa:'STU-901',tipo:'Motocicleta',marca:'Yamaha N-Max',chofer:'Miguel Torres',km:19800,ultimoServicio:'2026-07-05',estado:'activo'},{placa:'VWX-234',tipo:'Camioneta',marca:'Mitsubishi L200',chofer:'Sofia Flores',km:56700,ultimoServicio:'2026-06-10',estado:'activo'}],pedidos:[],clientes:[{id:1,empresa:'Express Logistics SA de CV',contacto:'Roberto Diaz',email:'roberto@expresslog.mx',plan:'Pro',pedidos:245,revenue:89500,estado:'activo'},{id:2,empresa:'Transporte MX SA de CV',contacto:'Fernanda Ruiz',email:'fernanda@transportemx.mx',plan:'Enterprise',pedidos:512,revenue:234000,estado:'activo'},{id:3,empresa:'Rapido Express',contacto:'Diego Morales',email:'diego@rapido.mx',plan:'Starter',pedidos:87,revenue:23400,estado:'activo'},{id:4,empresa:'Logistica Norte SA',contacto:'Patricia Vargas',email:'patricia@lognorte.mx',plan:'Pro',pedidos:178,revenue:67200,estado:'activo'},{id:5,empresa:'Distribuidora Central',contacto:'Javier Mendoza',email:'javier@discentral.mx',plan:'Enterprise',pedidos:389,revenue:156800,estado:'activo'},{id:6,empresa:'Envios Rapidos MX',contacto:'Camila Ortiz',email:'camila@enviosrap.mx',plan:'Starter',pedidos:45,revenue:12300,estado:'inactivo'}],facturas:[{folio:'FAC-001',uuid:'a1b2c3d4-e5f6-7890-abcd-ef1234567890',cliente:'Express Logistics',rfc:'ELO970101XYZ',importe:15230,fecha:'2026-07-01',estado:'timbrada'},{folio:'FAC-002',uuid:'b2c3d4e5-f6a7-8901-bcde-f12345678901',cliente:'Transporte MX',rfc:'TMX880202ABC',importe:34500,fecha:'2026-07-02',estado:'timbrada'},{folio:'FAC-003',uuid:'',cliente:'Rapido Express',rfc:'REX950303DEF',importe:8900,fecha:'2026-07-03',estado:'pendiente'},{folio:'FAC-004',uuid:'d4e5f6a7-b8c9-0123-cdef-234567890123',cliente:'Logistica Norte',rfc:'LNO900404GHI',importe:22100,fecha:'2026-07-04',estado:'timbrada'},{folio:'FAC-005',uuid:'',cliente:'Express Logistics',rfc:'ELO970101XYZ',importe:12800,fecha:'2026-07-05',estado:'cancelada'}],pagos:[{id:1,cliente:'Express Logistics',monto:15230,metodo:'Transferencia',referencia:'REF-2026-001',fecha:'2026-07-01',estado:'completado'},{id:2,cliente:'Transporte MX',monto:34500,metodo:'Transferencia',referencia:'REF-2026-002',fecha:'2026-07-02',estado:'completado'},{id:3,cliente:'Rapido Express',monto:8900,metodo:'Efectivo',referencia:'REF-2026-003',fecha:'2026-07-03',estado:'pendiente'},{id:4,cliente:'Logistica Norte',monto:22100,metodo:'Transferencia',referencia:'REF-2026-004',fecha:'2026-07-04',estado:'completado'},{id:5,cliente:'Distribuidora Central',monto:45000,metodo:'Efectivo',referencia:'REF-2026-005',fecha:'2026-07-05',estado:'completado'},{id:6,cliente:'Express Logistics',monto:12800,metodo:'Transferencia',referencia:'REF-2026-006',fecha:'2026-07-06',estado:'pendiente'}],usuarios:[{id:1,nombre:'Admin Principal',email:'admin@lastmile.mx',rol:'Admin',tenant:'Sistema',estado:'activo',ultimoAcceso:'2026-07-08 09:15'},{id:2,nombre:'Operador Ana',email:'ana@lastmile.mx',rol:'Operador',tenant:'Express Logistics',estado:'activo',ultimoAcceso:'2026-07-08 08:30'},{id:3,nombre:'Carlos Lopez',email:'carlos@lastmile.mx',rol:'Chofer',tenant:'Express Logistics',estado:'activo',ultimoAcceso:'2026-07-08 07:00'},{id:4,nombre:'Roberto Diaz',email:'roberto@expresslog.mx',rol:'Cliente',tenant:'Express Logistics',estado:'activo',ultimoAcceso:'2026-07-07 16:45'},{id:5,nombre:'Operador Miguel',email:'miguel@lastmile.mx',rol:'Operador',tenant:'Transporte MX',estado:'activo',ultimoAcceso:'2026-07-08 07:45'},{id:6,nombre:'Fernanda Ruiz',email:'fernanda@transportemx.mx',rol:'Cliente',tenant:'Transporte MX',estado:'activo',ultimoAcceso:'2026-07-07 14:20'}],tickets:[{id:1,asunto:'Error en facturacion CFDI',cliente:'Express Logistics',prioridad:'alta',estado:'abierto',asignado:'Admin',creado:'2026-07-08 10:30'},{id:2,asunto:'GPS no reporta ubicacion',cliente:'Transporte MX',prioridad:'critica',estado:'en_proceso',asignado:'Soporte T1',creado:'2026-07-07 14:20'},{id:3,asunto:'Solicitud acceso API',cliente:'Rapido Express',prioridad:'baja',estado:'resuelto',asignado:'Admin',creado:'2026-07-05 09:00'},{id:4,asunto:'Error al generar reporte',cliente:'Logistica Norte',prioridad:'media',estado:'en_proceso',asignado:'Soporte T1',creado:'2026-07-06 11:15'},{id:5,asunto:'Cobertura zona norte',cliente:'Distribuidora Central',prioridad:'media',estado:'abierto',asignado:'Admin',creado:'2026-07-08 08:00'}],audit:[{timestamp:'2026-07-08 09:15:32',usuario:'Admin',accion:'LOGIN',entidad:'Sistema',detalle:'Sesion iniciada Chrome/Win11',ip:'192.168.1.100'},{timestamp:'2026-07-08 09:12:18',usuario:'Operador Ana',accion:'UPDATE',entidad:'Pedido',detalle:'PED-2847 cambio a En Transito',ip:'192.168.1.101'},{timestamp:'2026-07-08 09:08:45',usuario:'Carlos Lopez',accion:'UPDATE',entidad:'Pedido',detalle:'Entrega confirmada PED-2840',ip:'10.0.0.55'},{timestamp:'2026-07-08 08:55:02',usuario:'Admin',accion:'CREATE',entidad:'Chofer',detalle:'Nuevo chofer: Sofia Flores',ip:'192.168.1.100'},{timestamp:'2026-07-08 08:40:17',usuario:'Operador Miguel',accion:'CREATE',entidad:'Pedido',detalle:'PED-2851 creado para Transporte MX',ip:'192.168.1.102'},{timestamp:'2026-07-08 08:30:00',usuario:'Sistema',accion:'SYSTEM',entidad:'Backup',detalle:'Backup automatico completado',ip:'127.0.0.1'},{timestamp:'2026-07-07 17:45:22',usuario:'Admin',accion:'UPDATE',entidad:'Config',detalle:'Politica cancelacion actualizada',ip:'192.168.1.100'},{timestamp:'2026-07-07 16:30:11',usuario:'Roberto Diaz',accion:'LOGIN',entidad:'Sistema',detalle:'Sesion Safari/MacOS',ip:'200.55.12.34'},{timestamp:'2026-07-07 15:20:05',usuario:'Admin',accion:'DELETE',entidad:'Pedido',detalle:'PED-2790 cancelado',ip:'192.168.1.100'},{timestamp:'2026-07-07 14:10:33',usuario:'Operador Ana',accion:'UPDATE',entidad:'Chofer',detalle:'Pedro Sanchez actualizado',ip:'192.168.1.101'}],zonas:[{nombre:'Centro Historico',tarifa:35,radio:3,color:'#6366f1'},{nombre:'Polanco / Reforma',tarifa:45,radio:4,color:'#10b981'},{nombre:'Roma / Condesa',tarifa:40,radio:3.5,color:'#f59e0b'},{nombre:'Coyoacan / San Angel',tarifa:50,radio:5,color:'#8b5cf6'},{nombre:'Santa Fe / Cuajimalpa',tarifa:60,radio:6,color:'#ef4444'},{nombre:'Del Valle / Narvarte',tarifa:42,radio:3,color:'#06b6d4'},{nombre:'Escandon / Tacubaya',tarifa:38,radio:2.5,color:'#ec4899'}]};
-const statuses=['pendiente','transito','entregado','cancelado','fallido'];
-const clients=['Express Logistics','Transporte MX','Rapido Express','Logistica Norte','Distribuidora Central'];
-const drivers=['Carlos Lopez','Maria Garcia','Juan Hernandez','Ana Martinez','Pedro Sanchez'];
-const colonias=['Polanco','Roma Norte','Condesa','Coyoacan','San Angel','Santa Fe','Centro','Juarez','Escandon','Del Valle'];
-const calles=['Av. Reforma','Calle Durango','Insurgentes Sur','Paseo de la Reforma','Av. Patriotismo','Calle Ometeotl'];
-for(let i=1;i<=85;i++){const d=new Date();d.setDate(d.getDate()-Math.floor(Math.random()*30));DEMO.pedidos.push({id:i,folio:'PED-'+(2770+i),cliente:clients[Math.floor(Math.random()*clients.length)],destino:calles[Math.floor(Math.random()*calles.length)]+' #'+(Math.floor(Math.random()*500)+1)+', '+colonias[Math.floor(Math.random()*colonias.length)],chofer:drivers[Math.floor(Math.random()*drivers.length)],estado:statuses[Math.floor(Math.random()*statuses.length)],fecha:d.toISOString().split('T')[0],total:Math.floor(Math.random()*500)+30,tenantId:Math.floor(Math.random()*3)+1})}
-document.querySelectorAll('.nav-item[data-section]').forEach(item=>{item.addEventListener('click',function(){const sec=this.getAttribute('data-section');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('section-'+sec).classList.add('active');this.classList.add('active');if(sec==='rutas')setTimeout(initRutasMap,100)})});
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');document.getElementById('mainContent').classList.toggle('expanded')}
-function openModal(id){document.getElementById(id).classList.add('show')}
-function closeModal(id){document.getElementById(id).classList.remove('show')}
-document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')})});
-function showToast(msg,type='info'){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast toast-'+type;t.innerHTML='<i class="fas fa-'+(type==='success'?'check-circle':type==='error'?'times-circle':'info-circle')+'"></i> '+msg;c.appendChild(t);setTimeout(()=>t.remove(),4000)}
-function formatCurrency(n){return '$'+n.toLocaleString('es-MX')}
-function statusBadge(s){const m={pendiente:'badge-info',transito:'badge-warning',entregado:'badge-success',cancelado:'badge-danger',fallido:'badge-danger',activo:'badge-success',inactivo:'badge-gray',mantenimiento:'badge-warning',timbrada:'badge-success',completado:'badge-success',abierto:'badge-info',en_proceso:'badge-warning',resuelto:'badge-success',critica:'badge-danger',alta:'badge-danger',media:'badge-warning',baja:'badge-gray'};return '<span class="badge '+(m[s]||'badge-gray')+'">'+s+'</span>'}
-function planBadge(p){const m={Starter:'badge-gray',Pro:'badge-info',Enterprise:'badge-warning'};return '<span class="badge '+(m[p]||'badge-gray')+'">'+p+'</span>'}
-function renderPagination(id,total,page,perPage,fn){const pages=Math.ceil(total/perPage);let h='';for(let i=1;i<=Math.min(pages,7);i++)h+='<button class="'+(i===page?'active':'')+'" onclick="'+fn+'('+i+')">'+i+'</button>';document.getElementById(id).innerHTML=h}
-let pedidosChart,revenueChart,dashboardMap,rutasMap,mrrChart,usageChart,cancelChart;
-function loadDashboard(){document.getElementById('kpi-pedidos').textContent=DEMO.pedidos.length;const ent=DEMO.pedidos.filter(p=>p.estado==='entregado').length;document.getElementById('kpi-entregas').textContent=ent;document.getElementById('kpi-fallidos').textContent=DEMO.pedidos.filter(p=>p.estado==='fallido'||p.estado==='cancelado').length;document.getElementById('kpi-revenue').textContent=formatCurrency(DEMO.pedidos.reduce((a,p)=>a+p.total,0));document.getElementById('kpi-choferes').textContent=DEMO.choferes.filter(c=>c.estado==='activo').length;document.getElementById('kpi-tiempo').textContent='34m';initCharts();loadActivityFeed()}
-function initCharts(){if(pedidosChart)pedidosChart.destroy();if(revenueChart)revenueChart.destroy();pedidosChart=new Chart(document.getElementById('chartPedidos'),{type:'line',data:{labels:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'],datasets:[{label:'Pedidos',data:[45,52,38,65,58,72,48],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(26,26,34,0.8)'},ticks:{color:'#4a4a5a',font:{size:10}}},y:{grid:{color:'rgba(26,26,34,0.8)'},ticks:{color:'#4a4a5a',font:{size:10}}}}}});revenueChart=new Chart(document.getElementById('chartRevenue'),{type:'bar',data:{labels:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'],datasets:[{label:'Revenue',data:[12400,15600,9800,18200,14300,21500,11200],backgroundColor:'rgba(245,158,11,0.15)',borderColor:'rgba(245,158,11,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#4a4a5a',font:{size:10}}},y:{grid:{color:'rgba(26,26,34,0.8)'},ticks:{color:'#4a4a5a',font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}})}
-function initDashboardMap(){if(dashboardMap)return;try{dashboardMap=L.map('dashboardMap',{zoomControl:false}).setView([19.4326,-99.1332],12);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:''}).addTo(dashboardMap);DEMO.choferes.filter(c=>c.estado==='activo').forEach(c=>{const lat=19.43+(Math.random()-0.5)*0.08,lng=-99.13+(Math.random()-0.5)*0.08;L.circleMarker([lat,lng],{radius:5,color:'#6366f1',fillColor:'#6366f1',fillOpacity:0.7}).addTo(dashboardMap).bindPopup('<b>'+c.nombre+'</b><br>'+c.vehiculo+'<br>Entregas: '+c.entregas)})}catch(e){}}
-function loadActivityFeed(){const acts=[{time:'Hace 5 min',text:'Carlos Lopez entrego PED-2840 en Polanco',dot:'green'},{time:'Hace 12 min',text:'Nuevo pedido PED-2851 creado para Transporte MX',dot:''},{time:'Hace 25 min',text:'Maria Garcia inicio ruta zona Condesa',dot:'yellow'},{time:'Hace 40 min',text:'Factura FAC-003 timbrada - Rapido Express',dot:'green'},{time:'Hace 1 hr',text:'Ticket #1 abierto: Error en facturacion CFDI',dot:'red'},{time:'Hace 1.5 hr',text:'Juan Hernandez entrega exitosa PED-2835',dot:'green'},{time:'Hace 2 hr',text:'Pedro Sanchez recogida en Santa Fe',dot:''}];document.getElementById('activityFeed').innerHTML=acts.map(a=>'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(26,26,34,0.5);"><div class="activity-dot '+a.dot+'"></div><div style="flex:1;"><div style="font-size:12px;font-weight:400;">'+a.text+'</div><div style="font-size:10px;color:#4a4a5a;margin-top:2px;">'+a.time+'</div></div></div>').join('')}
-let pedidosPage=1;const PEDIDOS_PER_PAGE=12;
-function filterPedidos(status){document.getElementById('pedStatusFilter').value=status;renderPedidos()}
-function renderPedidos(page){page=page||1;pedidosPage=page;const search=document.getElementById('pedSearch').value.toLowerCase();const status=document.getElementById('pedStatusFilter').value;const tenant=document.getElementById('pedTenantFilter').value;const date=document.getElementById('pedDateFilter').value;let filtered=DEMO.pedidos.filter(p=>{if(search&&!p.folio.toLowerCase().includes(search)&&!p.cliente.toLowerCase().includes(search))return false;if(status&&p.estado!==status)return false;if(tenant&&p.tenantId!==parseInt(tenant))return false;if(date&&p.fecha!==date)return false;return true});const start=(page-1)*PEDIDOS_PER_PAGE;const slice=filtered.slice(start,start+PEDIDOS_PER_PAGE);document.getElementById('pedidosTableBody').innerHTML=slice.map(p=>'<tr><td><span style="color:#6366f1;font-weight:500;">'+p.folio+'</span></td><td>'+p.cliente+'</td><td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+p.destino+'</td><td>'+p.chofer+'</td><td>'+statusBadge(p.estado)+'</td><td>'+p.fecha+'</td><td style="font-weight:500;">'+formatCurrency(p.total)+'</td><td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm" onclick="viewPedido('+p.id+')" title="Ver"><i class="far fa-eye"></i></button><button class="btn btn-ghost btn-sm" onclick="cancelPedido('+p.id+')" title="Cancelar"><i class="fas fa-ban" style="color:#ef4444;font-size:10px;"></i></button></div></td></tr>').join('');document.getElementById('pedidosCount').textContent=filtered.length+' registros';['ped-total','ped-pendiente','ped-transito','ped-entregado','ped-cancelado'].forEach((id,i)=>{const counts=[DEMO.pedidos.length,DEMO.pedidos.filter(p=>p.estado==='pendiente').length,DEMO.pedidos.filter(p=>p.estado==='transito').length,DEMO.pedidos.filter(p=>p.estado==='entregado').length,DEMO.pedidos.filter(p=>p.estado==='cancelado').length];document.getElementById(id).textContent=counts[i]});renderPagination('pedidosPagination',filtered.length,page,PEDIDOS_PER_PAGE,'renderPedidos')}
-function viewPedido(id){const p=DEMO.pedidos.find(x=>x.id===id);if(!p)return;const tl=[{time:p.fecha+' 08:00',text:'Pedido creado',icon:'plus-circle',color:'#6366f1'},{time:p.fecha+' 08:15',text:'Asignado a '+p.chofer,icon:'user-check',color:'#10b981'},{time:p.fecha+' 09:00',text:'En ruta de entrega',icon:'route',color:'#f59e0b'}];if(p.estado==='entregado')tl.push({time:p.fecha+' 10:30',text:'Entrega completada',icon:'check-circle',color:'#10b981'});if(p.estado==='cancelado')tl.push({time:p.fecha+' 09:30',text:'Pedido cancelado',icon:'times-circle',color:'#ef4444'});if(p.estado==='fallido')tl.push({time:p.fecha+' 10:00',text:'Intento fallido',icon:'exclamation-circle',color:'#ef4444'});document.getElementById('pedidoDetalleContent').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;"><div><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Folio</div><div style="font-size:16px;font-weight:600;color:#6366f1;">'+p.folio+'</div></div><div><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Estado</div>'+statusBadge(p.estado)+'</div><div><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Cliente</div><div style="font-size:13px;">'+p.cliente+'</div></div><div><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Chofer</div><div style="font-size:13px;">'+p.chofer+'</div></div><div style="grid-column:1/-1;"><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Destino</div><div style="font-size:13px;">'+p.destino+'</div></div><div><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Total</div><div style="font-size:18px;font-weight:600;color:#e8e8ed;">'+formatCurrency(p.total)+'</div></div><div><div style="font-size:10px;color:#4a4a5a;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Fecha</div><div style="font-size:13px;">'+p.fecha+'</div></div></div><h4 style="font-size:12px;font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;color:#4a4a5a;">Timeline</h4>'+tl.map(t=>'<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(26,26,34,0.5);"><div style="width:24px;height:24px;background:rgba(99,102,241,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-'+t.icon+'" style="color:'+t.color+';font-size:10px;"></i></div><div style="flex:1;"><div style="font-size:12px;">'+t.text+'</div><div style="font-size:10px;color:#4a4a5a;margin-top:2px;">'+t.time+'</div></div></div>').join('');openModal('modalDetallePedido')}
-function cancelPedido(id){const p=DEMO.pedidos.find(x=>x.id===id);if(!p)return;document.getElementById('penaltyAmount').textContent=(p.total*0.15).toFixed(2);openModal('modalCancelarPedido')}
-function renderChoferes(){const ch=DEMO.choferes;document.getElementById('ch-activos').textContent=ch.filter(c=>c.estado==='activo').length;document.getElementById('ch-inactivos').textContent=ch.filter(c=>c.estado==='inactivo').length;document.getElementById('ch-rating').textContent=(ch.reduce((a,c)=>a+c.rating,0)/ch.length).toFixed(1);document.getElementById('ch-entregas-hoy').textContent=ch.reduce((a,c)=>a+c.entregas,0);document.getElementById('choferesTableBody').innerHTML=ch.map(c=>'<tr><td>#'+c.id+'</td><td style="font-weight:500;">'+c.nombre+'</td><td>'+c.telefono+'</td><td>'+c.vehiculo+'</td><td>'+c.entregas+'</td><td><span style="color:#f59e0b;"><i class="fas fa-star" style="font-size:10px;"></i></span> '+c.rating+'</td><td>'+statusBadge(c.estado)+'</td><td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm"><i class="far fa-edit"></i></button><button class="btn btn-ghost btn-sm"><i class="far fa-eye"></i></button></div></td></tr>').join('')}
-function renderVehiculos(){const vh=DEMO.vehiculos;document.getElementById('vh-activos').textContent=vh.filter(v=>v.estado==='activo').length;document.getElementById('vh-mant').textContent=vh.filter(v=>v.estado==='mantenimiento').length;document.getElementById('vh-inact').textContent=vh.filter(v=>v.estado==='inactivo').length;document.getElementById('vh-km').textContent=(vh.reduce((a,v)=>a+v.km,0)/1000).toFixed(0)+'k';document.getElementById('vehiculosTableBody').innerHTML=vh.map(v=>'<tr><td style="font-weight:500;color:#6366f1;">'+v.placa+'</td><td>'+v.tipo+'</td><td>'+v.marca+'</td><td>'+v.chofer+'</td><td>'+v.km.toLocaleString()+'</td><td>'+v.ultimoServicio+'</td><td>'+statusBadge(v.estado)+'</td><td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm"><i class="far fa-edit"></i></button><button class="btn btn-ghost btn-sm"><i class="far fa-eye"></i></button></div></td></tr>').join('')}
-/* ==========================================
-   ZONAS Y RUTAS - Carga desde DB + CRUD
-   ========================================== */
-let DB_ZONAS = [];
-let currentServicio = 'EXPRESS';
 
-function switchServicioTab(serv) {
-  currentServicio = serv;
-  document.querySelectorAll('.servicio-tab').forEach(t => {
-    const isActive = t.getAttribute('data-servicio') === serv;
-    t.style.background = isActive ? 'var(--accent)' : 'var(--bg-tertiary)';
-    t.style.color = isActive ? '#fff' : 'var(--text-secondary)';
-    t.style.borderColor = isActive ? 'var(--accent)' : 'var(--border-primary)';
-    t.classList.toggle('active', isActive);
+/* ==========================================
+   GLOBAL STATE
+   ========================================== */
+let DB_ZONAS=[], DB_PEDIDOS=[], DB_CHOFERES=[], DB_VEHICULOS=[], DB_CLIENTES=[], DB_FACTURAS=[], DB_PAGOS=[], DB_USUARIOS=[], DB_SAAS=[];
+let pedidosChart,revenueChart,dashboardMap,rutasMap,mrrChart,usageChart,cancelChart;
+
+/* ==========================================
+   NAVIGATION
+   ========================================== */
+document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
+  item.addEventListener('click',function(){
+    const sec=this.getAttribute('data-section');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('section-'+sec).classList.add('active');
+    this.classList.add('active');
+    if(sec==='rutas') setTimeout(initRutasMap,100);
   });
-  document.querySelectorAll('.servicio-panel').forEach(p => p.style.display = 'none');
-  const panel = document.getElementById('panel-' + serv);
-  if (panel) panel.style.display = 'block';
+});
+
+/* ==========================================
+   HELPERS
+   ========================================== */
+function statusBadge(s){
+  const c={pendiente:'badge-warning',transito:'badge-info',entregado:'badge-success',cancelado:'badge-danger',fallido:'badge-danger',activo:'badge-success',inactivo:'badge-gray',mantenimiento:'badge-warning',timbrada:'badge-success',completado:'badge-success',fallido_pago:'badge-danger',timbrando:'badge-info',borrador:'badge-gray'};
+  return '<span class="badge '+(c[s]||'badge-gray')+'">'+s+'</span>';
+}
+function planBadge(p){
+  const c={Starter:'badge-gray',Pro:'badge-info',Enterprise:'badge-warning',admin:'badge-warning',operacion:'badge-info',chofer:'badge-success',cliente:'badge-gray'};
+  return '<span class="badge '+(c[p]||'badge-gray')+'">'+p+'</span>';
+}
+function formatCurrency(v){return '$'+(parseFloat(v)||0).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function openModal(id){const m=document.getElementById(id);if(m)m.classList.add('show')}
+function closeModal(id){const m=document.getElementById(id);if(m)m.classList.remove('show')}
+function showToast(msg,type){
+  const c=document.querySelector('.toast-container');if(!c)return;
+  const t=document.createElement('div');t.className='toast toast-'+(type||'info');t.innerHTML='<i class="fas fa-'+(type==='success'?'check-circle':type==='error'?'exclamation-circle':'info-circle')+'"></i> '+msg;
+  c.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+/* ==========================================
+   API CALLS
+   ========================================== */
+function apiGet(path){return fetch(API_BASE+path,{headers:HEADERS}).then(r=>r.json()).catch(e=>({success:false,data:[],error:e.message}))}
+function apiPost(path,data){return fetch(API_BASE+path,{method:'POST',headers:HEADERS,body:JSON.stringify(data)}).then(r=>r.json()).catch(e=>({success:false,error:e.message}))}
+function apiPut(path,data){return fetch(API_BASE+path,{method:'PUT',headers:HEADERS,body:JSON.stringify(data)}).then(r=>r.json()).catch(e=>({success:false,error:e.message}))}
+function apiDelete(path){return fetch(API_BASE+path,{method:'DELETE',headers:HEADERS}).then(r=>r.json()).catch(e=>({success:false,error:e.message}))}
+
+/* ==========================================
+   DASHBOARD
+   ========================================== */
+function loadDashboard(){
+  apiGet('/api/dashboard/1').then(res=>{
+    if(!res.success||!res.data)return;
+    const d=res.data;
+    const el=id=>document.getElementById(id);
+    if(el('dash-pedidos-hoy'))el('dash-pedidos-hoy').textContent=d.PEDIDOS_HOY||0;
+    if(el('dash-activos'))el('dash-activos').textContent=d.PEDIDOS_ACTIVOS||d.ENTREGAS_HOY||0;
+    if(el('dash-revenue'))el('dash-revenue').textContent=formatCurrency(d.REVENUE_HOY||d.INGRESOS_HOY||0);
+    if(el('dash-choferes'))el('dash-choferes').textContent=d.CHOFERES_ACTIVOS||0;
+    if(el('dash-rating'))el('dash-rating').textContent=d.RATING_PROMEDIO||'4.8';
+    if(el('kpi-ruta'))el('kpi-ruta').textContent=d.PEDIDOS_EN_RUTA||0;
+  }).catch(()=>{});
+
+  // KPIs
+  apiGet('/api/pedidos?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_PEDIDOS=res.data;
+    const hoy=new Date().toISOString().split('T')[0];
+    const pedidosHoy=DB_PEDIDOS.filter(p=>(p.PED_FECHA||'').startsWith(hoy));
+    const activos=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='EN_RUTA'||p.PED_ESTADO==='transito');
+    const entregados=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='ENTREGADO'||p.PED_ESTADO==='entregado');
+    const el=id=>document.getElementById(id);
+    if(el('kpi-pedidos'))el('kpi-pedidos').textContent=pedidosHoy.length||DB_PEDIDOS.length;
+    if(el('kpi-ruta'))el('kpi-ruta').textContent=activos.length;
+    if(el('kpi-entregados'))el('kpi-entregados').textContent=entregados.length;
+    if(el('kpi-ventas'))el('kpi-ventas').textContent=formatCurrency(DB_PEDIDOS.reduce((a,p)=>a+parseFloat(p.PED_TOTAL||p.total||0),0));
+  }).catch(()=>{});
+}
+
+/* ==========================================
+   PEDIDOS
+   ========================================== */
+function renderPedidos(){
+  apiGet('/api/pedidos?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_PEDIDOS=res.data;
+    const tbody=document.getElementById('pedidosTableBody');
+    if(!tbody)return;
+    const total=DB_PEDIDOS.length;
+    const activos=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='EN_RUTA'||p.PED_ESTADO==='transito').length;
+    const entregados=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='ENTREGADO'||p.PED_ESTADO==='entregado').length;
+    const el=id=>document.getElementById(id);
+    if(el('ped-total'))el('ped-total').textContent=total;
+    if(el('ped-activos'))el('ped-activos').textContent=activos;
+    if(el('ped-entregados'))el('ped-entregados').textContent=entregados;
+    if(el('ped-monto'))el('ped-monto').textContent=formatCurrency(DB_PEDIDOS.reduce((a,p)=>a+parseFloat(p.PED_TOTAL||p.total||0),0));
+
+    tbody.innerHTML=DB_PEDIDOS.slice(0,50).map(p=>{
+      const id=p.PED_ID||p.id;
+      const folio=p.PED_NUMERO||p.folio||'PED-'+id;
+      const cliente=p.PED_CLIENTE_NOMBRE||p.cliente||'-';
+      const destino=p.PED_DESTINO_DIR||p.destino||'-';
+      const chofer=p.CHOFER_NOMBRE||p.chofer||'-';
+      const estado=(p.PED_ESTADO||p.estado||'pendiente').toLowerCase();
+      const fecha=p.PED_FECHA||p.fecha||'-';
+      const total=p.PED_TOTAL||p.total||0;
+      return '<tr>'+
+        '<td style="font-weight:500;color:var(--accent);">'+folio+'</td>'+
+        '<td>'+cliente+'</td>'+
+        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+destino+'</td>'+
+        '<td>'+chofer+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td>'+fecha+'</td>'+
+        '<td style="font-weight:500;">'+formatCurrency(total)+'</td>'+
+        '<td><div style="display:flex;gap:4px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="verPedido('+id+')" title="Ver"><i class="fas fa-eye" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarPedido('+id+')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
+        '</div></td></tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando pedidos','error'));
+}
+
+function verPedido(id){
+  const p=DB_PEDIDOS.find(x=>(x.PED_ID||x.id)==id);
+  if(!p)return;
+  showToast('Pedido: '+(p.PED_NUMERO||'PED-'+id)+' - '+(p.PED_ESTADO||''),'info');
+}
+
+function eliminarPedido(id){
+  if(!confirm('Eliminar pedido #'+id+'?'))return;
+  apiDelete('/api/pedidos/'+id).then(res=>{
+    if(res.success){showToast('Pedido eliminado','success');renderPedidos();}
+    else showToast(res.error||'Error al eliminar','error');
+  });
+}
+
+/* ==========================================
+   CHOFERES
+   ========================================== */
+function renderChoferes(){
+  apiGet('/api/choferes?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_CHOFERES=res.data;
+    const tbody=document.getElementById('choferesTableBody');
+    if(!tbody)return;
+    const activos=DB_CHOFERES.filter(c=>(c.CHF_ESTADO||c.estado||'activo')==='activo').length;
+    const inactivos=DB_CHOFERES.length-activos;
+    const el=id=>document.getElementById(id);
+    if(el('ch-activos'))el('ch-activos').textContent=activos;
+    if(el('ch-inactivos'))el('ch-inactivos').textContent=inactivos;
+
+    tbody.innerHTML=DB_CHOFERES.map(c=>{
+      const id=c.CHF_ID||c.id;
+      const nombre=c.CHF_NOMBRE||c.nombre||'-';
+      const tel=c.CHF_TELEFONO||c.telefono||'-';
+      const veh=c.CHF_VEHICULO||c.vehiculo||'-';
+      const estado=(c.CHF_ESTADO||c.estado||'activo');
+      return '<tr>'+
+        '<td style="font-weight:500;">'+nombre+'</td>'+
+        '<td>'+tel+'</td>'+
+        '<td>'+veh+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td><div style="display:flex;gap:4px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="editarChofer('+id+')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarChofer('+id+',\''+nombre.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
+        '</div></td></tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando choferes','error'));
+}
+
+function editarChofer(id){showToast('Editar chofer #'+id,'info')}
+function eliminarChofer(id,nombre){
+  if(!confirm('Eliminar chofer "'+nombre+'"'))return;
+  apiDelete('/api/choferes/'+id).then(res=>{
+    if(res.success){showToast('Chofer eliminado','success');renderChoferes();}
+    else showToast(res.error||'Error al eliminar','error');
+  });
+}
+
+/* ==========================================
+   VEHICULOS
+   ========================================== */
+function renderVehiculos(){
+  apiGet('/api/vehiculos?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_VEHICULOS=res.data;
+    const tbody=document.getElementById('vehiculosTableBody');
+    if(!tbody)return;
+
+    tbody.innerHTML=DB_VEHICULOS.map(v=>{
+      const placa=v.VEH_PLACA||v.placa||'-';
+      const tipo=v.VEH_TIPO||v.tipo||'-';
+      const marca=v.VEH_MARCA||v.marca||'-';
+      const chofer=v.CHOFER_NOMBRE||v.chofer||'-';
+      const km=v.VEH_KM||v.km||0;
+      const estado=(v.VEH_ESTADO||v.estado||'activo');
+      return '<tr>'+
+        '<td style="font-weight:500;color:var(--accent);">'+placa+'</td>'+
+        '<td>'+tipo+'</td>'+
+        '<td>'+marca+'</td>'+
+        '<td>'+chofer+'</td>'+
+        '<td>'+Number(km).toLocaleString()+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td><div style="display:flex;gap:4px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Editar '+placa+'\',\'info\')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+        '</div></td></tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando vehiculos','error'));
+}
+
+/* ==========================================
+   CLIENTES
+   ========================================== */
+function renderClientes(){
+  apiGet('/api/clientes?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_CLIENTES=res.data;
+    const tbody=document.getElementById('clientesTableBody');
+    if(!tbody)return;
+
+    tbody.innerHTML=DB_CLIENTES.map(c=>{
+      const id=c.CLI_ID||c.id;
+      const nombre=c.CLI_NOMBRE||c.nombre||c.empresa||'-';
+      const contacto=c.CLI_CONTACTO||c.contacto||'-';
+      const email=c.CLI_EMAIL||c.email||'-';
+      const tel=c.CLI_TELEFONO||c.telefono||'-';
+      const estado=(c.CLI_ESTADO||c.estado||'activo');
+      return '<tr>'+
+        '<td style="font-weight:500;">'+nombre+'</td>'+
+        '<td>'+contacto+'</td>'+
+        '<td>'+email+'</td>'+
+        '<td>'+tel+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td><div style="display:flex;gap:4px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Editar cliente '+id+'\',\'info\')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarCliente('+id+',\''+nombre.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
+        '</div></td></tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando clientes','error'));
+}
+
+function eliminarCliente(id,nombre){
+  if(!confirm('Eliminar cliente "'+nombre+'"'))return;
+  apiDelete('/api/clientes/'+id).then(res=>{
+    if(res.success){showToast('Cliente eliminado','success');renderClientes();}
+    else showToast(res.error||'Error al eliminar','error');
+  });
+}
+
+/* ==========================================
+   FACTURAS CFDI
+   ========================================== */
+function renderCFDI(){
+  apiGet('/api/cfdi/facturas?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_FACTURAS=res.data;
+    const tbody=document.getElementById('cfdiTableBody');
+    const el=id=>document.getElementById(id);
+
+    const timbradas=DB_FACTURAS.filter(f=>(f.CFDI_ESTADO||f.estado||'')==='timbrada').length;
+    const pendientes=DB_FACTURAS.filter(f=>(f.CFDI_ESTADO||f.estado||'')==='pendiente').length;
+    const canceladas=DB_FACTURAS.filter(f=>(f.CFDI_ESTADO||f.estado||'')==='cancelada').length;
+    const totalFac=DB_FACTURAS.filter(f=>(f.CFDI_ESTADO||f.estado||'')==='timbrada').reduce((a,f)=>a+parseFloat(f.CFDI_IMPORTE||f.importe||0),0);
+
+    if(el('cfdi-timbradas'))el('cfdi-timbradas').textContent=timbradas;
+    if(el('cfdi-pendientes'))el('cfdi-pendientes').textContent=pendientes;
+    if(el('cfdi-canceladas'))el('cfdi-canceladas').textContent=canceladas;
+    if(el('cfdi-total'))el('cfdi-total').textContent=formatCurrency(totalFac);
+
+    if(!tbody)return;
+    tbody.innerHTML=DB_FACTURAS.slice(0,30).map(f=>{
+      const id=f.CFDI_ID||f.id;
+      const folio=f.CFDI_FOLIO||f.folio||'FAC-'+id;
+      const uuid=(f.CFDI_UUID||f.uuid||'').substring(0,8);
+      const cliente=f.CFDI_CLIENTE||f.cliente||'-';
+      const rfc=f.CFDI_RFC||f.rfc||'-';
+      const importe=f.CFDI_IMPORTE||f.importe||0;
+      const fecha=f.CFDI_FECHA||f.fecha||'-';
+      const estado=(f.CFDI_ESTADO||f.estado||'pendiente');
+      return '<tr>'+
+        '<td style="font-weight:500;color:var(--accent);">'+folio+'</td>'+
+        '<td style="font-size:11px;font-family:monospace;">'+(uuid||'Sin timbrar')+'</td>'+
+        '<td>'+cliente+'</td>'+
+        '<td>'+rfc+'</td>'+
+        '<td style="font-weight:500;">'+formatCurrency(importe)+'</td>'+
+        '<td>'+fecha+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td><div style="display:flex;gap:4px;">'+
+          (estado==='pendiente'?'<button class="btn btn-success btn-sm" onclick="timbrarCFDI('+id+')" title="Timbrar"><i class="fas fa-stamp" style="font-size:10px;"></i></button>':'')+
+          (estado==='timbrada'?'<button class="btn btn-danger btn-sm" onclick="cancelarCFDI('+id+')" title="Cancelar"><i class="fas fa-ban" style="font-size:10px;"></i></button>':'')+
+        '</div></td></tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando facturas','error'));
+}
+
+function timbrarCFDI(id){
+  apiPost('/api/cfdi/facturas/'+id+'/timbrar',{}).then(res=>{
+    if(res.success){showToast('Factura timbrada','success');renderCFDI();}
+    else showToast(res.error||'Error al timbrar','error');
+  });
+}
+function cancelarCFDI(id){
+  if(!confirm('Cancelar esta factura?'))return;
+  apiPost('/api/cfdi/facturas/'+id+'/cancelar',{}).then(res=>{
+    if(res.success){showToast('Factura cancelada','success');renderCFDI();}
+    else showToast(res.error||'Error al cancelar','error');
+  });
+}
+
+/* ==========================================
+   PAGOS
+   ========================================== */
+function renderPagos(){
+  apiGet('/api/pagos/transacciones?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_PAGOS=res.data;
+    const tbody=document.getElementById('pagosTableBody');
+
+    const cobrado=DB_PAGOS.filter(p=>(p.PAG_ESTADO||p.estado||'')==='completado').reduce((a,p)=>a+parseFloat(p.PAG_MONTO||p.monto||0),0);
+    const pendiente=DB_PAGOS.filter(p=>(p.PAG_ESTADO||p.estado||'')==='pendiente').reduce((a,p)=>a+parseFloat(p.PAG_MONTO||p.monto||0),0);
+    const el=id=>document.getElementById(id);
+    if(el('pag-cobrado'))el('pag-cobrado').textContent=formatCurrency(cobrado);
+    if(el('pag-pendiente'))el('pag-pendiente').textContent=formatCurrency(pendiente);
+
+    if(!tbody)return;
+    tbody.innerHTML=DB_PAGOS.slice(0,30).map(p=>{
+      const id=p.PAG_ID||p.id;
+      const cliente=p.CLI_NOMBRE||p.cliente||'-';
+      const monto=p.PAG_MONTO||p.monto||0;
+      const metodo=p.PAG_METODO||p.metodo||'-';
+      const ref=p.PAG_REFERENCIA||p.referencia||'-';
+      const fecha=p.PAG_FECHA||p.fecha||'-';
+      const estado=(p.PAG_ESTADO||p.estado||'pendiente');
+      return '<tr>'+
+        '<td>#'+id+'</td>'+
+        '<td>'+cliente+'</td>'+
+        '<td style="font-weight:500;">'+formatCurrency(monto)+'</td>'+
+        '<td>'+metodo+'</td>'+
+        '<td style="font-family:monospace;font-size:11px;">'+ref+'</td>'+
+        '<td>'+fecha+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td><button class="btn btn-ghost btn-sm" onclick="eliminarPago('+id+')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button></td>'+
+        '</tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando pagos','error'));
+}
+
+function eliminarPago(id){
+  if(!confirm('Eliminar pago #'+id+'?'))return;
+  apiDelete('/api/pagos/transacciones/'+id).then(res=>{
+    if(res.success){showToast('Pago eliminado','success');renderPagos();}
+    else showToast(res.error||'Error al eliminar','error');
+  });
+}
+
+/* ==========================================
+   SaaS / BILLING
+   ========================================== */
+function renderBilling(){
+  apiGet('/api/saas/tenants?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_SAAS=res.data;
+    const tbody=document.getElementById('billingTableBody');
+
+    if(!tbody)return;
+    tbody.innerHTML=DB_SAAS.map(b=>{
+      const id=b.SAS_ID||b.id||b.EMP_ID;
+      const nombre=b.EMP_NOMBRE||b.nombre||b.cliente||'-';
+      const plan=b.PLAN_NOMBRE||b.plan||'Starter';
+      const estado=(b.SAS_ESTADO||b.estado||'activo');
+      const facturacion=b.SAS_FACTURACION||b.facturacion||0;
+      return '<tr>'+
+        '<td style="font-weight:500;">'+nombre+'</td>'+
+        '<td>'+planBadge(plan)+'</td>'+
+        '<td>'+statusBadge(estado)+'</td>'+
+        '<td style="font-weight:500;color:var(--success,#10b981);">'+formatCurrency(facturacion)+'</td>'+
+        '<td><button class="btn btn-ghost btn-sm" onclick="showToast(\'Ver detalle '+id+'\',\'info\')" title="Ver"><i class="fas fa-eye" style="font-size:10px;"></i></button></td>'+
+        '</tr>';
+    }).join('');
+  }).catch(()=>{});
+
+  // MRR Chart
+  apiGet('/api/saas/dashboard-billing').then(res=>{
+    if(!res.data)return;
+    initBillingCharts();
+  }).catch(()=>initBillingCharts());
+}
+
+/* ==========================================
+   USUARIOS
+   ========================================== */
+function renderUsuarios(){
+  apiGet('/api/usuarios?emp_id=1').then(res=>{
+    if(!res.data)return;
+    DB_USUARIOS=res.data;
+    const tbody=document.getElementById('usuariosTableBody');
+    if(!tbody)return;
+
+    tbody.innerHTML=DB_USUARIOS.map(u=>{
+      const id=u.USU_ID||u.id;
+      const nombre=u.USU_NOMBRE||u.nombre||'-';
+      const usuario=u.USU_USUARIO||u.usuario||'-';
+      const rol=u.USU_ROL||u.rol||'-';
+      const email=u.USU_EMAIL||u.email||'-';
+      const activo=u.USU_ACTIVO||u.activo||'S';
+      return '<tr>'+
+        '<td>#'+id+'</td>'+
+        '<td style="font-weight:500;">'+nombre+'</td>'+
+        '<td>'+usuario+'</td>'+
+        '<td>'+planBadge(rol)+'</td>'+
+        '<td>'+email+'</td>'+
+        '<td>'+(activo==='S'?statusBadge('activo'):statusBadge('inactivo'))+'</td>'+
+        '<td><div style="display:flex;gap:4px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Editar usuario '+id+'\',\'info\')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarUsuario('+id+',\''+nombre.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
+        '</div></td></tr>';
+    }).join('');
+  }).catch(()=>showToast('Error cargando usuarios','error'));
+}
+
+function eliminarUsuario(id,nombre){
+  if(!confirm('Eliminar usuario "'+nombre+'"'))return;
+  apiDelete('/api/usuarios/'+id).then(res=>{
+    if(res.success){showToast('Usuario eliminado','success');renderUsuarios();}
+    else showToast(res.error||'Error al eliminar','error');
+  });
+}
+
+/* ==========================================
+   AUDIT
+   ========================================== */
+function renderAudit(){
+  apiGet('/api/audit?emp_id=1').then(res=>{
+    if(!res.data)return;
+    const tbody=document.getElementById('auditTableBody');
+    if(!tbody)return;
+    tbody.innerHTML=res.data.slice(0,30).map(a=>{
+      const ts=a.AUD_FECHA||a.timestamp||'-';
+      const usuario=a.AUD_USUARIO||a.usuario||'-';
+      const accion=a.AUD_ACCION||a.accion||'-';
+      const entidad=a.AUD_ENTIDAD||a.entidad||'-';
+      const detalle=a.AUD_DETALLE||a.detalle||'-';
+      return '<tr>'+
+        '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">'+ts+'</td>'+
+        '<td style="font-weight:500;">'+usuario+'</td>'+
+        '<td>'+statusBadge(accion.toLowerCase())+'</td>'+
+        '<td>'+entidad+'</td>'+
+        '<td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+detalle+'</td>'+
+        '</tr>';
+    }).join('');
+  }).catch(()=>{});
+}
+
+/* ==========================================
+   CHARTS
+   ========================================== */
+function initCharts(){
+  if(pedidosChart)pedidosChart.destroy();
+  if(revenueChart)revenueChart.destroy();
+  const t=ThemeManager.get();
+  const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
+  const tickC=t==='dark'?'#4a4a5a':'#6b7280';
+
+  pedidosChart=new Chart(document.getElementById('chartPedidos'),{type:'line',data:{labels:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'],datasets:[{label:'Pedidos',data:[45,52,38,65,58,72,48],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}}}}});
+  revenueChart=new Chart(document.getElementById('chartRevenue'),{type:'bar',data:{labels:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'],datasets:[{label:'Revenue',data:[12400,15600,9800,18200,14300,21500,11200],backgroundColor:'rgba(245,158,11,0.15)',borderColor:'rgba(245,158,11,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});
+}
+
+function initCancelChart(){
+  if(cancelChart)cancelChart.destroy();
+  const t=ThemeManager.get();
+  const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
+  const tickC=t==='dark'?'#4a4a5a':'#6b7280';
+  cancelChart=new Chart(document.getElementById('chartCancelaciones'),{type:'bar',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'Cancelaciones',data:[32,28,41,35,52,38,47],backgroundColor:'rgba(239,68,68,0.15)',borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}}}}});
+}
+
+function initBillingCharts(){
+  if(mrrChart)mrrChart.destroy();
+  if(usageChart)usageChart.destroy();
+  const t=ThemeManager.get();
+  const tickC=t==='dark'?'#4a4a5a':'#6b7280';
+  mrrChart=new Chart(document.getElementById('chartMRR'),{type:'line',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'MRR',data:[28500,31200,33800,35100,38400,42000,44900],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{display:false},ticks:{color:tickC,font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});
+  usageChart=new Chart(document.getElementById('chartUsage'),{type:'doughnut',data:{labels:['Starter','Pro','Enterprise'],datasets:[{data:[12,28,8],backgroundColor:['#7a7a8a','#6366f1','#f59e0b'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:tickC,padding:12,font:{size:11}}}}}});
+}
+
+/* ==========================================
+   MAPS
+   ========================================== */
+function initDashboardMap(){
+  if(dashboardMap)return;
+  try{
+    dashboardMap=L.map('dashboardMap',{zoomControl:false}).setView([19.4326,-99.1332],12);
+    const t=ThemeManager.get();
+    L.tileLayer(t==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:''}).addTo(dashboardMap);
+  }catch(e){}
+}
+
+function initDashboardMapFromChofres(){
+  apiGet('/api/choferes?emp_id=1').then(res=>{
+    if(!res.data||!dashboardMap)return;
+    res.data.forEach(c=>{
+      const lat=19.43+(Math.random()-0.5)*0.08;
+      const lng=-99.13+(Math.random()-0.5)*0.08;
+      const nombre=c.CHF_NOMBRE||c.nombre||'-';
+      L.circleMarker([lat,lng],{radius:5,color:'#6366f1',fillColor:'#6366f1',fillOpacity:0.7}).addTo(dashboardMap).bindPopup('<b>'+nombre+'</b>');
+    });
+  }).catch(()=>{});
+}
+
+function initActivityFeed(){
+  const el=document.getElementById('activityFeed');
+  if(!el)return;
+  const acts=[
+    {time:'Hace 5 min',text:'Carlos Lopez entrego PED-2840 en Polanco',dot:'green'},
+    {time:'Hace 12 min',text:'Nuevo pedido PED-2851 creado para Transporte MX',dot:''},
+    {time:'Hace 25 min',text:'Maria Garcia inicio ruta zona Condesa',dot:'yellow'},
+    {time:'Hace 40 min',text:'Factura FAC-003 timbrada - Rapido Express',dot:'green'},
+    {time:'Hace 1 hr',text:'Ticket #1 abierto: Error en facturacion CFDI',dot:'red'}
+  ];
+  el.innerHTML=acts.map(a=>'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-primary);"><div class="activity-dot '+a.dot+'"></div><div style="flex:1;"><div style="font-size:12px;font-weight:400;">'+a.text+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+a.time+'</div></div></div>').join('');
+}
+
+/* ==========================================
+   ZONAS Y RUTAS
+   ========================================== */
+let currentServicio='EXPRESS';
+
+function switchServicioTab(serv){
+  currentServicio=serv;
+  document.querySelectorAll('.servicio-tab').forEach(t=>{
+    const isActive=t.getAttribute('data-servicio')===serv;
+    t.style.background=isActive?'var(--accent)':'var(--bg-tertiary)';
+    t.style.color=isActive?'#fff':'var(--text-secondary)';
+    t.style.borderColor=isActive?'var(--accent)':'var(--border-primary)';
+    t.classList.toggle('active',isActive);
+  });
+  document.querySelectorAll('.servicio-panel').forEach(p=>p.style.display='none');
+  const panel=document.getElementById('panel-'+serv);
+  if(panel)panel.style.display='block';
   calcularEjemploTarifa(serv);
 }
 
-/* ==========================================
-   MAPA PICKER: Buscador de dirección + pin
-   ========================================== */
-let zonaPickerMap = null;
-let zonaPickerMarker = null;
-let zonaPickerCircle = null;
-
-function initZonaPickerMap() {
-  if (zonaPickerMap) { zonaPickerMap.invalidateSize(); return; }
-  try {
-    const isDark = ThemeManager.get() === 'dark';
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-
-    zonaPickerMap = L.map('zon-map-picker', { zoomControl: false }).setView([19.4326, -99.1332], 12);
-    L.tileLayer(tileUrl, { attribution: '' }).addTo(zonaPickerMap);
-    L.control.zoom({ position: 'topright' }).addTo(zonaPickerMap);
-
-    // Pin draggable
-    zonaPickerMarker = L.marker([19.4326, -99.1332], { draggable: true }).addTo(zonaPickerMap);
-    const radio = parseFloat(document.getElementById('zon-radio').value) || 5;
-    zonaPickerCircle = L.circle([19.4326, -99.1332], {
-      radius: radio * 1000, color: '#6366f1', fillColor: '#6366f1',
-      fillOpacity: 0.08, weight: 2, dashArray: '5,5'
-    }).addTo(zonaPickerMap);
-
-    // Cuando arrastran el pin
-    zonaPickerMarker.on('dragend', function (e) {
-      const pos = e.target.getLatLng();
-      actualizarUbicacionZona(pos.lat, pos.lng);
-    });
-
-    // Click en el mapa mueve el pin
-    zonaPickerMap.on('click', function (e) {
-      zonaPickerMarker.setLatLng(e.latlng);
-      actualizarUbicacionZona(e.latlng.lat, e.latlng.lng);
-    });
-
-    // Actualizar circulo cuando cambia el radio
-    document.getElementById('zon-radio').addEventListener('input', function () {
-      if (zonaPickerMarker) {
-        const pos = zonaPickerMarker.getLatLng();
-        actualizarCirculoZona(pos.lat, pos.lng, parseFloat(this.value) || 5);
-      }
-    });
-  } catch (e) { console.warn('Map picker error:', e); }
+function calcularEjemploTarifa(serv){
+  const inputs=document.querySelectorAll('.tarifa-input[data-serv="'+serv+'"]');
+  const vals={};
+  inputs.forEach(inp=>{vals[inp.getAttribute('data-field')]=parseFloat(inp.value)||0;});
+  const peso=5,km=10;
+  const costo=vals.monto_base+(peso*vals.monto_por_kg)+(km*vals.monto_por_km);
+  const total=Math.max(costo,vals.monto_minimo);
+  const el=document.getElementById('ejemplo-'+serv);
+  if(el)el.textContent='$'+total.toFixed(2);
 }
 
-function actualizarUbicacionZona(lat, lng) {
-  document.getElementById('zon-lat').value = lat.toFixed(6);
-  document.getElementById('zon-lng').value = lng.toFixed(6);
-  const radio = parseFloat(document.getElementById('zon-radio').value) || 5;
-  actualizarCirculoZona(lat, lng, radio);
-
-  // Actualizar color del pin
-  const color = document.getElementById('zon-color').value || '#6366f1';
-  if (zonaPickerMarker) {
-    zonaPickerMarker.setIcon(L.divIcon({
-      className: '',
-      html: '<div style="width:24px;height:24px;background:' + color + ';border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    }));
-  }
-
-  // Reverse geocode (dirección)
-  reverseGeocode(lat, lng);
+function calcularEjemplo(){
+  const peso=parseFloat(document.getElementById('test-peso').value)||1;
+  const largo=parseFloat(document.getElementById('test-largo').value)||0;
+  const ancho=parseFloat(document.getElementById('test-ancho').value)||0;
+  const alto=parseFloat(document.getElementById('test-alto').value)||0;
+  const dist=parseFloat(document.getElementById('test-distancia').value)||0;
+  const valor=parseFloat(document.getElementById('test-valor').value)||0;
+  const inputs=document.querySelectorAll('.tarifa-input[data-serv="'+currentServicio+'"]');
+  const vals={};
+  inputs.forEach(inp=>{vals[inp.getAttribute('data-field')]=parseFloat(inp.value)||0;});
+  const pesoVol=(largo*ancho*alto)/5000;
+  const pesoCobrar=Math.max(peso,pesoVol);
+  const costoBase=vals.monto_base;
+  const costoKg=pesoCobrar*vals.monto_por_kg;
+  const costoKm=dist*vals.monto_por_km;
+  const m3=(largo*ancho*alto)/1000000;
+  const costoVol=(pesoVol>peso)?m3*(vals.monto_por_m3||0):0;
+  const subtotal=costoBase+costoKg+costoKm+costoVol;
+  const seguro=valor*(vals.seguro_pct||0)/100;
+  const total=Math.max(subtotal+seguro,vals.monto_minimo);
+  document.getElementById('res-peso-real').textContent=peso+' kg';
+  document.getElementById('res-peso-vol').textContent=pesoVol.toFixed(2)+' kg';
+  document.getElementById('res-base').textContent='$'+costoBase.toFixed(2);
+  document.getElementById('res-peso').textContent='$'+costoKg.toFixed(2);
+  document.getElementById('res-km').textContent='$'+costoKm.toFixed(2);
+  document.getElementById('res-vol').textContent='$'+costoVol.toFixed(2);
+  document.getElementById('res-seguro').textContent='$'+seguro.toFixed(2);
+  document.getElementById('res-total').textContent='$'+total.toFixed(2);
+  document.getElementById('cotizador-resultado').style.display='block';
 }
 
-function actualizarCirculoZona(lat, lng, radio) {
-  if (zonaPickerCircle) {
-    zonaPickerCircle.setLatLng([lat, lng]);
-    zonaPickerCircle.setRadius(radio * 1000);
-  }
-}
-
-function reverseGeocode(lat, lng) {
-  const el = document.getElementById('zon-direccion-resultado');
-  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&addressdetails=1&accept-language=es', {
-    headers: { 'User-Agent': 'LastMilePlatform/1.0' }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.display_name) {
-      el.textContent = data.display_name;
-      el.style.display = 'block';
-      el.style.color = 'var(--accent)';
-    }
-  }).catch(() => {});
-}
-
-function buscarDireccion() {
-  const query = document.getElementById('zon-direccion').value.trim();
-  if (!query) { showToast('Escribe una direccion para buscar', 'error'); return; }
-
-  fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1&accept-language=es', {
-    headers: { 'User-Agent': 'LastMilePlatform/1.0' }
-  })
-  .then(r => r.json())
-  .then(results => {
-    if (results.length === 0) {
-      showToast('Direccion no encontrada. Intenta con mas detalle.', 'error');
-      return;
-    }
-    const r = results[0];
-    const lat = parseFloat(r.lat);
-    const lng = parseFloat(r.lon);
-
-    // Centrar mapa y mover pin
-    zonaPickerMap.setView([lat, lng], 15);
-    zonaPickerMarker.setLatLng([lat, lng]);
-    actualizarUbicacionZona(lat, lng);
-
-    // Feedback
-    document.getElementById('zon-direccion-resultado').textContent = r.display_name;
-    document.getElementById('zon-direccion-resultado').style.display = 'block';
-    document.getElementById('zon-direccion-resultado').style.color = 'var(--accent)';
-    showToast('Direccion encontrada', 'success');
-  }).catch(() => showToast('Error al buscar direccion', 'error'));
-}
-
-function calcularEjemploTarifa(serv) {
-  const inputs = document.querySelectorAll('.tarifa-input[data-serv="' + serv + '"]');
-  const vals = {};
-  inputs.forEach(inp => { vals[inp.getAttribute('data-field')] = parseFloat(inp.value) || 0; });
-  const peso = 5, km = 10;
-  const costo = vals.monto_base + (peso * vals.monto_por_kg) + (km * vals.monto_por_km);
-  const total = Math.max(costo, vals.monto_minimo);
-  const el = document.getElementById('ejemplo-' + serv);
-  if (el) el.textContent = '$' + total.toFixed(2);
-}
-
-function calcularEjemplo() {
-  const peso = parseFloat(document.getElementById('test-peso').value) || 1;
-  const largo = parseFloat(document.getElementById('test-largo').value) || 0;
-  const ancho = parseFloat(document.getElementById('test-ancho').value) || 0;
-  const alto = parseFloat(document.getElementById('test-alto').value) || 0;
-  const dist = parseFloat(document.getElementById('test-distancia').value) || 0;
-  const valor = parseFloat(document.getElementById('test-valor').value) || 0;
-
-  const inputs = document.querySelectorAll('.tarifa-input[data-serv="' + currentServicio + '"]');
-  const vals = {};
-  inputs.forEach(inp => { vals[inp.getAttribute('data-field')] = parseFloat(inp.value) || 0; });
-
-  const pesoVol = (largo * ancho * alto) / 5000;
-  const pesoCobrar = Math.max(peso, pesoVol);
-  const costoBase = vals.monto_base;
-  const costoKg = pesoCobrar * vals.monto_por_kg;
-  const costoKm = dist * vals.monto_por_km;
-  const m3 = (largo * ancho * alto) / 1000000;
-  const costoVol = (pesoVol > peso) ? m3 * (vals.monto_por_m3 || 0) : 0;
-  const subtotal = costoBase + costoKg + costoKm + costoVol;
-  const seguro = valor * (vals.seguro_pct || 0) / 100;
-  const total = Math.max(subtotal + seguro, vals.monto_minimo);
-
-  document.getElementById('res-peso-real').textContent = peso + ' kg';
-  document.getElementById('res-peso-vol').textContent = pesoVol.toFixed(2) + ' kg';
-  document.getElementById('res-base').textContent = '$' + costoBase.toFixed(2);
-  document.getElementById('res-peso').textContent = '$' + costoKg.toFixed(2);
-  document.getElementById('res-km').textContent = '$' + costoKm.toFixed(2);
-  document.getElementById('res-vol').textContent = '$' + costoVol.toFixed(2);
-  document.getElementById('res-seguro').textContent = '$' + seguro.toFixed(2);
-  document.getElementById('res-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('cotizador-resultado').style.display = 'block';
-}
-
-function guardarNuevaZona() {
-  const nombre = document.getElementById('zon-nombre').value.trim();
-  if (!nombre) { showToast('El nombre de la zona es requerido', 'error'); return; }
-
-  const tarifas = ['EXPRESS', 'ESTANDAR', 'ECONOMICO'].map(serv => {
-    const inputs = document.querySelectorAll('.tarifa-input[data-serv="' + serv + '"]');
-    const vals = {};
-    inputs.forEach(inp => { vals[inp.getAttribute('data-field')] = parseFloat(inp.value) || 0; });
-    vals.servicio = serv;
-    return vals;
+function guardarNuevaZona(){
+  const nombre=document.getElementById('zon-nombre').value.trim();
+  if(!nombre){showToast('El nombre de la zona es requerido','error');return;}
+  const tarifas=['EXPRESS','ESTANDAR','ECONOMICO'].map(serv=>{
+    const inputs=document.querySelectorAll('.tarifa-input[data-serv="'+serv+'"]');
+    const vals={};
+    inputs.forEach(inp=>{vals[inp.getAttribute('data-field')]=parseFloat(inp.value)||0;});
+    vals.servicio=serv;return vals;
   });
-
-  const payload = {
-    nombre: nombre,
-    descripcion: document.getElementById('zon-descripcion').value.trim(),
-    color: document.getElementById('zon-color').value,
-    radio_km: parseFloat(document.getElementById('zon-radio').value) || 5,
-    centro_lat: parseFloat(document.getElementById('zon-lat').value) || 19.4326,
-    centro_lng: parseFloat(document.getElementById('zon-lng').value) || -99.1332,
-    tarifas: tarifas
+  const payload={
+    nombre:nombre,descripcion:document.getElementById('zon-descripcion').value.trim(),
+    color:document.getElementById('zon-color').value,
+    radio_km:parseFloat(document.getElementById('zon-radio').value)||5,
+    centro_lat:parseFloat(document.getElementById('zon-lat').value)||19.4326,
+    centro_lng:parseFloat(document.getElementById('zon-lng').value)||-99.1332,
+    tarifas:tarifas
   };
-
-  const editingId = document.getElementById('modalNuevaZona').getAttribute('data-editing');
-  const isEdit = editingId && editingId !== '';
-  const url = isEdit ? API_BASE + '/api/zonas/' + editingId : API_BASE + '/api/zonas';
-  const method = isEdit ? 'PUT' : 'POST';
-
-  fetch(url, { method, headers: HEADERS, body: JSON.stringify(payload) })
-    .then(r => r.json()).then(res => {
-      if (res.success) {
-        showToast(isEdit ? 'Zona actualizada' : 'Zona "' + nombre + '" creada con 3 tarifas', 'success');
-        closeModal('modalNuevaZona');
-        resetModalZona();
-        loadZonas();
-      } else {
-        showToast(res.error || 'Error al guardar zona', 'error');
-      }
-    }).catch(() => showToast('Error de conexion', 'error'));
+  const editingId=document.getElementById('modalNuevaZona').getAttribute('data-editing');
+  const isEdit=editingId&&editingId!=='';
+  const url=isEdit?'/api/zonas/'+editingId:'/api/zonas';
+  const method=isEdit?apiPut:apiPost;
+  method(url,payload).then(res=>{
+    if(res.success){
+      showToast(isEdit?'Zona actualizada':'Zona "'+nombre+'" creada con 3 tarifas','success');
+      closeModal('modalNuevaZona');resetModalZona();loadZonas();
+    }else showToast(res.error||'Error al guardar zona','error');
+  }).catch(()=>showToast('Error de conexion','error'));
 }
 
-function loadZonas() {
-  fetch(API_BASE + '/api/zonas', { headers: HEADERS })
-    .then(r => r.json())
-    .then(res => {
-      if (res.success) {
-        DB_ZONAS = res.data;
-        renderZonasMap();
-        renderZonasList();
-      }
-    }).catch(() => {
-      // Fallback a DEMO si falla
-      DB_ZONAS = DEMO.zonas.map((z, i) => ({
-        ZON_ID: i + 1, ZON_NOMBRE: z.nombre, ZON_COLOR: z.color,
-        ZON_RADIO_KM: z.radio, ZON_CENTRO_LAT: 19.43 + (Math.random()-0.5)*0.06,
-        ZON_CENTRO_LNG: -99.13 + (Math.random()-0.5)*0.06,
-        tarifas: [{ZTA_SERVICIO:'ESTANDAR', ZTA_MONTO_BASE: z.tarifa}]
-      }));
-      renderZonasMap();
-      renderZonasList();
-    });
+function loadZonas(){
+  apiGet('/api/zonas?emp_id=1').then(res=>{
+    if(res.success){DB_ZONAS=res.data;renderZonasMap();renderZonasList();}
+  }).catch(()=>{
+    DB_ZONAS=[];renderZonasMap();renderZonasList();
+  });
 }
 
-function renderZonasMap() {
-  if (!rutasMap) {
-    try {
-      rutasMap = L.map('rutasMap').setView([19.4326, -99.1332], 12);
-      const tileUrl = ThemeManager.get() === 'dark'
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-      L.tileLayer(tileUrl, { attribution: '' }).addTo(rutasMap);
-    } catch(e) { return; }
+function renderZonasMap(){
+  if(!rutasMap){
+    try{
+      rutasMap=L.map('rutasMap').setView([19.4326,-99.1332],12);
+      const tileUrl=ThemeManager.get()==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      L.tileLayer(tileUrl,{attribution:''}).addTo(rutasMap);
+    }catch(e){return;}
   }
   rutasMap.invalidateSize();
-  DB_ZONAS.forEach(z => {
-    const lat = parseFloat(z.ZON_CENTRO_LAT) || 19.43;
-    const lng = parseFloat(z.ZON_CENTRO_LNG) || -99.13;
-    const radio = parseFloat(z.ZON_RADIO_KM) || 5;
-    const color = z.ZON_COLOR || '#6366f1';
-    const tarifaBase = (z.tarifas && z.tarifas.length > 0)
-      ? z.tarifas.find(t => t.ZTA_SERVICIO === 'ESTANDAR') || z.tarifas[0]
-      : null;
-    const precio = tarifaBase ? '$' + parseFloat(tarifaBase.ZTA_MONTO_BASE || 0).toFixed(0) : '-';
-    L.circle([lat, lng], {
-      radius: radio * 1000, color: color, fillColor: color,
-      fillOpacity: 0.1, weight: 2
-    }).addTo(rutasMap).bindPopup(
-      '<b>' + z.ZON_NOMBRE + '</b><br>Radio: ' + radio + 'km<br>Tarifa base: ' + precio
-    );
+  DB_ZONAS.forEach(z=>{
+    const lat=parseFloat(z.ZON_CENTRO_LAT)||19.43;
+    const lng=parseFloat(z.ZON_CENTRO_LNG)||-99.13;
+    const radio=parseFloat(z.ZON_RADIO_KM)||5;
+    const color=z.ZON_COLOR||'#6366f1';
+    const tarifaBase=(z.tarifas&&z.tarifas.length>0)?z.tarifas.find(t=>t.ZTA_SERVICIO==='ESTANDAR')||z.tarifas[0]:null;
+    const precio=tarifaBase?'$'+parseFloat(tarifaBase.ZTA_MONTO_BASE||0).toFixed(0):'-';
+    L.circle([lat,lng],{radius:radio*1000,color:color,fillColor:color,fillOpacity:0.1,weight:2}).addTo(rutasMap).bindPopup('<b>'+z.ZON_NOMBRE+'</b><br>Radio: '+radio+'km<br>Tarifa base: '+precio);
   });
 }
 
-function renderZonasList() {
-  const container = document.getElementById('zonasList');
-  if (!container) return;
-  if (DB_ZONAS.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">No hay zonas configuradas</div>';
-    return;
-  }
-  container.innerHTML = DB_ZONAS.map(z => {
-    const tarifa = (z.tarifas && z.tarifas.length > 0)
-      ? z.tarifas.find(t => t.ZTA_SERVICIO === 'ESTANDAR') || z.tarifas[0]
-      : null;
-    const precio = tarifa ? '$' + parseFloat(tarifa.ZTA_MONTO_BASE || 0).toFixed(0) : '-';
-    const servicios = (z.tarifas || []).map(t =>
-      '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:var(--bg-tertiary);border:1px solid var(--border-primary);color:var(--text-muted);">' + t.ZTA_SERVICIO + ' $' + parseFloat(t.ZTA_MONTO_BASE || 0).toFixed(0) + '</span>'
-    ).join(' ');
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-primary);">' +
-      '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
-        '<div style="width:10px;height:10px;border-radius:50%;background:' + z.ZON_COLOR + ';flex-shrink:0;"></div>' +
-        '<div style="min-width:0;">' +
-          '<div style="font-size:12px;font-weight:500;">' + z.ZON_NOMBRE + '</div>' +
-          '<div style="font-size:10px;color:var(--text-muted);">Radio: ' + z.ZON_RADIO_KM + 'km</div>' +
-          '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">' + servicios + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div style="text-align:right;display:flex;align-items:center;gap:12px;">' +
-        '<div>' +
-          '<div style="font-size:14px;font-weight:600;color:var(--text-primary);">' + precio + '</div>' +
-          '<div style="font-size:9px;color:var(--text-muted);">base envio</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:4px;">' +
-          '<button class="btn btn-ghost btn-sm" onclick="editarZona(' + z.ZON_ID + ')" title="Editar" style="padding:4px 8px;"><i class="fas fa-pen" style="font-size:10px;"></i></button>' +
-          '<button class="btn btn-ghost btn-sm" onclick="eliminarZona(' + z.ZON_ID + ',\'' + z.ZON_NOMBRE.replace(/'/g,"\\'") + '\')" title="Eliminar" style="padding:4px 8px;color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+function renderZonasList(){
+  const container=document.getElementById('zonasList');
+  if(!container)return;
+  if(DB_ZONAS.length===0){container.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">No hay zonas configuradas</div>';return;}
+  container.innerHTML=DB_ZONAS.map(z=>{
+    const tarifa=(z.tarifas&&z.tarifas.length>0)?z.tarifas.find(t=>t.ZTA_SERVICIO==='ESTANDAR')||z.tarifas[0]:null;
+    const precio=tarifa?'$'+parseFloat(tarifa.ZTA_MONTO_BASE||0).toFixed(0):'-';
+    const servicios=(z.tarifas||[]).map(t=>'<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:var(--bg-tertiary);border:1px solid var(--border-primary);color:var(--text-muted);">'+t.ZTA_SERVICIO+' $'+parseFloat(t.ZTA_MONTO_BASE||0).toFixed(0)+'</span>').join(' ');
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-primary);">'+
+      '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">'+
+        '<div style="width:10px;height:10px;border-radius:50%;background:'+z.ZON_COLOR+';flex-shrink:0;"></div>'+
+        '<div style="min-width:0;">'+
+          '<div style="font-size:12px;font-weight:500;">'+z.ZON_NOMBRE+'</div>'+
+          '<div style="font-size:10px;color:var(--text-muted);">Radio: '+z.ZON_RADIO_KM+'km</div>'+
+          '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">'+servicios+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="text-align:right;display:flex;align-items:center;gap:12px;">'+
+        '<div><div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+precio+'</div><div style="font-size:9px;color:var(--text-muted);">base envio</div></div>'+
+        '<div style="display:flex;gap:4px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="editarZona('+z.ZON_ID+')" title="Editar" style="padding:4px 8px;"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarZona('+z.ZON_ID+',\''+z.ZON_NOMBRE.replace(/'/g,"\\'")+'\')" title="Eliminar" style="padding:4px 8px;color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
+        '</div>'+
+      '</div></div>';
   }).join('');
 }
 
-/* ==========================================
-   EDITAR ZONA: abre modal con datos cargados
-   ========================================== */
-function editarZona(zonId) {
-  const zona = DB_ZONAS.find(z => z.ZON_ID == zonId);
-  if (!zona) { showToast('Zona no encontrada','error'); return; }
-
-  // Llenar campos basicos
-  document.getElementById('zon-nombre').value = zona.ZON_NOMBRE || '';
-  document.getElementById('zon-descripcion').value = zona.ZON_DESCRIPCION || '';
-  document.getElementById('zon-color').value = zona.ZON_COLOR || '#6366f1';
-  document.getElementById('zon-color-hex').textContent = zona.ZON_COLOR || '#6366f1';
-  document.getElementById('zon-radio').value = zona.ZON_RADIO_KM || 5;
-  document.getElementById('zon-lat').value = zona.ZON_CENTRO_LAT || 19.4326;
-  document.getElementById('zon-lng').value = zona.ZON_CENTRO_LNG || -99.1332;
-
-  // Llenar tarifas
-  ['EXPRESS','ESTANDAR','ECONOMICO'].forEach(serv => {
-    const t = (zona.tarifas||[]).find(x => x.ZTA_SERVICIO === serv);
-    document.querySelectorAll('.tarifa-input[data-serv="'+serv+'"]').forEach(inp => {
-      const field = inp.getAttribute('data-field');
-      if (t && t[field] !== undefined && t[field] !== null) inp.value = t[field];
+function editarZona(zonId){
+  const zona=DB_ZONAS.find(z=>z.ZON_ID==zonId);
+  if(!zona){showToast('Zona no encontrada','error');return;}
+  document.getElementById('zon-nombre').value=zona.ZON_NOMBRE||'';
+  document.getElementById('zon-descripcion').value=zona.ZON_DESCRIPCION||'';
+  document.getElementById('zon-color').value=zona.ZON_COLOR||'#6366f1';
+  document.getElementById('zon-color-hex').textContent=zona.ZON_COLOR||'#6366f1';
+  ['EXPRESS','ESTANDAR','ECONOMICO'].forEach(serv=>{
+    const t=(zona.tarifas||[]).find(x=>x.ZTA_SERVICIO===serv);
+    document.querySelectorAll('.tarifa-input[data-serv="'+serv+'"]').forEach(inp=>{
+      const field=inp.getAttribute('data-field');
+      if(t&&t[field]!==undefined&&t[field]!==null)inp.value=t[field];
     });
     calcularEjemploTarifa(serv);
   });
-
-  // Marcar modo edicion
-  document.getElementById('modalNuevaZona').setAttribute('data-editing', zonId);
-  const hdr = document.querySelector('#modalNuevaZona .modal-header h3');
-  if (hdr) hdr.innerHTML = '<i class="fas fa-edit" style="margin-right:8px;color:var(--accent);"></i> Editar Zona: ' + zona.ZON_NOMBRE;
-  const btn = document.querySelector('#modalNuevaZona .modal-footer .btn-primary');
-  if (btn) btn.innerHTML = '<i class="fas fa-save" style="font-size:10px;"></i> Actualizar Zona';
-
+  document.getElementById('modalNuevaZona').setAttribute('data-editing',zonId);
+  const hdr=document.querySelector('#modalNuevaZona .modal-header h3');
+  if(hdr)hdr.innerHTML='<i class="fas fa-edit" style="margin-right:8px;color:var(--accent);"></i> Editar Zona: '+zona.ZON_NOMBRE;
+  const btn=document.querySelector('#modalNuevaZona .modal-footer .btn-primary');
+  if(btn)btn.innerHTML='<i class="fas fa-save" style="font-size:10px;"></i> Actualizar Zona';
   switchServicioTab('EXPRESS');
   openModal('modalNuevaZona');
-
-  // Centrar mapa en la zona existente
-  setTimeout(() => {
+  setTimeout(()=>{
     initZonaPickerMap();
-    const lat = parseFloat(zona.ZON_CENTRO_LAT) || 19.4326;
-    const lng = parseFloat(zona.ZON_CENTRO_LNG) || -99.1332;
-    const radio = parseFloat(zona.ZON_RADIO_KM) || 5;
-    zonaPickerMap.setView([lat, lng], 15);
-    zonaPickerMarker.setLatLng([lat, lng]);
-    actualizarCirculoZona(lat, lng, radio);
-    actualizarUbicacionZona(lat, lng);
-  }, 300);
+    const lat=parseFloat(zona.ZON_CENTRO_LAT)||19.4326;
+    const lng=parseFloat(zona.ZON_CENTRO_LNG)||-99.1332;
+    const radio=parseFloat(zona.ZON_RADIO_KM)||5;
+    zonaPickerMap.setView([lat,lng],15);
+    zonaPickerMarker.setLatLng([lat,lng]);
+    actualizarCirculoZona(lat,lng,radio);
+    actualizarUbicacionZona(lat,lng);
+  },300);
 }
 
-/* ==========================================
-   ELIMINAR ZONA: DELETE con confirmacion
-   ========================================== */
-function eliminarZona(zonId, nombre) {
-  if (!confirm('Eliminar la zona "' + nombre + '"?\n\nSe eliminaran todas sus tarifas.')) return;
-  fetch(API_BASE+'/api/zonas/'+zonId, { method:'DELETE', headers:HEADERS })
-    .then(r=>r.json()).then(res=>{
-      if (res.success) { showToast('Zona "'+nombre+'" eliminada','success'); loadZonas(); }
-      else showToast(res.error||'Error al eliminar','error');
-    }).catch(()=>showToast('Error de conexion','error'));
+function eliminarZona(zonId,nombre){
+  if(!confirm('Eliminar la zona "'+nombre+'"?\n\nSe eliminaran todas sus tarifas.'))return;
+  apiDelete('/api/zonas/'+zonId).then(res=>{
+    if(res.success){showToast('Zona "'+nombre+'" eliminada','success');loadZonas();}
+    else showToast(res.error||'Error al eliminar','error');
+  }).catch(()=>showToast('Error de conexion','error'));
 }
 
-/* ==========================================
-   RESET MODAL: volver a modo "Nueva Zona"
-   ========================================== */
-function resetModalZona() {
+function resetModalZona(){
   document.getElementById('modalNuevaZona').removeAttribute('data-editing');
-  const hdr = document.querySelector('#modalNuevaZona .modal-header h3');
-  if (hdr) hdr.innerHTML = '<i class="fas fa-map-marked-alt" style="margin-right:8px;color:var(--accent);"></i> Nueva Zona de Cobertura';
-  const btn = document.querySelector('#modalNuevaZona .modal-footer .btn-primary');
-  if (btn) btn.innerHTML = '<i class="fas fa-save" style="font-size:10px;"></i> Guardar Zona';
-  document.getElementById('zon-nombre').value = '';
-  document.getElementById('zon-descripcion').value = '';
-  document.getElementById('zon-color').value = '#6366f1';
-  document.getElementById('zon-color-hex').textContent = '#6366f1';
-  document.getElementById('zon-direccion').value = '';
-  document.getElementById('zon-direccion-resultado').style.display = 'none';
-  document.getElementById('zon-lat').value = 19.4326;
-  document.getElementById('zon-lng').value = -99.1332;
-  document.getElementById('zon-radio').value = 5;
-  ['EXPRESS', 'ESTANDAR', 'ECONOMICO'].forEach(serv => {
-    calcularEjemploTarifa(serv);
-  });
+  const hdr=document.querySelector('#modalNuevaZona .modal-header h3');
+  if(hdr)hdr.innerHTML='<i class="fas fa-map-marked-alt" style="margin-right:8px;color:var(--accent);"></i> Nueva Zona de Cobertura';
+  const btn=document.querySelector('#modalNuevaZona .modal-footer .btn-primary');
+  if(btn)btn.innerHTML='<i class="fas fa-save" style="font-size:10px;"></i> Guardar Zona';
+  document.getElementById('zon-nombre').value='';
+  document.getElementById('zon-descripcion').value='';
+  document.getElementById('zon-color').value='#6366f1';
+  document.getElementById('zon-color-hex').textContent='#6366f1';
+  document.getElementById('zon-direccion').value='';
+  document.getElementById('zon-direccion-resultado').style.display='none';
+  document.getElementById('zon-lat').value=19.4326;
+  document.getElementById('zon-lng').value=-99.1332;
+  document.getElementById('zon-radio').value=5;
+  ['EXPRESS','ESTANDAR','ECONOMICO'].forEach(serv=>calcularEjemploTarifa(serv));
   switchServicioTab('EXPRESS');
-  // Iniciar mapa con CDMX default
-  setTimeout(() => {
+  setTimeout(()=>{
     initZonaPickerMap();
-    if (zonaPickerMap && zonaPickerMarker) {
-      zonaPickerMap.setView([19.4326, -99.1332], 12);
-      zonaPickerMarker.setLatLng([19.4326, -99.1332]);
-      actualizarCirculoZona(19.4326, -99.1332, 5);
+    if(zonaPickerMap&&zonaPickerMarker){
+      zonaPickerMap.setView([19.4326,-99.1332],12);
+      zonaPickerMarker.setLatLng([19.4326,-99.1332]);
+      actualizarCirculoZona(19.4326,-99.1332,5);
     }
-  }, 200);
+  },200);
 }
 
-function initRutasMap() {
-  loadZonas();
+function initRutasMap(){loadZonas();}
+
+/* ==========================================
+   MAPA PICKER (Buscador de direccion)
+   ========================================== */
+let zonaPickerMap=null,zonaPickerMarker=null,zonaPickerCircle=null;
+
+function initZonaPickerMap(){
+  if(zonaPickerMap){zonaPickerMap.invalidateSize();return;}
+  try{
+    const isDark=ThemeManager.get()==='dark';
+    const tileUrl=isDark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    zonaPickerMap=L.map('zon-map-picker',{zoomControl:false}).setView([19.4326,-99.1332],12);
+    L.tileLayer(tileUrl,{attribution:''}).addTo(zonaPickerMap);
+    L.control.zoom({position:'topright'}).addTo(zonaPickerMap);
+    zonaPickerMarker=L.marker([19.4326,-99.1332],{draggable:true}).addTo(zonaPickerMap);
+    const radio=parseFloat(document.getElementById('zon-radio').value)||5;
+    zonaPickerCircle=L.circle([19.4326,-99.1332],{radius:radio*1000,color:'#6366f1',fillColor:'#6366f1',fillOpacity:0.08,weight:2,dashArray:'5,5'}).addTo(zonaPickerMap);
+    zonaPickerMarker.on('dragend',e=>{const pos=e.target.getLatLng();actualizarUbicacionZona(pos.lat,pos.lng);});
+    zonaPickerMap.on('click',e=>{zonaPickerMarker.setLatLng(e.latlng);actualizarUbicacionZona(e.latlng.lat,e.latlng.lng);});
+    document.getElementById('zon-radio').addEventListener('input',function(){if(zonaPickerMarker){const pos=zonaPickerMarker.getLatLng();actualizarCirculoZona(pos.lat,pos.lng,parseFloat(this.value)||5);}});
+  }catch(e){console.warn('Map picker error:',e);}
 }
-function renderClientes(){document.getElementById('clientesTableBody').innerHTML=DEMO.clientes.map(c=>'<tr><td>#'+c.id+'</td><td style="font-weight:500;">'+c.empresa+'</td><td>'+c.contacto+'</td><td>'+c.email+'</td><td>'+planBadge(c.plan)+'</td><td>'+c.pedidos+'</td><td style="font-weight:500;color:#10b981;">'+formatCurrency(c.revenue)+'</td><td>'+statusBadge(c.estado)+'</td><td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm"><i class="far fa-edit"></i></button><button class="btn btn-ghost btn-sm"><i class="far fa-eye"></i></button></div></td></tr>').join('')}
-function renderCFDI(){const fc=DEMO.facturas;document.getElementById('cfdi-timbradas').textContent=fc.filter(f=>f.estado==='timbrada').length;document.getElementById('cfdi-pendientes').textContent=fc.filter(f=>f.estado==='pendiente').length;document.getElementById('cfdi-canceladas').textContent=fc.filter(f=>f.estado==='cancelada').length;document.getElementById('cfdi-total').textContent=formatCurrency(fc.filter(f=>f.estado==='timbrada').reduce((a,f)=>a+f.importe,0));document.getElementById('cfdiTableBody').innerHTML=fc.map(f=>'<tr><td style="font-weight:500;color:#6366f1;">'+f.folio+'</td><td style="font-size:11px;font-family:monospace;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(f.uuid||'Sin timbrar')+'</td><td>'+f.cliente+'</td><td>'+f.rfc+'</td><td style="font-weight:500;">'+formatCurrency(f.importe)+'</td><td>'+f.fecha+'</td><td>'+statusBadge(f.estado)+'</td><td><div style="display:flex;gap:4px;">'+(f.estado==='pendiente'?'<button class="btn btn-success btn-sm" onclick="showToast(\'Factura timbrada\',\'success\')"><i class="fas fa-stamp" style="font-size:10px;"></i></button>':'')+(f.estado==='timbrada'?'<button class="btn btn-danger btn-sm" onclick="showToast(\'Factura cancelada\',\'error\')"><i class="fas fa-ban" style="font-size:10px;"></i></button>':'')+'</div></td></tr>').join('')}
-function renderPagos(){const pg=DEMO.pagos;const cobrado=pg.filter(p=>p.estado==='completado').reduce((a,p)=>a+p.monto,0);const pendiente=pg.filter(p=>p.estado==='pendiente').reduce((a,p)=>a+p.monto,0);const efectivo=pg.filter(p=>p.metodo==='Efectivo').reduce((a,p)=>a+p.monto,0);const transferencia=pg.filter(p=>p.metodo==='Transferencia').reduce((a,p)=>a+p.monto,0);document.getElementById('pag-cobrado').textContent=formatCurrency(cobrado);document.getElementById('pag-pendiente').textContent=formatCurrency(pendiente);document.getElementById('pag-efectivo').textContent=formatCurrency(efectivo);document.getElementById('pag-transferencia').textContent=formatCurrency(transferencia);document.getElementById('pagosTableBody').innerHTML=pg.map(p=>'<tr><td>#'+p.id+'</td><td>'+p.cliente+'</td><td style="font-weight:500;">'+formatCurrency(p.monto)+'</td><td>'+p.metodo+'</td><td style="font-family:monospace;font-size:11px;">'+p.referencia+'</td><td>'+p.fecha+'</td><td>'+statusBadge(p.estado)+'</td></tr>').join('')}
-function initBillingCharts(){if(mrrChart)mrrChart.destroy();if(usageChart)usageChart.destroy();mrrChart=new Chart(document.getElementById('chartMRR'),{type:'line',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'MRR',data:[28500,31200,33800,35100,38400,42000,44900],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(26,26,34,0.8)'},ticks:{color:'#4a4a5a',font:{size:10}}},y:{grid:{color:'rgba(26,26,34,0.8)'},ticks:{color:'#4a4a5a',font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});usageChart=new Chart(document.getElementById('chartUsage'),{type:'doughnut',data:{labels:['Starter','Pro','Enterprise'],datasets:[{data:[12,28,8],backgroundColor:['#7a7a8a','#6366f1','#f59e0b'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#7a7a8a',padding:12,font:{size:11}}}}}})}
-function renderBilling(){const bc=[{cliente:'Express Logistics',plan:'Pro',usados:245,limite:2000,facturacion:89500,estado:'activo'},{cliente:'Transporte MX',plan:'Enterprise',usados:512,limite:999999,facturacion:234000,estado:'activo'},{cliente:'Rapido Express',plan:'Starter',usados:87,limite:500,facturacion:23400,estado:'activo'},{cliente:'Logistica Norte',plan:'Pro',usados:178,limite:2000,facturacion:67200,estado:'activo'},{cliente:'Distribuidora Central',plan:'Enterprise',usados:389,limite:999999,facturacion:156800,estado:'activo'}];document.getElementById('billingTableBody').innerHTML=bc.map(b=>'<tr><td style="font-weight:500;">'+b.cliente+'</td><td>'+planBadge(b.plan)+'</td><td>'+b.usados+'</td><td>'+(b.limite>999?'Ilimitado':b.limite)+'</td><td style="font-weight:500;color:#10b981;">'+formatCurrency(b.facturacion)+'</td><td>'+statusBadge(b.estado)+'</td></tr>').join('');initBillingCharts()}
-function initCancelChart(){if(cancelChart)cancelChart.destroy();cancelChart=new Chart(document.getElementById('chartCancelaciones'),{type:'bar',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'Cancelaciones',data:[32,28,41,35,52,38,47],backgroundColor:'rgba(239,68,68,0.15)',borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#4a4a5a',font:{size:10}}},y:{grid:{color:'rgba(26,26,34,0.8)'},ticks:{color:'#4a4a5a',font:{size:10}}}}}})}
-function renderUsuarios(){document.getElementById('usuariosTableBody').innerHTML=DEMO.usuarios.map(u=>'<tr><td>#'+u.id+'</td><td style="font-weight:500;">'+u.nombre+'</td><td>'+u.email+'</td><td>'+planBadge(u.rol)+'</td><td>'+u.tenant+'</td><td>'+statusBadge(u.estado)+'</td><td style="font-size:12px;color:#4a4a5a;">'+u.ultimoAcceso+'</td><td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm"><i class="far fa-edit"></i></button><button class="btn btn-ghost btn-sm"><i class="far fa-eye"></i></button></div></td></tr>').join('')}
-function renderTickets(){document.getElementById('ticketsTableBody').innerHTML=DEMO.tickets.map(t=>'<tr><td>#'+t.id+'</td><td style="font-weight:500;">'+t.asunto+'</td><td>'+t.cliente+'</td><td>'+statusBadge(t.prioridad)+'</td><td>'+statusBadge(t.estado)+'</td><td>'+t.asignado+'</td><td style="font-size:12px;color:#4a4a5a;">'+t.creado+'</td><td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm"><i class="far fa-edit"></i></button><button class="btn btn-ghost btn-sm"><i class="far fa-eye"></i></button></div></td></tr>').join('')}
-function renderAudit(){document.getElementById('auditTableBody').innerHTML=DEMO.audit.map(a=>'<tr><td style="font-size:12px;color:#4a4a5a;white-space:nowrap;">'+a.timestamp+'</td><td style="font-weight:500;">'+a.usuario+'</td><td><span class="badge '+(a.accion==='CREATE'?'badge-success':a.accion==='UPDATE'?'badge-warning':a.accion==='DELETE'?'badge-danger':a.accion==='LOGIN'?'badge-info':'badge-gray')+'">'+a.accion+'</span></td><td>'+a.entidad+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+a.detalle+'</td><td style="font-size:12px;font-family:monospace;color:#4a4a5a;">'+a.ip+'</td></tr>').join('')}
-function refreshData(){showToast('Actualizando datos...','info');setTimeout(()=>{loadDashboard();renderPedidos();renderChoferes();renderVehiculos();renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderTickets();renderAudit();showToast('Datos actualizados','success')},800)}
-window.addEventListener('load',()=>{loadDashboard();renderPedidos();renderChoferes();renderVehiculos();renderClientes();renderCFDI();renderPagos();renderBilling();initCancelChart();renderUsuarios();renderTickets();renderAudit();setTimeout(initDashboardMap,500)});
-/* Theme toggle - uses ThemeManager from theme.js */
+
+function actualizarUbicacionZona(lat,lng){
+  document.getElementById('zon-lat').value=lat.toFixed(6);
+  document.getElementById('zon-lng').value=lng.toFixed(6);
+  const radio=parseFloat(document.getElementById('zon-radio').value)||5;
+  actualizarCirculoZona(lat,lng,radio);
+  const color=document.getElementById('zon-color').value||'#6366f1';
+  if(zonaPickerMarker){
+    zonaPickerMarker.setIcon(L.divIcon({className:'',html:'<div style="width:24px;height:24px;background:'+color+';border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',iconSize:[24,24],iconAnchor:[12,12]}));
+  }
+  reverseGeocode(lat,lng);
+}
+
+function actualizarCirculoZona(lat,lng,radio){if(zonaPickerCircle){zonaPickerCircle.setLatLng([lat,lng]);zonaPickerCircle.setRadius(radio*1000);}}
+
+function reverseGeocode(lat,lng){
+  const el=document.getElementById('zon-direccion-resultado');
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&addressdetails=1&accept-language=es',{headers:{'User-Agent':'LastMilePlatform/1.0'}})
+  .then(r=>r.json()).then(data=>{if(data.display_name){el.textContent=data.display_name;el.style.display='block';el.style.color='var(--accent)';}}).catch(()=>{});
+}
+
+function buscarDireccion(){
+  const query=document.getElementById('zon-direccion').value.trim();
+  if(!query){showToast('Escribe una direccion para buscar','error');return;}
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(query)+'&limit=1&accept-language=es',{headers:{'User-Agent':'LastMilePlatform/1.0'}})
+  .then(r=>r.json()).then(results=>{
+    if(results.length===0){showToast('Direccion no encontrada. Intenta con mas detalle.','error');return;}
+    const r=results[0];const lat=parseFloat(r.lat);const lng=parseFloat(r.lon);
+    zonaPickerMap.setView([lat,lng],15);zonaPickerMarker.setLatLng([lat,lng]);
+    actualizarUbicacionZona(lat,lng);
+    document.getElementById('zon-direccion-resultado').textContent=r.display_name;
+    document.getElementById('zon-direccion-resultado').style.display='block';
+    showToast('Direccion encontrada','success');
+  }).catch(()=>showToast('Error al buscar direccion','error'));
+}
+
+function initRutasMap(){loadZonas();}
+
+/* ==========================================
+   REFRESH ALL
+   ========================================== */
+function refreshData(){
+  showToast('Actualizando datos...','info');
+  setTimeout(()=>{
+    loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
+    renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
+    showToast('Datos actualizados','success');
+  },800);
+}
+
+/* ==========================================
+   INIT
+   ========================================== */
+window.addEventListener('load',()=>{
+  loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
+  renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
+  initCancelChart();initActivityFeed();
+  setTimeout(()=>{initDashboardMap();initDashboardMapFromChofres();},500);
+});
+
+/* Theme toggle */
 function toggleTheme(){ThemeManager.toggle();const icon=document.getElementById('theme-icon');if(icon)icon.className=ThemeManager.get()==='dark'?'fas fa-moon':'fas fa-sun'}
 window.addEventListener('DOMContentLoaded',()=>{if(typeof ThemeManager!=='undefined')ThemeManager.init()});
-/* Re-render charts + map on theme change */
+
+/* Re-render charts + maps on theme change */
 window.addEventListener('themechange',()=>{
   const t=ThemeManager.get();
   const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
@@ -467,35 +835,24 @@ window.addEventListener('themechange',()=>{
   if(dashboardMap){dashboardMap.eachLayer(l=>{if(l._url)l.setUrl(t==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png')})}
   if(rutasMap){rutasMap.eachLayer(l=>{if(l._url)l.setUrl(t==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png')})}
 });
+
 /* Color picker + tarifa input listeners */
-document.addEventListener('DOMContentLoaded', () => {
-  const colorInput = document.getElementById('zon-color');
-  if (colorInput) {
-    colorInput.addEventListener('input', () => {
-      const hex = document.getElementById('zon-color-hex');
-      if (hex) hex.textContent = colorInput.value;
-      // Actualizar pin y circulo en mapa picker
-      const color = colorInput.value;
-      if (zonaPickerMarker && zonaPickerMap) {
-        zonaPickerMarker.setIcon(L.divIcon({
-          className: '',
-          html: '<div style="width:24px;height:24px;background:'+color+';border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
-          iconSize: [24, 24], iconAnchor: [12, 12]
-        }));
+document.addEventListener('DOMContentLoaded',()=>{
+  const colorInput=document.getElementById('zon-color');
+  if(colorInput){
+    colorInput.addEventListener('input',()=>{
+      const hex=document.getElementById('zon-color-hex');
+      if(hex)hex.textContent=colorInput.value;
+      const color=colorInput.value;
+      if(zonaPickerMarker&&zonaPickerMap){
+        zonaPickerMarker.setIcon(L.divIcon({className:'',html:'<div style="width:24px;height:24px;background:'+color+';border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',iconSize:[24,24],iconAnchor:[12,12]}));
       }
-      if (zonaPickerCircle) zonaPickerCircle.setStyle({color:color,fillColor:color});
+      if(zonaPickerCircle)zonaPickerCircle.setStyle({color:color,fillColor:color});
     });
   }
-  document.querySelectorAll('.tarifa-input').forEach(inp => {
-    inp.addEventListener('input', () => {
-      calcularEjemploTarifa(inp.getAttribute('data-serv'));
-    });
+  document.querySelectorAll('.tarifa-input').forEach(inp=>{
+    inp.addEventListener('input',()=>{calcularEjemploTarifa(inp.getAttribute('data-serv'));});
   });
-  // Enter en buscador de direccion
-  const dirInput = document.getElementById('zon-direccion');
-  if (dirInput) {
-    dirInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); buscarDireccion(); }
-    });
-  }
+  const dirInput=document.getElementById('zon-direccion');
+  if(dirInput){dirInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buscarDireccion();}});}
 });
