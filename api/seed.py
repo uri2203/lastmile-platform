@@ -579,5 +579,178 @@ def seed():
     print(f'[SEED] 3 empresas, 14 usuarios, 100 pedidos, 7 zonas, 21 tarifas')
 
 
+def seed_pg():
+    """Seed PostgreSQL database with demo data. Uses psycopg2."""
+    import psycopg2
+    db_url = os.environ.get('DATABASE_URL', '')
+    if not db_url:
+        print('[SEED-PG] No DATABASE_URL set, skipping')
+        return
+
+    # Check if already seeded
+    conn = psycopg2.connect(db_url)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM EMPRESAS")
+        count = cur.fetchone()[0]
+        if count > 0:
+            print(f'[SEED-PG] Already has {count} empresas. Skipping.')
+            conn.close()
+            return
+    except Exception:
+        conn.close()
+        return
+
+    print('[SEED-PG] Seeding PostgreSQL...')
+    conn = psycopg2.connect(db_url)
+    cur = conn.cursor()
+
+    def h(p):
+        return hashlib.sha256(p.encode()).hexdigest()
+
+    # Empresas
+    empresas = [
+        ('Express Delivery MX', 'EDM230101AB1', 'Av. Reforma 255, Col. Centro, CDMX', '5551234567', 'admin@expressdelivery.mx', 'Carlos Mendez'),
+        ('Transporte Rapido SA', 'TRA230202CD2', 'Blvd. Insurgentes 890, Col. Roma, CDMX', '5552345678', 'admin@transporterapido.mx', 'Ana Torres'),
+        ('Logistica Integral MX', 'LIM230303EF3', 'Calz. de Tlalpan 456, Col. Del Valle, CDMX', '5553456789', 'admin@logisticaintegral.mx', 'Roberto Diaz'),
+    ]
+    for e in empresas:
+        cur.execute("INSERT INTO EMPRESAS (EMP_NOMBRE,EMP_RFC,EMP_DIRECCION,EMP_TELEFONO,EMP_EMAIL,EMP_CONTACTO) VALUES (%s,%s,%s,%s,%s,%s) RETURNING EMP_ID", e)
+
+    # Usuarios
+    usuarios = [
+        (1,'admin',h('admin123'),'Administrador','admin@delivery.mx','5551001001','admin'),
+        (1,'operador',h('oper123'),'Operador General','ops@delivery.mx','5551001002','operacion'),
+        (1,'chofer1',h('chof123'),'Carlos Rodriguez','carlos@delivery.mx','5551001003','chofer'),
+        (1,'chofer2',h('chof123'),'Maria Lopez','maria@delivery.mx','5551001004','chofer'),
+        (1,'cliente1',h('clie123'),'Juan Perez Store','juan@perez.mx','5551001005','cliente'),
+        (1,'cliente2',h('clie123'),'Ana Garcia Shop','ana@garcia.mx','5551001006','cliente'),
+        (2,'admin2',h('admin123'),'Admin Transporte Rapido','admin@transporte.mx','5552002001','admin'),
+        (2,'ops2',h('oper123'),'Operador TR','ops@transporte.mx','5552002002','operacion'),
+        (2,'chofer3',h('chof123'),'Pedro Sanchez','pedro@transporte.mx','5552002003','chofer'),
+        (2,'cliente3',h('clie123'),'Tienda Rodriguez','tienda@rodriguez.mx','5552002004','cliente'),
+        (3,'admin3',h('admin123'),'Admin Logistica Integral','admin@logistica.mx','5553003001','admin'),
+        (3,'ops3',h('oper123'),'Operador LI','ops@logistica.mx','5553003002','operacion'),
+        (3,'chofer4',h('chof123'),'Roberto Diaz','roberto@logistica.mx','5553003003','chofer'),
+        (3,'cliente4',h('clie123'),'Comercial Torres','torres@comercial.mx','5553003004','cliente'),
+    ]
+    for u in usuarios:
+        cur.execute("INSERT INTO USUARIOS (USU_EMP_ID,USU_USUARIO,USU_PASS,USU_NOMBRE,USU_EMAIL,USU_TELEFONO,USU_ROL) VALUES (%s,%s,%s,%s,%s,%s,%s)", u)
+
+    # Choferes
+    choferes = [
+        (1,'Carlos','Rodriguez','CARR850101','LIC-001','5551110001','carlos@delivery.mx','ACTIVO'),
+        (1,'Maria','Lopez','MALO900202','LIC-002','5551110002','maria@delivery.mx','ACTIVO'),
+        (1,'Pedro','Sanchez','PESA880303','LIC-003','5551110003','pedro@delivery.mx','ACTIVO'),
+        (1,'Ana','Martinez','AAMA920404','LIC-004','5551110004','ana@delivery.mx','ACTIVO'),
+        (1,'Jose','Hernandez','JOHE870505','LIC-005','5551110005','jose@delivery.mx','ACTIVO'),
+        (2,'Pedro','Sanchez2','PESA880606','LIC-006','5552220001','pedro2@transporte.mx','ACTIVO'),
+        (2,'Laura','Garcia','LAGA910707','LIC-007','5552220002','laura@transporte.mx','ACTIVO'),
+        (2,'Miguel','Torres','MITO890808','LIC-008','5552220003','miguel@transporte.mx','ACTIVO'),
+        (3,'Roberto','Diaz','RODI860909','LIC-009','5553330001','roberto@logistica.mx','ACTIVO'),
+        (3,'Sofia','Ruiz','SORU931010','LIC-010','5553330002','sofia@logistica.mx','ACTIVO'),
+    ]
+    for ch in choferes:
+        cur.execute("INSERT INTO CHOFERES (EMP_ID,CHO_NOMBRE,CHO_APELLIDO,CHO_RFC,CHO_LICENCIA,CHO_TELEFONO,CHO_EMAIL,CHO_ESTATUS) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", ch)
+
+    # Vehiculos
+    vehiculos = [
+        (1,'EXP-001','Nissan','NP300','2023','ABC-123','Blanco','CAMIONETA',1000,2.5,'DISPONIBLE'),
+        (1,'EXP-002','Volkswagen','Saveiro','2022','DEF-456','Gris','CAMIONETA',800,1.8,'DISPONIBLE'),
+        (1,'EXP-003','Ford','Ranger','2024','GHI-789','Negro','CAMIONETA',1200,3.0,'EN_RUTA'),
+        (2,'TR-001','Chevrolet','Tornado','2023','JKL-012','Rojo','CAMIONETA',900,2.2,'DISPONIBLE'),
+        (2,'TR-002','Nissan','Frontier','2022','MNO-345','Azul','CAMIONETA',1500,3.5,'DISPONIBLE'),
+        (3,'LI-001','Toyota','Hilux','2024','PQR-678','Blanco','CAMIONETA',1100,2.8,'DISPONIBLE'),
+    ]
+    for v in vehiculos:
+        cur.execute("INSERT INTO VEHICULOS (EMP_ID,VEH_UNIDAD,VEH_MARCA,VEH_MODELO,VEH_ANIO,VEH_PLACAS,VEH_COLOR,VEH_TIPO,VEH_CAPACIDAD_KG,VEH_CAPACIDAD_M3,VEH_ESTATUS) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", v)
+
+    # Clientes
+    clientes = [
+        (1,'Tech Solutions SA','TSA230101','Juan Perez','5551111111','info@techsol.mx','Av. Reforma 255','Centro','CDMX','CDMX','06000'),
+        (1,'Comercial ABC','CAB230202','Maria Garcia','5551111112','ventas@comercial.mx','Calle 5 de Mayo 120','Juarez','CDMX','CDMX','06600'),
+        (1,'Distribuidora Norte','DNO230303','Pedro Hernandez','5551111113','pedidos@distnorte.mx','Blvd. Insurgentes 890','Roma Norte','CDMX','CDMX','06700'),
+        (1,'Farmacias Guadalajara','FG230404','Ana Martinez','5551111114','compras@fg.mx','Av. Universidad 300','Narvarte','CDMX','CDMX','03100'),
+        (1,'Restaurant El Bajio','REB230505','Jose Luis Fernandez','5551111115','reservas@elbajio.mx','Av. Patriotismo 222','San Pedro de los Pinos','CDMX','CDMX','03810'),
+        (2,'Mineria del Valle','MDV230606','Roberto Torres','5552222221','ops@miner.mx','Calz. de Tlalpan 456','Portales','CDMX','CDMX','03300'),
+        (2,'Superama Express','SEX230707','Laura Sanchez','5552222222','logistica@superama.mx','Calle Montes de Oca 45','San Angel','CDMX','CDMX','01000'),
+        (3,'Grupo Logistico MX','GLM230808','Fernando Ruiz','5553333331','contacto@glm.mx','Periferico Sur 1200','Del Valle','CDMX','CDMX','03103'),
+    ]
+    for cl in clientes:
+        cur.execute("INSERT INTO CLIENTES_LM (EMP_ID,CLI_RAZON_SOCIAL,CLI_RFC,CLI_CONTACTO,CLI_TELEFONO,CLI_EMAIL,CLI_DIRECCION,CLI_COLONIA,CLI_CIUDAD,CLI_ESTADO,CLI_CP) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", cl)
+
+    # Zonas
+    zonas = [
+        (1,'Centro Historico','Zona centro historico de CDMX','#6366f1',3.0,19.4326,-99.1332),
+        (1,'Polanco / Reforma','Zona premium','#10b981',4.0,19.4350,-99.1950),
+        (1,'Roma / Condesa','Zonas populares','#f59e0b',3.5,19.4126,-99.1600),
+        (1,'Coyoacan / San Angel','Zona sur artistica','#8b5cf6',5.0,19.3500,-99.1550),
+        (1,'Santa Fe / Cuajimalpa','Zona corporativa','#ef4444',6.0,19.3600,-99.2700),
+        (1,'Del Valle / Narvarte','Zona residencial sur','#06b6d4',3.0,19.3900,-99.1700),
+        (1,'Escandon / Tacubaya','Zona mixta poniente','#ec4899',2.5,19.4050,-99.2000),
+    ]
+    for z in zonas:
+        cur.execute("INSERT INTO ZONAS (ZON_EMP_ID,ZON_NOMBRE,ZON_DESCRIPCION,ZON_COLOR,ZON_RADIO_KM,ZON_CENTRO_LAT,ZON_CENTRO_LNG) VALUES (%s,%s,%s,%s,%s,%s,%s)", z)
+
+    # Tarifas
+    for zon_id in range(1, 8):
+        base = 35 + (zon_id * 5)
+        for servicio, extra, kg, km, seguro in [
+            ('EXPRESS', 10, 8.00, 5.00, 2.0),
+            ('ESTANDAR', 0, 5.00, 3.50, 0),
+            ('ECONOMICO', -10, 3.00, 2.00, 0),
+        ]:
+            cur.execute("INSERT INTO ZONA_TARIFAS (ZTA_ZON_ID,ZTA_EMP_ID,ZTA_SERVICIO,ZTA_MONTO_BASE,ZTA_MONTO_POR_KG,ZTA_MONTO_POR_KM,ZTA_MONTO_POR_M3,ZTA_PESO_MIN_KG,ZTA_PESO_MAX_KG,ZTA_DISTANCIA_MAX_KM,ZTA_MONTO_MINIMO,ZTA_SEGURO_PCT) VALUES (%s,%s,%s,%s,%s,%s,0,0.5,30.0,50.0,%s,%s)",
+                        [zon_id, 1, servicio, base + extra, kg, km, base + extra, seguro])
+
+    # SAAS Planes
+    cur.execute("INSERT INTO SAAS_PLANES (PLAN_NOMBRE,PLAN_DESCRIPCION,PLAN_PRECIO_MENSUAL,PLAN_PRECIO_ANUAL,PLAN_MAX_CHOFERES,PLAN_MAX_ENVIOS_MES,PLAN_MAX_USUARIOS,PLAN_MAX_SUCURSALES,PLAN_FEATURES) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                ['Starter','$999/mes - 5 choferes, 200 envios',999,9990,5,200,3,1,'basicos'])
+    cur.execute("INSERT INTO SAAS_PLANES (PLAN_NOMBRE,PLAN_DESCRIPCION,PLAN_PRECIO_MENSUAL,PLAN_PRECIO_ANUAL,PLAN_MAX_CHOFERES,PLAN_MAX_ENVIOS_MES,PLAN_MAX_USUARIOS,PLAN_MAX_SUCURSALES,PLAN_FEATURES) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                ['Pro','$2,499/mes - 15 choferes, 1000 envios',2499,24990,15,1000,10,5,'avanzado,reportes,api'])
+    cur.execute("INSERT INTO SAAS_PLANES (PLAN_NOMBRE,PLAN_DESCRIPCION,PLAN_PRECIO_MENSUAL,PLAN_PRECIO_ANUAL,PLAN_MAX_CHOFERES,PLAN_MAX_ENVIOS_MES,PLAN_MAX_USUARIOS,PLAN_MAX_SUCURSALES,PLAN_FEATURES) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                ['Enterprise','$5,999/mes - ilimitado',5999,59990,999,99999,999,99,'todo,soporte_dedicado,sla'])
+
+    # Suscripciones
+    cur.execute("INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID,PLAN_ID,SUS_ESTADO,SUS_FECHA_INICIO,SUS_FECHA_FIN) VALUES (1,2,'ACTIVA',CURRENT_DATE,CURRENT_DATE + INTERVAL '30 days')")
+    cur.execute("INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID,PLAN_ID,SUS_ESTADO,SUS_FECHA_INICIO,SUS_FECHA_FIN) VALUES (2,1,'ACTIVA',CURRENT_DATE,CURRENT_DATE + INTERVAL '30 days')")
+    cur.execute("INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID,PLAN_ID,SUS_ESTADO,SUS_FECHA_INICIO,SUS_FECHA_FIN) VALUES (3,1,'ACTIVA',CURRENT_DATE,CURRENT_DATE + INTERVAL '30 days')")
+
+    # Pedidos (100 demo)
+    import random
+    estados = ['PENDIENTE','EN_RUTA','ENTREGADO']
+    nombres = ['Tech Solutions','Comercial ABC','Distribuidora Norte','Farmacias GDL','Restaurant El Bajio','Mineria del Valle','Superama Express','Grupo Logistico MX']
+    direcciones = ['Av. Reforma 255','Calle 5 de Mayo 120','Blvd. Insurgentes 890','Av. Universidad 300','Calz. de Tlalpan 456','Periferico Sur 1200','Calle Montes de Oca 45','Av. Patriotismo 222']
+    colonias = ['Centro','Juarez','Roma Norte','Narvarte','Portales','Del Valle','San Angel','Pedregal']
+
+    for i in range(100):
+        emp_id = random.choice([1,1,1,2,2,3])
+        idx = random.randint(0, len(nombres)-1)
+        estado = random.choice(estados)
+        peso = round(random.uniform(0.5, 30), 1)
+        costo = round(random.uniform(80, 1500), 2)
+        cur.execute("""INSERT INTO PEDIDOS (EMP_ID,PED_NUMERO,CLI_ID,PED_CLIENTE_NOMBRE,PED_CLIENTE_TELEFONO,
+            PED_DESTINO_DIR,PED_DESTINO_COL,PED_DESTINO_CIUDAD,PED_PESO_KG,PED_BULTOS,PED_COSTO_TOTAL,
+            PED_FORMA_PAGO,PED_ESTADO,PED_PRIORIDAD)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            [emp_id, f'PED-2026-{i+1:04d}', random.randint(1,8), nombres[idx],
+             f'555{random.randint(1000000,9999999)}', direcciones[idx], colonias[idx],
+             'CDMX', peso, random.randint(1,8), costo,
+             random.choice(['EFECTIVO','TARJETA','TRANSFERENCIA','OXXO']), estado,
+             random.choice(['NORMAL','ALTA','URGENTE','BAJA'])])
+
+    # Pagos
+    for emp_id, tipo, nombre in [(1,'EFECTIVO','Efectivo'),(1,'TARJETA','Tarjeta de credito'),(1,'TRANSFERENCIA','Transferencia bancaria'),(1,'OXXO','Deposito OXXO'),(2,'EFECTIVO','Efectivo'),(2,'TARJETA','Tarjeta'),(3,'EFECTIVO','Efectivo')]:
+        cur.execute("INSERT INTO PAGOS_METODOS (EMP_ID,PMT_TIPO,PMT_NOMBRE,PMT_ACTIVO) VALUES (%s,%s,%s,'S')", [emp_id, tipo, nombre])
+
+    # CFDI Folios
+    for emp_id in [1,2,3]:
+        cur.execute("INSERT INTO CFDI_FOLIOS (EMP_ID,FOL_SERIE,FOL_SIGUIENTE,FOL_FINAL,FOL_ESTATUS) VALUES (%s,'A',1,1000,'ACTIVO')", [emp_id])
+
+    conn.commit()
+    conn.close()
+    print('[SEED-PG] DONE! 3 empresas, 14 usuarios, 100 pedidos, 7 zonas, 21 tarifas')
+
+
 if __name__ == '__main__':
     seed()
