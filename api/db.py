@@ -79,9 +79,9 @@ def _translate_sql(sql):
 
 
 def _row_to_dict(cursor, row):
-    """Convert a database row to a dictionary."""
+    """Convert a database row to a dictionary (uppercase keys for consistency)."""
     if USE_POSTGRES:
-        columns = [desc[0] for desc in cursor.description]
+        columns = [desc[0].upper() for desc in cursor.description]
         return dict(zip(columns, row))
     else:
         return dict(row)
