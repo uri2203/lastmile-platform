@@ -81,7 +81,7 @@ function loadDashboard(){
   }).catch(()=>{});
 
   // KPIs from pedidos
-  apiGet('/api/pedidos?emp_id=1').then(res=>{
+  apiGet('/api/pedidos').then(res=>{
     if(!res.data)return;
     DB_PEDIDOS=res.data;
     const el=id=>document.getElementById(id);
@@ -103,7 +103,7 @@ function loadDashboard(){
    PEDIDOS
    ========================================== */
 function renderPedidos(){
-  apiGet('/api/pedidos?emp_id=1').then(res=>{
+  apiGet('/api/pedidos').then(res=>{
     if(!res.data)return;
     DB_PEDIDOS=res.data;
     let filtered=DB_PEDIDOS;
@@ -114,13 +114,13 @@ function renderPedidos(){
     if(!tbody)return;
     tbody.innerHTML=filtered.slice(0,50).map(p=>{
       const id=p.PED_ID||p.id;
-      const folio=p.PED_NUMERO||p.folio||'PED-'+id;
-      const cliente=p.PED_CLIENTE_NOMBRE||p.cliente||'-';
-      const destino=p.PED_DESTINO_DIR||p.destino||'-';
-      const chofer=p.CHOFER_NOMBRE||p.chofer||'-';
-      const estado=(p.PED_ESTADO||p.estado||'pendiente').toLowerCase();
-      const fecha=p.PED_FECHA||p.fecha||'-';
-      const total=p.PED_TOTAL||p.total||0;
+      const folio=p.PED_NUMERO||'PED-'+id;
+      const cliente=p.PED_CLIENTE_NOMBRE||'-';
+      const destino=p.PED_DESTINO_DIR||'-';
+      const chofer=p.CHOFER_ASIGNADO||'-';
+      const estado=(p.PED_ESTADO||'pendiente').toLowerCase();
+      const fecha=p.PED_FECHA_PEDIDO?new Date(p.PED_FECHA_PEDIDO).toLocaleDateString():'-';
+      const total=p.PED_COSTO_TOTAL||0;
       return '<tr>'+
         '<td style="font-weight:500;color:var(--accent);">'+folio+'</td>'+
         '<td>'+cliente+'</td>'+
@@ -155,37 +155,77 @@ function eliminarPedido(id){
    CHOFERES
    ========================================== */
 function renderChoferes(){
-  apiGet('/api/choferes?emp_id=1').then(res=>{
+  apiGet('/api/choferes').then(res=>{
     if(!res.data)return;
     DB_CHOFERES=res.data;
     const tbody=document.getElementById('choferesTableBody');
     if(!tbody)return;
-    const activos=DB_CHOFERES.filter(c=>(c.CHF_ESTADO||c.estado||'activo')==='activo').length;
+    const activos=DB_CHOFERES.filter(c=>(c.CHO_ESTATUS||c.CHO_ESTADO||c.estado||'ACTIVO')==='ACTIVO').length;
     const inactivos=DB_CHOFERES.length-activos;
     const el=id=>document.getElementById(id);
     if(el('ch-activos'))el('ch-activos').textContent=activos;
     if(el('ch-inactivos'))el('ch-inactivos').textContent=inactivos;
 
     tbody.innerHTML=DB_CHOFERES.map(c=>{
-      const id=c.CHF_ID||c.id;
-      const nombre=c.CHF_NOMBRE||c.nombre||'-';
-      const tel=c.CHF_TELEFONO||c.telefono||'-';
-      const veh=c.CHF_VEHICULO||c.vehiculo||'-';
-      const estado=(c.CHF_ESTADO||c.estado||'activo');
+      const id=c.CHO_ID||c.CHF_ID||c.id;
+      const nombre=(c.CHO_NOMBRE||c.CHF_NOMBRE||c.nombre||'');
+      const apellido=c.CHO_APELLIDO||c.CHF_APELLIDO||c.apellido||'';
+      const full=(nombre+' '+apellido).trim()||'-';
+      const tel=c.CHO_TELEFONO||c.CHF_TELEFONO||c.telefono||'-';
+      const veh=c.CHO_VEHICULO||c.CHF_VEHICULO||c.vehiculo||'-';
+      const estado=(c.CHO_ESTATUS||c.CHF_ESTADO||c.estado||'ACTIVO');
       return '<tr>'+
-        '<td style="font-weight:500;">'+nombre+'</td>'+
+        '<td style="font-weight:500;">'+full+'</td>'+
         '<td>'+tel+'</td>'+
         '<td>'+veh+'</td>'+
-        '<td>'+statusBadge(estado)+'</td>'+
+        '<td>'+statusBadge(estado.toLowerCase())+'</td>'+
         '<td><div style="display:flex;gap:4px;">'+
           '<button class="btn btn-ghost btn-sm" onclick="editarChofer('+id+')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
-          '<button class="btn btn-ghost btn-sm" onclick="eliminarChofer('+id+',\''+nombre.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="eliminarChofer('+id+',\''+full.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
         '</div></td></tr>';
     }).join('');
   }).catch(()=>showToast('Error cargando choferes','error'));
 }
 
-function editarChofer(id){showToast('Editar chofer #'+id,'info')}
+function editarChofer(id){
+  const c=DB_CHOFERES.find(x=>(x.CHO_ID||x.CHF_ID||x.id)==id);
+  if(!c)return showToast('Chofer no encontrado','error');
+  const modal=document.getElementById('modalNuevoChofer');
+  if(!modal)return showToast('Modal no encontrado','error');
+  const inputs=modal.querySelectorAll('input,select');
+  inputs[0].value=c.CHO_NOMBRE||'';
+  inputs[1].value=c.CHO_TELEFONO||'';
+  inputs[2].value=c.CHO_LICENCIA||'';
+  inputs[3].value='';
+  inputs[4].value=c.CHO_EMAIL||'';
+  inputs[5].value=(c.CHO_ESTATUS||'ACTIVO')==='ACTIVO'?'Activo':'Inactivo';
+  modal.setAttribute('data-editing',id);
+  const hdr=modal.querySelector('.modal-header h3');
+  if(hdr)hdr.textContent='Editar Chofer';
+  const btn=modal.querySelector('.modal-footer .btn-primary');
+  if(btn)btn.innerHTML='<i class="fas fa-save" style="font-size:10px;"></i> Actualizar';
+  openModal('modalNuevoChofer');
+}
+
+function saveChofer(){
+  const modal=document.getElementById('modalNuevoChofer');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  const nombre=inputs[0].value.trim();
+  const telefono=inputs[1].value.trim();
+  const licencia=inputs[2].value.trim();
+  const email=inputs[4].value.trim();
+  const estatus=inputs[5].value==='Activo'?'ACTIVO':'INACTIVO';
+  if(!nombre){showToast('Nombre requerido','error');return;}
+  const data={nombre:nombre,telefono:telefono,licencia:licencia,email:email,estatus:estatus};
+  const editingId=modal.getAttribute('data-editing');
+  const isEdit=editingId&&editingId!=='';
+  const promise=isEdit?apiPut('/api/choferes/'+editingId,data):apiPost('/api/choferes',data);
+  promise.then(res=>{
+    if(res.success){showToast(isEdit?'Chofer actualizado':'Chofer creado','success');closeModal('modalNuevoChofer');modal.removeAttribute('data-editing');renderChoferes();}
+    else showToast(res.error||'Error al guardar','error');
+  });
+}
 function eliminarChofer(id,nombre){
   if(!confirm('Eliminar chofer "'+nombre+'"'))return;
   apiDelete('/api/choferes/'+id).then(res=>{
@@ -198,38 +238,82 @@ function eliminarChofer(id,nombre){
    VEHICULOS
    ========================================== */
 function renderVehiculos(){
-  apiGet('/api/vehiculos?emp_id=1').then(res=>{
+  apiGet('/api/vehiculos').then(res=>{
     if(!res.data)return;
     DB_VEHICULOS=res.data;
     const tbody=document.getElementById('vehiculosTableBody');
     if(!tbody)return;
 
     tbody.innerHTML=DB_VEHICULOS.map(v=>{
-      const placa=v.VEH_PLACA||v.placa||'-';
+      const id=v.VEH_ID||v.id;
+      const unidad=v.VEH_UNIDAD||'-';
+      const placa=v.VEH_PLACAS||v.VEH_PLACA||'-';
       const tipo=v.VEH_TIPO||v.tipo||'-';
       const marca=v.VEH_MARCA||v.marca||'-';
+      const modelo=v.VEH_MODELO||v.modelo||'-';
       const chofer=v.CHOFER_NOMBRE||v.chofer||'-';
       const km=v.VEH_KM||v.km||0;
-      const estado=(v.VEH_ESTADO||v.estado||'activo');
+      const estado=(v.VEH_ESTATUS||v.VEH_ESTADO||v.estado||'DISPONIBLE');
       return '<tr>'+
-        '<td style="font-weight:500;color:var(--accent);">'+placa+'</td>'+
+        '<td style="font-weight:500;color:var(--accent);">'+unidad+'</td>'+
+        '<td>'+placa+'</td>'+
         '<td>'+tipo+'</td>'+
-        '<td>'+marca+'</td>'+
-        '<td>'+chofer+'</td>'+
+        '<td>'+marca+' '+modelo+'</td>'+
         '<td>'+Number(km).toLocaleString()+'</td>'+
-        '<td>'+statusBadge(estado)+'</td>'+
+        '<td>'+statusBadge(estado.toLowerCase())+'</td>'+
         '<td><div style="display:flex;gap:4px;">'+
-          '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Editar '+placa+'\',\'info\')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="editarVehiculo('+id+')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
         '</div></td></tr>';
     }).join('');
   }).catch(()=>showToast('Error cargando vehiculos','error'));
+}
+
+function editarVehiculo(id){
+  const v=DB_VEHICULOS.find(x=>(x.VEH_ID||x.id)==id);
+  if(!v)return showToast('Vehiculo no encontrado','error');
+  const modal=document.getElementById('modalNuevoVehiculo');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  inputs[0].value=v.VEH_PLACAS||v.VEH_PLACA||'';
+  inputs[1].value=v.VEH_TIPO||'CAMIONETA';
+  inputs[2].value=v.VEH_MARCA||'';
+  inputs[3].value=v.VEH_MODELO||'';
+  inputs[4].value=v.VEH_ANIO||'';
+  inputs[5].value=(v.VEH_ESTATUS||'DISPONIBLE')==='DISPONIBLE'?'Activo':'Mantenimiento';
+  modal.setAttribute('data-editing',id);
+  const hdr=modal.querySelector('.modal-header h3');
+  if(hdr)hdr.textContent='Editar Vehiculo';
+  const btn=modal.querySelector('.modal-footer .btn-primary');
+  if(btn)btn.innerHTML='<i class="fas fa-save" style="font-size:10px;"></i> Actualizar';
+  openModal('modalNuevoVehiculo');
+}
+
+function saveVehiculo(){
+  const modal=document.getElementById('modalNuevoVehiculo');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  const placas=inputs[0].value.trim();
+  const tipo=inputs[1].value;
+  const marca=inputs[2].value.trim();
+  const modelo=inputs[3].value.trim();
+  const anio=inputs[4].value.trim();
+  const estatus=inputs[5].value==='Activo'?'DISPONIBLE':'MANTENIMIENTO';
+  if(!placas){showToast('Placas requeridas','error');return;}
+  const data={unidad:placas,placas:placas,tipo:tipo,marca:marca,modelo:modelo,anio:anio,estatus:estatus};
+  const editingId=modal.getAttribute('data-editing');
+  const isEdit=editingId&&editingId!=='';
+  const promise=isEdit?apiPut('/api/vehiculos/'+editingId,data):apiPost('/api/vehiculos',data);
+  promise.then(res=>{
+    if(res.success){showToast(isEdit?'Vehiculo actualizado':'Vehiculo creado','success');closeModal('modalNuevoVehiculo');modal.removeAttribute('data-editing');renderVehiculos();}
+    else showToast(res.error||'Error al guardar','error');
+  });
 }
 
 /* ==========================================
    CLIENTES
    ========================================== */
 function renderClientes(){
-  apiGet('/api/clientes?emp_id=1').then(res=>{
+  apiGet('/api/clientes').then(res=>{
     if(!res.data)return;
     DB_CLIENTES=res.data;
     const tbody=document.getElementById('clientesTableBody');
@@ -237,25 +321,64 @@ function renderClientes(){
 
     tbody.innerHTML=DB_CLIENTES.map(c=>{
       const id=c.CLI_ID||c.id;
-      const nombre=c.CLI_NOMBRE||c.nombre||c.empresa||'-';
+      const nombre=c.CLI_RAZON_SOCIAL||c.CLI_NOMBRE||c.nombre||c.empresa||'-';
       const contacto=c.CLI_CONTACTO||c.contacto||'-';
       const email=c.CLI_EMAIL||c.email||'-';
       const tel=c.CLI_TELEFONO||c.telefono||'-';
-      const estado=(c.CLI_ESTADO||c.estado||'activo');
+      const estado=(c.CLI_ESTATUS||c.CLI_ESTADO||c.estado||'ACTIVO');
       return '<tr>'+
         '<td style="font-weight:500;">'+nombre+'</td>'+
         '<td>'+contacto+'</td>'+
         '<td>'+email+'</td>'+
         '<td>'+tel+'</td>'+
-        '<td>'+statusBadge(estado)+'</td>'+
+        '<td>'+statusBadge(estado.toLowerCase())+'</td>'+
         '<td><div style="display:flex;gap:4px;">'+
-          '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Editar cliente '+id+'\',\'info\')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="editarCliente('+id+')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
           '<button class="btn btn-ghost btn-sm" onclick="eliminarCliente('+id+',\''+nombre.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
         '</div></td></tr>';
     }).join('');
   }).catch(()=>showToast('Error cargando clientes','error'));
 }
 
+function editarCliente(id){
+  const c=DB_CLIENTES.find(x=>(x.CLI_ID||x.id)==id);
+  if(!c)return showToast('Cliente no encontrado','error');
+  const modal=document.getElementById('modalNuevoCliente');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  inputs[0].value=c.CLI_RAZON_SOCIAL||c.CLI_NOMBRE||'';
+  inputs[1].value=c.CLI_RFC||'';
+  inputs[2].value=c.CLI_CONTACTO||'';
+  inputs[3].value=c.CLI_EMAIL||'';
+  inputs[4].value=c.CLI_TELEFONO||'';
+  inputs[5].value=c.CLI_TIPO_CLIENTE||'GENERAL';
+  modal.setAttribute('data-editing',id);
+  const hdr=modal.querySelector('.modal-header h3');
+  if(hdr)hdr.textContent='Editar Cliente';
+  const btn=modal.querySelector('.modal-footer .btn-primary');
+  if(btn)btn.innerHTML='<i class="fas fa-save" style="font-size:10px;"></i> Actualizar';
+  openModal('modalNuevoCliente');
+}
+
+function saveCliente(){
+  const modal=document.getElementById('modalNuevoCliente');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  const razon=inputs[0].value.trim();
+  const rfc=inputs[1].value.trim();
+  const contacto=inputs[2].value.trim();
+  const email=inputs[3].value.trim();
+  const telefono=inputs[4].value.trim();
+  if(!razon){showToast('Razon social requerida','error');return;}
+  const data={razon_social:razon,rfc:rfc,contacto:contacto,email:email,telefono:telefono};
+  const editingId=modal.getAttribute('data-editing');
+  const isEdit=editingId&&editingId!=='';
+  const promise=isEdit?apiPut('/api/clientes/'+editingId,data):apiPost('/api/clientes',data);
+  promise.then(res=>{
+    if(res.success){showToast(isEdit?'Cliente actualizado':'Cliente creado','success');closeModal('modalNuevoCliente');modal.removeAttribute('data-editing');renderClientes();}
+    else showToast(res.error||'Error al guardar','error');
+  });
+}
 function eliminarCliente(id,nombre){
   if(!confirm('Eliminar cliente "'+nombre+'"'))return;
   apiDelete('/api/clientes/'+id).then(res=>{
@@ -328,26 +451,26 @@ function cancelarCFDI(id){
    PAGOS
    ========================================== */
 function renderPagos(){
-  apiGet('/api/pagos/transacciones?emp_id=1').then(res=>{
+  apiGet('/api/pagos/transacciones').then(res=>{
     if(!res.data)return;
     DB_PAGOS=res.data;
     const tbody=document.getElementById('pagosTableBody');
 
-    const cobrado=DB_PAGOS.filter(p=>(p.PAG_ESTADO||p.estado||'')==='completado').reduce((a,p)=>a+parseFloat(p.PAG_MONTO||p.monto||0),0);
-    const pendiente=DB_PAGOS.filter(p=>(p.PAG_ESTADO||p.estado||'')==='pendiente').reduce((a,p)=>a+parseFloat(p.PAG_MONTO||p.monto||0),0);
+    const cobrado=DB_PAGOS.filter(p=>(p.TRP_ESTATUS||p.PAG_ESTADO||'')==='PAGADO'||(p.TRP_ESTATUS||'')==='COMPLETADO').reduce((a,p)=>a+parseFloat(p.TRP_MONTO||p.PAG_MONTO||p.monto||0),0);
+    const pendiente=DB_PAGOS.filter(p=>(p.TRP_ESTATUS||p.PAG_ESTADO||'')==='PENDIENTE').reduce((a,p)=>a+parseFloat(p.TRP_MONTO||p.PAG_MONTO||p.monto||0),0);
     const el=id=>document.getElementById(id);
     if(el('pag-cobrado'))el('pag-cobrado').textContent=formatCurrency(cobrado);
     if(el('pag-pendiente'))el('pag-pendiente').textContent=formatCurrency(pendiente);
 
     if(!tbody)return;
     tbody.innerHTML=DB_PAGOS.slice(0,30).map(p=>{
-      const id=p.PAG_ID||p.id;
+      const id=p.TRP_ID||p.PAG_ID||p.id;
       const cliente=p.CLI_NOMBRE||p.cliente||'-';
-      const monto=p.PAG_MONTO||p.monto||0;
-      const metodo=p.PAG_METODO||p.metodo||'-';
-      const ref=p.PAG_REFERENCIA||p.referencia||'-';
-      const fecha=p.PAG_FECHA||p.fecha||'-';
-      const estado=(p.PAG_ESTADO||p.estado||'pendiente');
+      const monto=p.TRP_MONTO||p.PAG_MONTO||p.monto||0;
+      const metodo=p.TRP_METODO||p.PAG_METODO||p.metodo||'-';
+      const ref=p.TRP_NUM_REFERENCIA||p.PAG_REFERENCIA||p.referencia||'-';
+      const fecha=p.TRP_FECHA_REGISTRO||p.PAG_FECHA||p.fecha||'-';
+      const estado=(p.TRP_ESTATUS||p.PAG_ESTADO||p.estado||'PENDIENTE');
       return '<tr>'+
         '<td>#'+id+'</td>'+
         '<td>'+cliente+'</td>'+
@@ -355,7 +478,7 @@ function renderPagos(){
         '<td>'+metodo+'</td>'+
         '<td style="font-family:monospace;font-size:11px;">'+ref+'</td>'+
         '<td>'+fecha+'</td>'+
-        '<td>'+statusBadge(estado)+'</td>'+
+        '<td>'+statusBadge(estado.toLowerCase())+'</td>'+
         '<td><button class="btn btn-ghost btn-sm" onclick="eliminarPago('+id+')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button></td>'+
         '</tr>';
     }).join('');
@@ -407,7 +530,7 @@ function renderBilling(){
    USUARIOS
    ========================================== */
 function renderUsuarios(){
-  apiGet('/api/usuarios?emp_id=1').then(res=>{
+  apiGet('/api/usuarios').then(res=>{
     if(!res.data)return;
     DB_USUARIOS=res.data;
     const tbody=document.getElementById('usuariosTableBody');
@@ -428,13 +551,54 @@ function renderUsuarios(){
         '<td>'+email+'</td>'+
         '<td>'+(activo==='S'?statusBadge('activo'):statusBadge('inactivo'))+'</td>'+
         '<td><div style="display:flex;gap:4px;">'+
-          '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Editar usuario '+id+'\',\'info\')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="editarUsuario('+id+')" title="Editar"><i class="fas fa-pen" style="font-size:10px;"></i></button>'+
           '<button class="btn btn-ghost btn-sm" onclick="eliminarUsuario('+id+',\''+nombre.replace(/'/g,"\\'")+'\')" title="Eliminar" style="color:var(--danger,#ef4444);"><i class="fas fa-trash" style="font-size:10px;"></i></button>'+
         '</div></td></tr>';
     }).join('');
   }).catch(()=>showToast('Error cargando usuarios','error'));
 }
 
+function editarUsuario(id){
+  const u=DB_USUARIOS.find(x=>(x.USU_ID||x.id)==id);
+  if(!u)return showToast('Usuario no encontrado','error');
+  const modal=document.getElementById('modalNuevoUsuario');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  inputs[0].value=u.USU_NOMBRE||'';
+  inputs[1].value=u.USU_EMAIL||'';
+  inputs[2].value=u.USU_ROL||'operacion';
+  inputs[4].value='';
+  inputs[5].value='';
+  modal.setAttribute('data-editing',id);
+  const hdr=modal.querySelector('.modal-header h3');
+  if(hdr)hdr.textContent='Editar Usuario';
+  const btn=modal.querySelector('.modal-footer .btn-primary');
+  if(btn)btn.innerHTML='<i class="fas fa-save" style="font-size:10px;"></i> Actualizar';
+  openModal('modalNuevoUsuario');
+}
+
+function saveUsuario(){
+  const modal=document.getElementById('modalNuevoUsuario');
+  if(!modal)return;
+  const inputs=modal.querySelectorAll('input,select');
+  const nombre=inputs[0].value.trim();
+  const email=inputs[1].value.trim();
+  const rol=inputs[2].value.toLowerCase();
+  const password=inputs[4].value;
+  const confirm=inputs[5].value;
+  if(!nombre){showToast('Nombre requerido','error');return;}
+  const editingId=modal.getAttribute('data-editing');
+  const isEdit=editingId&&editingId!=='';
+  if(!isEdit&&!password){showToast('Password requerido','error');return;}
+  if(!isEdit&&password!==confirm){showToast('Passwords no coinciden','error');return;}
+  const data={nombre:nombre,email:email,rol:rol};
+  if(password)data.password=password;
+  const promise=isEdit?apiPut('/api/usuarios/'+editingId,data):apiPost('/api/usuarios',data);
+  promise.then(res=>{
+    if(res.success){showToast(isEdit?'Usuario actualizado':'Usuario creado','success');closeModal('modalNuevoUsuario');modal.removeAttribute('data-editing');renderUsuarios();}
+    else showToast(res.error||'Error al guardar','error');
+  });
+}
 function eliminarUsuario(id,nombre){
   if(!confirm('Eliminar usuario "'+nombre+'"'))return;
   apiDelete('/api/usuarios/'+id).then(res=>{

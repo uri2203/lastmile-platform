@@ -41,6 +41,15 @@
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
+
+  /* Aliases used by panel-tenant */
+  --bg-hover: var(--bg-card-hover, #1a1a22);
+  --bg-active: var(--bg-card-hover, #1a1a22);
+  --text-tertiary: var(--text-muted, #5a5a6a);
+  --color-success: var(--success, #10b981);
+  --color-warning: var(--warning, #f59e0b);
+  --color-danger: var(--danger, #ef4444);
+  --color-info: var(--info, #3b82f6);
 }
 
 /* ---------- DARK THEME ---------- */

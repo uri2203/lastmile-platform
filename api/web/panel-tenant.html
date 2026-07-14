@@ -735,11 +735,11 @@
     themeCheckbox.addEventListener('change', () => {
       const newTheme = themeCheckbox.checked ? 'dark' : 'light';
       applyTheme(newTheme);
-      if (typeof ThemeManager !== 'undefined') ThemeManager.setTheme(newTheme);
+      if (typeof ThemeManager !== 'undefined') ThemeManager.apply(newTheme);
     });
 
     if (typeof ThemeManager !== 'undefined') {
-      const saved = ThemeManager.getTheme();
+      const saved = ThemeManager.get();
       applyTheme(saved || 'dark');
     }
 
@@ -758,8 +758,8 @@
 
     // ========== TOAST ==========
     function showToast(msg) {
-      if (typeof Utils !== 'undefined' && Utils.showToast) {
-        Utils.showToast(msg, 'success');
+      if (typeof Utils !== 'undefined' && Utils.toast) {
+        Utils.toast(msg, 'success');
       } else {
         const t = document.createElement('div');
         t.style.cssText = 'position:fixed; bottom:24px; right:24px; background:var(--accent-primary); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; z-index:999; box-shadow:0 4px 20px rgba(0,0,0,0.3);';
