@@ -74,9 +74,22 @@ console_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefm
 request_logger.addHandler(console_handler)
 
 # ========================================
-# DATABASE: SQLite
+# DATABASE: SQLite (con soporte para disco persistente en Render)
 # ========================================
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lastmile.db')
+DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(DATA_DIR, 'lastmile.db')
+
+# Auto-initialize database on first run
+if not os.path.exists(DB_PATH):
+    print(f'[DB] First run - initializing database at {DB_PATH}')
+    from database import init_db
+    init_db()
+    # Try to migrate data from backup if available
+    try:
+        from migrate import migrate
+        migrate()
+    except Exception:
+        pass
 
 
 def get_db():
@@ -1291,7 +1304,7 @@ def get_ots_mantto():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     env = os.environ.get('FLASK_ENV', 'development')
-    ssl_enabled = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cert.pem'))
+    ssl_enabled = os.path.exists(os.path.join(DATA_DIR, 'cert.pem'))
 
     print()
     print('  ========================================')
@@ -1299,7 +1312,7 @@ if __name__ == '__main__':
     print('  ========================================')
     print(f'  Puerto:     {port}')
     print(f'  Entorno:    {env}')
-    print(f'  Database:   SQLite (lastmile.db)')
+    print(f'  Database:   SQLite ({DB_PATH})')
     print(f'  HTTPS:      {"ACTIVO" if ssl_enabled else "NO (HTTP)"}')
     print(f'  Rate Limit: 200/min general, 10/min auth')
     print(f'  CORS:       {"Restringido" if ALLOWED_ORIGINS != ["*"] else "ABIERTO"}')
@@ -1310,8 +1323,8 @@ if __name__ == '__main__':
     request_logger.info(f'Server starting on port {port} (env={env}, db=SQLite)')
 
     if ssl_enabled:
-        cert_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cert.pem')
-        key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'key.pem')
+        cert_path = os.path.join(DATA_DIR, 'cert.pem')
+        key_path = os.path.join(DATA_DIR, 'key.pem')
         app.run(host='0.0.0.0', port=port, debug=False, ssl_context=(cert_path, key_path))
     else:
         app.run(host='0.0.0.0', port=port, debug=False)

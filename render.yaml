@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: lastmile-delivery
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+    envVars:
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.11"
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

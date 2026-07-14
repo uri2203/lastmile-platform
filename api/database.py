@@ -7,7 +7,8 @@ Todas las tablas y vistas del sistema.
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'lastmile.db')
+DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(DATA_DIR, 'lastmile.db')
 
 
 def get_db():
