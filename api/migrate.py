@@ -7,8 +7,9 @@ import json
 import os
 from datetime import datetime
 
-BACKUP_DIR = os.path.join(os.path.dirname(__file__), 'backups', 'backup_20260714_095601')
-DB_PATH = os.path.join(os.path.dirname(__file__), 'lastmile.db')
+DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
+BACKUP_DIR = os.path.join(DATA_DIR, 'backups', 'backup_20260714_095601')
+DB_PATH = os.path.join(DATA_DIR, 'lastmile.db')
 
 # Map backup JSON filenames to SQLite table names
 TABLE_MAP = {
