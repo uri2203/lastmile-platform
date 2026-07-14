@@ -2,18 +2,102 @@
 LAST MILE DELIVERY SYSTEM - Backend API (Python/Flask)
 Conecta a AS/400 (TESTLIB) via JDBC
 Multi-tenant: cada request lleva X-Emp-Id
+Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones
 """
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from dotenv import load_dotenv
 import jaydebeapi
 import hashlib
 import os
+import logging
+import time
+from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
-# Servir archivos estáticos desde /web
+# ========================================
+# CARGAR VARIABLES DE ENTORNO
+# ========================================
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
+# Servir archivos estaticos desde /web
 app = Flask(__name__, static_folder='web', static_url_path='')
-CORS(app)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'lastmile-dev-key-change-in-prod')
+
+# ========================================
+# CORS: Restringido por origen en produccion
+# ========================================
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '').split(',') if os.environ.get('ALLOWED_ORIGINS') else ['*']
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True,
+     allow_headers=['Content-Type', 'X-Emp-Id', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+
+# ========================================
+# RATE LIMITING: 200 req/min por IP general, 10/min para auth
+# ========================================
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per minute"],
+    storage_uri="memory://",
+)
+
+# ========================================
+# LOGGING: Rotating file + console
+# ========================================
+LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Request log (all HTTP)
+request_logger = logging.getLogger('request')
+request_logger.setLevel(logging.INFO)
+req_handler = RotatingFileHandler(
+    os.path.join(LOG_DIR, 'requests.log'),
+    maxBytes=5*1024*1024, backupCount=5, encoding='utf-8'
+)
+req_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+request_logger.addHandler(req_handler)
+
+# Error log (errors only)
+error_logger = logging.getLogger('error')
+error_logger.setLevel(logging.ERROR)
+err_handler = RotatingFileHandler(
+    os.path.join(LOG_DIR, 'errors.log'),
+    maxBytes=5*1024*1024, backupCount=5, encoding='utf-8'
+)
+err_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+error_logger.addHandler(err_handler)
+
+# Console output
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%H:%M:%S'))
+request_logger.addHandler(console_handler)
+
+# Request timing middleware
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    if hasattr(request, 'start_time'):
+        elapsed = round((time.time() - request.start_time) * 1000, 1)
+        status = response.status_code
+        path = request.path
+        method = request.method
+        emp_id = request.headers.get('X-Emp-Id', '-')
+        ip = request.remote_addr or '-'
+        request_logger.info(f'{method} {path} => {status} [{elapsed}ms] emp={emp_id} ip={ip}')
+    return response
+
+# Global error handler
+@app.errorhandler(Exception)
+def handle_exception(e):
+    error_logger.error(f'Unhandled: {str(e)}', exc_info=True)
+    return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 # Register AI Blueprint
 try:
@@ -39,7 +123,7 @@ def serve_static(filename):
     return send_from_directory('web', filename)
 
 # ========================================
-# CONFIGURACIÓN
+# CONFIGURACION DB
 # ========================================
 DB_CONFIG = {
     'driver_path': os.path.join(os.path.dirname(__file__), '..', '..', 'BOOT-INF', 'lib', 'jt400-21.0.6.jar'),
@@ -81,24 +165,41 @@ def execute(sql, params=None):
     return affected
 
 def get_emp_id():
-    return int(request.headers.get('X-Emp-Id', '1'))
+    try:
+        return int(request.headers.get('X-Emp-Id', '1'))
+    except (ValueError, TypeError):
+        return 1  # Default to emp 1 if invalid header
 
 # ========================================
 # HEALTH CHECK
 # ========================================
 @app.route('/api/health', methods=['GET'])
 def health():
+    db_status = 'DISCONNECTED'
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM SYSIBM.SYSDUMMY1")
+        cursor.close()
+        conn.close()
+        db_status = 'CONNECTED'
+    except Exception as e:
+        db_status = f'ERROR: {str(e)[:80]}'
+        error_logger.error(f'Health check DB failed: {e}')
+    
     return jsonify({
-        'status': 'OK',
+        'status': 'OK' if db_status == 'CONNECTED' else 'DEGRADED',
         'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0',
-        'database': 'AS/400 TESTLIB'
+        'version': '1.1.0',
+        'database': db_status,
+        'rate_limit': '200/min'
     })
 
 # ========================================
 # AUTH: Login (sin seleccionar empresa)
 # ========================================
 @app.route('/api/auth/login', methods=['POST'])
+@limiter.limit("10 per minute")  # Anti brute-force
 def auth_login():
     """
     Login con usuario + password.
@@ -155,6 +256,7 @@ def auth_login():
 # SETUP: Crear tabla USUARIOS (temporal)
 # ========================================
 @app.route('/api/setup/usuarios', methods=['POST'])
+@limiter.limit("2 per hour")  # Setup: solo permitir 2 veces por hora
 def setup_usuarios():
     """Crea la tabla USUARIOS y carga datos de prueba. TEMPORAL - eliminar en produccion."""
     try:
@@ -222,6 +324,7 @@ def setup_usuarios():
 # SETUP: Crear tablas ZONAS y ZONA_TARIFAS
 # ========================================
 @app.route('/api/setup/zonas', methods=['POST'])
+@limiter.limit("2 per hour")  # Setup: solo permitir 2 veces por hora
 def setup_zonas():
     """Crea las tablas de zonas y tarifas. Multi-tenant por EMP_ID."""
     try:
@@ -1302,36 +1405,36 @@ def get_billing_dashboard():
 # INICIAR SERVIDOR
 # ========================================
 if __name__ == '__main__':
-    print('\n  ========================================')
-    print('  LAST MILE API - Python/Flask v1.0.0')
-    print('  Puerto: 5000')
-    print('  Base de datos: AS/400 (TESTLIB)')
-    print('  Multi-tenant: SI')
-    print('  ========================================\n')
-    print('  Endpoints:')
-    print('    GET  /api/health')
-    print('    GET  /api/empresas')
-    print('    GET  /api/dashboard/<empId>')
-    print('    GET  /api/pedidos')
-    print('    POST /api/pedidos')
-    print('    PUT  /api/pedidos/<id>/estado')
-    print('    GET  /api/choferes')
-    print('    GET  /api/choferes/rendimiento')
-    print('    GET  /api/vehiculos')
-    print('    GET  /api/vehiculos/flota')
-    print('    GET  /api/rutas')
-    print('    GET  /api/entregas')
-    print('    GET  /api/clientes')
-    print('    GET  /api/clientes/top')
-    print('    GET  /api/kpis')
-    print('    GET  /api/incidencias')
-    print('    GET  /api/tracking/<choId>')
-    print('    POST /api/tracking')
-    print('    GET  /api/zonas')
-    print('    GET  /api/tarifas')
-    print('    GET  /api/audit')
-    print('    GET  /api/mantenimiento/unidades')
-    print('    GET  /api/mantenimiento/ots')
-    print('\n  Header: X-Emp-Id: 1|2|3\n')
+    port = int(os.environ.get('PORT', 5000))
+    env = os.environ.get('FLASK_ENV', 'development')
+    db_pass_set = bool(os.environ.get('DB_PASS'))
+    ssl_enabled = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cert.pem'))
     
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    print()
+    print('  ========================================')
+    print('  LAST MILE DELIVERY API v1.1.0')
+    print('  ========================================')
+    print(f'  Puerto:     {port}')
+    print(f'  Entorno:    {env}')
+    print(f'  DB:         AS/400 TESTLIB ({"PASS configurado" if db_pass_set else "SIN DB_PASS"})')
+    print(f'  HTTPS:      {"ACTIVO" if ssl_enabled else "NO (HTTP)"}')
+    print(f'  Rate Limit: 200/min general, 10/min auth')
+    print(f'  CORS:       {"Restringido" if ALLOWED_ORIGINS != ["*"] else "ABIERTO (configurar ALLOWED_ORIGINS)"}')
+    print(f'  Logs:       {LOG_DIR}')
+    print('  ========================================')
+    print()
+    
+    if not db_pass_set:
+        print('  [WARN] DB_PASS no definido. Define la variable DB_PASS en .env')
+    
+    if ALLOWED_ORIGINS == ['*']:
+        print('  [WARN] CORS abierto. Configura ALLOWED_ORIGINS en .env para produccion')
+    
+    request_logger.info(f'Server starting on port {port} (env={env})')
+    
+    if ssl_enabled:
+        cert_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cert.pem')
+        key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'key.pem')
+        app.run(host='0.0.0.0', port=port, debug=False, ssl_context=(cert_path, key_path))
+    else:
+        app.run(host='0.0.0.0', port=port, debug=False)
