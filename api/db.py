@@ -28,7 +28,11 @@ else:
 def get_db():
     """Get database connection (PostgreSQL or SQLite)."""
     if USE_POSTGRES:
-        conn = psycopg2.connect(DATABASE_URL)
+        # Add sslmode=require if not present (required for Supabase pooler)
+        url = DATABASE_URL
+        if 'sslmode' not in url:
+            url += '&sslmode=require' if '?' in url else '?sslmode=require'
+        conn = psycopg2.connect(url)
         conn.autocommit = False
         return conn
     else:
