@@ -1,6 +1,7 @@
 """
-LAST MILE DELIVERY SYSTEM - Backend API v2.0 (Python/Flask + SQLite)
+LAST MILE DELIVERY SYSTEM - Backend API v3.0 (Python/Flask + SQLite/PostgreSQL)
 Migrado desde AS/400 DB2/400 a SQLite local.
+Multi-database: SQLite (dev) + PostgreSQL/Supabase (produccion via DATABASE_URL).
 Multi-tenant: cada request lleva X-Emp-Id
 Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones
 """
@@ -10,9 +11,9 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
+from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
 import hashlib
 import os
-import sqlite3
 import time
 import logging
 from logging.handlers import RotatingFileHandler
@@ -74,69 +75,41 @@ console_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefm
 request_logger.addHandler(console_handler)
 
 # ========================================
-# DATABASE: SQLite (con soporte para disco persistente en Render)
+# DATABASE: Auto-detect SQLite or PostgreSQL via DATABASE_URL
 # ========================================
-DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(DATA_DIR, 'lastmile.db')
 
-# Auto-initialize database on first run (tables + demo data via seed.py)
-if not os.path.exists(DB_PATH):
-    print(f'[DB] First run - initializing database at {DB_PATH}')
-    try:
-        from seed import seed
-        seed()
-    except Exception as e:
-        print(f'[DB] Seed failed ({e}), falling back to schema only')
-        from database import init_db
-        init_db()
-else:
-    # DB exists but might be empty (e.g. Render persistent disk reset)
-    try:
-        import sqlite3 as _chk
-        _conn = _chk.connect(DB_PATH)
-        _c = _conn.cursor()
-        _c.execute("SELECT COUNT(*) FROM EMPRESAS")
-        _count = _c.fetchone()[0]
-        _conn.close()
-        if _count == 0:
-            print('[DB] Database exists but is empty - running seed...')
+# Auto-initialize database on first run
+db_info = get_db_info()
+if db_info['type'] == 'SQLite':
+    DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
+    DB_PATH = os.path.join(DATA_DIR, 'lastmile.db')
+
+    if not os.path.exists(DB_PATH):
+        print(f'[DB] First run - initializing SQLite database at {DB_PATH}')
+        try:
             from seed import seed
             seed()
-    except Exception:
-        pass
-
-
-def get_db():
-    """Get SQLite connection with Row factory."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=5000")
-    return conn
-
-
-def query(sql, params=None):
-    """Execute a SELECT and return list of dicts."""
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(sql, params or [])
-    columns = [desc[0] for desc in cursor.description] if cursor.description else []
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return [dict(zip(columns, row)) for row in rows]
-
-
-def execute(sql, params=None):
-    """Execute an INSERT/UPDATE/DELETE and return affected rows."""
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(sql, params or [])
-    conn.commit()
-    affected = cursor.rowcount
-    cursor.close()
-    conn.close()
-    return affected
+        except Exception as e:
+            print(f'[DB] Seed failed ({e}), falling back to schema only')
+            from database import init_db
+            init_db()
+    elif check_empty():
+        print('[DB] Database exists but is empty - running seed...')
+        try:
+            from seed import seed
+            seed()
+        except Exception as e:
+            print(f'[DB] Seed failed: {e}')
+else:
+    # PostgreSQL: initialize schema, seed if empty
+    init_schema()
+    if check_empty():
+        print('[DB] PostgreSQL empty - running seed via migrate_to_pg.py...')
+        try:
+            from seed import seed_pg
+            seed_pg()
+        except Exception as e:
+            print(f'[DB] PG seed skipped ({e}). Run: python migrate_to_pg.py DATABASE_URL')
 
 
 def get_emp_id():
@@ -198,21 +171,18 @@ def serve_static(filename):
 def health():
     db_status = 'DISCONNECTED'
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
-        conn.close()
+        query("SELECT 1")
         db_status = 'CONNECTED'
     except Exception as e:
         db_status = f'ERROR: {str(e)[:80]}'
 
+    info = get_db_info()
     return jsonify({
         'status': 'OK' if db_status == 'CONNECTED' else 'DEGRADED',
         'timestamp': datetime.now().isoformat(),
-        'version': '2.0.0',
-        'database': f'SQLite ({db_status})',
-        'db_file': os.path.basename(DB_PATH),
+        'version': '3.0.0',
+        'database': f"{info['type']} ({db_status})",
+        'db_path': info.get('path', info.get('url', '')),
         'rate_limit': '200/min'
     })
 
@@ -273,25 +243,42 @@ def setup_usuarios():
     """Crea la tabla USUARIOS y carga datos de prueba."""
     try:
         try:
-            execute("DROP TABLE USUARIOS")
+            execute("DROP TABLE IF EXISTS USUARIOS CASCADE")
         except:
             pass
 
-        execute("""
-            CREATE TABLE USUARIOS (
-                USU_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                USU_EMP_ID INTEGER NOT NULL,
-                USU_USUARIO TEXT NOT NULL,
-                USU_PASS TEXT NOT NULL,
-                USU_NOMBRE TEXT NOT NULL,
-                USU_EMAIL TEXT,
-                USU_TELEFONO TEXT,
-                USU_ROL TEXT NOT NULL DEFAULT 'operacion',
-                USU_ACTIVO TEXT DEFAULT 'S',
-                USU_CREATED TEXT DEFAULT (datetime('now')),
-                USU_UPDATED TEXT DEFAULT (datetime('now'))
-            )
-        """)
+        if USE_POSTGRES:
+            execute("""
+                CREATE TABLE USUARIOS (
+                    USU_ID SERIAL PRIMARY KEY,
+                    USU_EMP_ID INTEGER NOT NULL,
+                    USU_USUARIO TEXT NOT NULL,
+                    USU_PASS TEXT NOT NULL,
+                    USU_NOMBRE TEXT NOT NULL,
+                    USU_EMAIL TEXT,
+                    USU_TELEFONO TEXT,
+                    USU_ROL TEXT NOT NULL DEFAULT 'operacion',
+                    USU_ACTIVO TEXT DEFAULT 'S',
+                    USU_CREATED TIMESTAMP DEFAULT NOW(),
+                    USU_UPDATED TIMESTAMP DEFAULT NOW()
+                )
+            """)
+        else:
+            execute("""
+                CREATE TABLE USUARIOS (
+                    USU_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    USU_EMP_ID INTEGER NOT NULL,
+                    USU_USUARIO TEXT NOT NULL,
+                    USU_PASS TEXT NOT NULL,
+                    USU_NOMBRE TEXT NOT NULL,
+                    USU_EMAIL TEXT,
+                    USU_TELEFONO TEXT,
+                    USU_ROL TEXT NOT NULL DEFAULT 'operacion',
+                    USU_ACTIVO TEXT DEFAULT 'S',
+                    USU_CREATED TEXT DEFAULT (datetime('now')),
+                    USU_UPDATED TEXT DEFAULT (datetime('now'))
+                )
+            """)
 
         try:
             execute("CREATE INDEX IX_USU_USER ON USUARIOS(USU_USUARIO)")
@@ -1318,15 +1305,16 @@ def get_ots_mantto():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     env = os.environ.get('FLASK_ENV', 'development')
-    ssl_enabled = os.path.exists(os.path.join(DATA_DIR, 'cert.pem'))
+    ssl_enabled = os.path.exists(os.path.join(DATA_DIR, 'cert.pem')) if 'DATA_DIR' in dir() else False
+    db_info = get_db_info()
 
     print()
     print('  ========================================')
-    print('  LAST MILE DELIVERY API v2.0.0')
+    print('  LAST MILE DELIVERY API v3.0.0')
     print('  ========================================')
     print(f'  Puerto:     {port}')
     print(f'  Entorno:    {env}')
-    print(f'  Database:   SQLite ({DB_PATH})')
+    print(f'  Database:   {db_info["type"]} ({db_info.get("path", db_info.get("url", ""))})')
     print(f'  HTTPS:      {"ACTIVO" if ssl_enabled else "NO (HTTP)"}')
     print(f'  Rate Limit: 200/min general, 10/min auth')
     print(f'  CORS:       {"Restringido" if ALLOWED_ORIGINS != ["*"] else "ABIERTO"}')
@@ -1334,7 +1322,7 @@ if __name__ == '__main__':
     print('  ========================================')
     print()
 
-    request_logger.info(f'Server starting on port {port} (env={env}, db=SQLite)')
+    request_logger.info(f'Server starting on port {port} (env={env}, db={db_info["type"]})')
 
     if ssl_enabled:
         cert_path = os.path.join(DATA_DIR, 'cert.pem')
