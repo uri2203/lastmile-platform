@@ -629,6 +629,60 @@ def get_rendimiento_choferes():
     data = query('SELECT * FROM TESTLIB.V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC', [emp_id])
     return jsonify({'success': True, 'data': data})
 
+@app.route('/api/choferes/<int:cho_id>', methods=['DELETE'])
+def delete_chofer(cho_id):
+    emp_id = get_emp_id()
+    try:
+        execute("DELETE FROM TESTLIB.CHOFERES WHERE CHF_ID = ? AND EMP_ID = ?", [cho_id, emp_id])
+        return jsonify({'success': True, 'message': 'Chofer eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/vehiculos/<int:veh_id>', methods=['DELETE'])
+def delete_vehiculo(veh_id):
+    emp_id = get_emp_id()
+    try:
+        execute("DELETE FROM TESTLIB.VEHICULOS WHERE VEH_ID = ? AND EMP_ID = ?", [veh_id, emp_id])
+        return jsonify({'success': True, 'message': 'Vehiculo eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/clientes/<int:cli_id>', methods=['DELETE'])
+def delete_cliente(cli_id):
+    emp_id = get_emp_id()
+    try:
+        execute("DELETE FROM TESTLIB.CLIENTES_LM WHERE CLI_ID = ? AND EMP_ID = ?", [cli_id, emp_id])
+        return jsonify({'success': True, 'message': 'Cliente eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/pedidos/<int:ped_id>', methods=['DELETE'])
+def delete_pedido(ped_id):
+    emp_id = get_emp_id()
+    try:
+        execute("DELETE FROM TESTLIB.PEDIDOS WHERE PED_ID = ?", [ped_id])
+        return jsonify({'success': True, 'message': 'Pedido eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/pagos/transacciones/<int:pag_id>', methods=['DELETE'])
+def delete_pago(pag_id):
+    emp_id = get_emp_id()
+    try:
+        execute("DELETE FROM TESTLIB.PAGOS_TRANSACCIONES WHERE TRP_ID = ?", [pag_id])
+        return jsonify({'success': True, 'message': 'Pago eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/usuarios/<int:usu_id>', methods=['DELETE'])
+def delete_usuario(usu_id):
+    emp_id = get_emp_id()
+    try:
+        execute("DELETE FROM TESTLIB.USUARIOS WHERE USU_ID = ? AND USU_EMP_ID = ?", [usu_id, emp_id])
+        return jsonify({'success': True, 'message': 'Usuario eliminado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 # ========================================
 # MÓDULO: VEHÍCULOS
 # ========================================
