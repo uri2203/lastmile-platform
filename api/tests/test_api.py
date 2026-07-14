@@ -39,7 +39,7 @@ class TestHealth:
         j = r.json()
         assert j['status'] in ('OK', 'DEGRADED')
         assert 'timestamp' in j
-        assert j['version'] == '1.1.0'
+        assert j['version'] == '2.0.0'
 
 # ========================================
 # AUTH
