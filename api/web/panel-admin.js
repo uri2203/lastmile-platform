@@ -50,6 +50,128 @@ function switchServicioTab(serv) {
   calcularEjemploTarifa(serv);
 }
 
+/* ==========================================
+   MAPA PICKER: Buscador de dirección + pin
+   ========================================== */
+let zonaPickerMap = null;
+let zonaPickerMarker = null;
+let zonaPickerCircle = null;
+
+function initZonaPickerMap() {
+  if (zonaPickerMap) { zonaPickerMap.invalidateSize(); return; }
+  try {
+    const isDark = ThemeManager.get() === 'dark';
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    zonaPickerMap = L.map('zon-map-picker', { zoomControl: false }).setView([19.4326, -99.1332], 12);
+    L.tileLayer(tileUrl, { attribution: '' }).addTo(zonaPickerMap);
+    L.control.zoom({ position: 'topright' }).addTo(zonaPickerMap);
+
+    // Pin draggable
+    zonaPickerMarker = L.marker([19.4326, -99.1332], { draggable: true }).addTo(zonaPickerMap);
+    const radio = parseFloat(document.getElementById('zon-radio').value) || 5;
+    zonaPickerCircle = L.circle([19.4326, -99.1332], {
+      radius: radio * 1000, color: '#6366f1', fillColor: '#6366f1',
+      fillOpacity: 0.08, weight: 2, dashArray: '5,5'
+    }).addTo(zonaPickerMap);
+
+    // Cuando arrastran el pin
+    zonaPickerMarker.on('dragend', function (e) {
+      const pos = e.target.getLatLng();
+      actualizarUbicacionZona(pos.lat, pos.lng);
+    });
+
+    // Click en el mapa mueve el pin
+    zonaPickerMap.on('click', function (e) {
+      zonaPickerMarker.setLatLng(e.latlng);
+      actualizarUbicacionZona(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Actualizar circulo cuando cambia el radio
+    document.getElementById('zon-radio').addEventListener('input', function () {
+      if (zonaPickerMarker) {
+        const pos = zonaPickerMarker.getLatLng();
+        actualizarCirculoZona(pos.lat, pos.lng, parseFloat(this.value) || 5);
+      }
+    });
+  } catch (e) { console.warn('Map picker error:', e); }
+}
+
+function actualizarUbicacionZona(lat, lng) {
+  document.getElementById('zon-lat').value = lat.toFixed(6);
+  document.getElementById('zon-lng').value = lng.toFixed(6);
+  const radio = parseFloat(document.getElementById('zon-radio').value) || 5;
+  actualizarCirculoZona(lat, lng, radio);
+
+  // Actualizar color del pin
+  const color = document.getElementById('zon-color').value || '#6366f1';
+  if (zonaPickerMarker) {
+    zonaPickerMarker.setIcon(L.divIcon({
+      className: '',
+      html: '<div style="width:24px;height:24px;background:' + color + ';border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    }));
+  }
+
+  // Reverse geocode (dirección)
+  reverseGeocode(lat, lng);
+}
+
+function actualizarCirculoZona(lat, lng, radio) {
+  if (zonaPickerCircle) {
+    zonaPickerCircle.setLatLng([lat, lng]);
+    zonaPickerCircle.setRadius(radio * 1000);
+  }
+}
+
+function reverseGeocode(lat, lng) {
+  const el = document.getElementById('zon-direccion-resultado');
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&addressdetails=1&accept-language=es', {
+    headers: { 'User-Agent': 'LastMilePlatform/1.0' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.display_name) {
+      el.textContent = data.display_name;
+      el.style.display = 'block';
+      el.style.color = 'var(--accent)';
+    }
+  }).catch(() => {});
+}
+
+function buscarDireccion() {
+  const query = document.getElementById('zon-direccion').value.trim();
+  if (!query) { showToast('Escribe una direccion para buscar', 'error'); return; }
+
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1&accept-language=es', {
+    headers: { 'User-Agent': 'LastMilePlatform/1.0' }
+  })
+  .then(r => r.json())
+  .then(results => {
+    if (results.length === 0) {
+      showToast('Direccion no encontrada. Intenta con mas detalle.', 'error');
+      return;
+    }
+    const r = results[0];
+    const lat = parseFloat(r.lat);
+    const lng = parseFloat(r.lon);
+
+    // Centrar mapa y mover pin
+    zonaPickerMap.setView([lat, lng], 15);
+    zonaPickerMarker.setLatLng([lat, lng]);
+    actualizarUbicacionZona(lat, lng);
+
+    // Feedback
+    document.getElementById('zon-direccion-resultado').textContent = r.display_name;
+    document.getElementById('zon-direccion-resultado').style.display = 'block';
+    document.getElementById('zon-direccion-resultado').style.color = 'var(--accent)';
+    showToast('Direccion encontrada', 'success');
+  }).catch(() => showToast('Error al buscar direccion', 'error'));
+}
+
 function calcularEjemploTarifa(serv) {
   const inputs = document.querySelectorAll('.tarifa-input[data-serv="' + serv + '"]');
   const vals = {};
@@ -259,6 +381,18 @@ function editarZona(zonId) {
 
   switchServicioTab('EXPRESS');
   openModal('modalNuevaZona');
+
+  // Centrar mapa en la zona existente
+  setTimeout(() => {
+    initZonaPickerMap();
+    const lat = parseFloat(zona.ZON_CENTRO_LAT) || 19.4326;
+    const lng = parseFloat(zona.ZON_CENTRO_LNG) || -99.1332;
+    const radio = parseFloat(zona.ZON_RADIO_KM) || 5;
+    zonaPickerMap.setView([lat, lng], 15);
+    zonaPickerMarker.setLatLng([lat, lng]);
+    actualizarCirculoZona(lat, lng, radio);
+    actualizarUbicacionZona(lat, lng);
+  }, 300);
 }
 
 /* ==========================================
@@ -286,10 +420,24 @@ function resetModalZona() {
   document.getElementById('zon-descripcion').value = '';
   document.getElementById('zon-color').value = '#6366f1';
   document.getElementById('zon-color-hex').textContent = '#6366f1';
-  document.getElementById('zon-radio').value = 5;
+  document.getElementById('zon-direccion').value = '';
+  document.getElementById('zon-direccion-resultado').style.display = 'none';
   document.getElementById('zon-lat').value = 19.4326;
   document.getElementById('zon-lng').value = -99.1332;
+  document.getElementById('zon-radio').value = 5;
+  ['EXPRESS', 'ESTANDAR', 'ECONOMICO'].forEach(serv => {
+    calcularEjemploTarifa(serv);
+  });
   switchServicioTab('EXPRESS');
+  // Iniciar mapa con CDMX default
+  setTimeout(() => {
+    initZonaPickerMap();
+    if (zonaPickerMap && zonaPickerMarker) {
+      zonaPickerMap.setView([19.4326, -99.1332], 12);
+      zonaPickerMarker.setLatLng([19.4326, -99.1332]);
+      actualizarCirculoZona(19.4326, -99.1332, 5);
+    }
+  }, 200);
 }
 
 function initRutasMap() {
@@ -326,6 +474,16 @@ document.addEventListener('DOMContentLoaded', () => {
     colorInput.addEventListener('input', () => {
       const hex = document.getElementById('zon-color-hex');
       if (hex) hex.textContent = colorInput.value;
+      // Actualizar pin y circulo en mapa picker
+      const color = colorInput.value;
+      if (zonaPickerMarker && zonaPickerMap) {
+        zonaPickerMarker.setIcon(L.divIcon({
+          className: '',
+          html: '<div style="width:24px;height:24px;background:'+color+';border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+          iconSize: [24, 24], iconAnchor: [12, 12]
+        }));
+      }
+      if (zonaPickerCircle) zonaPickerCircle.setStyle({color:color,fillColor:color});
     });
   }
   document.querySelectorAll('.tarifa-input').forEach(inp => {
@@ -333,4 +491,11 @@ document.addEventListener('DOMContentLoaded', () => {
       calcularEjemploTarifa(inp.getAttribute('data-serv'));
     });
   });
+  // Enter en buscador de direccion
+  const dirInput = document.getElementById('zon-direccion');
+  if (dirInput) {
+    dirInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); buscarDireccion(); }
+    });
+  }
 });
