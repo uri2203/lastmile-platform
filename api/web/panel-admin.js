@@ -21,6 +21,21 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
   });
 });
 
+/* Sidebar toggle */
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const mc=document.getElementById('mainContent');
+  if(sb){sb.classList.toggle('collapsed');}
+  if(mc){mc.classList.toggle('expanded');}
+}
+
+/* Pedidos filter */
+let pedStatusFilter='';
+function filterPedidos(status){
+  pedStatusFilter=status;
+  renderPedidos();
+}
+
 /* ==========================================
    HELPERS
    ========================================== */
@@ -33,6 +48,7 @@ function planBadge(p){
   return '<span class="badge '+(c[p]||'badge-gray')+'">'+p+'</span>';
 }
 function formatCurrency(v){return '$'+(parseFloat(v)||0).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function getTheme(){try{return typeof ThemeManager!=='undefined'?ThemeManager.get():'dark';}catch(e){return 'dark';}}
 function openModal(id){const m=document.getElementById(id);if(m)m.classList.add('show')}
 function closeModal(id){const m=document.getElementById(id);if(m)m.classList.remove('show')}
 function showToast(msg,type){
@@ -57,27 +73,29 @@ function loadDashboard(){
     if(!res.success||!res.data)return;
     const d=res.data;
     const el=id=>document.getElementById(id);
-    if(el('dash-pedidos-hoy'))el('dash-pedidos-hoy').textContent=d.PEDIDOS_HOY||0;
-    if(el('dash-activos'))el('dash-activos').textContent=d.PEDIDOS_ACTIVOS||d.ENTREGAS_HOY||0;
-    if(el('dash-revenue'))el('dash-revenue').textContent=formatCurrency(d.REVENUE_HOY||d.INGRESOS_HOY||0);
-    if(el('dash-choferes'))el('dash-choferes').textContent=d.CHOFERES_ACTIVOS||0;
-    if(el('dash-rating'))el('dash-rating').textContent=d.RATING_PROMEDIO||'4.8';
-    if(el('kpi-ruta'))el('kpi-ruta').textContent=d.PEDIDOS_EN_RUTA||0;
+    if(el('kpi-pedidos'))el('kpi-pedidos').textContent=d.PEDIDOS_HOY||0;
+    if(el('kpi-entregas'))el('kpi-entregas').textContent=d.ENTREGAS_HOY||0;
+    if(el('kpi-revenue'))el('kpi-revenue').textContent=formatCurrency(d.REVENUE_HOY||d.INGRESOS_HOY||0);
+    if(el('kpi-choferes'))el('kpi-choferes').textContent=d.CHOFERES_ACTIVOS||0;
+    if(el('kpi-tiempo'))el('kpi-tiempo').textContent=(d.TIEMPO_PROMEDIO||'28')+'m';
   }).catch(()=>{});
 
-  // KPIs
+  // KPIs from pedidos
   apiGet('/api/pedidos?emp_id=1').then(res=>{
     if(!res.data)return;
     DB_PEDIDOS=res.data;
-    const hoy=new Date().toISOString().split('T')[0];
-    const pedidosHoy=DB_PEDIDOS.filter(p=>(p.PED_FECHA||'').startsWith(hoy));
-    const activos=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='EN_RUTA'||p.PED_ESTADO==='transito');
-    const entregados=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='ENTREGADO'||p.PED_ESTADO==='entregado');
     const el=id=>document.getElementById(id);
-    if(el('kpi-pedidos'))el('kpi-pedidos').textContent=pedidosHoy.length||DB_PEDIDOS.length;
-    if(el('kpi-ruta'))el('kpi-ruta').textContent=activos.length;
-    if(el('kpi-entregados'))el('kpi-entregados').textContent=entregados.length;
-    if(el('kpi-ventas'))el('kpi-ventas').textContent=formatCurrency(DB_PEDIDOS.reduce((a,p)=>a+parseFloat(p.PED_TOTAL||p.total||0),0));
+    const total=DB_PEDIDOS.length;
+    const pendiente=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='PENDIENTE'||p.PED_ESTADO==='pendiente').length;
+    const transito=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='EN_RUTA'||p.PED_ESTADO==='transito').length;
+    const entregado=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='ENTREGADO'||p.PED_ESTADO==='entregado').length;
+    const cancelado=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='CANCELADO'||p.PED_ESTADO==='cancelado').length;
+    const revenue=DB_PEDIDOS.reduce((a,p)=>a+parseFloat(p.PED_TOTAL||p.total||0),0);
+    if(el('ped-total'))el('ped-total').textContent=total;
+    if(el('ped-pendiente'))el('ped-pendiente').textContent=pendiente;
+    if(el('ped-transito'))el('ped-transito').textContent=transito;
+    if(el('ped-entregado'))el('ped-entregado').textContent=entregado;
+    if(el('kpi-revenue'))el('kpi-revenue').textContent=formatCurrency(revenue);
   }).catch(()=>{});
 }
 
@@ -88,18 +106,13 @@ function renderPedidos(){
   apiGet('/api/pedidos?emp_id=1').then(res=>{
     if(!res.data)return;
     DB_PEDIDOS=res.data;
+    let filtered=DB_PEDIDOS;
+    if(pedStatusFilter){
+      filtered=DB_PEDIDOS.filter(p=>(p.PED_ESTADO||'').toLowerCase()===pedStatusFilter.toLowerCase());
+    }
     const tbody=document.getElementById('pedidosTableBody');
     if(!tbody)return;
-    const total=DB_PEDIDOS.length;
-    const activos=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='EN_RUTA'||p.PED_ESTADO==='transito').length;
-    const entregados=DB_PEDIDOS.filter(p=>p.PED_ESTADO==='ENTREGADO'||p.PED_ESTADO==='entregado').length;
-    const el=id=>document.getElementById(id);
-    if(el('ped-total'))el('ped-total').textContent=total;
-    if(el('ped-activos'))el('ped-activos').textContent=activos;
-    if(el('ped-entregados'))el('ped-entregados').textContent=entregados;
-    if(el('ped-monto'))el('ped-monto').textContent=formatCurrency(DB_PEDIDOS.reduce((a,p)=>a+parseFloat(p.PED_TOTAL||p.total||0),0));
-
-    tbody.innerHTML=DB_PEDIDOS.slice(0,50).map(p=>{
+    tbody.innerHTML=filtered.slice(0,50).map(p=>{
       const id=p.PED_ID||p.id;
       const folio=p.PED_NUMERO||p.folio||'PED-'+id;
       const cliente=p.PED_CLIENTE_NOMBRE||p.cliente||'-';
@@ -461,7 +474,7 @@ function renderAudit(){
 function initCharts(){
   if(pedidosChart)pedidosChart.destroy();
   if(revenueChart)revenueChart.destroy();
-  const t=ThemeManager.get();
+  const t=getTheme();
   const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
   const tickC=t==='dark'?'#4a4a5a':'#6b7280';
 
@@ -471,7 +484,7 @@ function initCharts(){
 
 function initCancelChart(){
   if(cancelChart)cancelChart.destroy();
-  const t=ThemeManager.get();
+  const t=getTheme();
   const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
   const tickC=t==='dark'?'#4a4a5a':'#6b7280';
   cancelChart=new Chart(document.getElementById('chartCancelaciones'),{type:'bar',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'Cancelaciones',data:[32,28,41,35,52,38,47],backgroundColor:'rgba(239,68,68,0.15)',borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}}}}});
@@ -480,7 +493,7 @@ function initCancelChart(){
 function initBillingCharts(){
   if(mrrChart)mrrChart.destroy();
   if(usageChart)usageChart.destroy();
-  const t=ThemeManager.get();
+  const t=getTheme();
   const tickC=t==='dark'?'#4a4a5a':'#6b7280';
   mrrChart=new Chart(document.getElementById('chartMRR'),{type:'line',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'MRR',data:[28500,31200,33800,35100,38400,42000,44900],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{display:false},ticks:{color:tickC,font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});
   usageChart=new Chart(document.getElementById('chartUsage'),{type:'doughnut',data:{labels:['Starter','Pro','Enterprise'],datasets:[{data:[12,28,8],backgroundColor:['#7a7a8a','#6366f1','#f59e0b'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:tickC,padding:12,font:{size:11}}}}}});
@@ -493,7 +506,7 @@ function initDashboardMap(){
   if(dashboardMap)return;
   try{
     dashboardMap=L.map('dashboardMap',{zoomControl:false}).setView([19.4326,-99.1332],12);
-    const t=ThemeManager.get();
+    const t=getTheme();
     L.tileLayer(t==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:''}).addTo(dashboardMap);
   }catch(e){}
 }
@@ -626,7 +639,7 @@ function renderZonasMap(){
   if(!rutasMap){
     try{
       rutasMap=L.map('rutasMap').setView([19.4326,-99.1332],12);
-      const tileUrl=ThemeManager.get()==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      const tileUrl=getTheme()==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
       L.tileLayer(tileUrl,{attribution:''}).addTo(rutasMap);
     }catch(e){return;}
   }
@@ -748,7 +761,7 @@ let zonaPickerMap=null,zonaPickerMarker=null,zonaPickerCircle=null;
 function initZonaPickerMap(){
   if(zonaPickerMap){zonaPickerMap.invalidateSize();return;}
   try{
-    const isDark=ThemeManager.get()==='dark';
+    const isDark=getTheme()==='dark';
     const tileUrl=isDark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     zonaPickerMap=L.map('zon-map-picker',{zoomControl:false}).setView([19.4326,-99.1332],12);
     L.tileLayer(tileUrl,{attribution:''}).addTo(zonaPickerMap);
@@ -797,8 +810,6 @@ function buscarDireccion(){
   }).catch(()=>showToast('Error al buscar direccion','error'));
 }
 
-function initRutasMap(){loadZonas();}
-
 /* ==========================================
    REFRESH ALL
    ========================================== */
@@ -817,17 +828,16 @@ function refreshData(){
 window.addEventListener('load',()=>{
   loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
   renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
-  initCancelChart();initActivityFeed();
+  initCharts();initCancelChart();initActivityFeed();
   setTimeout(()=>{initDashboardMap();initDashboardMapFromChofres();},500);
 });
 
 /* Theme toggle */
-function toggleTheme(){ThemeManager.toggle();const icon=document.getElementById('theme-icon');if(icon)icon.className=ThemeManager.get()==='dark'?'fas fa-moon':'fas fa-sun'}
-window.addEventListener('DOMContentLoaded',()=>{if(typeof ThemeManager!=='undefined')ThemeManager.init()});
+function toggleTheme(){ThemeManager.toggle();const icon=document.getElementById('theme-icon');if(icon)icon.className=getTheme()==='dark'?'fas fa-sun':'fas fa-moon'}
 
 /* Re-render charts + maps on theme change */
 window.addEventListener('themechange',()=>{
-  const t=ThemeManager.get();
+  const t=getTheme();
   const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
   const tickC=t==='dark'?'#4a4a5a':'#6b7280';
   if(pedidosChart){pedidosChart.options.scales.x.grid.color=gridC;pedidosChart.options.scales.y.grid.color=gridC;pedidosChart.options.scales.x.ticks.color=tickC;pedidosChart.options.scales.y.ticks.color=tickC;pedidosChart.update()}
@@ -855,4 +865,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   const dirInput=document.getElementById('zon-direccion');
   if(dirInput){dirInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buscarDireccion();}});}
+  // Close modal on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+    overlay.addEventListener('click',e=>{
+      if(e.target===overlay){
+        overlay.classList.remove('show');
+        if(overlay.id==='modalNuevaZona')resetModalZona();
+      }
+    });
+  });
 });

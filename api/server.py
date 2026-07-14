@@ -674,6 +674,21 @@ def delete_pago(pag_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+# ========================================
+# MÓDULO: USUARIOS (GET)
+# ========================================
+@app.route('/api/usuarios', methods=['GET'])
+def get_usuarios():
+    emp_id = get_emp_id()
+    data = query('SELECT USU_ID, USU_EMP_ID, USU_USUARIO, USU_NOMBRE, USU_EMAIL, USU_TELEFONO, USU_ROL, USU_ACTIVO, USU_CREATED FROM TESTLIB.USUARIOS WHERE USU_EMP_ID = ? ORDER BY USU_NOMBRE', [emp_id])
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/usuarios/<int:usu_id>', methods=['GET'])
+def get_usuario(usu_id):
+    emp_id = get_emp_id()
+    data = query('SELECT USU_ID, USU_EMP_ID, USU_USUARIO, USU_NOMBRE, USU_EMAIL, USU_TELEFONO, USU_ROL, USU_ACTIVO, USU_CREATED FROM TESTLIB.USUARIOS WHERE USU_ID = ? AND USU_EMP_ID = ?', [usu_id, emp_id])
+    return jsonify({'success': True, 'data': data[0] if data else None})
+
 @app.route('/api/usuarios/<int:usu_id>', methods=['DELETE'])
 def delete_usuario(usu_id):
     emp_id = get_emp_id()
