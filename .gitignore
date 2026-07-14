@@ -20,6 +20,7 @@ server_err.log
 err.txt
 out.txt
 error.log
+api/logs/
 
 # OS
 .DS_Store
@@ -50,3 +51,13 @@ ejecutar_app.bat
 # Node (si se usa en el futuro)
 node_modules/
 package-lock.json
+
+# SSL certs (nunca commitear)
+*.pem
+
+# Backups
+api/backups/
+
+# Test cache
+tests/__pycache__/
+.pytest_cache/
