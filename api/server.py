@@ -1068,22 +1068,31 @@ def create_cfdi_factura():
 
 @app.route('/api/cfdi/facturas/<int:fac_id>/timbrar', methods=['POST'])
 def timbrar_factura(fac_id):
-    import uuid as uuid_mod
     emp_id = get_emp_id()
-    uuid_cfdi = str(uuid_mod.uuid4()).upper()
-    execute("UPDATE CFDI_FACTURAS SET FAC_UUID=?, FAC_FECHA_TIMBRADO=datetime('now'), FAC_ESTATUS=? WHERE FAC_ID=? AND EMP_ID=?",
-            [uuid_cfdi, 'TIMBRADA', fac_id, emp_id])
-    execute("INSERT INTO CFDI_TIMBRADO_LOG (FAC_ID, TIM_PAC, TIM_CODIGO_RESPUESTA, TIM_MENSAJE, TIM_EXITOSO) VALUES (?,?,?,?,?)",
-            [fac_id, 'SIMULADO', '200', 'Timbrado exitoso', 'S'])
-    return jsonify({'success': True, 'uuid': uuid_cfdi, 'message': 'Factura timbrada correctamente'})
+    from cfdi_service import cfdi_service
+    result = cfdi_service.create_invoice(fac_id, emp_id)
+    if result.get('success'):
+        return jsonify({'success': True, 'uuid': result.get('uuid'), 'message': 'Factura timbrada correctamente'})
+    else:
+        return jsonify({'success': False, 'error': result.get('error', 'Error al timbrar')}), 400
 
 
 @app.route('/api/cfdi/facturas/<int:fac_id>/cancelar', methods=['POST'])
 def cancelar_factura(fac_id):
+    emp_id = get_emp_id()
     motivo = request.json.get('motivo', 'Error en factura')
-    execute("UPDATE CFDI_FACTURAS SET FAC_ESTATUS=?, FAC_MOTIVO_CANCELACION=? WHERE FAC_ID=? AND EMP_ID=?",
-            ['CANCELADA', motivo, fac_id, get_emp_id()])
-    return jsonify({'success': True, 'message': 'Factura cancelada'})
+    from cfdi_service import cfdi_service
+    result = cfdi_service.cancel_invoice(fac_id, emp_id, motivo)
+    if result.get('success'):
+        return jsonify({'success': True, 'message': 'Factura cancelada'})
+    else:
+        return jsonify({'success': False, 'error': result.get('error', 'Error al cancelar')}), 400
+
+
+@app.route('/api/cfdi/status', methods=['GET'])
+def cfdi_status():
+    from cfdi_service import cfdi_service
+    return jsonify({'success': True, 'data': cfdi_service.get_status()})
 
 
 @app.route('/api/cfdi/catalogo', methods=['GET'])
