@@ -1023,6 +1023,61 @@ def post_tracking():
     return jsonify({'success': True, 'message': 'Tracking registrado'})
 
 
+@app.route('/api/tracking/live', methods=['GET'])
+def get_live_tracking():
+    """Get latest position of all active choferes for real-time map."""
+    emp_id = get_emp_id()
+    try:
+        data = query(
+            "SELECT DISTINCT ON (t.CHO_ID) "
+            "t.CHO_ID, t.TRK_LATITUD, t.TRK_LONGITUD, t.TRK_VELOCIDAD, t.TRK_RUMBO, t.TRK_BATERIA, t.TRK_FECHA, "
+            "c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO, "
+            "p.PED_ID, p.PED_DESTINO_DIR, p.PED_CLIENTE_NOMBRE, p.PED_ESTADO "
+            "FROM TRACKING t "
+            "JOIN CHOFERES c ON t.CHO_ID = c.CHO_ID "
+            "LEFT JOIN PEDIDOS p ON p.CHO_ID = t.CHO_ID AND p.PED_ESTADO IN ('EN_RUTA', 'ASIGNADO') "
+            "WHERE t.EMP_ID = ? "
+            "ORDER BY t.CHO_ID, t.TRK_FECHA DESC",
+            [emp_id]
+        )
+        # Filter to only choferes with recent tracking (last 2 hours)
+        from datetime import datetime, timedelta
+        cutoff = datetime.now() - timedelta(hours=2)
+        live = []
+        for row in (data or []):
+            if row.get('TRK_FECHA'):
+                try:
+                    fecha = row['TRK_FECHA']
+                    if isinstance(fecha, str):
+                        fecha = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
+                    if fecha.replace(tzinfo=None) > cutoff:
+                        live.append(row)
+                except Exception:
+                    live.append(row)  # Include if can't parse date
+            else:
+                live.append(row)
+        return jsonify({'success': True, 'data': live})
+    except Exception as e:
+        return jsonify({'success': True, 'data': []})
+
+
+@app.route('/api/tracking/route/<int:cho_id>', methods=['GET'])
+def get_chofer_route(cho_id):
+    """Get route history for a chofer (last 24 hours)."""
+    emp_id = get_emp_id()
+    try:
+        data = query(
+            "SELECT TRK_LATITUD, TRK_LONGITUD, TRK_VELOCIDAD, TRK_FECHA "
+            "FROM TRACKING WHERE CHO_ID=? AND EMP_ID=? "
+            "AND TRK_FECHA >= NOW() - INTERVAL '24 hours' "
+            "ORDER BY TRK_FECHA ASC",
+            [cho_id, emp_id]
+        )
+        return jsonify({'success': True, 'data': data})
+    except Exception:
+        return jsonify({'success': True, 'data': []})
+
+
 # ========================================
 # MODULO: AUDITORIA
 # ========================================
