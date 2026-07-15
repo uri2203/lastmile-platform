@@ -594,27 +594,25 @@ def get_dashboard_charts(emp_id):
     # Pedidos by day of week (last 7 days)
     try:
         rows = query(
-            "SELECT TO_CHAR(PED_FECHA_PEDIDO, 'Dy') as dia, COUNT(*) as total "
+            "SELECT PED_FECHA_PEDIDO::date as dia, COUNT(*) as total "
             "FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '7 days' "
-            "GROUP BY TO_CHAR(PED_FECHA_PEDIDO, 'Dy'), EXTRACT(DOW FROM PED_FECHA_PEDIDO) "
-            "ORDER BY EXTRACT(DOW FROM PED_FECHA_PEDIDO)",
+            "GROUP BY dia ORDER BY dia",
             [emp_id]
         )
-        result['pedidos_semana'] = [{'dia': r['DIA'], 'total': r['TOTAL']} for r in (rows or [])]
+        result['pedidos_semana'] = [{'dia': str(r.get('DIA', '')), 'total': r.get('TOTAL', 0)} for r in (rows or [])]
     except Exception:
         pass
 
     # Ingresos by day (last 7 days)
     try:
         rows = query(
-            "SELECT TO_CHAR(PED_FECHA_PEDIDO, 'Dy') as dia, SUM(PED_COSTO_TOTAL) as total "
+            "SELECT PED_FECHA_PEDIDO::date as dia, SUM(PED_COSTO_TOTAL) as total "
             "FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '7 days' "
             "AND PED_ESTADO='ENTREGADO' "
-            "GROUP BY TO_CHAR(PED_FECHA_PEDIDO, 'Dy'), EXTRACT(DOW FROM PED_FECHA_PEDIDO) "
-            "ORDER BY EXTRACT(DOW FROM PED_FECHA_PEDIDO)",
+            "GROUP BY dia ORDER BY dia",
             [emp_id]
         )
-        result['ingresos_semana'] = [{'dia': r['DIA'], 'total': float(r['TOTAL'] or 0)} for r in (rows or [])]
+        result['ingresos_semana'] = [{'dia': str(r.get('DIA', '')), 'total': float(r.get('TOTAL', 0) or 0)} for r in (rows or [])]
     except Exception:
         pass
 
@@ -625,7 +623,7 @@ def get_dashboard_charts(emp_id):
             "GROUP BY PED_ESTADO",
             [emp_id]
         )
-        result['estados_pie'] = {r['PED_ESTADO']: r['TOTAL'] for r in (rows or [])}
+        result['estados_pie'] = {r.get('PED_ESTADO', ''): r.get('TOTAL', 0) for r in (rows or [])}
     except Exception:
         pass
 
@@ -639,7 +637,7 @@ def get_dashboard_charts(emp_id):
             [emp_id]
         )
         result['top_choferes'] = [
-            {'nombre': f"{r['CHO_NOMBRE'] or ''} {r['CHO_APELLIDO'] or ''}".strip(), 'entregas': r['ENTREGAS']}
+            {'nombre': f"{r.get('CHO_NOMBRE', '') or ''} {r.get('CHO_APELLIDO', '') or ''}".strip(), 'entregas': r.get('ENTREGAS', 0)}
             for r in (rows or [])
         ]
     except Exception:
@@ -1095,35 +1093,18 @@ def get_live_tracking():
     emp_id = get_emp_id()
     try:
         data = query(
-            "SELECT DISTINCT ON (t.CHO_ID) "
-            "t.CHO_ID, t.TRK_LATITUD, t.TRK_LONGITUD, t.TRK_VELOCIDAD, t.TRK_RUMBO, t.TRK_BATERIA, t.TRK_FECHA, "
-            "c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO, "
-            "p.PED_ID, p.PED_DESTINO_DIR, p.PED_CLIENTE_NOMBRE, p.PED_ESTADO "
+            "SELECT t.CHO_ID, t.TRK_LATITUD, t.TRK_LONGITUD, t.TRK_VELOCIDAD, t.TRK_RUMBO, t.TRK_BATERIA, t.TRK_FECHA, "
+            "c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO "
             "FROM TRACKING t "
             "JOIN CHOFERES c ON t.CHO_ID = c.CHO_ID "
-            "LEFT JOIN PEDIDOS p ON p.CHO_ID = t.CHO_ID AND p.PED_ESTADO IN ('EN_RUTA', 'ASIGNADO') "
             "WHERE t.EMP_ID = ? "
-            "ORDER BY t.CHO_ID, t.TRK_FECHA DESC",
+            "AND t.TRK_FECHA = (SELECT MAX(T2.TRK_FECHA) FROM TRACKING T2 WHERE T2.CHO_ID = t.CHO_ID AND T2.EMP_ID = t.EMP_ID) "
+            "ORDER BY t.TRK_FECHA DESC",
             [emp_id]
         )
-        # Filter to only choferes with recent tracking (last 2 hours)
-        from datetime import datetime, timedelta
-        cutoff = datetime.now() - timedelta(hours=2)
-        live = []
-        for row in (data or []):
-            if row.get('TRK_FECHA'):
-                try:
-                    fecha = row['TRK_FECHA']
-                    if isinstance(fecha, str):
-                        fecha = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
-                    if fecha.replace(tzinfo=None) > cutoff:
-                        live.append(row)
-                except Exception:
-                    live.append(row)  # Include if can't parse date
-            else:
-                live.append(row)
-        return jsonify({'success': True, 'data': live})
+        return jsonify({'success': True, 'data': data or []})
     except Exception as e:
+        app.logger.warning(f'Live tracking error: {str(e)}')
         return jsonify({'success': True, 'data': []})
 
 
