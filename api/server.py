@@ -699,9 +699,10 @@ def create_pedido():
         new_id = last[0]['id'] if last else None
         # Send notification
         try:
-            notification_service.send('pedido_creado', new_id, emp_id,
-                                     cli_id=p.get('cliId'),
-                                     extra={'destino': p.get('destinoDir', '')})
+            if notification_service:
+                notification_service.send('pedido_creado', new_id, emp_id,
+                                         cli_id=p.get('cliId'),
+                                         extra={'destino': p.get('destinoDir', '')})
         except Exception:
             pass
     except Exception:
@@ -729,27 +730,30 @@ def update_estado_pedido(ped_id):
             ch = query("SELECT CHF_NOMBRE FROM CHOFERES WHERE CHO_ID=?", [chofer_id]) if chofer_id else None
             chofer_name = ch[0].get('CHF_NOMBRE', 'Chofer') if ch else 'Chofer'
             # Notify client that order is on the way
-            notification_service.send('pedido_en_ruta', ped_id, emp_id,
-                                     cli_id=cli_id,
-                                     extra={'chofer': chofer_name,
-                                            'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
-            # Notify chofer
-            if chofer_id:
-                notification_service.send('pedido_asignado_chofer', ped_id, emp_id,
-                                         chofer_id=chofer_id, cli_id=cli_id,
-                                         extra={'cliente': pedido[0].get('PED_CLIENTE_NOMBRE', '') if pedido else '',
-                                                'origen': '', 'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
+            if notification_service:
+                notification_service.send('pedido_en_ruta', ped_id, emp_id,
+                                         cli_id=cli_id,
+                                         extra={'chofer': chofer_name,
+                                                'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
+                # Notify chofer
+                if chofer_id:
+                    notification_service.send('pedido_asignado_chofer', ped_id, emp_id,
+                                             chofer_id=chofer_id, cli_id=cli_id,
+                                             extra={'cliente': pedido[0].get('PED_CLIENTE_NOMBRE', '') if pedido else '',
+                                                    'origen': '', 'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
 
         elif estado == 'ENTREGADO':
-            notification_service.send('pedido_entregado', ped_id, emp_id,
-                                     cli_id=cli_id,
-                                     extra={'fecha_entrega': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                                            'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
+            if notification_service:
+                notification_service.send('pedido_entregado', ped_id, emp_id,
+                                         cli_id=cli_id,
+                                         extra={'fecha_entrega': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                                                'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
 
         elif estado == 'CANCELADO':
-            notification_service.send('pedido_cancelado', ped_id, emp_id,
-                                     cli_id=cli_id,
-                                     extra={'razon': request.json.get('razon', 'Sin especificar')})
+            if notification_service:
+                notification_service.send('pedido_cancelado', ped_id, emp_id,
+                                         cli_id=cli_id,
+                                         extra={'razon': request.json.get('razon', 'Sin especificar')})
     except Exception as e:
         app.logger.warning(f'Notification error: {str(e)}')
 
@@ -1429,11 +1433,18 @@ def update_whitelabel():
 # ========================================
 # MODULO: EXPORTACION CSV/PDF
 # ========================================
-from export_service import export_service, EXPORT_CONFIGS
+try:
+    from export_service import export_service, EXPORT_CONFIGS
+except Exception as _export_err:
+    export_service = None
+    EXPORT_CONFIGS = {}
+    print(f'[WARN] Export service disabled: {_export_err}')
 
 
 @app.route('/api/export/<entity>', methods=['GET'])
 def export_entity(entity):
+    if not export_service:
+        return jsonify({'success': False, 'error': 'Export service not configured'}), 503
     emp_id = get_emp_id()
     fmt = request.args.get('format', 'csv')
 
@@ -1473,6 +1484,8 @@ def export_entity(entity):
 
 @app.route('/api/export/custom', methods=['POST'])
 def export_custom():
+    if not export_service:
+        return jsonify({'success': False, 'error': 'Export service not configured'}), 503
     data = request.json or {}
     sql = data.get('sql', '')
     columns = data.get('columns', {})
@@ -2004,11 +2017,17 @@ from payment_service import (
 # ========================================
 # MODULO: NOTIFICACIONES
 # ========================================
-from notification_service import notification_service
+try:
+    from notification_service import notification_service
+except Exception as _notif_err:
+    notification_service = None
+    print(f'[WARN] Notification service disabled: {_notif_err}')
 
 
 @app.route('/api/notifications/send', methods=['POST'])
 def send_notification():
+    if not notification_service:
+        return jsonify({'success': False, 'error': 'Notification service not configured'}), 503
     data = request.get_json() or {}
     template = data.get('template')
     pedido_id = data.get('pedido_id')
@@ -2026,6 +2045,8 @@ def send_notification():
 
 @app.route('/api/notifications/custom', methods=['POST'])
 def send_custom_notification():
+    if not notification_service:
+        return jsonify({'success': False, 'error': 'Notification service not configured'}), 503
     data = request.get_json() or {}
     result = notification_service.send_custom(
         to_email=data.get('to_email'),
@@ -2039,6 +2060,8 @@ def send_custom_notification():
 
 @app.route('/api/notifications/test', methods=['POST'])
 def test_notification():
+    if not notification_service:
+        return jsonify({'success': False, 'error': 'Notification service not configured'}), 503
     data = request.get_json() or {}
     test_type = data.get('type', 'email')
     to = data.get('to')
@@ -2055,6 +2078,8 @@ def test_notification():
 
 @app.route('/api/notifications/config', methods=['GET'])
 def get_notification_config():
+    if not notification_service:
+        return jsonify({'success': True, 'data': {'email_enabled': False, 'sms_enabled': False, 'email_provider': 'None', 'sms_provider': 'None'}})
     return jsonify({
         'success': True,
         'data': {
