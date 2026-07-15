@@ -25,7 +25,6 @@ function toggleSidebar(){
   if(mc)mc.classList.toggle('expanded');
 }
 
-function toggleTheme(){ThemeManager.toggle();const icon=document.getElementById('theme-icon');if(icon)icon.className=getTheme()==='dark'?'fas fa-sun':'fas fa-moon'}
 function getTheme(){try{return typeof ThemeManager!=='undefined'?ThemeManager.get():'dark';}catch(e){return 'dark';}}
 
 /* ==========================================
