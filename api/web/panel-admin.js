@@ -503,6 +503,7 @@ function loadBilling() {
   apiGet('/api/billing/estado').then(res => {
     if (!res.success || !res.data) return;
     billingData = res.data;
+    DB_SAAS = res.data;
 
     const planName = document.getElementById('billing-plan-name');
     const planPrice = document.getElementById('billing-plan-price');
@@ -528,10 +529,10 @@ function loadBilling() {
     if (fechaInicio) fechaInicio.textContent = 'Inicio: ' + (billingData.suscripcion_inicio || '--');
     if (proximoCobro) proximoCobro.textContent = 'Total pagado: ' + formatCurrency(billingData.monto_completado || 0);
 
-    // Usage (placeholder - would need real usage data)
-    if (usoPedidos) usoPedidos.textContent = '0/' + (billingData.limite_pedidos_mes || 500);
-    if (usoChoferes) usoChoferes.textContent = '0/' + (billingData.limite_choferes || 10);
-    if (usoUsuarios) usoUsuarios.textContent = '0/' + (billingData.limite_usuarios || 5);
+    // Usage - real data from API
+    if (usoPedidos) usoPedidos.textContent = (billingData.pedidos_usados || 0) + '/' + (billingData.limite_pedidos_mes || 500);
+    if (usoChoferes) usoChoferes.textContent = (billingData.choferes || 0) + '/' + (billingData.limite_choferes || 10);
+    if (usoUsuarios) usoUsuarios.textContent = (billingData.usuarios || 0) + '/' + (billingData.limite_usuarios || 5);
   }).catch(() => {});
 
   // Load payment history
@@ -622,6 +623,19 @@ function initBillingCharts() {
   const textColor = isDark ? '#9ca3af' : '#6b7280';
   const gridColor = isDark ? 'rgba(75,85,99,0.3)' : 'rgba(209,213,219,0.5)';
 
+  // Get real data from loaded billing state
+  const usageData = [
+    DB_SAAS?.limites?.pedidos_mes ? Math.round((DB_SAAS.pedidos_usados||0)/DB_SAAS.limites.pedidos_mes*100) : 0,
+    DB_SAAS?.limites?.choferes ? Math.round((DB_SAAS.choferes||0)/DB_SAAS.limites.choferes*100) : 0,
+    DB_SAAS?.limites?.usuarios ? Math.round((DB_SAAS.usuarios||0)/DB_SAAS.limites.usuarios*100) : 0
+  ];
+  const revenueData = DB_SAAS?.pagos?.length > 0
+    ? DB_SAAS.pagos.slice(-6).map(p => p.monto || 0)
+    : [DB_SAAS?.precio_mensual || 0];
+  const revenueLabels = DB_SAAS?.pagos?.length > 0
+    ? DB_SAAS.pagos.slice(-6).map(p => { const d = new Date(p.fecha); return d.toLocaleString('es-MX',{month:'short'}); })
+    : ['Actual'];
+
   // Usage chart
   const usageCtx = document.getElementById('chartUsageBilling');
   if (usageCtx && typeof Chart !== 'undefined') {
@@ -631,7 +645,7 @@ function initBillingCharts() {
       data: {
         labels: ['Pedidos', 'Choferes', 'Usuarios'],
         datasets: [{
-          data: [35, 60, 40],
+          data: usageData,
           backgroundColor: ['var(--accent)', 'var(--success)', 'var(--warning)'],
           borderWidth: 0
         }]
@@ -650,10 +664,10 @@ function initBillingCharts() {
     window._revBillingChart = new Chart(revCtx, {
       type: 'bar',
       data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        labels: revenueLabels,
         datasets: [{
           label: 'Ingresos',
-          data: [999, 999, 2499, 2499, 2499, 5999],
+          data: revenueData,
           backgroundColor: 'var(--accent)',
           borderRadius: 4
         }]
@@ -798,14 +812,7 @@ function initCancelChart(){
   cancelChart=new Chart(document.getElementById('chartCancelaciones'),{type:'bar',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'Cancelaciones',data:[32,28,41,35,52,38,47],backgroundColor:'rgba(239,68,68,0.15)',borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}}}}});
 }
 
-function initBillingCharts(){
-  if(mrrChart)mrrChart.destroy();
-  if(usageChart)usageChart.destroy();
-  const t=getTheme();
-  const tickC=t==='dark'?'#4a4a5a':'#6b7280';
-  mrrChart=new Chart(document.getElementById('chartMRR'),{type:'line',data:{labels:['Ene','Feb','Mar','Abr','May','Jun','Jul'],datasets:[{label:'MRR',data:[28500,31200,33800,35100,38400,42000,44900],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{display:false},ticks:{color:tickC,font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});
-  usageChart=new Chart(document.getElementById('chartUsage'),{type:'doughnut',data:{labels:['Starter','Pro','Enterprise'],datasets:[{data:[12,28,8],backgroundColor:['#7a7a8a','#6366f1','#f59e0b'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:tickC,padding:12,font:{size:11}}}}}});
-}
+/* MRR/Usage charts removed - canvas IDs don't exist in HTML */
 
 /* ==========================================
    MAPS

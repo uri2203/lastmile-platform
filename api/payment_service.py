@@ -366,6 +366,23 @@ def get_billing_stats(emp_id):
         monto_total = float(pagos[0].get('monto_total', 0) or 0)
         monto_completado = float(pagos[0].get('monto_completado', 0) or 0)
 
+    # Real usage counts
+    pedidos_usados = 0
+    choferes_count = 0
+    usuarios_count = 0
+    try:
+        r = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days'", [emp_id])
+        if r: pedidos_usados = r[0].get('TOTAL', 0) or 0
+    except Exception: pass
+    try:
+        r = query("SELECT COUNT(*) as total FROM CHOFERES WHERE EMP_ID=?", [emp_id])
+        if r: choferes_count = r[0].get('TOTAL', 0) or 0
+    except Exception: pass
+    try:
+        r = query("SELECT COUNT(*) as total FROM USUARIOS WHERE EMP_ID=?", [emp_id])
+        if r: usuarios_count = r[0].get('TOTAL', 0) or 0
+    except Exception: pass
+
     return {
         'plan_actual': plan_name,
         'plan_nombre': plan['name'],
@@ -378,6 +395,9 @@ def get_billing_stats(emp_id):
         'limite_usuarios': plan['max_usuarios'],
         'limite_choferes': plan['max_choferes'],
         'limite_pedidos_mes': plan['max_pedidos_mes'],
+        'pedidos_usados': pedidos_usados,
+        'choferes': choferes_count,
+        'usuarios': usuarios_count,
     }
 
 
