@@ -1369,47 +1369,54 @@ def get_billing_dashboard():
 
 @app.route('/api/saas/global-stats', methods=['GET'])
 def saas_global_stats():
-    empresas = query('SELECT COUNT(*) as total, COUNT(CASE WHEN EMP_ESTATUS=\'ACTIVA\' THEN 1 END) as activas FROM EMPRESAS')
-    pedidos_hoy = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE PED_FECHA_PEDIDO >= CURRENT_DATE")
-    pedidos_mes = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days'")
-    choferes = query('SELECT COUNT(*) as total FROM CHOFERES')
-    usuarios = query('SELECT COUNT(*) as total FROM USUARIOS')
-    clientes = query('SELECT COUNT(*) as total FROM CLIENTES_LM')
+    result = {
+        'empresas_total': 0, 'empresas_activas': 0, 'pedidos_hoy': 0, 'pedidos_mes': 0,
+        'choferes_total': 0, 'usuarios_total': 0, 'clientes_total': 0,
+        'revenue_mes': 0, 'mrr': 0, 'pagos_pendientes': 0, 'pagos_pend_monto': 0,
+        'sus_activas': 0, 'sus_trial': 0, 'sus_canceladas': 0,
+    }
+    try:
+        empresas = query('SELECT COUNT(*) as total, COUNT(CASE WHEN EMP_ESTATUS=\'ACTIVA\' THEN 1 END) as activas FROM EMPRESAS')
+        if empresas: result['empresas_total'] = empresas[0].get('total', 0); result['empresas_activas'] = empresas[0].get('activas', 0)
+    except Exception: pass
+    try:
+        r = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE PED_FECHA_PEDIDO >= CURRENT_DATE")
+        if r: result['pedidos_hoy'] = r[0].get('total', 0)
+    except Exception: pass
+    try:
+        r = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days'")
+        if r: result['pedidos_mes'] = r[0].get('total', 0)
+    except Exception: pass
+    try:
+        r = query('SELECT COUNT(*) as total FROM CHOFERES')
+        if r: result['choferes_total'] = r[0].get('total', 0)
+    except Exception: pass
+    try:
+        r = query('SELECT COUNT(*) as total FROM USUARIOS')
+        if r: result['usuarios_total'] = r[0].get('total', 0)
+    except Exception: pass
+    try:
+        r = query('SELECT COUNT(*) as total FROM CLIENTES_LM')
+        if r: result['clientes_total'] = r[0].get('total', 0)
+    except Exception: pass
+    try:
+        r = query("SELECT COALESCE(SUM(COB_MONTO), 0) as total FROM SAAS_COBROS WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '30 days'")
+        if r: result['revenue_mes'] = float(r[0].get('total', 0) or 0)
+    except Exception: pass
+    try:
+        r = query("SELECT COALESCE(SUM(P.PLAN_PRECIO_MENSUAL), 0) as total FROM SAAS_SUSCRIPCIONES S JOIN SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID WHERE S.SUS_ESTADO = 'ACTIVA'")
+        if r: result['mrr'] = float(r[0].get('total', 0) or 0)
+    except Exception: pass
+    try:
+        r = query("SELECT COUNT(*) as total, COALESCE(SUM(COB_MONTO), 0) as monto FROM SAAS_COBROS WHERE COB_ESTATUS = 'PENDIENTE'")
+        if r: result['pagos_pendientes'] = r[0].get('total', 0); result['pagos_pend_monto'] = float(r[0].get('monto', 0) or 0)
+    except Exception: pass
+    try:
+        sus = query("SELECT SUS_ESTADO, COUNT(*) as total FROM SAAS_SUSCRIPCIONES GROUP BY SUS_ESTADO")
+        for s in (sus or []): result['sus_' + s['SUS_ESTADO'].lower()] = s.get('total', 0)
+    except Exception: pass
 
-    revenue_mes = {'total': 0}
-    mrr = {'total': 0}
-    pagos_pend = {'total': 0, 'monto': 0}
-    sus_map = {}
-    try:
-        revenue_mes = query("SELECT COALESCE(SUM(COB_MONTO), 0) as total FROM SAAS_COBROS WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '30 days'")[0] or revenue_mes
-    except Exception: pass
-    try:
-        mrr = query("SELECT COALESCE(SUM(P.PLAN_PRECIO_MENSUAL), 0) as total FROM SAAS_SUSCRIPCIONES S JOIN SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID WHERE S.SUS_ESTADO = 'ACTIVA'")[0] or mrr
-    except Exception: pass
-    try:
-        pagos_pend = query("SELECT COUNT(*) as total, COALESCE(SUM(COB_MONTO), 0) as monto FROM SAAS_COBROS WHERE COB_ESTATUS = 'PENDIENTE'")[0] or pagos_pend
-    except Exception: pass
-    try:
-        suscripciones = query("SELECT SUS_ESTADO, COUNT(*) as total FROM SAAS_SUSCRIPCIONES GROUP BY SUS_ESTADO")
-        sus_map = {s['SUS_ESTADO']: s['total'] for s in (suscripciones or [])}
-    except Exception: pass
-
-    return jsonify({'success': True, 'data': {
-        'empresas_total': empresas[0]['total'] if empresas else 0,
-        'empresas_activas': empresas[0]['activas'] if empresas else 0,
-        'pedidos_hoy': pedidos_hoy[0]['total'] if pedidos_hoy else 0,
-        'pedidos_mes': pedidos_mes[0]['total'] if pedidos_mes else 0,
-        'choferes_total': choferes[0]['total'] if choferes else 0,
-        'usuarios_total': usuarios[0]['total'] if usuarios else 0,
-        'clientes_total': clientes[0]['total'] if clientes else 0,
-        'revenue_mes': float(revenue_mes.get('total', 0) or 0),
-        'mrr': float(mrr.get('total', 0) or 0),
-        'pagos_pendientes': pagos_pend.get('total', 0) or 0,
-        'pagos_pend_monto': float(pagos_pend.get('monto', 0) or 0),
-        'sus_activas': sus_map.get('ACTIVA', 0),
-        'sus_trial': sus_map.get('TRIAL', 0),
-        'sus_canceladas': sus_map.get('CANCELADA', 0),
-    }})
+    return jsonify({'success': True, 'data': result})
 
 
 @app.route('/api/saas/tenants/<int:emp_id>', methods=['GET'])
