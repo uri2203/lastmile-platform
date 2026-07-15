@@ -111,6 +111,13 @@ else:
         except Exception as e:
             print(f'[DB] PG seed skipped ({e}). Run: python migrate_to_pg.py DATABASE_URL')
 
+    # Auto-add billing columns if missing
+    try:
+        from payment_service import ensure_billing_columns
+        ensure_billing_columns()
+    except Exception as e:
+        print(f'[DB] Billing columns check skipped: {e}')
+
 
 def get_emp_id():
     try:
@@ -1559,10 +1566,29 @@ def get_planes():
 @app.route('/api/billing/estado', methods=['GET'])
 def get_billing_estado():
     emp_id = get_emp_id()
-    stats = get_billing_stats(emp_id)
-    stats['stripe_enabled'] = stripe_service.enabled
-    stats['mp_enabled'] = mp_service.enabled
-    return jsonify({'success': True, 'data': stats})
+    try:
+        stats = get_billing_stats(emp_id)
+        stats['stripe_enabled'] = stripe_service.enabled
+        stats['mp_enabled'] = mp_service.enabled
+        return jsonify({'success': True, 'data': stats})
+    except Exception as e:
+        error_logger.error(f'Billing estado error: {str(e)}', exc_info=True)
+        plan = get_plan_config('STARTER')
+        return jsonify({'success': True, 'data': {
+            'plan_actual': 'STARTER',
+            'plan_nombre': plan['name'],
+            'precio_mensual': plan['price_mxn'],
+            'suscripcion_activa': False,
+            'suscripcion_inicio': None,
+            'total_pagos': 0,
+            'monto_total': 0,
+            'monto_completado': 0,
+            'limite_usuarios': plan['max_usuarios'],
+            'limite_choferes': plan['max_choferes'],
+            'limite_pedidos_mes': plan['max_pedidos_mes'],
+            'stripe_enabled': stripe_service.enabled,
+            'mp_enabled': mp_service.enabled,
+        }})
 
 
 @app.route('/api/billing/checkout', methods=['POST'])

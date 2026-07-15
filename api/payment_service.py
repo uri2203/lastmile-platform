@@ -178,14 +178,23 @@ class MercadoPagoService:
 # BILLING DATABASE OPERATIONS
 # ========================================
 def get_empresa_billing(emp_id):
-    rows = query(
-        "SELECT EMP_ID, EMP_NOMBRE, EMP_EMAIL, EMP_PLAN, EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES "
-        "FROM EMPRESAS WHERE EMP_ID = ?", [emp_id]
-    )
+    rows = None
+    try:
+        rows = query(
+            "SELECT EMP_ID, EMP_NOMBRE, EMP_EMAIL, EMP_PLAN, EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES "
+            "FROM EMPRESAS WHERE EMP_ID = ?", [emp_id]
+        )
+    except Exception:
+        try:
+            rows = query("SELECT EMP_ID, EMP_NOMBRE, EMP_EMAIL FROM EMPRESAS WHERE EMP_ID = ?", [emp_id])
+        except Exception:
+            return None
+
     if not rows:
         return None
     empresa = rows[0]
-    plan = get_plan_config(empresa.get('EMP_PLAN', 'STARTER'))
+    plan_name = empresa.get('EMP_PLAN', 'STARTER') or 'STARTER'
+    plan = get_plan_config(plan_name)
     empresa['plan_config'] = plan
 
     try:
@@ -215,6 +224,28 @@ def get_empresa_billing(emp_id):
     empresa['pagos_recientes'] = pagos
 
     return empresa
+
+
+def ensure_billing_columns():
+    """Add missing billing columns/tables to EMPRESAS if they don't exist."""
+    if not USE_POSTGRES:
+        return
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_PLAN TEXT DEFAULT 'STARTER'")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_MAX_USUARIOS INTEGER DEFAULT 5")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_MAX_CHOFERES INTEGER DEFAULT 10")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_MAX_PEDIDOS_MES INTEGER DEFAULT 500")
+    except Exception:
+        pass
 
 
 def create_suscripcion(emp_id, plan_name, provider, external_id=None):
@@ -316,9 +347,24 @@ def get_billing_stats(emp_id):
             pass
 
     suscripcion = get_suscripcion_activa(emp_id)
-    empresa = query("SELECT EMP_PLAN FROM EMPRESAS WHERE EMP_ID=?", [emp_id])
-    plan_name = empresa[0]['EMP_PLAN'] if empresa else 'STARTER'
+
+    plan_name = 'STARTER'
+    try:
+        empresa = query("SELECT EMP_PLAN FROM EMPRESAS WHERE EMP_ID=?", [emp_id])
+        if empresa and empresa[0].get('EMP_PLAN'):
+            plan_name = empresa[0]['EMP_PLAN']
+    except Exception:
+        pass
+
     plan = get_plan_config(plan_name)
+
+    total_pagos = 0
+    monto_total = 0
+    monto_completado = 0
+    if pagos and len(pagos) > 0:
+        total_pagos = pagos[0].get('total_pagos', 0) or 0
+        monto_total = float(pagos[0].get('monto_total', 0) or 0)
+        monto_completado = float(pagos[0].get('monto_completado', 0) or 0)
 
     return {
         'plan_actual': plan_name,
@@ -326,9 +372,9 @@ def get_billing_stats(emp_id):
         'precio_mensual': plan['price_mxn'],
         'suscripcion_activa': suscripcion is not None,
         'suscripcion_inicio': str(suscripcion.get('SUS_FECHA_INICIO', '')) if suscripcion else None,
-        'total_pagos': pagos[0]['total_pagos'] if pagos else 0,
-        'monto_total': float(pagos[0]['monto_total'] or 0) if pagos else 0,
-        'monto_completado': float(pagos[0]['monto_completado'] or 0) if pagos else 0,
+        'total_pagos': total_pagos,
+        'monto_total': monto_total,
+        'monto_completado': monto_completado,
         'limite_usuarios': plan['max_usuarios'],
         'limite_choferes': plan['max_choferes'],
         'limite_pedidos_mes': plan['max_pedidos_mes'],
