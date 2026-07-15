@@ -1529,6 +1529,192 @@ def delete_pedido(ped_id):
 
 
 # ========================================
+# MODULO: BILLING / SUSCRIPCIONES
+# ========================================
+from payment_service import (
+    stripe_service, mp_service, get_plan_config, PLANS,
+    get_empresa_billing, create_suscripcion, create_pago,
+    cancel_suscripcion, get_suscripcion_activa, get_billing_stats
+)
+
+
+@app.route('/api/billing/planes', methods=['GET'])
+def get_planes():
+    planes = []
+    for key, plan in PLANS.items():
+        planes.append({
+            'id': key,
+            'name': plan['name'],
+            'price_mxn': plan['price_mxn'],
+            'max_usuarios': plan['max_usuarios'],
+            'max_choferes': plan['max_choferes'],
+            'max_pedidos_mes': plan['max_pedidos_mes'],
+            'features': plan['features'],
+            'stripe_available': bool(plan['stripe_price_id']),
+            'mp_available': bool(plan['mp_plan_id']),
+        })
+    return jsonify({'success': True, 'data': planes})
+
+
+@app.route('/api/billing/estado', methods=['GET'])
+def get_billing_estado():
+    emp_id = get_emp_id()
+    stats = get_billing_stats(emp_id)
+    stats['stripe_enabled'] = stripe_service.enabled
+    stats['mp_enabled'] = mp_service.enabled
+    return jsonify({'success': True, 'data': stats})
+
+
+@app.route('/api/billing/checkout', methods=['POST'])
+def create_checkout():
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    plan_name = data.get('plan', 'STARTER')
+    provider = data.get('provider', 'stripe')
+
+    empresa = query("SELECT * FROM EMPRESAS WHERE EMP_ID=?", [emp_id])
+    if not empresa:
+        return jsonify({'success': False, 'error': 'Empresa no encontrada'}), 404
+    empresa = empresa[0]
+
+    base_url = request.host_url.rstrip('/')
+    success_url = f'{base_url}/panel-admin.html?billing=success'
+    cancel_url = f'{base_url}/panel-admin.html?billing=cancel'
+
+    if provider == 'stripe':
+        result = stripe_service.create_checkout_session(emp_id, plan_name, success_url, cancel_url)
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        return jsonify({'success': True, 'checkout_url': result.get('url'), 'session_id': result.get('id')})
+    elif provider == 'mercadopago':
+        result = mp_service.create_preference(
+            emp_id, plan_name,
+            success_url, cancel_url, success_url
+        )
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        return jsonify({'success': True, 'checkout_url': result.get('init_point'), 'preference_id': result.get('id')})
+    else:
+        return jsonify({'success': False, 'error': f'Proveedor no soportado: {provider}'}), 400
+
+
+@app.route('/api/billing/suscripcion', methods=['POST'])
+def activate_suscripcion():
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    plan_name = data.get('plan', 'STARTER')
+    provider = data.get('provider', 'manual')
+    external_id = data.get('external_id', '')
+
+    create_suscripcion(emp_id, plan_name, provider, external_id)
+    return jsonify({'success': True, 'message': f'Suscripcion {plan_name} activada'})
+
+
+@app.route('/api/billing/cancelar', methods=['POST'])
+def cancelar_suscripcion():
+    emp_id = get_emp_id()
+    sus = get_suscripcion_activa(emp_id)
+    if not sus:
+        return jsonify({'success': False, 'error': 'No hay suscripcion activa'})
+
+    if sus.get('SUS_PROVEEDOR') == 'stripe' and sus.get('SUS_EXTERNAL_ID'):
+        stripe_service.cancel_subscription(sus['SUS_EXTERNAL_ID'])
+
+    cancel_suscripcion(emp_id)
+    return jsonify({'success': True, 'message': 'Suscripcion cancelada, plan revertido a Starter'})
+
+
+@app.route('/api/billing/pagos', methods=['GET'])
+def get_pagos():
+    emp_id = get_emp_id()
+    pagos = query(
+        "SELECT * FROM PAGOS_TRANSACCIONES WHERE EMP_ID = ? ORDER BY TRP_FECHA_REGISTRO DESC LIMIT 50",
+        [emp_id]
+    )
+    return jsonify({'success': True, 'data': pagos})
+
+
+@app.route('/api/billing/pago', methods=['POST'])
+def record_pago():
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    monto = float(data.get('monto', 0))
+    metodo = data.get('metodo', 'EFECTIVO')
+    referencia = data.get('referencia', '')
+    notas = data.get('notas', '')
+
+    if monto <= 0:
+        return jsonify({'success': False, 'error': 'Monto debe ser mayor a 0'}), 400
+
+    create_pago(emp_id, monto, metodo, referencia, notas)
+    return jsonify({'success': True, 'message': 'Pago registrado'})
+
+
+@app.route('/api/billing/webhook/stripe', methods=['POST'])
+@limiter.limit("100 per minute")
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature', '')
+
+    event = stripe_service.verify_webhook(payload, sig_header)
+    if not event:
+        return jsonify({'error': 'Invalid webhook'}), 400
+
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        emp_id = int(session.get('metadata', {}).get('emp_id', 0))
+        plan_name = session.get('metadata', {}).get('plan', 'STARTER')
+        if emp_id:
+            create_suscripcion(emp_id, plan_name, 'stripe', session.get('subscription'))
+            create_pago(emp_id, PLANS.get(plan_name, {}).get('price_mxn', 0), 'STRIPE', session.get('payment_intent'))
+    elif event['type'] == 'invoice.payment_succeeded':
+        invoice = event['data']['object']
+        emp_id = int(invoice.get('metadata', {}).get('emp_id', 0))
+        if emp_id:
+            create_pago(emp_id, invoice.get('amount_paid', 0) / 100, 'STRIPE', invoice.get('payment_intent'), 'Renovacion automatica')
+    elif event['type'] == 'customer.subscription.deleted':
+        sub = event['data']['object']
+        sub_id = sub.get('id')
+        rows = query("SELECT EMP_ID FROM SUSCRIPCIONES WHERE SUS_EXTERNAL_ID=? AND SUS_ESTADO='ACTIVA'", [sub_id])
+        if rows:
+            cancel_suscripcion(rows[0]['EMP_ID'])
+
+    return jsonify({'received': True})
+
+
+@app.route('/api/billing/webhook/mercadopago', methods=['POST'])
+@limiter.limit("100 per minute")
+def mercadopago_webhook():
+    data = request.get_json() or {}
+    if data.get('type') == 'payment':
+        payment_id = data.get('data', {}).get('id')
+        if payment_id:
+            payment = mp_service.get_payment(payment_id)
+            if payment.get('status') == 'approved':
+                ext_ref = payment.get('external_reference', '')
+                if ext_ref.startswith('emp_'):
+                    parts = ext_ref.split('_')
+                    emp_id = int(parts[1]) if len(parts) > 1 else 0
+                    plan_name = parts[2] if len(parts) > 2 else 'STARTER'
+                    if emp_id:
+                        create_suscripcion(emp_id, plan_name, 'mercadopago', str(payment_id))
+                        create_pago(emp_id, payment.get('transaction_amount', 0), 'MERCADOPAGO', str(payment_id))
+    return jsonify({'received': True})
+
+
+@app.route('/api/billing/stats-all', methods=['GET'])
+def billing_stats_all():
+    stats = query('''
+        SELECT E.EMP_ID, E.EMP_NOMBRE, E.EMP_PLAN,
+            (SELECT COUNT(*) FROM SUSCRIPCIONES S WHERE S.EMP_ID = E.EMP_ID AND S.SUS_ESTADO = 'ACTIVA') as activas,
+            (SELECT COALESCE(SUM(T.TRP_MONTO), 0) FROM PAGOS_TRANSACCIONES T WHERE T.EMP_ID = E.EMP_ID AND T.TRP_ESTATUS = 'COMPLETADO') as ingresos
+        FROM EMPRESAS E
+        ORDER BY E.EMP_ID
+    ''')
+    return jsonify({'success': True, 'data': stats})
+
+
+# ========================================
 # MANTENIMIENTO (EDGAR data - simulado)
 # ========================================
 @app.route('/api/mantenimiento/unidades', methods=['GET'])

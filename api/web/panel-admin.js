@@ -496,34 +496,178 @@ function eliminarPago(id){
 /* ==========================================
    SaaS / BILLING
    ========================================== */
-function renderBilling(){
-  apiGet('/api/saas/tenants?emp_id=1').then(res=>{
-    if(!res.data)return;
-    DB_SAAS=res.data;
-    const tbody=document.getElementById('billingTableBody');
+let billingData = null;
 
-    if(!tbody)return;
-    tbody.innerHTML=DB_SAAS.map(b=>{
-      const id=b.SAS_ID||b.id||b.EMP_ID;
-      const nombre=b.EMP_NOMBRE||b.nombre||b.cliente||'-';
-      const plan=b.PLAN_NOMBRE||b.plan||'Starter';
-      const estado=(b.SAS_ESTADO||b.estado||'activo');
-      const facturacion=b.SAS_FACTURACION||b.facturacion||0;
-      return '<tr>'+
-        '<td style="font-weight:500;">'+nombre+'</td>'+
-        '<td>'+planBadge(plan)+'</td>'+
-        '<td>'+statusBadge(estado)+'</td>'+
-        '<td style="font-weight:500;color:var(--success,#10b981);">'+formatCurrency(facturacion)+'</td>'+
-        '<td><button class="btn btn-ghost btn-sm" onclick="showToast(\'Ver detalle '+id+'\',\'info\')" title="Ver"><i class="fas fa-eye" style="font-size:10px;"></i></button></td>'+
+function loadBilling() {
+  // Load current billing state
+  apiGet('/api/billing/estado').then(res => {
+    if (!res.success || !res.data) return;
+    billingData = res.data;
+
+    const planName = document.getElementById('billing-plan-name');
+    const planPrice = document.getElementById('billing-plan-price');
+    const statusDot = document.getElementById('billing-status-dot');
+    const statusText = document.getElementById('billing-status-text');
+    const fechaInicio = document.getElementById('billing-fecha-inicio');
+    const proximoCobro = document.getElementById('billing-proximo-cobro');
+    const usoPedidos = document.getElementById('billing-uso-pedidos');
+    const usoChoferes = document.getElementById('billing-uso-choferes');
+    const usoUsuarios = document.getElementById('billing-uso-usuarios');
+
+    if (planName) planName.textContent = billingData.plan_nombre || 'Starter';
+    if (planPrice) planPrice.textContent = formatCurrency(billingData.precio_mensual || 999) + ' MXN/mes';
+
+    if (billingData.suscripcion_activa) {
+      if (statusDot) statusDot.style.background = 'var(--success)';
+      if (statusText) statusText.textContent = 'Activa';
+    } else {
+      if (statusDot) statusDot.style.background = 'var(--warning)';
+      if (statusText) statusText.textContent = 'Sin suscripcion';
+    }
+
+    if (fechaInicio) fechaInicio.textContent = 'Inicio: ' + (billingData.suscripcion_inicio || '--');
+    if (proximoCobro) proximoCobro.textContent = 'Total pagado: ' + formatCurrency(billingData.monto_completado || 0);
+
+    // Usage (placeholder - would need real usage data)
+    if (usoPedidos) usoPedidos.textContent = '0/' + (billingData.limite_pedidos_mes || 500);
+    if (usoChoferes) usoChoferes.textContent = '0/' + (billingData.limite_choferes || 10);
+    if (usoUsuarios) usoUsuarios.textContent = '0/' + (billingData.limite_usuarios || 5);
+  }).catch(() => {});
+
+  // Load payment history
+  apiGet('/api/billing/pagos').then(res => {
+    if (!res.success || !res.data) return;
+    const tbody = document.getElementById('billingPagosTableBody');
+    if (!tbody) return;
+
+    if (res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">Sin pagos registrados</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = res.data.map(p => {
+      const fecha = p.TRP_FECHA_REGISTRO || p.COB_FECHA_COBRO || '-';
+      const monto = formatCurrency(p.TRP_MONTO || p.COB_MONTO || 0);
+      const metodo = p.TRP_METODO || p.COB_METODO_PAGO || '-';
+      const ref = p.TRP_NUM_REFERENCIA || p.COB_REFERENCIA_PAGO || '-';
+      const estatus = (p.TRP_ESTATUS || p.COB_ESTATUS || 'PENDIENTE').toLowerCase();
+      return '<tr>' +
+        '<td>' + fecha + '</td>' +
+        '<td style="font-weight:500;color:var(--success);">' + monto + '</td>' +
+        '<td>' + metodo + '</td>' +
+        '<td>' + ref + '</td>' +
+        '<td>' + statusBadge(estatus) + '</td>' +
         '</tr>';
     }).join('');
-  }).catch(()=>{});
+  }).catch(() => {});
 
-  // MRR Chart
-  apiGet('/api/saas/dashboard-billing').then(res=>{
-    if(!res.data)return;
-    initBillingCharts();
-  }).catch(()=>initBillingCharts());
+  // Init charts
+  initBillingCharts();
+}
+
+function selectPlan(planName) {
+  if (!confirm('Deseas cambiar al plan ' + planName + '?')) return;
+
+  apiPost('/api/billing/suscripcion', { plan: planName, provider: 'manual' }).then(res => {
+    if (res.success) {
+      showToast('Plan actualizado a ' + planName, 'success');
+      loadBilling();
+    } else {
+      showToast(res.error || 'Error actualizando plan', 'error');
+    }
+  }).catch(() => showToast('Error de conexion', 'error'));
+}
+
+function cancelarSuscripcion() {
+  if (!confirm('Seguro que deseas cancelar tu suscripcion? Se revertira al plan Starter.')) return;
+
+  apiPost('/api/billing/cancelar', {}).then(res => {
+    if (res.success) {
+      showToast('Suscripcion cancelada', 'success');
+      loadBilling();
+    } else {
+      showToast(res.error || 'Error cancelando', 'error');
+    }
+  }).catch(() => showToast('Error de conexion', 'error'));
+}
+
+function openUpgradeModal() {
+  showToast('Selecciona un plan de la lista', 'info');
+}
+
+function pagarManual() {
+  const monto = prompt('Monto del pago (MXN):');
+  if (!monto || isNaN(monto)) return;
+
+  const metodo = prompt('Metodo de pago (EFECTIVO, TRANSFERENCIA, TARJETA):') || 'EFECTIVO';
+  const ref = prompt('Referencia (opcional):') || '';
+
+  apiPost('/api/billing/pago', {
+    monto: parseFloat(monto),
+    metodo: metodo,
+    referencia: ref,
+    notas: 'Pago manual registrado desde admin'
+  }).then(res => {
+    if (res.success) {
+      showToast('Pago registrado: ' + formatCurrency(monto), 'success');
+      loadBilling();
+    } else {
+      showToast(res.error || 'Error registrando pago', 'error');
+    }
+  }).catch(() => showToast('Error de conexion', 'error'));
+}
+
+function initBillingCharts() {
+  const isDark = getTheme() === 'dark';
+  const textColor = isDark ? '#9ca3af' : '#6b7280';
+  const gridColor = isDark ? 'rgba(75,85,99,0.3)' : 'rgba(209,213,219,0.5)';
+
+  // Usage chart
+  const usageCtx = document.getElementById('chartUsageBilling');
+  if (usageCtx && typeof Chart !== 'undefined') {
+    if (window._usageBillingChart) window._usageBillingChart.destroy();
+    window._usageBillingChart = new Chart(usageCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pedidos', 'Choferes', 'Usuarios'],
+        datasets: [{
+          data: [35, 60, 40],
+          backgroundColor: ['var(--accent)', 'var(--success)', 'var(--warning)'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 11 } } } }
+      }
+    });
+  }
+
+  // Revenue chart
+  const revCtx = document.getElementById('chartRevenueBilling');
+  if (revCtx && typeof Chart !== 'undefined') {
+    if (window._revBillingChart) window._revBillingChart.destroy();
+    window._revBillingChart = new Chart(revCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Ingresos',
+          data: [999, 999, 2499, 2499, 2499, 5999],
+          backgroundColor: 'var(--accent)',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } },
+          x: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
 }
 
 /* ==========================================
@@ -981,7 +1125,7 @@ function refreshData(){
   showToast('Actualizando datos...','info');
   setTimeout(()=>{
     loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
-    renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
+    renderClientes();renderCFDI();renderPagos();loadBilling();renderUsuarios();renderAudit();
     loadNotifications();
     showToast('Datos actualizados','success');
   },800);
@@ -992,7 +1136,7 @@ function refreshData(){
    ========================================== */
 window.addEventListener('load',()=>{
   loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
-  renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
+  renderClientes();renderCFDI();renderPagos();loadBilling();renderUsuarios();renderAudit();
   initCharts();initCancelChart();initActivityFeed();loadNotifications();
   setTimeout(()=>{initDashboardMap();initDashboardMapFromChofres();},500);
 });
