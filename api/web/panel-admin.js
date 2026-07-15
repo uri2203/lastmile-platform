@@ -140,7 +140,33 @@ function renderPedidos(){
 function verPedido(id){
   const p=DB_PEDIDOS.find(x=>(x.PED_ID||x.id)==id);
   if(!p)return;
-  showToast('Pedido: '+(p.PED_NUMERO||'PED-'+id)+' - '+(p.PED_ESTADO||''),'info');
+  const el=document.getElementById('pedidoDetalleContent');
+  if(!el)return;
+  el.innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Folio</label><div style="font-size:14px;font-weight:600;color:var(--accent);">'+(p.PED_NUMERO||'PED-'+p.PED_ID)+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Estado</label><div>'+statusBadge((p.PED_ESTADO||'pendiente').toLowerCase())+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Cliente</label><div style="font-size:14px;">'+(p.PED_CLIENTE_NOMBRE||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Telefono</label><div style="font-size:14px;">'+(p.PED_CLIENTE_TELEFONO||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Origen</label><div style="font-size:14px;">'+(p.PED_ORIGEN_DIR||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Destino</label><div style="font-size:14px;">'+(p.PED_DESTINO_DIR||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Colonia Destino</label><div style="font-size:14px;">'+(p.PED_DESTINO_COL||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">CP Destino</label><div style="font-size:14px;">'+(p.PED_DESTINO_CP||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Ciudad</label><div style="font-size:14px;">'+(p.PED_DESTINO_CIUDAD||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Estado Destino</label><div style="font-size:14px;">'+(p.PED_DESTINO_ESTADO||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Chofer</label><div style="font-size:14px;">'+(p.CHOFER_ASIGNADO||'Sin asignar')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Vehiculo</label><div style="font-size:14px;">'+(p.UNIDAD_ASIGNADA||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Bultos</label><div style="font-size:14px;">'+(p.PED_BULTOS||1)+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Peso (kg)</label><div style="font-size:14px;">'+(p.PED_PESO_KG||0)+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Costo Envio</label><div style="font-size:14px;font-weight:600;">'+formatCurrency(p.PED_COSTO_ENVIO||0)+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Costo Total</label><div style="font-size:14px;font-weight:600;">'+formatCurrency(p.PED_COSTO_TOTAL||0)+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Forma de Pago</label><div style="font-size:14px;">'+(p.PED_FORMA_PAGO||'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Prioridad</label><div style="font-size:14px;">'+(p.PED_PRIORIDAD||'NORMAL')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Fecha Pedido</label><div style="font-size:14px;">'+(p.PED_FECHA_PEDIDO?new Date(p.PED_FECHA_PEDIDO).toLocaleString():'-')+'</div></div>'+
+    '<div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Referencia</label><div style="font-size:14px;">'+(p.PED_REFERENCIA||'-')+'</div></div>'+
+    '<div style="grid-column:span 2;"><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Descripcion</label><div style="font-size:14px;">'+(p.PED_DESCRIPCION||p.PED_INSTRUCCIONES||'Sin descripcion')+'</div></div>'+
+    '</div>';
+  openModal('modalDetallePedido');
 }
 
 function eliminarPedido(id){
