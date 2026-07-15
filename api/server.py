@@ -586,6 +586,68 @@ def get_dashboard(emp_id):
     return jsonify({'success': True, 'data': data[0] if data else {}})
 
 
+@app.route('/api/dashboard/<int:emp_id>/charts', methods=['GET'])
+def get_dashboard_charts(emp_id):
+    """Get real chart data for dashboard."""
+    result = {'pedidos_semana': [], 'ingresos_semana': [], 'estados_pie': {}, 'top_choferes': []}
+
+    # Pedidos by day of week (last 7 days)
+    try:
+        rows = query(
+            "SELECT TO_CHAR(PED_FECHA_PEDIDO, 'Dy') as dia, COUNT(*) as total "
+            "FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '7 days' "
+            "GROUP BY TO_CHAR(PED_FECHA_PEDIDO, 'Dy'), EXTRACT(DOW FROM PED_FECHA_PEDIDO) "
+            "ORDER BY EXTRACT(DOW FROM PED_FECHA_PEDIDO)",
+            [emp_id]
+        )
+        result['pedidos_semana'] = [{'dia': r['DIA'], 'total': r['TOTAL']} for r in (rows or [])]
+    except Exception:
+        pass
+
+    # Ingresos by day (last 7 days)
+    try:
+        rows = query(
+            "SELECT TO_CHAR(PED_FECHA_PEDIDO, 'Dy') as dia, SUM(PED_COSTO_TOTAL) as total "
+            "FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '7 days' "
+            "AND PED_ESTADO='ENTREGADO' "
+            "GROUP BY TO_CHAR(PED_FECHA_PEDIDO, 'Dy'), EXTRACT(DOW FROM PED_FECHA_PEDIDO) "
+            "ORDER BY EXTRACT(DOW FROM PED_FECHA_PEDIDO)",
+            [emp_id]
+        )
+        result['ingresos_semana'] = [{'dia': r['DIA'], 'total': float(r['TOTAL'] or 0)} for r in (rows or [])]
+    except Exception:
+        pass
+
+    # Order status distribution
+    try:
+        rows = query(
+            "SELECT PED_ESTADO, COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? "
+            "GROUP BY PED_ESTADO",
+            [emp_id]
+        )
+        result['estados_pie'] = {r['PED_ESTADO']: r['TOTAL'] for r in (rows or [])}
+    except Exception:
+        pass
+
+    # Top choferes by deliveries
+    try:
+        rows = query(
+            "SELECT c.CHO_NOMBRE, c.CHO_APELLIDO, COUNT(p.PED_ID) as entregas "
+            "FROM CHOFERES c LEFT JOIN PEDIDOS p ON c.CHO_ID = p.CHO_ID AND p.PED_ESTADO = 'ENTREGADO' "
+            "WHERE c.EMP_ID=? GROUP BY c.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO "
+            "ORDER BY entregas DESC LIMIT 5",
+            [emp_id]
+        )
+        result['top_choferes'] = [
+            {'nombre': f"{r['CHO_NOMBRE'] or ''} {r['CHO_APELLIDO'] or ''}".strip(), 'entregas': r['ENTREGAS']}
+            for r in (rows or [])
+        ]
+    except Exception:
+        pass
+
+    return jsonify({'success': True, 'data': result})
+
+
 # ========================================
 # MODULO: PEDIDOS
 # ========================================
