@@ -44,9 +44,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Make package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -s -X PATCH \
-            "https://api.github.com/user/packages/container/lastmile-platform" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{"visibility":"public"}'
+          gh api \
+            --method PATCH \
+            "/user/packages/container/lastmile-platform" \
+            -f visibility='public' || echo "Package visibility update skipped"
