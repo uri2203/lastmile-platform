@@ -982,6 +982,7 @@ function refreshData(){
   setTimeout(()=>{
     loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
     renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
+    loadNotifications();
     showToast('Datos actualizados','success');
   },800);
 }
@@ -992,7 +993,7 @@ function refreshData(){
 window.addEventListener('load',()=>{
   loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
   renderClientes();renderCFDI();renderPagos();renderBilling();renderUsuarios();renderAudit();
-  initCharts();initCancelChart();initActivityFeed();
+  initCharts();initCancelChart();initActivityFeed();loadNotifications();
   setTimeout(()=>{initDashboardMap();initDashboardMapFromChofres();},500);
 });
 
@@ -1036,6 +1037,73 @@ document.addEventListener('DOMContentLoaded',()=>{
         overlay.classList.remove('show');
         if(overlay.id==='modalNuevaZona')resetModalZona();
       }
-    });
   });
+});
+
+/* ==========================================
+   NOTIFICATIONS
+   ========================================== */
+function toggleNotifDropdown(){
+  const dd=document.getElementById('notif-dropdown');
+  if(dd.style.display==='none'){dd.style.display='block';loadNotifications();}
+  else dd.style.display='none';
+}
+document.addEventListener('click',e=>{
+  const bell=document.getElementById('notif-bell');
+  const dd=document.getElementById('notif-dropdown');
+  if(bell&&dd&&!bell.contains(e.target))dd.style.display='none';
+});
+
+async function loadNotifications(){
+  const list=document.getElementById('notif-list');
+  const empty=document.getElementById('notif-empty');
+  if(!list)return;
+  list.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-muted);">Cargando...</div>';
+  empty.style.display='none';
+  const notifs=[];
+  try{
+    const [statsRes,pagosRes,chofRes]=await Promise.all([
+      apiFetch('/api/pedidos/estadisticas'),
+      apiFetch('/api/pagos'),
+      apiFetch('/api/choferes')
+    ]);
+    if(statsRes&&statsRes.data){
+      const d=statsRes.data;
+      if(d.pendientes>0)notifs.push({icon:'fa-box',color:'var(--warning)',text:d.pendientes+' pedidos pendientes',section:'pedidos'});
+      if(d.cancelados>0)notifs.push({icon:'fa-times-circle',color:'var(--danger)',text:d.cancelados+' pedidos cancelados',section:'pedidos'});
+    }
+    if(pagosRes&&pagosRes.data){
+      const pend=pagosRes.data.filter(p=>(p.TRP_ESTATUS||p.PAG_ESTADO||'').toUpperCase()==='PENDIENTE');
+      if(pend.length>0)notifs.push({icon:'fa-dollar-sign',color:'var(--warning)',text:pend.length+' pagos pendientes de cobro',section:'pagos'});
+    }
+    if(chofRes&&chofRes.data){
+      const inact=chofRes.data.filter(c=>(c.CHO_ESTATUS||'').toUpperCase()==='INACTIVO');
+      if(inact.length>0)notifs.push({icon:'fa-user-xmark',color:'var(--danger)',text:inact.length+' choferes inactivos',section:'choferes'});
+    }
+  }catch(e){console.warn('notif error',e);}
+
+  const countEl=document.getElementById('notif-count');
+  if(notifs.length>0){
+    countEl.style.display='flex';
+    countEl.textContent=notifs.length;
+    list.innerHTML=notifs.map(n=>'<div class="notif-item" onclick="event.stopPropagation();document.getElementById(\'notif-dropdown\').style.display=\'none\';document.querySelector(\'[data-section='+n.section+']\').click();" style="padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid var(--border-primary);transition:background 0.15s;font-size:12px;"><i class="fas '+n.icon+'" style="color:'+n.color+';font-size:13px;width:18px;text-align:center;"></i><span>'+n.text+'</span></div>').join('');
+    list.querySelectorAll('.notif-item').forEach(el=>el.addEventListener('mouseenter',()=>el.style.background='var(--bg-card-hover)'));
+    list.querySelectorAll('.notif-item').forEach(el=>el.addEventListener('mouseleave',()=>el.style.background=''));
+    empty.style.display='none';
+  }else{
+    countEl.style.display='none';
+    list.innerHTML='';
+    empty.style.display='block';
+  }
+}
+
+async function apiFetch(endpoint){
+  try{
+    const resp=await fetch(API_BASE+endpoint,{headers:HEADERS});
+    if(!resp.ok)return null;
+    return await resp.json();
+  }catch(e){return null;}
+}
+
+function refreshNotifications(){loadNotifications();}
 });
