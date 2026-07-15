@@ -166,6 +166,11 @@ def login_page():
     return send_from_directory('web', 'index.html')
 
 
+@app.route('/saas')
+def saas_panel():
+    return send_from_directory('web', 'panel-saas.html')
+
+
 @app.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory('web', filename)
@@ -1360,6 +1365,176 @@ def get_billing_dashboard():
             'uso_hoy': uso_hoy[0] if uso_hoy else {}
         }
     })
+
+
+@app.route('/api/saas/global-stats', methods=['GET'])
+def saas_global_stats():
+    empresas = query('SELECT COUNT(*) as total, COUNT(CASE WHEN EMP_ESTATUS=\'ACTIVA\' THEN 1 END) as activas FROM EMPRESAS')
+    pedidos_hoy = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE PED_FECHA_PEDIDO >= CURRENT_DATE")
+    pedidos_mes = query("SELECT COUNT(*) as total FROM PEDIDOS WHERE PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days'")
+    choferes = query('SELECT COUNT(*) as total FROM CHOFERES')
+    usuarios = query('SELECT COUNT(*) as total FROM USUARIOS')
+    clientes = query('SELECT COUNT(*) as total FROM CLIENTES_LM')
+    revenue_mes = query("SELECT COALESCE(SUM(COB_MONTO), 0) as total FROM SAAS_COBROS WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '30 days'")
+    mrr = query("SELECT COALESCE(SUM(P.PLAN_PRECIO_MENSUAL), 0) as total FROM SAAS_SUSCRIPCIONES S JOIN SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID WHERE S.SUS_ESTADO = 'ACTIVA'")
+    pagos_pend = query("SELECT COUNT(*) as total, COALESCE(SUM(COB_MONTO), 0) as monto FROM SAAS_COBROS WHERE COB_ESTATUS = 'PENDIENTE'")
+    suscripciones = query("SELECT SUS_ESTADO, COUNT(*) as total FROM SAAS_SUSCRIPCIONES GROUP BY SUS_ESTADO")
+    sus_map = {s['SUS_ESTADO']: s['total'] for s in (suscripciones or [])}
+
+    return jsonify({'success': True, 'data': {
+        'empresas_total': empresas[0]['total'] if empresas else 0,
+        'empresas_activas': empresas[0]['activas'] if empresas else 0,
+        'pedidos_hoy': pedidos_hoy[0]['total'] if pedidos_hoy else 0,
+        'pedidos_mes': pedidos_mes[0]['total'] if pedidos_mes else 0,
+        'choferes_total': choferes[0]['total'] if choferes else 0,
+        'usuarios_total': usuarios[0]['total'] if usuarios else 0,
+        'clientes_total': clientes[0]['total'] if clientes else 0,
+        'revenue_mes': float(revenue_mes[0]['total'] or 0) if revenue_mes else 0,
+        'mrr': float(mrr[0]['total'] or 0) if mrr else 0,
+        'pagos_pendientes': pagos_pend[0]['total'] if pagos_pend else 0,
+        'pagos_pend_monto': float(pagos_pend[0]['monto'] or 0) if pagos_pend else 0,
+        'sus_activas': sus_map.get('ACTIVA', 0),
+        'sus_trial': sus_map.get('TRIAL', 0),
+        'sus_canceladas': sus_map.get('CANCELADA', 0),
+    }})
+
+
+@app.route('/api/saas/tenants/<int:emp_id>', methods=['GET'])
+def get_saas_tenant(emp_id):
+    data = query('''SELECT E.*,
+        (SELECT COUNT(*) FROM PEDIDOS P WHERE P.EMP_ID = E.EMP_ID) as TOTAL_PEDIDOS,
+        (SELECT COUNT(*) FROM CHOFERES C WHERE C.EMP_ID = E.EMP_ID) as TOTAL_CHOFERES,
+        (SELECT COUNT(*) FROM CLIENTES_LM CL WHERE CL.EMP_ID = E.EMP_ID) as TOTAL_CLIENTES,
+        (SELECT COUNT(*) FROM VEHICULOS V WHERE V.EMP_ID = E.EMP_ID) as TOTAL_VEHICULOS,
+        (SELECT COUNT(*) FROM USUARIOS U WHERE U.USU_EMP_ID = E.EMP_ID) as TOTAL_USUARIOS
+        FROM EMPRESAS E WHERE E.EMP_ID = ?''', [emp_id])
+    if not data:
+        return jsonify({'success': False, 'error': 'Tenant no encontrado'}), 404
+
+    tenant = data[0]
+    tenant['suscripcion'] = query('''SELECT S.*, P.PLAN_NOMBRE, P.PLAN_PRECIO_MENSUAL
+        FROM SAAS_SUSCRIPCIONES S JOIN SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID
+        WHERE S.EMP_ID = ? AND S.SUS_ESTADO = 'ACTIVA' ORDER BY S.SUS_FECHA_INICIO DESC LIMIT 1''', [emp_id])
+    tenant['suscripcion'] = tenant['suscripcion'][0] if tenant['suscripcion'] else None
+    tenant['pagos_recientes'] = query('''SELECT * FROM SAAS_COBROS WHERE EMP_ID = ? ORDER BY COB_FECHA_COBRO DESC LIMIT 5''', [emp_id])
+    tenant['usuarios'] = query('SELECT USU_ID, USU_USUARIO, USU_NOMBRE, USU_ROL, USU_ACTIVO FROM USUARIOS WHERE USU_EMP_ID = ?', [emp_id])
+    tenant['uso_reciente'] = query('SELECT * FROM SAAS_USO_RECURSOS WHERE EMP_ID = ? ORDER BY USR_FECHA DESC LIMIT 7', [emp_id])
+
+    return jsonify({'success': True, 'data': tenant})
+
+
+@app.route('/api/saas/tenants', methods=['POST'])
+def create_saas_tenant():
+    data = request.json or {}
+    nombre = data.get('nombre', '').strip()
+    if not nombre:
+        return jsonify({'success': False, 'error': 'Nombre requerido'})
+
+    execute("INSERT INTO EMPRESAS (EMP_NOMBRE, EMP_RFC, EMP_EMAIL, EMP_TELEFONO, EMP_ESTATUS, EMP_PLAN) VALUES (?, ?, ?, ?, 'ACTIVA', ?)",
+            [nombre, data.get('rfc', ''), data.get('email', ''), data.get('telefono', ''), data.get('plan', 'STARTER')])
+
+    emp = query("SELECT EMP_ID FROM EMPRESAS WHERE EMP_NOMBRE = ? ORDER BY EMP_ID DESC LIMIT 1", [nombre])
+    emp_id = emp[0]['EMP_ID'] if emp else 0
+
+    if emp_id:
+        admin_user = data.get('admin_user', 'admin')
+        admin_pass = data.get('admin_pass', 'admin123')
+        import hashlib
+        pass_hash = hashlib.sha256(admin_pass.strip().encode()).hexdigest()
+        execute("INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?, ?, ?, ?, ?, 'admin')",
+                [emp_id, admin_user, pass_hash, f'Admin {nombre}', data.get('email', '')])
+
+    return jsonify({'success': True, 'message': f'Tenant "{nombre}" creado', 'emp_id': emp_id})
+
+
+@app.route('/api/saas/tenants/<int:emp_id>', methods=['PUT'])
+def update_saas_tenant(emp_id):
+    data = request.json or {}
+    execute("UPDATE EMPRESAS SET EMP_NOMBRE=?, EMP_RFC=?, EMP_EMAIL=?, EMP_TELEFONO=?, EMP_ESTATUS=?, EMP_PLAN=? WHERE EMP_ID=?",
+            [data.get('nombre', ''), data.get('rfc', ''), data.get('email', ''), data.get('telefono', ''),
+             data.get('estatus', 'ACTIVA'), data.get('plan', 'STARTER'), emp_id])
+    return jsonify({'success': True, 'message': 'Tenant actualizado'})
+
+
+@app.route('/api/saas/tenants/<int:emp_id>/suspend', methods=['POST'])
+def suspend_saas_tenant(emp_id):
+    execute("UPDATE EMPRESAS SET EMP_ESTATUS='SUSPENDIDA' WHERE EMP_ID=?", [emp_id])
+    try:
+        execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='SUSPENDIDA' WHERE EMP_ID=? AND SUS_ESTADO='ACTIVA'", [emp_id])
+    except Exception:
+        pass
+    return jsonify({'success': True, 'message': 'Tenant suspendido'})
+
+
+@app.route('/api/saas/tenants/<int:emp_id>/activate', methods=['POST'])
+def activate_saas_tenant(emp_id):
+    execute("UPDATE EMPRESAS SET EMP_ESTATUS='ACTIVA' WHERE EMP_ID=?", [emp_id])
+    return jsonify({'success': True, 'message': 'Tenant activado'})
+
+
+@app.route('/api/saas/all-users', methods=['GET'])
+def get_saas_all_users():
+    return jsonify({'success': True, 'data': query('''SELECT U.*, E.EMP_NOMBRE
+        FROM USUARIOS U JOIN EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID
+        ORDER BY U.USU_ID DESC''')})
+
+
+@app.route('/api/saas/all-pedidos', methods=['GET'])
+def get_saas_all_pedidos():
+    return jsonify({'success': True, 'data': query('''SELECT P.*, E.EMP_NOMBRE
+        FROM PEDIDOS P JOIN EMPRESAS E ON P.EMP_ID = E.EMP_ID
+        ORDER BY P.PED_FECHA_PEDIDO DESC LIMIT 100''')})
+
+
+@app.route('/api/saas/audit', methods=['GET'])
+def get_saas_audit():
+    return jsonify({'success': True, 'data': query('''SELECT A.*, E.EMP_NOMBRE
+        FROM AUDIT_LOG A LEFT JOIN EMPRESAS E ON A.EMP_ID = E.EMP_ID
+        ORDER BY A.AUD_FECHA DESC LIMIT 100''')})
+
+
+@app.route('/api/saas/audit', methods=['POST'])
+def create_saas_audit():
+    emp_id = get_emp_id()
+    a = request.json or {}
+    execute("INSERT INTO AUDIT_LOG (EMP_ID, AUD_USUARIO, AUD_ACCION, AUD_TABLA, AUD_REGISTRO_ID, AUD_DETALLE, AUD_IP) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [emp_id, a.get('usuario', 'SYSTEM'), a.get('accion', ''), a.get('tabla', ''), a.get('registro_id', 0), a.get('detalle', ''), a.get('ip', '')])
+    return jsonify({'success': True})
+
+
+@app.route('/api/saas/revenue-chart', methods=['GET'])
+def saas_revenue_chart():
+    data = query('''SELECT
+        TO_CHAR(COB_FECHA_COBRO, 'YYYY-MM') as mes,
+        SUM(COB_MONTO) as total,
+        SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END) as cobrado
+        FROM SAAS_COBROS
+        WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '12 months'
+        GROUP BY TO_CHAR(COB_FECHA_COBRO, 'YYYY-MM')
+        ORDER BY mes''')
+    return jsonify({'success': True, 'data': data or []})
+
+
+@app.route('/api/saas/tenants-chart', methods=['GET'])
+def saas_tenants_chart():
+    data = query('''SELECT
+        PLAN_ID, COUNT(*) as total
+        FROM SAAS_SUSCRIPCIONES
+        WHERE SUS_ESTADO IN ('ACTIVA', 'TRIAL')
+        GROUP BY PLAN_ID''')
+    return jsonify({'success': True, 'data': data or []})
+
+
+@app.route('/api/saas/config', methods=['GET'])
+def get_saas_config():
+    return jsonify({'success': True, 'data': {
+        'platform_name': 'Last Mile Delivery SaaS',
+        'currency': 'MXN',
+        'timezone': 'America/Mexico_City',
+        'trial_days': 14,
+        'max_free_tenants': 3,
+        'maintenance_mode': False,
+    }})
 
 
 # ========================================
