@@ -1310,6 +1310,83 @@ def update_whitelabel():
 
 
 # ========================================
+# MODULO: EXPORTACION CSV/PDF
+# ========================================
+from export_service import export_service, EXPORT_CONFIGS
+
+
+@app.route('/api/export/<entity>', methods=['GET'])
+def export_entity(entity):
+    emp_id = get_emp_id()
+    fmt = request.args.get('format', 'csv')
+
+    config = EXPORT_CONFIGS.get(entity)
+    if not config:
+        return jsonify({'success': False, 'error': f'Entidad {entity} no soportada'}), 400
+
+    # Query data
+    table_map = {
+        'pedidos': 'PEDIDOS', 'clientes': 'CLIENTES_LM', 'choferes': 'CHOFERES',
+        'vehiculos': 'VEHICULOS', 'usuarios': 'USUARIOS',
+        'pagos': 'PAGOS_TRANSACCIONES', 'facturas': 'CFDI_FACTURAS'
+    }
+    table = table_map.get(entity, entity.upper())
+
+    try:
+        data = query(f"SELECT * FROM {table} WHERE EMP_ID=? ORDER BY 1 DESC LIMIT 5000", [emp_id])
+    except Exception:
+        data = query(f"SELECT * FROM {table} ORDER BY 1 DESC LIMIT 5000")
+
+    if fmt == 'pdf':
+        result = export_service.to_pdf(data, config['columns'], title=config['title'])
+    else:
+        result = export_service.to_csv(data, list(config['columns'].keys()),
+                                       filename=f'{entity}_{datetime.now().strftime("%Y%m%d")}.csv')
+
+    if not result.get('success'):
+        return jsonify({'success': False, 'error': result.get('error')}), 400
+
+    from flask import Response
+    return Response(
+        result['content'],
+        mimetype=result['content_type'],
+        headers={'Content-Disposition': f'attachment; filename={result["filename"]}'}
+    )
+
+
+@app.route('/api/export/custom', methods=['POST'])
+def export_custom():
+    data = request.json or {}
+    sql = data.get('sql', '')
+    columns = data.get('columns', {})
+    title = data.get('title', 'Reporte')
+    fmt = data.get('format', 'csv')
+
+    if not sql:
+        return jsonify({'success': False, 'error': 'SQL requerido'}), 400
+
+    try:
+        result_data = query(sql)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+    if fmt == 'pdf':
+        result = export_service.to_pdf(result_data, columns, title=title)
+    else:
+        result = export_service.to_csv(result_data, list(columns.keys()))
+
+    if not result.get('success'):
+        return jsonify({'success': False, 'error': result.get('error')}), 400
+
+    from flask import Response
+    return Response(
+        result['content'],
+        mimetype=result['content_type'],
+        headers={'Content-Disposition': f'attachment; filename={result["filename"]}'}
+    )
+
+
+# ========================================
 # MODULO: SaaS ADMIN
 # ========================================
 @app.route('/api/saas/tenants', methods=['GET'])
