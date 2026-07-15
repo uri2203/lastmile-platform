@@ -1375,11 +1375,24 @@ def saas_global_stats():
     choferes = query('SELECT COUNT(*) as total FROM CHOFERES')
     usuarios = query('SELECT COUNT(*) as total FROM USUARIOS')
     clientes = query('SELECT COUNT(*) as total FROM CLIENTES_LM')
-    revenue_mes = query("SELECT COALESCE(SUM(COB_MONTO), 0) as total FROM SAAS_COBROS WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '30 days'")
-    mrr = query("SELECT COALESCE(SUM(P.PLAN_PRECIO_MENSUAL), 0) as total FROM SAAS_SUSCRIPCIONES S JOIN SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID WHERE S.SUS_ESTADO = 'ACTIVA'")
-    pagos_pend = query("SELECT COUNT(*) as total, COALESCE(SUM(COB_MONTO), 0) as monto FROM SAAS_COBROS WHERE COB_ESTATUS = 'PENDIENTE'")
-    suscripciones = query("SELECT SUS_ESTADO, COUNT(*) as total FROM SAAS_SUSCRIPCIONES GROUP BY SUS_ESTADO")
-    sus_map = {s['SUS_ESTADO']: s['total'] for s in (suscripciones or [])}
+
+    revenue_mes = {'total': 0}
+    mrr = {'total': 0}
+    pagos_pend = {'total': 0, 'monto': 0}
+    sus_map = {}
+    try:
+        revenue_mes = query("SELECT COALESCE(SUM(COB_MONTO), 0) as total FROM SAAS_COBROS WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '30 days'")[0] or revenue_mes
+    except Exception: pass
+    try:
+        mrr = query("SELECT COALESCE(SUM(P.PLAN_PRECIO_MENSUAL), 0) as total FROM SAAS_SUSCRIPCIONES S JOIN SAAS_PLANES P ON S.PLAN_ID = P.PLAN_ID WHERE S.SUS_ESTADO = 'ACTIVA'")[0] or mrr
+    except Exception: pass
+    try:
+        pagos_pend = query("SELECT COUNT(*) as total, COALESCE(SUM(COB_MONTO), 0) as monto FROM SAAS_COBROS WHERE COB_ESTATUS = 'PENDIENTE'")[0] or pagos_pend
+    except Exception: pass
+    try:
+        suscripciones = query("SELECT SUS_ESTADO, COUNT(*) as total FROM SAAS_SUSCRIPCIONES GROUP BY SUS_ESTADO")
+        sus_map = {s['SUS_ESTADO']: s['total'] for s in (suscripciones or [])}
+    except Exception: pass
 
     return jsonify({'success': True, 'data': {
         'empresas_total': empresas[0]['total'] if empresas else 0,
@@ -1389,10 +1402,10 @@ def saas_global_stats():
         'choferes_total': choferes[0]['total'] if choferes else 0,
         'usuarios_total': usuarios[0]['total'] if usuarios else 0,
         'clientes_total': clientes[0]['total'] if clientes else 0,
-        'revenue_mes': float(revenue_mes[0]['total'] or 0) if revenue_mes else 0,
-        'mrr': float(mrr[0]['total'] or 0) if mrr else 0,
-        'pagos_pendientes': pagos_pend[0]['total'] if pagos_pend else 0,
-        'pagos_pend_monto': float(pagos_pend[0]['monto'] or 0) if pagos_pend else 0,
+        'revenue_mes': float(revenue_mes.get('total', 0) or 0),
+        'mrr': float(mrr.get('total', 0) or 0),
+        'pagos_pendientes': pagos_pend.get('total', 0) or 0,
+        'pagos_pend_monto': float(pagos_pend.get('monto', 0) or 0),
         'sus_activas': sus_map.get('ACTIVA', 0),
         'sus_trial': sus_map.get('TRIAL', 0),
         'sus_canceladas': sus_map.get('CANCELADA', 0),
@@ -1504,24 +1517,30 @@ def create_saas_audit():
 
 @app.route('/api/saas/revenue-chart', methods=['GET'])
 def saas_revenue_chart():
-    data = query('''SELECT
-        TO_CHAR(COB_FECHA_COBRO, 'YYYY-MM') as mes,
-        SUM(COB_MONTO) as total,
-        SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END) as cobrado
-        FROM SAAS_COBROS
-        WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '12 months'
-        GROUP BY TO_CHAR(COB_FECHA_COBRO, 'YYYY-MM')
-        ORDER BY mes''')
+    try:
+        data = query('''SELECT
+            TO_CHAR(COB_FECHA_COBRO, 'YYYY-MM') as mes,
+            SUM(COB_MONTO) as total,
+            SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END) as cobrado
+            FROM SAAS_COBROS
+            WHERE COB_FECHA_COBRO >= CURRENT_DATE - INTERVAL '12 months'
+            GROUP BY TO_CHAR(COB_FECHA_COBRO, 'YYYY-MM')
+            ORDER BY mes''')
+    except Exception:
+        data = []
     return jsonify({'success': True, 'data': data or []})
 
 
 @app.route('/api/saas/tenants-chart', methods=['GET'])
 def saas_tenants_chart():
-    data = query('''SELECT
-        PLAN_ID, COUNT(*) as total
-        FROM SAAS_SUSCRIPCIONES
-        WHERE SUS_ESTADO IN ('ACTIVA', 'TRIAL')
-        GROUP BY PLAN_ID''')
+    try:
+        data = query('''SELECT
+            PLAN_ID, COUNT(*) as total
+            FROM SAAS_SUSCRIPCIONES
+            WHERE SUS_ESTADO IN ('ACTIVA', 'TRIAL')
+            GROUP BY PLAN_ID''')
+    except Exception:
+        data = []
     return jsonify({'success': True, 'data': data or []})
 
 
