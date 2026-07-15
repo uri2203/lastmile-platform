@@ -379,7 +379,7 @@ def get_billing_stats(emp_id):
         if r: choferes_count = r[0].get('TOTAL', 0) or 0
     except Exception: pass
     try:
-        r = query("SELECT COUNT(*) as total FROM USUARIOS WHERE EMP_ID=?", [emp_id])
+        r = query("SELECT COUNT(*) as total FROM USUARIOS WHERE USU_EMP_ID=?", [emp_id])
         if r: usuarios_count = r[0].get('TOTAL', 0) or 0
     except Exception: pass
 
