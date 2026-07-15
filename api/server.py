@@ -631,6 +631,19 @@ def create_pedido():
          p.get('destinoCiudad'), p.get('pesoKg', 0), p.get('bultos', 1),
          p.get('costoTotal', 0), p.get('formaPago', 'EFECTIVO'), p.get('prioridad', 'NORMAL')]
     )
+    # Get the new pedido ID
+    try:
+        last = query("SELECT MAX(PED_ID) as id FROM PEDIDOS WHERE EMP_ID=?", [emp_id])
+        new_id = last[0]['id'] if last else None
+        # Send notification
+        try:
+            notification_service.send('pedido_creado', new_id, emp_id,
+                                     cli_id=p.get('cliId'),
+                                     extra={'destino': p.get('destinoDir', '')})
+        except Exception:
+            pass
+    except Exception:
+        pass
     return jsonify({'success': True, 'message': 'Pedido creado'})
 
 
@@ -642,6 +655,41 @@ def update_estado_pedido(ped_id):
 
     execute('UPDATE PEDIDOS SET PED_ESTADO = ? WHERE PED_ID = ? AND EMP_ID = ?', [estado, ped_id, emp_id])
     execute('INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO) VALUES (?, ?, ?)', [ped_id, estado, usuario])
+
+    # Send notification based on status change
+    try:
+        # Get chofer and client info
+        pedido = query("SELECT CHO_ID, CLI_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=?", [ped_id])
+        chofer_id = pedido[0].get('CHO_ID') if pedido else None
+        cli_id = pedido[0].get('CLI_ID') if pedido else None
+
+        if estado == 'EN_RUTA':
+            ch = query("SELECT CHF_NOMBRE FROM CHOFERES WHERE CHO_ID=?", [chofer_id]) if chofer_id else None
+            chofer_name = ch[0].get('CHF_NOMBRE', 'Chofer') if ch else 'Chofer'
+            # Notify client that order is on the way
+            notification_service.send('pedido_en_ruta', ped_id, emp_id,
+                                     cli_id=cli_id,
+                                     extra={'chofer': chofer_name,
+                                            'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
+            # Notify chofer
+            if chofer_id:
+                notification_service.send('pedido_asignado_chofer', ped_id, emp_id,
+                                         chofer_id=chofer_id, cli_id=cli_id,
+                                         extra={'cliente': pedido[0].get('PED_CLIENTE_NOMBRE', '') if pedido else '',
+                                                'origen': '', 'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
+
+        elif estado == 'ENTREGADO':
+            notification_service.send('pedido_entregado', ped_id, emp_id,
+                                     cli_id=cli_id,
+                                     extra={'fecha_entrega': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                                            'destino': pedido[0].get('PED_DESTINO_DIR', '') if pedido else ''})
+
+        elif estado == 'CANCELADO':
+            notification_service.send('pedido_cancelado', ped_id, emp_id,
+                                     cli_id=cli_id,
+                                     extra={'razon': request.json.get('razon', 'Sin especificar')})
+    except Exception as e:
+        app.logger.warning(f'Notification error: {str(e)}')
 
     return jsonify({'success': True, 'message': f'Estado actualizado a {estado}'})
 
@@ -1748,6 +1796,71 @@ from payment_service import (
     get_empresa_billing, create_suscripcion, create_pago,
     cancel_suscripcion, get_suscripcion_activa, get_billing_stats
 )
+
+
+# ========================================
+# MODULO: NOTIFICACIONES
+# ========================================
+from notification_service import notification_service
+
+
+@app.route('/api/notifications/send', methods=['POST'])
+def send_notification():
+    data = request.get_json() or {}
+    template = data.get('template')
+    pedido_id = data.get('pedido_id')
+    emp_id = get_emp_id()
+    chofer_id = data.get('chofer_id')
+    cli_id = data.get('cli_id')
+    extra = data.get('extra', {})
+
+    if not template:
+        return jsonify({'success': False, 'error': 'Template requerido'}), 400
+
+    result = notification_service.send(template, pedido_id, emp_id, chofer_id, cli_id, extra)
+    return jsonify({'success': True, 'data': result})
+
+
+@app.route('/api/notifications/custom', methods=['POST'])
+def send_custom_notification():
+    data = request.get_json() or {}
+    result = notification_service.send_custom(
+        to_email=data.get('to_email'),
+        to_phone=data.get('to_phone'),
+        subject=data.get('subject'),
+        html=data.get('html'),
+        sms_text=data.get('sms_text')
+    )
+    return jsonify({'success': True, 'data': result})
+
+
+@app.route('/api/notifications/test', methods=['POST'])
+def test_notification():
+    data = request.get_json() or {}
+    test_type = data.get('type', 'email')
+    to = data.get('to')
+
+    if test_type == 'email':
+        result = notification_service.email.send(to, 'Test - Last Mile', '<h1>Funciona!</h1><p>El sistema de email esta configurado correctamente.</p>')
+    elif test_type == 'sms':
+        result = notification_service.sms.send(to, 'Last Mile: SMS configurado correctamente.')
+    else:
+        return jsonify({'success': False, 'error': 'Tipo invalido'}), 400
+
+    return jsonify({'success': True, 'data': result})
+
+
+@app.route('/api/notifications/config', methods=['GET'])
+def get_notification_config():
+    return jsonify({
+        'success': True,
+        'data': {
+            'email_enabled': notification_service.email.enabled,
+            'sms_enabled': notification_service.sms.enabled,
+            'email_provider': 'Resend' if notification_service.email.enabled else 'None',
+            'sms_provider': 'Twilio' if notification_service.sms.enabled else 'None',
+        }
+    })
 
 
 @app.route('/api/billing/planes', methods=['GET'])
