@@ -161,6 +161,11 @@ def root():
     return send_from_directory('web', 'landing.html')
 
 
+@app.route('/')
+def landing_page():
+    return send_from_directory('web', 'landing-v2.html')
+
+
 @app.route('/login')
 def login_page():
     return send_from_directory('web', 'index.html')
