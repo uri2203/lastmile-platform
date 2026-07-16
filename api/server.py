@@ -182,6 +182,161 @@ def serve_static(filename):
 
 
 # ========================================
+# MODULO: ONBOARDING
+# ========================================
+@app.route('/register')
+def register_page():
+    return send_from_directory('web', 'register.html')
+
+
+@app.route('/api/onboarding/register', methods=['POST'])
+def onboarding_register():
+    """Register a new tenant with admin user."""
+    import hashlib
+    data = request.get_json() or {}
+
+    emp_data = data.get('empresa', {})
+    usr_data = data.get('usuario', {})
+    plan = data.get('plan', 'STARTER')
+
+    # Validate
+    if not emp_data.get('nombre'):
+        return jsonify({'success': False, 'error': 'Nombre de empresa requerido'}), 400
+    if not emp_data.get('rfc'):
+        return jsonify({'success': False, 'error': 'RFC requerido'}), 400
+    if not usr_data.get('email') or '@' not in usr_data.get('email', ''):
+        return jsonify({'success': False, 'error': 'Email inválido'}), 400
+    if not usr_data.get('password') or len(usr_data.get('password', '')) < 6:
+        return jsonify({'success': False, 'error': 'Contraseña mínimo 6 caracteres'}), 400
+
+    # Check if RFC already exists
+    try:
+        existing = query("SELECT EMP_ID FROM EMPRESAS WHERE EMP_RFC=?", [emp_data['rfc'].upper()])
+        if existing:
+            return jsonify({'success': False, 'error': 'Ya existe una empresa con ese RFC'}), 400
+    except Exception:
+        pass
+
+    # Check if email already exists
+    try:
+        existing = query("SELECT USU_ID FROM USUARIOS WHERE USU_EMAIL=?", [usr_data['email']])
+        if existing:
+            return jsonify({'success': False, 'error': 'Ya existe una cuenta con ese email'}), 400
+    except Exception:
+        pass
+
+    # Create empresa
+    plan_config = {'STARTER': 10, 'PRO': 50, 'ENTERPRISE': 9999}
+    try:
+        emp_id = execute_returning(
+            "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_RAZON_SOCIAL, EMP_CIUDAD, EMP_CP, "
+            "EMP_ESTATUS, EMP_PLAN, EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_CREATED) "
+            "VALUES (?, ?, ?, ?, ?, 'ACTIVA', ?, ?, ?, ?, NOW()) RETURNING EMP_ID",
+            [emp_data['rfc'].upper(), emp_data['nombre'],
+             emp_data.get('razon_social', emp_data['nombre']),
+             emp_data.get('ciudad', ''), emp_data.get('cp', ''),
+             plan, 5, plan_config.get(plan, 10), 500]
+        )
+        if not emp_id:
+            # Fallback: get the ID
+            r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
+            emp_id = r[0]['id'] if r else 1
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Error creando empresa: {str(e)[:100]}'}), 500
+
+    # Create admin user
+    password_hash = hashlib.sha256(usr_data['password'].encode()).hexdigest()
+    try:
+        execute(
+            "INSERT INTO USUARIOS (EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, "
+            "USU_TELEFONO, USU_ROL, USU_ACTIVO, USU_CREATED) "
+            "VALUES (?, ?, ?, ?, ?, ?, 'admin', 'S', NOW())",
+            [emp_id, usr_data.get('usuario', 'admin'), password_hash,
+             usr_data['nombre'], usr_data['email'],
+             usr_data.get('telefono', '')]
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Error creando usuario: {str(e)[:100]}'}), 500
+
+    # Create subscription
+    try:
+        execute(
+            "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO) "
+            "VALUES (?, ?, 'ACTIVA', NOW())",
+            [emp_id, plan]
+        )
+    except Exception:
+        pass
+
+    # Seed some sample data for the new tenant
+    try:
+        _seed_demo_data(emp_id)
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'message': 'Cuenta creada exitosamente',
+        'emp_id': emp_id,
+        'login': usr_data.get('usuario', 'admin')
+    })
+
+
+def _seed_demo_data(emp_id):
+    """Seed demo data for new tenant."""
+    from datetime import datetime, timedelta
+    import random
+
+    # Sample clients
+    clients = [
+        ('Distribuidora Norte', 'DNO230303', 'Pedro Hernandez', 'pedidos@distnorte.mx', '5551111113', 'CDMX'),
+        ('Tienda Express', 'TEX230303', 'Laura Sanchez', 'contacto@tienda.mx', '5551111114', 'CDMX'),
+        ('Comercializadora Sur', 'CSU230303', 'Roberto Diaz', 'ventas@sur.mx', '5551111115', 'CDMX'),
+    ]
+    for rfc, nombre, contacto, email, tel, ciudad in clients:
+        try:
+            execute(
+                "INSERT INTO CLIENTES_LM (EMP_ID, CLI_RAZON_SOCIAL, CLI_RFC, CLI_CONTACTO, "
+                "CLI_EMAIL, CLI_TELEFONO, CLI_CIUDAD, CLI_ESTATUS) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVO')",
+                [emp_id, nombre, rfc, contacto, email, tel, ciudad]
+            )
+        except Exception:
+            pass
+
+    # Sample choferes
+    choferes = [
+        ('Carlos', 'Rodriguez', '5551001001', 'carlos@delivery.mx', 'LIC-001'),
+        ('Maria', 'Lopez', '5551001002', 'maria@delivery.mx', 'LIC-002'),
+        ('Ana', 'Martinez', '5551001003', 'ana@delivery.mx', 'LIC-003'),
+    ]
+    for nombre, apellido, tel, email, lic in choferes:
+        try:
+            execute(
+                "INSERT INTO CHOFERES (EMP_ID, CHO_NOMBRE, CHO_APELLIDO, CHO_TELEFONO, "
+                "CHO_EMAIL, CHO_LICENCIA, CHO_ESTATUS) "
+                "VALUES (?, ?, ?, ?, ?, ?, 'ACTIVO')",
+                [emp_id, nombre, apellido, tel, email, lic]
+            )
+        except Exception:
+            pass
+
+    # Sample orders
+    for i in range(5):
+        try:
+            execute(
+                "INSERT INTO PEDIDOS (EMP_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR, "
+                "PED_DESTINO_CIUDAD, PED_BULTOS, PED_COSTO_TOTAL, PED_FORMA_PAGO, "
+                "PED_ESTADO, PED_FECHA_PEDIDO) "
+                "VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO', 'PENDIENTE', NOW() - INTERVAL '{} days')".format(i),
+                [emp_id, f'Cliente Demo {i+1}', f'Dirección {i+1}, Col. Centro',
+                 'CDMX', random.randint(1, 3), round(random.uniform(150, 800), 2)]
+            )
+        except Exception:
+            pass
+
+
+# ========================================
 # HEALTH CHECK
 # ========================================
 @app.route('/api/health', methods=['GET'])
