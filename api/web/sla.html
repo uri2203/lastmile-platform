@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acuerdo de Nivel de Servicio (SLA) - LastMile Platform</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; line-height: 1.7; }
+        .legal-container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .legal-header { text-align: center; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border-color); }
+        .legal-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .legal-header .subtitle { color: var(--text-secondary); font-size: 0.95rem; }
+        .legal-section { margin-bottom: 36px; }
+        .legal-section h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; color: var(--accent-primary); }
+        .legal-section p, .legal-section li { color: var(--text-secondary); font-size: 0.95rem; }
+        .legal-section ul { padding-left: 20px; margin-top: 8px; }
+        .legal-section li { margin-bottom: 6px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-primary); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; }
+        .back-link:hover { text-decoration: underline; }
+        .highlight { background: var(--bg-secondary); padding: 16px; border-radius: 8px; border-left: 3px solid var(--accent-primary); margin: 16px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem; }
+        th { color: var(--text-primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="legal-container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+        <div class="legal-header">
+            <h1>Acuerdo de Nivel de Servicio (SLA)</h1>
+            <p class="subtitle">LastMile Platform — Última actualización: Julio 2026</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>1. Compromiso de Disponibilidad</h2>
+            <div class="highlight">
+                <p><strong>LastMile Platform se compromete a mantener una disponibilidad del servicio del 99.5% mensual.</strong></p>
+            </div>
+            <p>La disponibilidad se mide como el porcentaje de tiempo en que la API principal está accesible y funcionando correctamente durante cada mes calendario, excluyendo:</p>
+            <ul>
+                <li>Mantenimiento programado notificado con al menos 72 horas de anticipación</li>
+                <li>Interrupciones causadas por fuerza mayor o eventos extraordinarios</li>
+                <li>Problemas de conectividad del Usuario</li>
+                <li>Servicios de terceros fuera de nuestro control</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>2. Ventanas de Mantenimiento</h2>
+            <ul>
+                <li><strong>Mantenimiento programado:</strong> Sábados de 02:00 a 06:00 (hora del Centro de México)</li>
+                <li><strong>Notificación:</strong> Con al menos 72 horas de anticipación por email y en la plataforma</li>
+                <li><strong>Mantenimiento de emergencia:</strong> Puede realizarse en cualquier momento con notificación mínima</li>
+                <li><strong>Duración máxima:</strong> 4 horas por evento de mantenimiento</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>3. Tiempos de Respuesta al Soporte</h2>
+            <div class="highlight">
+                <p>Los tiempos de respuesta varían según el plan contratado y la severidad del incidente:</p>
+            </div>
+            <table>
+                <tr><th>Severidad</th><th>Starter</th><th>Pro</th><th>Enterprise</th></tr>
+                <tr><td><strong>Crítica</strong> — Servicio completamente caído</td><td>4 horas</td><td>2 horas</td><td>1 hora</td></tr>
+                <tr><td><strong>Alta</strong> — Funcionalidad principal afectada</td><td>8 horas</td><td>4 horas</td><td>2 horas</td></tr>
+                <tr><td><strong>Media</strong> — Funcionalidad secundaria afectada</td><td>24 horas</td><td>12 horas</td><td>4 horas</td></tr>
+                <tr><td><strong>Baja</strong> — Consulta o solicitud de mejora</td><td>72 horas</td><td>48 horas</td><td>24 horas</td></tr>
+            </table>
+            <p><strong>Horario de soporte:</strong> Lunes a viernes de 9:00 a 18:00 (hora del Centro de México). Soporte por email: soporte@lastmile-platform.mx</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>4. Canales de Soporte</h2>
+            <ul>
+                <li><strong>Email:</strong> soporte@lastmile-platform.mx (todos los planes)</li>
+                <li><strong>Chat en plataforma:</strong> Disponible en horario de soporte (Pro y Enterprise)</li>
+                <li><strong>Línea telefónica:</strong> Solo para clientes Enterprise</li>
+                <li><strong>Reuniones de revisión:</strong> Mensuales para Enterprise, trimestrales para Pro</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>5. Clasificación de Incidentes</h2>
+            <table>
+                <tr><th>Severidad</th><th>Descripción</th><th>Ejemplos</th></tr>
+                <tr><td><strong>Crítica</strong></td><td>Servicio completamente inaccesible o no funcional</td><td>API principal caída, autenticación masiva fallida, pérdida de datos</td></tr>
+                <tr><td><strong>Alta</strong></td><td>Funcionalidad principal degradada</td><td>Pedidos no se crean, GPS no funciona, facturación falla</td></tr>
+                <tr><td><strong>Media</strong></td><td>Funcionalidad secundaria afectada</td><td>Reportes no generan, notificaciones retrasadas, UI lenta</td></tr>
+                <tr><td><strong>Baja</strong></td><td>Consulta, solicitud o problema menor</td><td>Configuración, preguntas de uso, mejoras solicitadas</td></tr>
+            </table>
+        </div>
+
+        <div class="legal-section">
+            <h2>6. Créditos por Incumplimiento</h2>
+            <div class="highlight">
+                <p>Si la disponibilidad mensual cae por debajo del 99.5%, el Cliente tendrá derecho a créditos según la siguiente tabla:</p>
+            </div>
+            <table>
+                <tr><th>Disponibilidad Mensual</th><th>Crédito (% del pago mensual)</th></tr>
+                <tr><td>99.0% — 99.5%</td><td>10%</td></tr>
+                <tr><td>95.0% — 99.0%</td><td>25%</td></tr>
+                <tr><td>90.0% — 95.0%</td><td>50%</td></tr>
+                <tr><td>Menos del 90.0%</td><td>100%</td></tr>
+            </table>
+            <p><strong>Condiciones para reclamar créditos:</strong></p>
+            <ul>
+                <li>La solicitud debe realizarse dentro de los 30 días posteriores al mes afectado</li>
+                <li>Los créditos se aplicarán como descuento en el siguiente ciclo de facturación</li>
+                <li>Los créditos no son reclamables en efectivo</li>
+                <li>El Cliente debe reportar el incidente a través de los canales de soporte</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>7. Exclusiones del SLA</h2>
+            <p>Este SLA NO aplica en los siguientes casos:</p>
+            <ul>
+                <li>Interrupciones causadas por fuerza mayor o eventos extraordinarios</li>
+                <li>Problemas de conectividad de internet del Usuario</li>
+                <li>Fallas en servicios de terceros (Stripe, MercadoPago, Supabase, Render)</li>
+                <li>Mantenimiento programado notificado adecuadamente</li>
+                <li>Cuentas suspendidas por incumplimiento de términos</li>
+                <li>Pruebas de penetración o auditorías de seguridad autorizadas</li>
+                <li>Configuraciones incorrectas realizadas por el Usuario</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>8. Monitoreo y Reportes</h2>
+            <ul>
+                <li>LastMile Platform monitorea la disponibilidad 24/7 mediante herramientas automatizadas</li>
+                <li>El Cliente puede consultar el estado del servicio en tiempo real en la plataforma</li>
+                <li>Reportes de disponibilidad mensual están disponibles bajo solicitud</li>
+                <li>Incidentes críticos son comunicados automáticamente por email</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>9. Escalación</h2>
+            <p>Si el tiempo de respuesta acordado no se cumple, el Cliente puede escalar:</p>
+            <ul>
+                <li><strong>Nivel 1:</strong> Soporte estándar (soporte@lastmile-platform.mx)</li>
+                <li><strong>Nivel 2:</strong> Supervisión de soporte (supervision@lastmile-platform.mx)</li>
+                <li><strong>Nivel 3:</strong> Dirección técnica (direccion@lastmile-platform.mx)</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>10. Vigencia</h2>
+            <p>Este SLA es parte integral de los <a href="/terminos">Términos y Condiciones</a> y entra en vigor desde la fecha de activación de la suscripción del Cliente.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>11. Contacto</h2>
+            <p>
+                <strong>Soporte técnico:</strong> soporte@lastmile-platform.mx<br>
+                <strong>Escalaciones:</strong> supervision@lastmile-platform.mx<br>
+                <strong>Consultas del SLA:</strong> legal@lastmile-platform.mx
+            </p>
+        </div>
+    </div>
+</body>
+</html>

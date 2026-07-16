@@ -19,133 +19,254 @@
         .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-primary); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; }
         .back-link:hover { text-decoration: underline; }
         .highlight { background: var(--bg-secondary); padding: 16px; border-radius: 8px; border-left: 3px solid var(--accent-primary); margin: 16px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem; }
+        th { color: var(--text-primary); font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="legal-container">
         <a href="/" class="back-link">← Volver al inicio</a>
         <div class="legal-header">
-            <h1>Términos y Condiciones</h1>
+            <h1>Términos y Condiciones de Uso</h1>
             <p class="subtitle">LastMile Platform — Última actualización: Julio 2026</p>
+            <p class="subtitle" style="margin-top: 8px; font-size: 0.85rem;">Documento conforme a la legislación mexicana vigente</p>
         </div>
 
         <div class="legal-section">
-            <h2>1. Acceptance of Terms</h2>
-            <p>By accessing and using LastMile Platform ("the Service"), you agree to be bound by these Terms and Conditions. If you do not agree, do not use the Service.</p>
-        </div>
-
-        <div class="legal-section">
-            <h2>2. Description of Service</h2>
-            <p>LastMile Platform is a Last-Mile Delivery Management SaaS that provides:</p>
+            <h2>1. Definiciones</h2>
+            <p>Para efectos de este documento:</p>
             <ul>
-                <li>Order management and tracking</li>
-                <li>Driver (chofer) assignment and GPS tracking</li>
-                <li>Client portal and notifications</li>
-                <li>CFDI 4.0 invoicing (Facturación electrónica)</li>
-                <li>Reports and analytics</li>
-                <li>Multi-tenant whitelabel administration</li>
+                <li><strong>"Plataforma"</strong> se refiere a LastMile Platform, servicio de software como servicio (SaaS) para gestión de entregas de última milla.</li>
+                <li><strong>"Usuario"</strong> es toda persona física o moral que accede y utiliza la Plataforma.</li>
+                <li><strong>"Cliente"</strong> es el Usuario que contrata un plan de suscripción.</li>
+                <li><strong>"Chofer"</strong> es el repartidor asignado por el Cliente a través de la Plataforma.</li>
+                <li><strong>"Contenido"</strong> incluye datos, pedidos, facturas, ubicaciones y toda información ingresada a la Plataforma.</li>
+                <li><strong>"Plan"</strong> se refiere al nivel de servicio contratado (Starter, Pro, Enterprise).</li>
             </ul>
         </div>
 
         <div class="legal-section">
-            <h2>3. Account Registration</h2>
-            <p>To use the Service, you must:</p>
-            <ul>
-                <li>Be at least 18 years old or a legally constituted entity</li>
-                <li>Provide accurate and complete registration information</li>
-                <li>Maintain the security of your password and account</li>
-                <li>Accept responsibility for all activities under your account</li>
-            </ul>
+            <h2>2. Aceptación de los Términos</h2>
+            <p>Al acceder, registrarse o utilizar la Plataforma, el Usuario declara haber leído, comprendido y aceptado íntegramente estos Términos y Condiciones. Si el Usuario no está de acuerdo, deberá abstenerse de utilizar la Plataforma.</p>
+            <p>El uso continuado de la Plataforma constituye aceptación tácita de las modificaciones que se realicen a estos Términos.</p>
         </div>
 
         <div class="legal-section">
-            <h2>4. Subscription Plans and Payments</h2>
+            <h2>3. Objeto del Servicio</h2>
+            <p>LastMile Platform pone a disposición del Usuario una plataforma tecnológica en la nube para la gestión de entregas de última milla que incluye:</p>
+            <ul>
+                <li>Gestión y asignación de pedidos</li>
+                <li>Seguimiento GPS en tiempo real de choferes</li>
+                <li>Portal de clientes y notificaciones</li>
+                <li>Generación de facturas CFDI 4.0 (cumplimiento fiscal SAT)</li>
+                <li>Reportes y analítica operativa</li>
+                <li>Administración multi-tenant y whitelabel</li>
+                <li>Integración con pasarelas de pago (Stripe, MercadoPago)</li>
+            </ul>
             <div class="highlight">
-                <p><strong>Plans:</strong> Starter ($999 MXN/mes) | Pro ($2,499 MXN/mes) | Enterprise ($5,999 MXN/mes)</p>
+                <p><strong>Importante:</strong> La Plataforma se concede bajo licencia de uso, no bajo venta. El Usuario adquiere el derecho a utilizar el servicio conforme al plan contratado, no propiedad sobre el software.</p>
+            </div>
+        </div>
+
+        <div class="legal-section">
+            <h2>4. Registro de Cuenta</h2>
+            <p>Para utilizar la Plataforma, el Usuario debe:</p>
+            <ul>
+                <li>Ser mayor de 18 años o estar legalmente constituido como empresa</li>
+                <li>Proporcionar información de registro veraz, completa y actualizada</li>
+                <li>Mantener la confidencialidad de sus credenciales de acceso</li>
+                <li>Aceptar responsabilidad por todas las actividades realizadas bajo su cuenta</li>
+                <li>Notificar de inmediato cualquier uso no autorizado de su cuenta</li>
+            </ul>
+            <p>La Plataforma se reserva el derecho de suspender o cancelar cuentas que contengan información falsa o incompleta.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>5. Planes de Suscripción y Pagos</h2>
+            <div class="highlight">
+                <table>
+                    <tr><th>Plan</th><th>Precio</th><th>Límites</th></tr>
+                    <tr><td>Starter</td><td>$999 MXN/mes</td><td>Hasta 500 pedidos/mes</td></tr>
+                    <tr><td>Pro</td><td>$2,499 MXN/mes</td><td>Hasta 2,000 pedidos/mes</td></tr>
+                    <tr><td>Enterprise</td><td>$5,999 MXN/mes</td><td>Pedidos ilimitados</td></tr>
+                </table>
             </div>
             <ul>
-                <li>Subscriptions are billed monthly in advance</li>
-                <li>Payments are processed via Stripe or MercadoPago</li>
-                <li>You may upgrade or downgrade your plan at any time</li>
-                <li>Cancellations take effect at the end of the current billing period</li>
-                <li>No refunds for partial months</li>
-                <li>Prices are in Mexican Pesos (MXN) and include applicable taxes</li>
+                <li>Las suscripciones se facturan mensualmente por anticipado</li>
+                <li>Los precios están en Pesos Mexicanos (MXN) e incluyen IVA cuando aplique</li>
+                <li>El cobro se realiza automáticamente mediante la tarjeta registrada o método de pago seleccionado</li>
+                <li>Los pagos se procesan a través de Stripe o MercadoPago (pasarelas de pago de terceros)</li>
+                <li>El Cliente puede cambiar de plan en cualquier momento; los cambios se aplican en el siguiente ciclo de facturación</li>
+                <li>Los límites del plan se verifican en tiempo real; al alcanzar el límite, se ofrecerá opciones de upgrade</li>
+                <li>Consulte nuestra <a href="/pagos">Política de Pagos y Reembolsos</a> para detalles completos</li>
             </ul>
         </div>
 
         <div class="legal-section">
-            <h2>5. Acceptable Use</h2>
-            <p>You agree NOT to:</p>
+            <h2>6. Uso Aceptable</h2>
+            <p>El Usuario se compromete a NO:</p>
             <ul>
-                <li>Use the Service for any unlawful purpose</li>
-                <li>Attempt to gain unauthorized access to other accounts or systems</li>
-                <li>Interfere with or disrupt the Service or servers</li>
-                <li>Transmit malware, viruses, or harmful code</li>
-                <li>Resell or redistribute the Service without authorization</li>
-                <li>Scrape, crawl, or use automated tools to access the Service</li>
+                <li>Utilizar la Plataforma para fines ilícitos o contrarios a la moral y buenas costumbres</li>
+                <li>Intentar acceder no autorizadamente a otras cuentas, bases de datos o sistemas</li>
+                <li>Interferir, dañar o interrumpir el funcionamiento de la Plataforma o sus servidores</li>
+                <li>Transmitir malware, virus, código malicioso o cualquier elemento dañino</li>
+                <li>Revender, redistribuir o sublicenciar el servicio sin autorización escrita</li>
+                <li>Realizar ingeniería inversa, descompilar o desensamblar el software</li>
+                <li>Utilizar bots, scrapers o herramientas automatizadas para acceder al servicio</li>
+                <li>Sobrecargar intentionalmente la infraestructura con peticiones masivas</li>
+                <li>Suplantar la identidad de otro Usuario o tercero</li>
             </ul>
+            <p>El incumplimiento de esta cláusula podrá resultar en la suspensión o cancelación inmediata de la cuenta, sin derecho a reembolso.</p>
         </div>
 
         <div class="legal-section">
-            <h2>6. Data and Privacy</h2>
+            <h2>7. Responsabilidades del Cliente</h2>
+            <p>El Cliente es responsable de:</p>
             <ul>
-                <li>You retain ownership of all data you input into the Service</li>
-                <li>We will not sell your data to third parties</li>
-                <li>We may use anonymized, aggregated data for analytics and improvement</li>
-                <li>Upon cancellation, your data will be retained for 30 days, then deleted</li>
-                <li>You can request export of your data at any time</li>
+                <li>La exactitud y legalidad de la información ingresada a la Plataforma</li>
+                <li>La correcta configuración de su empresa, impuestos y datos fiscales</li>
+                <li>El cumplimiento de las obligaciones laborales con sus choferes</li>
+                <li>La obtención de los consentimientos necesarios de sus clientes finales para el tratamiento de datos</li>
+                <li>El uso adecuado de las credenciales de acceso de sus usuarios</li>
+                <li>La revisión y verificación de las facturas CFDI generadas antes de su envío al SAT</li>
             </ul>
         </div>
 
         <div class="legal-section">
-            <h2>7. Service Availability</h2>
+            <h2>8. Deslinde de Responsabilidades — Facturación CFDI 4.0</h2>
+            <div class="highlight">
+                <p><strong>AVISO IMPORTANTE:</strong> LastMile Platform proporciona herramientas de generación de facturas CFDI 4.0 como facilitador tecnológico. La Plataforma NO es responsable de:</p>
+            </div>
             <ul>
-                <li>We strive for 99.5% uptime but do not guarantee uninterrupted service</li>
-                <li>Scheduled maintenance will be announced in advance when possible</li>
-                <li>We are not liable for downtime caused by third-party providers (Supabase, Render, payment processors)</li>
+                <li>La exactitud de los datos fiscales ingresados por el Cliente (RFC, régimen fiscal, uso de CFDI)</li>
+                <li>El correcto timbrado ante el SAT — la responsabilidad fiscal recae íntegramente en el Cliente</li>
+                <li>Multas, recargos o sanciones fiscales derivadas de errores en la facturación</li>
+                <li>Cambios en la normativa fiscal del SAT que afecten el formato o requisitos del CFDI</li>
+                <li>La cancelación de facturas timbradas (proceso que depende directamente del SAT)</li>
             </ul>
+            <p>El Cliente declara conocer y aceptar que es el único responsable del cumplimiento de sus obligaciones fiscales ante el SAT.</p>
         </div>
 
         <div class="legal-section">
-            <h2>8. Limitation of Liability</h2>
-            <p>LastMile Platform shall not be liable for:</p>
+            <h2>9. Deslinde de Responsabilidades — GPS y Seguimiento</h2>
             <ul>
-                <li>Indirect, incidental, or consequential damages</li>
-                <li>Loss of profits, data, or business opportunities</li>
-                <li>Errors in CFDI invoicing (you are responsible for tax compliance)</li>
-                <li>Actions of drivers, clients, or third parties using the platform</li>
+                <li>El seguimiento GPS es una herramienta de apoyo y NO constituye una garantía de ubicación precisa</li>
+                <li>La precisión del GPS depende de factores externos (señal, dispositivo, condiciones climáticas)</li>
+                <li>LastMile Platform NO se hace responsable por retrasos en entregas basados en datos de GPS</li>
+                <li>Los tiempos de entrega estimados son aproximados y no constituyen compromisos contractuales</li>
+                <li>El rastreo de ubicación requiere el consentimiento del chofer y se realiza conforme a la Ley Federal de Protección de Datos Personales</li>
             </ul>
         </div>
 
         <div class="legal-section">
-            <h2>9. Intellectual Property</h2>
-            <p>The Service, including its code, design, logos, and documentation, is the property of LastMile Platform and is protected by Mexican and international intellectual property laws.</p>
-        </div>
-
-        <div class="legal-section">
-            <h2>10. Modifications</h2>
-            <p>We reserve the right to modify these Terms at any time. Material changes will be notified via email or in-app notification at least 30 days before taking effect.</p>
-        </div>
-
-        <div class="legal-section">
-            <h2>11. Termination</h2>
+            <h2>10. Deslinde de Responsabilidades — Servicios de Terceros</h2>
+            <p>La Plataforma se integra con servicios de terceros cuyo funcionamiento escapa de nuestro control:</p>
             <ul>
-                <li>You may cancel your subscription at any time from the admin panel</li>
-                <li>We may suspend or terminate your account for violation of these Terms</li>
-                <li>Upon termination, your right to use the Service ceases immediately</li>
+                <li><strong>Stripe / MercadoPago:</strong> Procesamiento de pagos. Cualquier problema con transacciones debe resolverse directamente con el proveedor de pago.</li>
+                <li><strong>Supabase / Render:</strong> Infraestructura en la nube. No garantizamos disponibilidad al 100% por causas de estos proveedores.</li>
+                <li><strong>Resend / Twilio:</strong> Envío de emails y SMS. La entrega de notificaciones depende de estos proveedores.</li>
+                <li><strong>FacturAPI:</strong> Timbrado de CFDI. Errores en el timbrado deben resolverse con el proveedor de facturación.</li>
+            </ul>
+            <p>LastMile Platform NO es responsable por daños, pérdidas o perjuicios derivados del funcionamiento de servicios de terceros.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>11. Propiedad Intelectual</h2>
+            <p>La Plataforma, incluyendo su código fuente, diseño, interfaces, logotipos, documentación y todo material relacionado, es propiedad exclusiva de LastMile Platform y está protegida por las leyes mexicanas e internacionales de propiedad intelectual.</p>
+            <p>El Usuario recibe una licencia limitada, no exclusiva, no transferizable y revocable para utilizar la Plataforma conforme al plan contratado. Esta licencia NO implica transferencia de ningún derecho de propiedad intelectual.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>12. Limitación de Responsabilidad</h2>
+            <p>En ningún caso LastMile Platform será responsable por:</p>
+            <ul>
+                <li>Daños indirectos, incidentales, especiales o consecuentes</li>
+                <li>Pérdida de beneficios, datos, oportunidades de negocio o goodwill</li>
+                <li>Errores en la facturación CFDI (responsabilidad del Cliente)</li>
+                <li>Acciones u omisiones de choferes, clientes finales o terceros</li>
+                <li>Interrupciones del servicio por causas de fuerza mayor o terceros</li>
+                <li>Daños que excedan el monto total pagado por el Cliente en los últimos 6 meses de servicio</li>
+            </ul>
+            <div class="highlight">
+                <p><strong>Topes de responsabilidad:</strong> La responsabilidad total de LastMile Platform en ningún caso excederá el monto total pagado por el Cliente durante los 6 (seis) meses inmediatamente anteriores al evento que dio lugar a la reclamación.</p>
+            </div>
+        </div>
+
+        <div class="legal-section">
+            <h2>13. Fuerza Mayor</h2>
+            <p>Neither party shall be liable for failures or delays caused by circumstances beyond reasonable control, including but not limited to: natural disasters, pandemics, government actions, power outages, internet failures, cyberattacks, or acts of third-party service providers.</p>
+            <p>En caso de fuerza mayor, la parte afectada notificará a la otra en un plazo máximo de 48 horas y ambas partes buscarán soluciones razonables.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>14. Protección al Consumidor (PROFECO)</h2>
+            <p>Conforme a la Ley Federal de Protección al Consumidor:</p>
+            <ul>
+                <li>El Usuario tiene derecho a recibir el servicio conforme a las especificaciones del plan contratado</li>
+                <li>Las quejas y reclamaciones pueden presentarse ante PROFECO o directamente a través de nuestros canales de soporte</li>
+                <li>El Usuario puede cancelar su suscripción en cualquier momento desde el panel de administración</li>
+                <li>Los precios incluyen todos los cargos aplicables; no existen costos ocultos</li>
+                <li>El Usuario recibirá confirmación de cada transacción de pago realizada</li>
             </ul>
         </div>
 
         <div class="legal-section">
-            <h2>12. Governing Law</h2>
-            <p>These Terms are governed by the laws of the United Mexican States. Any disputes shall be resolved in the courts of Mexico City (CDMX).</p>
+            <h2>15. Vigencia y Cancelación</h2>
+            <ul>
+                <li>La suscripción se renueva automáticamente al final de cada período de facturación</li>
+                <li>El Usuario puede cancelar su suscripción en cualquier momento desde el panel de administración</li>
+                <li>La cancelación surtirá efecto al final del período de facturación en curso</li>
+                <li>No se realizan reembolsos por períodos parciales, salvo el período de prueba de 7 días</li>
+                <li>Al cancelar, los datos del Usuario se conservarán durante 30 días para posible reactivación, y posteriormente serán eliminados conforme a nuestra Política de Privacidad</li>
+            </ul>
         </div>
 
         <div class="legal-section">
-            <h2>13. Contact</h2>
-            <p>For questions about these Terms, contact us at:</p>
-            <p><strong>Email:</strong> legal@lastmile-platform.mx<br>
-            <strong>Support:</strong> soporte@lastmile-platform.mx</p>
+            <h2>16. Suspensión por Incumplimiento</h2>
+            <p>LastMile Platform podrá suspender o cancelar unilateralmente el acceso del Usuario a la Plataforma cuando:</p>
+            <ul>
+                <li>Se detecte uso no autorizado o fraudulento</li>
+                <li>Se incumplan estos Términos y Condiciones</li>
+                <li>Se excedan los límites del plan de forma recurrente sin upgrade</li>
+                <li>No se realize el pago correspondiente después de 3 días del vencimiento</li>
+                <li>Se requiera por orden judicial o autoridad competente</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>17. Modificaciones</h2>
+            <p>LastMile Platform se reserva el derecho de modificar estos Términos en cualquier momento. Las modificaciones materiales serán notificadas por correo electrónico o notificación in-app con al menos 30 días de anticipación a su entrada en vigor.</p>
+            <p>El uso continuado de la Plataforma después de la fecha de vigencia de las modificaciones constituye aceptación de las mismas.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>18. Resolución de Controversias</h2>
+            <p>Para la interpretación y cumplimiento de estos Términos, las partes se someten a las leyes federales y estatales de los Estados Unidos Mexicanos.</p>
+            <p>Cualquier controversia derivada de estos Términos será resuelta por los tribunales competentes de la Ciudad de México, renunciando expresamente a cualquier otro fuero que pudiera corresponderles por razón de domicilio presente o futuro.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>19. Legislación Aplicable</h2>
+            <p>Estos Términos se rigen por:</p>
+            <ul>
+                <li>Código Civil Federal de los Estados Unidos Mexicanos</li>
+                <li>Ley Federal de Protección al Consumidor</li>
+                <li>Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP)</li>
+                <li>Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados</li>
+                <li>Ley Fintech (Ley para Regular las Instituciones de Tecnología Financiera) en lo aplicable</li>
+                <li>Disposiciones del SAT en materia de facturación electrónica (CFDI 4.0)</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>20. Contacto</h2>
+            <p>Para consultas sobre estos Términos y Condiciones:</p>
+            <p>
+                <strong>Email:</strong> legal@lastmile-platform.mx<br>
+                <strong>Soporte:</strong> soporte@lastmile-platform.mx<br>
+                <strong>Privacidad:</strong> privacidad@lastmile-platform.mx
+            </p>
         </div>
     </div>
 </body>

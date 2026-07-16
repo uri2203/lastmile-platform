@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deslinde de Responsabilidades - LastMile Platform</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; line-height: 1.7; }
+        .legal-container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .legal-header { text-align: center; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border-color); }
+        .legal-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .legal-header .subtitle { color: var(--text-secondary); font-size: 0.95rem; }
+        .legal-section { margin-bottom: 36px; }
+        .legal-section h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; color: var(--accent-primary); }
+        .legal-section p, .legal-section li { color: var(--text-secondary); font-size: 0.95rem; }
+        .legal-section ul { padding-left: 20px; margin-top: 8px; }
+        .legal-section li { margin-bottom: 6px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-primary); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; }
+        .back-link:hover { text-decoration: underline; }
+        .highlight { background: var(--bg-secondary); padding: 16px; border-radius: 8px; border-left: 3px solid var(--accent-primary); margin: 16px 0; }
+        .disclaimer-box { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .disclaimer-box h3 { color: #ef4444; font-size: 1rem; margin-bottom: 8px; }
+        .disclaimer-box p { font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="legal-container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+        <div class="legal-header">
+            <h1>Deslinde de Responsabilidades</h1>
+            <p class="subtitle">LastMile Platform — Última actualización: Julio 2026</p>
+            <p class="subtitle" style="margin-top: 8px; font-size: 0.85rem;">Este documento establece las limitaciones de responsabilidad de LastMile Platform</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>1. Naturaleza del Servicio</h2>
+            <div class="disclaimer-box">
+                <h3>AVISO IMPORTANTE</h3>
+                <p>LastMile Platform es una herramienta tecnológica de gestión de entregas. NO es un servicio de mensajería, paquetería ni transporte. NO realiza entregas directamente. El Usuario es responsable del uso que le dé a la plataforma.</p>
+            </div>
+            <p>La Plataforma se proporciona "tal cual" (as-is) y "conforme esté disponible" (as-available), sin garantías de ningún tipo, ya sean expresas o implícitas.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>2. Disponibilidad del Servicio</h2>
+            <div class="highlight">
+                <p><strong>No garantizamos disponibilidad continua.</strong> LastMile Platform no será responsable por interrupciones, demoras o errores en el servicio, incluyendo pero no limitado a:</p>
+            </div>
+            <ul>
+                <li>Mantenimiento programado o no programado de servidores</li>
+                <li>Fallas en la infraestructura de terceros (Supabase, Render, etc.)</li>
+                <li>Interrupciones de servicio de internet o telecomunicaciones</li>
+                <li>Ataques cibernéticos, virus o malware</li>
+                <li>Desastres naturales, pandemias o eventos de fuerza mayor</li>
+                <li>Cambios en las APIs de servicios de terceros (Stripe, MercadoPago, etc.)</li>
+                <li>Errores humanos o técnicos en la configuración del Usuario</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>3. Precisión de Datos y GPS</h2>
+            <div class="disclaimer-box">
+                <h3>DESCARGO DE RESPONSABILIDAD — GPS</h3>
+                <p>Los datos de ubicación GPS son aproximados y pueden contener errores. NO constituyen evidencia de ubicación precisa. La precisión depende del dispositivo, señal, condiciones climáticas y otros factores externos.</p>
+            </div>
+            <ul>
+                <li>La ubicación GPS mostrada puede tener un margen de error de hasta 50 metros</li>
+                <li>Los tiempos de entrega estimados son aproximados y no constituyen compromisos contractuales</li>
+                <li>Las rutas mostradas son sugerencias y pueden no reflejar la ruta real tomada por el chofer</li>
+                <li>El seguimiento en tiempo real puede tener retrasos de hasta 30 segundos</li>
+                <li>La Plataforma NO garantiza la entrega puntual de ningún pedido</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>4. Facturación CFDI 4.0</h2>
+            <div class="disclaimer-box">
+                <h3>DESCARGO DE RESPONSABILIDAD — FISCAL</h3>
+                <p>LastMile Platform facilita la generación de facturas CFDI 4.0 pero NO es responsable por errores fiscales, multas del SAT, o incumplimientos tributarios del Usuario.</p>
+            </div>
+            <ul>
+                <li>El Usuario es el único responsable de la exactitud de los datos fiscales ingresados</li>
+                <li>La Plataforma NO garantiza el timbrado exitoso ante el SAT</li>
+                <li>Los errores en la facturación son responsabilidad exclusiva del Usuario</li>
+                <li>La Plataforma NO reemplaza el asesoramiento fiscal profesional</li>
+                <li>El Usuario debe verificar cada factura antes de su envío al SAT</li>
+                <li>La cancelación de facturas depende del SAT y no de la Plataforma</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>5. Servicios de Terceros</h2>
+            <p>La Plataforma se integra con servicios de terceros cuyo funcionamiento escapa de nuestro control:</p>
+            <ul>
+                <li><strong>Stripe / MercadoPago:</strong> Problemas con transacciones, reembolsos o disputas deben resolverse directamente con el proveedor de pago</li>
+                <li><strong>Supabase / Render:</strong> Interrupciones en la infraestructura en la nube son responsabilidad de estos proveedores</li>
+                <li><strong>Resend / Twilio:</strong> La entrega de emails y SMS depende de estos proveedores y puede fallar por diversas razones</li>
+                <li><strong>FacturAPI:</strong> Errores en el timbrado de CFDI deben resolverse con el proveedor de facturación</li>
+                <li><strong>Google Maps / Mapbox:</strong> Los mapas y rutas son proporcionados por terceros y pueden contener errores</li>
+            </ul>
+            <p><strong>LastMile Platform NO es responsable por daños, pérdidas o perjuicios derivados del funcionamiento de servicios de terceros.</strong></p>
+        </div>
+
+        <div class="legal-section">
+            <h2>6. Datos del Usuario</h2>
+            <ul>
+                <li>El Usuario es responsable de la exactitud y legalidad de la información que ingresa a la Plataforma</li>
+                <li>El Usuario es responsable de mantener copias de seguridad de sus datos</li>
+                <li>La Plataforma NO garantiza la recuperación de datos perdidos por error del Usuario</li>
+                <li>El Usuario es responsable del cumplimiento de la Ley Federal de Protección de Datos Personales con respecto a los datos de sus clientes y choferes</li>
+                <li>La Plataforma NO se hace responsable por el uso indebido de datos por parte del Usuario</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>7. Decisiones de Negocio</h2>
+            <div class="highlight">
+                <p><strong>LastMile Platform NO se hace responsable por decisiones de negocio del Usuario basadas en datos de la Plataforma.</strong></p>
+            </div>
+            <ul>
+                <li>Los reportes y analítica son herramientas de apoyo, no asesoramiento profesional</li>
+                <li>Las estadísticas pueden contener errores o inexactitudes</li>
+                <li>El Usuario es responsable de sus propias decisiones comerciales</li>
+                <li>La Plataforma NO reemplaza el asesoramiento legal, contable o de negocio</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>8. Actividad de Choferes y Clientes</h2>
+            <ul>
+                <li>Los choferes son empleados o contratistas del Usuario, NO de LastMile Platform</li>
+                <li>La Plataforma NO se hace responsable por acciones, omisiones o conducta de los choferes</li>
+                <li>El Usuario es responsable de verificar antecedentes de sus choferes</li>
+                <li>La Plataforma NO se hace responsable por daños causados durante las entregas</li>
+                <li>Las relaciones contractuales entre el Usuario, sus choferes y clientes son responsabilidad exclusiva del Usuario</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>9. Topes de Responsabilidad</h2>
+            <div class="highlight">
+                <p><strong>LÍMITE MÁXIMO DE RESPONSABILIDAD:</strong></p>
+                <p>En ningún caso la responsabilidad total de LastMile Platform excederá el monto total pagado por el Usuario durante los <strong>6 (seis) meses</strong> inmediatamente anteriores al evento que dio origen a la reclamación.</p>
+            </div>
+            <p>Esta limitación aplica a:</p>
+            <ul>
+                <li>Daños directos</li>
+                <li>Daños indirectos, incidentales, especiales o consecuentes</li>
+                <li>Pérdida de beneficios, datos, oportunidades de negocio o goodwill</li>
+                <li>Reclamaciones contractuales o extracontractuales</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>10. Indemnización</h2>
+            <p>El Usuario acepta indemnizar y mantener indemne a LastMile Platform, sus directores, empleados y afiliados de y contra cualquier reclamación, daño, pérdida, costo o gasto (incluyendo honorarios legales razonables) derivados de:</p>
+            <ul>
+                <li>El uso indebido de la Plataforma por parte del Usuario</li>
+                <li>El incumplimiento de estos Términos y Condiciones</li>
+                <li>La violación de leyes o derechos de terceros por parte del Usuario</li>
+                <li>La exactitud de los datos ingresados por el Usuario</li>
+                <li>Las relaciones laborales del Usuario con sus choferes</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>11. Fuerza Mayor</h2>
+            <p>LastMile Platform no será responsable por fallas o demoras causadas por circunstancias fuera de su control razonable, incluyendo pero no limitado a: desastres naturales, pandemias, acciones gubernamentales, fallas de energía eléctrica, fallos de internet, ataques cibernéticos, o actos de proveedores de terceros.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>12. Legislación Aplicable</h2>
+            <p>Este Deslinde de Responsabilidades se rige por las leyes de los Estados Unidos Mexicanos. Cualquier controversia será resuelta por los tribunales competentes de la Ciudad de México.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>13. Contacto</h2>
+            <p>Para consultas sobre este Deslinde:</p>
+            <p>
+                <strong>Email:</strong> legal@lastmile-platform.mx<br>
+                <strong>Soporte:</strong> soporte@lastmile-platform.mx
+            </p>
+        </div>
+    </div>
+</body>
+</html>

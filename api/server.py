@@ -204,6 +204,22 @@ def terminos_page():
 def privacidad_page():
     return send_from_directory('web', 'privacidad.html')
 
+@app.route('/pagos')
+def pagos_page():
+    return send_from_directory('web', 'pagos.html')
+
+@app.route('/deslinde')
+def deslinde_page():
+    return send_from_directory('web', 'deslinde.html')
+
+@app.route('/sla')
+def sla_page():
+    return send_from_directory('web', 'sla.html')
+
+@app.route('/cookies')
+def cookies_page():
+    return send_from_directory('web', 'cookies.html')
+
 @app.route('/demo')
 def demo_video():
     return send_from_directory('web', 'demo-video.html')
