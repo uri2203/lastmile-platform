@@ -188,6 +188,14 @@ def serve_static(filename):
 def register_page():
     return send_from_directory('web', 'register.html')
 
+@app.route('/terminos')
+def terminos_page():
+    return send_from_directory('web', 'terminos.html')
+
+@app.route('/privacidad')
+def privacidad_page():
+    return send_from_directory('web', 'privacidad.html')
+
 
 @app.route('/api/onboarding/register', methods=['POST'])
 def onboarding_register():
@@ -367,6 +375,7 @@ def auth_login():
     data = request.get_json() or {}
     user = (data.get('user') or '').strip()
     passwd = data.get('pass') or ''
+    emp_id_param = data.get('emp_id')
 
     if not user or not passwd:
         return jsonify({'success': False, 'error': 'Usuario y contrasena requeridos'})
@@ -374,33 +383,43 @@ def auth_login():
     pass_hash = hashlib.sha256(passwd.strip().encode()).hexdigest()
 
     try:
-        rows = query(
+        sql = (
             "SELECT U.USU_ID, U.USU_USUARIO, U.USU_NOMBRE, U.USU_ROL, "
             "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE "
             "FROM USUARIOS U "
             "LEFT JOIN EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID "
-            "WHERE UPPER(U.USU_USUARIO) = UPPER(?) AND U.USU_ACTIVO = 'S'",
-            [user]
+            "WHERE UPPER(U.USU_USUARIO) = UPPER(?) AND U.USU_ACTIVO = 'S'"
         )
+        params = [user]
+        if emp_id_param:
+            sql += " AND U.USU_EMP_ID = ?"
+            params.append(emp_id_param)
+        rows = query(sql, params)
     except Exception:
         return jsonify({'success': False, 'error': 'Tabla USUARIOS no existe. Ejecuta el script de setup.'})
 
     if not rows:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
 
-    u = rows[0]
-    db_pass = str(u.get('USU_PASS', '')).strip()
-    if db_pass != pass_hash:
+    # Check password for each matching user (handles duplicate usernames across tenants)
+    matched = None
+    for row in rows:
+        db_pass = str(row.get('USU_PASS', '')).strip()
+        if db_pass == pass_hash:
+            matched = row
+            break
+
+    if not matched:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
 
     return jsonify({
         'success': True,
         'data': {
-            'emp_id': u['USU_EMP_ID'],
-            'usuario': u['USU_USUARIO'],
-            'nombre': u['USU_NOMBRE'],
-            'rol': u['USU_ROL'],
-            'empresa': u.get('EMP_NOMBRE', '')
+            'emp_id': matched['USU_EMP_ID'],
+            'usuario': matched['USU_USUARIO'],
+            'nombre': matched['USU_NOMBRE'],
+            'rol': matched['USU_ROL'],
+            'empresa': matched.get('EMP_NOMBRE', '')
         }
     })
 

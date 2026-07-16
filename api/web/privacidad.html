@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - LastMile Platform</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; line-height: 1.7; }
+        .legal-container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .legal-header { text-align: center; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border-color); }
+        .legal-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .legal-header .subtitle { color: var(--text-secondary); font-size: 0.95rem; }
+        .legal-section { margin-bottom: 36px; }
+        .legal-section h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; color: var(--accent-primary); }
+        .legal-section p, .legal-section li { color: var(--text-secondary); font-size: 0.95rem; }
+        .legal-section ul { padding-left: 20px; margin-top: 8px; }
+        .legal-section li { margin-bottom: 6px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-primary); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; }
+        .back-link:hover { text-decoration: underline; }
+        .highlight { background: var(--bg-secondary); padding: 16px; border-radius: 8px; border-left: 3px solid var(--accent-primary); margin: 16px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem; }
+        th { color: var(--text-primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="legal-container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+        <div class="legal-header">
+            <h1>Política de Privacidad</h1>
+            <p class="subtitle">LastMile Platform — Última actualización: Julio 2026</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>1. Información que Recopilamos</h2>
+            <div class="highlight">
+                <p><strong>LastMile Platform</strong> opera como un servicio SaaS (Software como Servicio) para gestión de entregas de última milla. Recopilamos información en tres categorías:</p>
+            </div>
+            <table>
+                <tr><th>Categoría</th><th>Datos</th><th>Propósito</th></tr>
+                <tr><td>Cuenta</td><td>Nombre, email, teléfono, RFC, contraseña (cifrada)</td><td>Gestión de cuenta y autenticación</td></tr>
+                <tr><td>Operaciones</td><td>Pedidos, clientes, choferes, ubicaciones GPS</td><td>Funcionamiento del servicio de entregas</td></tr>
+                <tr><td>Pagos</td><td>Tarjeta tokenizada, historial de transacciones</td><td>Procesamiento de pagos (Stripe/MercadoPago)</td></tr>
+                <tr><td>Uso</td><td>IP, navegador, dispositivo, páginas visitadas</td><td>Seguridad y mejora del servicio</td></tr>
+            </table>
+        </div>
+
+        <div class="legal-section">
+            <h2>2. Uso de la Información</h2>
+            <p>Utilizamos su información para:</p>
+            <ul>
+                <li>Proveer y mantener el servicio</li>
+                <li>Procesar transacciones y facturación</li>
+                <li>Enviar notificaciones relacionadas con pedidos (email/SMS)</li>
+                <li>Generar facturas CFDI 4.0 (cumplimiento fiscal)</li>
+                <li>Mejorar el servicio y desarrollar nuevas funcionalidades</li>
+                <li>Prevenir fraude y proteger la seguridad</li>
+                <li>Cumplir obligaciones legales</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>3. Compartir Información</h2>
+            <p><strong>No vendemos ni alquilamos</strong> su información personal a terceros.</p>
+            <p>Compartimos información únicamente con:</p>
+            <ul>
+                <li><strong>Procesadores de pago:</strong> Stripe y MercadoPago (para cobros)</li>
+                <li><strong>Infraestructura:</strong> Supabase (base de datos), Render (hosting)</li>
+                <li><strong>Notificaciones:</strong> Resend (emails), Twilio (SMS)</li>
+                <li><strong>CFDI:</strong> FacturAPI (timbrado fiscal, si aplica)</li>
+                <li><strong>Autoridades:</strong> Solo cuando sea requerido por ley</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>4. Seguridad de Datos</h2>
+            <ul>
+                <li>Contraseñas cifradas con SHA-256</li>
+                <li>Conexiones cifradas (TLS/SSL)</li>
+                <li>Autenticación por tokens JWT</li>
+                <li>Acceso restringido por roles y tenant</li>
+                <li>Backups automáticos en Supabase</li>
+                <li>Rate limiting para prevenir ataques de fuerza bruta</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>5. Retención de Datos</h2>
+            <ul>
+                <li><strong>Datos de cuenta:</strong> Mientras la suscripción esté activa + 30 días después de cancelación</li>
+                <li><strong>Datos de pedidos:</strong> 5 años (requerimiento fiscal mexicano)</li>
+                <li><strong>Datos de GPS/tracking:</strong> 90 días</li>
+                <li><strong>Logs de acceso:</strong> 1 año</li>
+                <li><strong>Datos de facturación:</strong> 5 años (requerimiento SAT)</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>6. Sus Derechos (LFPDPPP)</h2>
+            <p>De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares, usted tiene derecho a:</p>
+            <ul>
+                <li><strong>Acceso:</strong> Solicitar copia de sus datos personales</li>
+                <li><strong>Rectificación:</strong> Corregir datos inexactos</li>
+                <li><strong>Cancelación:</strong> Solicitar eliminación de sus datos</li>
+                <li><strong>Oposición:</strong> Oponerse al tratamiento de sus datos</li>
+                <li><strong>Portabilidad:</strong> Recibir sus datos en formato estructurado</li>
+            </ul>
+            <p>Para ejercer estos derechos, contacte a <strong>privacidad@lastmile-platform.mx</strong></p>
+        </div>
+
+        <div class="legal-section">
+            <h2>7. Cookies y Tecnologías de Rastreo</h2>
+            <ul>
+                <li><strong>Cookies esenciales:</strong> Para autenticación y sesión (requeridas)</li>
+                <li><strong>Cookies de preferencias:</strong> Tema oscuro/claro, idioma</li>
+                <li>No utilizamos cookies de rastreo publicitario</li>
+                <li>No compartimos datos con redes sociales</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>8. Menores de Edad</h2>
+            <p>El servicio no está dirigido a menores de 18 años. No recopilamos intencionalmente información de menores.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>9. Cambios en esta Política</h2>
+            <p>Los cambios materiales serán notificados por email o notificación in-app con al menos 30 días de anticipación.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>10. Contacto</h2>
+            <p>Para consultas sobre privacidad:</p>
+            <p><strong>Email:</strong> privacidad@lastmile-platform.mx<br>
+            <strong>Soporte:</strong> soporte@lastmile-platform.mx</p>
+        </div>
+    </div>
+</body>
+</html>
