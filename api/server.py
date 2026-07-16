@@ -867,7 +867,35 @@ def create_pedido():
     return jsonify({'success': True, 'message': 'Pedido creado'})
 
 
-@app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT'])
+@app.route('/api/pedidos/<int:ped_id>/asignar', methods=['POST'])
+def asignar_pedido(ped_id):
+    emp_id = get_emp_id()
+    data = request.json or {}
+    cho_id = data.get('cho_id')
+    veh_id = data.get('veh_id')
+    notas = data.get('notas', '')
+    try:
+        updates = ["CHO_ID=?"]
+        params = [cho_id]
+        if veh_id:
+            updates.append("VEH_ID=?")
+            params.append(veh_id)
+        if cho_id:
+            ch = query("SELECT CHO_NOMBRE, CHO_APELLIDO FROM CHOFERES WHERE CHO_ID=? AND EMP_ID=?", [cho_id, emp_id])
+            if ch:
+                nombre = (ch[0].get('CHO_NOMBRE', '') or '') + ' ' + (ch[0].get('CHO_APELLIDO', '') or '')
+                updates.append("CHOFER_ASIGNADO=?")
+                params.append(nombre.strip())
+        params.extend([ped_id, emp_id])
+        execute(f"UPDATE PEDIDOS SET {', '.join(updates)} WHERE PED_ID=? AND EMP_ID=?", params)
+        execute("INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO, HIS_OBSERVACIONES) VALUES (?, 'ASIGNADO', ?, ?)",
+                [ped_id, data.get('usuario', 'SYSTEM'), notas])
+        return jsonify({'success': True, 'message': 'Chofer asignado al pedido'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT', 'POST'])
 def update_estado_pedido(ped_id):
     emp_id = get_emp_id()
     estado = request.json.get('estado')
@@ -884,8 +912,8 @@ def update_estado_pedido(ped_id):
         cli_id = pedido[0].get('CLI_ID') if pedido else None
 
         if estado == 'EN_RUTA':
-            ch = query("SELECT CHF_NOMBRE FROM CHOFERES WHERE CHO_ID=?", [chofer_id]) if chofer_id else None
-            chofer_name = ch[0].get('CHF_NOMBRE', 'Chofer') if ch else 'Chofer'
+            ch = query("SELECT CHO_NOMBRE FROM CHOFERES WHERE CHO_ID=?", [chofer_id]) if chofer_id else None
+            chofer_name = ch[0].get('CHO_NOMBRE', 'Chofer') if ch else 'Chofer'
             # Notify client that order is on the way
             if notification_service:
                 notification_service.send('pedido_en_ruta', ped_id, emp_id,
