@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last Mile Delivery - Demo Video</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #1a1a25;
+            --border: #2a2a3a;
+            --text: #f0f0f5;
+            --text2: #8888a0;
+            --accent: #6366f1;
+            --accent2: #818cf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Video Container */
+        .video-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Scene System */
+        .scene {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: all 0.6s ease;
+            pointer-events: none;
+        }
+        .scene.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+        }
+        .controls button {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+        .controls button:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .controls button.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .controls .timer {
+            color: var(--text2);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Voiceover */
+        .voiceover {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 500;
+            z-index: 1001;
+            max-width: 700px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            line-height: 1.5;
+        }
+        .voiceover.visible { opacity: 1; }
+
+        /* Scene Title */
+        .scene-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .scene-title.visible { opacity: 1; }
+
+        /* ========== SCENE 1: Landing ========== */
+        .landing-hero {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 40px;
+        }
+        .landing-hero .logo {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .landing-hero .tagline {
+            font-size: 22px;
+            color: var(--text2);
+            margin-bottom: 40px;
+            max-width: 600px;
+        }
+        .mockup-terminal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            width: 600px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            text-align: left;
+        }
+        .mockup-terminal .prompt { color: var(--success); }
+        .mockup-terminal .cmd { color: var(--accent2); }
+        .mockup-terminal .output { color: var(--text2); }
+        .mockup-terminal .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--accent);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .landing-features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+        .feature-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .feature-card i {
+            font-size: 28px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .feature-card h3 { font-size: 14px; margin-bottom: 4px; }
+        .feature-card p { font-size: 12px; color: var(--text2); }
+
+        /* ========== SCENE 2: Register ========== */
+        .register-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            padding: 40px;
+        }
+        .register-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 500px;
+        }
+        .register-card h2 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .register-card .subtitle {
+            color: var(--text2);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .step-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .step-dot {
+            width: 32px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+        .step-dot.active { background: var(--accent); }
+        .step-dot.done { background: var(--success); }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        .form-input.typing {
+            border-color: var(--accent);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ========== SCENE 3: Login ========== */
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+        }
+        .login-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 400px;
+            text-align: center;
+        }
+        .login-card .logo-icon {
+            font-size: 40px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .login-card h2 {
+            font-size: 22px;
+            margin-bottom: 24px;
+        }
+
+        /* ========== SCENE 4: Dashboard ========== */
+        .dashboard-page {
+            display: flex;
+            height: 100vh;
+        }
+        .dash-sidebar {
+            width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+        }
+        .dash-sidebar .brand {
+            padding: 0 20px 20px;
+            font-weight: 700;
+            font-size: 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .dash-sidebar .nav-item {
+            padding: 10px 20px;
+            color: var(--text2);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .dash-sidebar .nav-item:hover,
+        .dash-sidebar .nav-item.active {
+            color: var(--text);
+            background: rgba(99,102,241,0.1);
+            border-right: 2px solid var(--accent);
+        }
+        .dash-main {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .dash-header h1 { font-size: 22px; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .kpi-card .label {
+            font-size: 12px;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .kpi-card .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .kpi-card .change {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 4px;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .chart-card h3 {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 120px;
+        }
+        .bar {
+            flex: 1;
+            background: var(--accent);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.6s ease;
+            position: relative;
+        }
+        .bar::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--text2);
+            white-space: nowrap;
+        }
+        .pie-chart {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--success) 0% 35%,
+                var(--warning) 35% 55%,
+                var(--accent) 55% 80%,
+                var(--danger) 80% 100%
+            );
+            margin: 0 auto;
+            position: relative;
+        }
+        .pie-chart::after {
+            content: '';
+            position: absolute;
+            top: 30px; left: 30px;
+            width: 60px; height: 60px;
+            background: var(--surface);
+            border-radius: 50%;
+        }
+
+        /* ========== SCENE 5-8: Pedidos ========== */
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .table-header h3 { font-size: 14px; }
+        .btn-sm {
+            padding: 6px 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 13px;
+        }
+        th {
+            background: var(--bg);
+            color: var(--text2);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        td {
+            border-bottom: 1px solid var(--border);
+        }
+        .badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-info { background: rgba(99,102,241,0.15); color: var(--accent); }
+        .badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .row-highlight {
+            animation: rowFlash 0.6s ease;
+        }
+        @keyframes rowFlash {
+            0% { background: rgba(99,102,241,0.2); }
+            100% { background: transparent; }
+        }
+
+        /* ========== SCENE 7: Map ========== */
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .map-tiles {
+            width: 100%;
+            height: 100%;
+            background: #0d1117;
+            position: relative;
+            overflow: hidden;
+        }
+        .map-grid {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .map-road {
+            position: absolute;
+            background: rgba(99,102,241,0.15);
+            border-radius: 2px;
+        }
+        .map-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--success);
+            border: 3px solid #065f46;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 10;
+            animation: markerPulse 2s infinite;
+        }
+        @keyframes markerPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(16,185,129,0); }
+        }
+        .map-popup {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            z-index: 20;
+            min-width: 160px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+        .map-popup.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .map-popup .name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .map-popup .detail { color: var(--text2); margin: 2px 0; }
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            border: 1px solid var(--border);
+        }
+        .map-legend .dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .map-legend .item {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* ========== SCENE 9: Client Panel ========== */
+        .client-tracking-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+        .tracking-number {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .tracking-timeline {
+            display: flex;
+            gap: 0;
+            margin: 16px 0;
+        }
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .timeline-step::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--border);
+        }
+        .timeline-step:last-child::after { display: none; }
+        .timeline-step .dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            position: relative;
+            z-index: 1;
+            font-size: 10px;
+        }
+        .timeline-step.done .dot {
+            background: var(--success);
+        }
+        .timeline-step.current .dot {
+            background: var(--accent);
+            animation: markerPulse 2s infinite;
+        }
+        .timeline-step .label {
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .timeline-step.done .label,
+        .timeline-step.current .label {
+            color: var(--text);
+        }
+
+        /* ========== SCENE 10: CFDI ========== */
+        .cfdi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .cfdi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .cfdi-logo {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .cfdi-uuid {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .cfdi-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+        .cfdi-row .label { color: var(--text2); }
+        .cfdi-total {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--success);
+            text-align: right;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .cfdi-stamp {
+            text-align: center;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(16,185,129,0.1);
+            border-radius: 8px;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* ========== CLOSING ========== */
+        .closing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+        }
+        .closing .big-logo {
+            font-size: 64px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        .closing .url {
+            font-size: 20px;
+            color: var(--text2);
+            margin-bottom: 32px;
+        }
+        .closing .cta {
+            background: var(--accent);
+            color: white;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            animation: ctaPulse 2s infinite;
+        }
+        @keyframes ctaPulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .closing .price {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text2);
+        }
+        .closing .price strong {
+            font-size: 28px;
+            color: var(--text);
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="scene-title" id="sceneTitle"></div>
+    <div class="voiceover" id="voiceover"></div>
+
+    <div class="video-container">
+        <!-- SCENE 1: Landing -->
+        <div class="scene" id="scene1">
+            <div class="landing-hero" style="flex:1;">
+                <div class="logo"><i class="fas fa-cube"></i> Last Mile Delivery</div>
+                <div class="tagline">La plataforma SaaS completa para gestionar tu negocio de entregas de última milla en México y LATAM</div>
+                <div class="mockup-terminal" id="terminal1">
+                    <div><span class="prompt">$</span> <span class="cmd">lastmile</span> <span class="output">deploy --status</span></div>
+                    <div><span class="output">✓ API v3.0.0 running</span></div>
+                    <div><span class="output">✓ GPS tracking activo</span></div>
+                    <div><span class="output">✓ 61 pedidos en sistema</span></div>
+                    <div><span class="output">✓ CFDI 4.0 habilitado</span></div>
+                    <div><span class="prompt">$</span> <span class="cursor"></span></div>
+                </div>
+            </div>
+            <div class="landing-features" id="features1">
+                <div class="feature-card" data-delay="0"><i class="fas fa-box"></i><h3>Gestión de Pedidos</h3><p>Crear, asignar y rastrear pedidos en tiempo real</p></div>
+                <div class="feature-card" data-delay="100"><i class="fas fa-truck"></i><h3>Choferes & GPS</h3><p>Rastreo GPS en tiempo real de todos tus choferes</p></div>
+                <div class="feature-card" data-delay="200"><i class="fas fa-users"></i><h3>Portal Cliente</h3><p>Tus clientes rastrean sus pedidos 24/7</p></div>
+                <div class="feature-card" data-delay="300"><i class="fas fa-file-invoice"></i><h3>CFDI 4.0</h3><p>Facturación electrónica automática con el SAT</p></div>
+                <div class="feature-card" data-delay="400"><i class="fas fa-chart-bar"></i><h3>Reportes</h3><p>Dashboard con métricas clave en tiempo real</p></div>
+                <div class="feature-card" data-delay="500"><i class="fas fa-shield-alt"></i><h3>Multi-tenant</h3><p>Whitelabel: cada empresa con su propia marca</p></div>
+            </div>
+        </div>
+
+        <!-- SCENE 2: Register -->
+        <div class="scene" id="scene2">
+            <div class="register-page">
+                <div class="register-card">
+                    <h2>Crear tu cuenta</h2>
+                    <p class="subtitle">Registra tu empresa en 60 segundos</p>
+                    <div class="step-indicator">
+                        <div class="step-dot done"></div>
+                        <div class="step-dot active"></div>
+                        <div class="step-dot"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de la empresa</label>
+                        <input class="form-input" id="reg-empresa" value="" placeholder="Tu empresa">
+                    </div>
+                    <div class="form-group">
+                        <label>RFC</label>
+                        <input class="form-input" id="reg-rfc" value="" placeholder="RFC">
+                    </div>
+                    <div class="form-group">
+                        <label>Ciudad</label>
+                        <input class="form-input" id="reg-ciudad" value="" placeholder="Ciudad">
+                    </div>
+                    <button class="btn-primary" id="reg-btn">Siguiente →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 3: Login -->
+        <div class="scene" id="scene3">
+            <div class="login-page">
+                <div class="login-card">
+                    <div class="logo-icon"><i class="fas fa-cube"></i></div>
+                    <h2>Iniciar Sesión</h2>
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input class="form-input" id="login-user" value="" placeholder="Usuario">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input class="form-input" id="login-pass" value="" type="password" placeholder="••••••">
+                    </div>
+                    <button class="btn-primary" id="login-btn">Entrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 4: Dashboard -->
+        <div class="scene" id="scene4">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+                    <div class="nav-item"><i class="fas fa-box"></i> Pedidos</div>
+                    <div class="nav-item"><i class="fas fa-map"></i> Mapa GPS</div>
+                    <div class="nav-item"><i class="fas fa-truck"></i> Choferes</div>
+                    <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+                    <div class="nav-item"><i class="fas fa-file-invoice"></i> Facturación</div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h1>Dashboard</h1>
+                        <span style="color:var(--text2);font-size:13px">Express Delivery MX</span>
+                    </div>
+                    <div class="kpi-grid" id="kpiGrid">
+                        <div class="kpi-card"><div class="label">Pedidos Hoy</div><div class="value" id="kpi1">0</div><div class="change">↑ 12% vs ayer</div></div>
+                        <div class="kpi-card"><div class="label">Choferes Activos</div><div class="value" id="kpi2">0</div><div class="change">3 en ruta</div></div>
+                        <div class="kpi-card"><div class="label">Ingresos Mes</div><div class="value" id="kpi3">$0</div><div class="change">↑ 8% vs mes anterior</div></div>
+                        <div class="kpi-card"><div class="label">Entregas Completadas</div><div class="value" id="kpi4">0</div><div class="change">95% tasa de éxito</div></div>
+                    </div>
+                    <div class="chart-row">
+                        <div class="chart-card">
+                            <h3>Pedidos por Semana</h3>
+                            <div class="bar-chart" id="barChart">
+                                <div class="bar" style="height:40%" data-label="Lun"></div>
+                                <div class="bar" style="height:65%" data-label="Mar"></div>
+                                <div class="bar" style="height:50%" data-label="Mié"></div>
+                                <div class="bar" style="height:80%" data-label="Jue"></div>
+                                <div class="bar" style="height:95%" data-label="Vie"></div>
+                                <div class="bar" style="height:60%" data-label="Sáb"></div>
+                                <div class="bar" style="height:30%" data-label="Dom"></div>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Estados de Pedidos</h3>
+                            <div class="pie-chart"></div>
+                            <div style="margin-top:40px;font-size:12px;color:var(--text2)">
+                                <div style="margin-bottom:4px"><span style="color:var(--success)">●</span> Entregados (35%)</div>
+                                <div style="margin-bottom:4px"><span style="color:var(--warning)">●</span> En Ruta (20%)</div>
+                                <div style="margin-bottom:4px"><span style="color:var(--accent)">●</span> Pendientes (25%)</div>
+                                <div><span style="color:var(--danger)">●</span> Cancelados (20%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 5: Pedidos -->
+        <div class="scene" id="scene5">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+                    <div class="nav-item active"><i class="fas fa-box"></i> Pedidos</div>
+                    <div class="nav-item"><i class="fas fa-map"></i> Mapa GPS</div>
+                    <div class="nav-item"><i class="fas fa-truck"></i> Choferes</div>
+                    <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+                    <div class="nav-item"><i class="fas fa-file-invoice"></i> Facturación</div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h1>Pedidos</h1>
+                        <button class="btn-sm" id="newPedidoBtn">+ Nuevo Pedido</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Cliente</th>
+                                    <th>Destino</th>
+                                    <th>Estado</th>
+                                    <th>Chofer</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pedidosTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 6: Asignar -->
+        <div class="scene" id="scene6">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+                    <div class="nav-item active"><i class="fas fa-box"></i> Pedidos</div>
+                    <div class="nav-item"><i class="fas fa-map"></i> Mapa GPS</div>
+                    <div class="nav-item"><i class="fas fa-truck"></i> Choferes</div>
+                    <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+                    <div class="nav-item"><i class="fas fa-file-invoice"></i> Facturación</div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h1>Asignar Chofer</h1>
+                    </div>
+                    <div class="cfdi-card" id="asignarCard">
+                        <h3 style="margin-bottom:16px">Pedido PED-2026-062</h3>
+                        <div class="form-group">
+                            <label>Chofer</label>
+                            <select class="form-input" id="select-chofer">
+                                <option value="">Seleccionar chofer...</option>
+                                <option value="1">Carlos Rodriguez</option>
+                                <option value="2">Maria Lopez</option>
+                                <option value="3" selected>Ana Martinez</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Vehículo</label>
+                            <select class="form-input" id="select-vehiculo">
+                                <option value="">Seleccionar vehículo...</option>
+                                <option value="1" selected>Nissan NP300 - ABC-123</option>
+                                <option value="2">Ford Transit - DEF-456</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" id="asignarBtn">Asignar Chofer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 7: GPS Map -->
+        <div class="scene" id="scene7">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+                    <div class="nav-item"><i class="fas fa-box"></i> Pedidos</div>
+                    <div class="nav-item active"><i class="fas fa-map"></i> Mapa GPS</div>
+                    <div class="nav-item"><i class="fas fa-truck"></i> Choferes</div>
+                    <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+                    <div class="nav-item"><i class="fas fa-file-invoice"></i> Facturación</div>
+                </div>
+                <div class="dash-main" style="padding:0;">
+                    <div class="map-container">
+                        <div class="map-tiles">
+                            <div class="map-grid"></div>
+                            <!-- Roads -->
+                            <div class="map-road" style="top:45%;left:0;width:100%;height:3px;"></div>
+                            <div class="map-road" style="top:0;left:48%;width:3px;height:100%;"></div>
+                            <div class="map-road" style="top:25%;left:20%;width:60%;height:2px;transform:rotate(-15deg);"></div>
+                            <div class="map-road" style="top:70%;left:10%;width:80%;height:2px;transform:rotate(10deg);"></div>
+                            
+                            <!-- Markers -->
+                            <div class="map-marker" style="top:35%;left:30%;" id="marker1"></div>
+                            <div class="map-marker" style="top:55%;left:60%;" id="marker2"></div>
+                            <div class="map-marker" style="top:40%;left:75%;" id="marker3"></div>
+                            <div class="map-marker" style="top:65%;left:25%;" id="marker4"></div>
+                            <div class="map-marker" style="top:30%;left:55%;" id="marker5"></div>
+
+                            <!-- Popup -->
+                            <div class="map-popup" id="mapPopup">
+                                <div class="name" id="popupName">Carlos Rodriguez</div>
+                                <div class="detail"><i class="fas fa-satellite-dish"></i> GPS Activo</div>
+                                <div class="detail"><i class="fas fa-tachometer-alt"></i> <span id="popupSpeed">45</span> km/h</div>
+                                <div class="detail"><i class="fas fa-battery-three-quarters"></i> <span id="popupBattery">78</span>%</div>
+                                <div class="detail"><i class="fas fa-clock"></i> Hace 30 segundos</div>
+                            </div>
+
+                            <div class="map-legend">
+                                <div class="item"><span class="dot" style="background:var(--success)"></span> Chofer activo</div>
+                                <div class="item"><span class="dot" style="background:var(--warning)"></span> En ruta</div>
+                                <div class="item"><span class="dot" style="background:var(--danger)"></span> Detenido</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 8: Estado -->
+        <div class="scene" id="scene8">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+                    <div class="nav-item active"><i class="fas fa-box"></i> Pedidos</div>
+                    <div class="nav-item"><i class="fas fa-map"></i> Mapa GPS</div>
+                    <div class="nav-item"><i class="fas fa-truck"></i> Choferes</div>
+                    <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+                    <div class="nav-item"><i class="fas fa-file-invoice"></i> Facturación</div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h1>Cambiar Estado</h1>
+                    </div>
+                    <div class="cfdi-card">
+                        <h3 style="margin-bottom:16px">Pedido PED-2026-062</h3>
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                            <span style="font-size:13px;color:var(--text2)">Estado actual:</span>
+                            <span class="badge badge-info" id="currentBadge">ASIGNADO</span>
+                        </div>
+                        <div class="tracking-timeline" id="statusTimeline">
+                            <div class="timeline-step done">
+                                <div class="dot"><i class="fas fa-check" style="font-size:10px"></i></div>
+                                <div class="label">Creado</div>
+                            </div>
+                            <div class="timeline-step done">
+                                <div class="dot"><i class="fas fa-check" style="font-size:10px"></i></div>
+                                <div class="label">Asignado</div>
+                            </div>
+                            <div class="timeline-step current">
+                                <div class="dot"><i class="fas fa-truck" style="font-size:10px"></i></div>
+                                <div class="label">En Ruta</div>
+                            </div>
+                            <div class="timeline-step">
+                                <div class="dot"></div>
+                                <div class="label">Entregado</div>
+                            </div>
+                        </div>
+                        <div style="text-align:center;margin-top:20px;">
+                            <button class="btn-primary" id="estadoBtn" style="width:auto;padding:12px 32px;">Marcar como ENTREGADO</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 9: Client Panel -->
+        <div class="scene" id="scene9">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item active"><i class="fas fa-home"></i> Mis Pedidos</div>
+                    <div class="nav-item"><i class="fas fa-map"></i> Tracking</div>
+                    <div class="nav-item"><i class="fas fa-user"></i> Mi Cuenta</div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h1>Mis Pedidos</h1>
+                        <span style="color:var(--text2);font-size:13px">María García</span>
+                    </div>
+                    <div class="client-tracking-card">
+                        <div class="tracking-number">PED-2026-062</div>
+                        <div style="color:var(--text2);font-size:13px;margin-bottom:8px;">
+                            <i class="fas fa-map-marker-alt" style="color:var(--accent)"></i> Av. Vallarta 2000, Col. Chapalita
+                        </div>
+                        <div style="display:flex;gap:16px;font-size:12px;color:var(--text2);margin-bottom:12px;">
+                            <span><i class="fas fa-box"></i> 2 bultos</span>
+                            <span><i class="fas fa-dollar-sign"></i> $350</span>
+                            <span><i class="fas fa-truck"></i> Ana Martínez</span>
+                        </div>
+                        <div class="tracking-timeline">
+                            <div class="timeline-step done">
+                                <div class="dot"><i class="fas fa-check" style="font-size:10px"></i></div>
+                                <div class="label">Creado</div>
+                            </div>
+                            <div class="timeline-step done">
+                                <div class="dot"><i class="fas fa-check" style="font-size:10px"></i></div>
+                                <div class="label">Asignado</div>
+                            </div>
+                            <div class="timeline-step done">
+                                <div class="dot"><i class="fas fa-check" style="font-size:10px"></i></div>
+                                <div class="label">En Ruta</div>
+                            </div>
+                            <div class="timeline-step current">
+                                <div class="dot"><i class="fas fa-box" style="font-size:10px"></i></div>
+                                <div class="label">Entregado</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card" style="margin-top:16px;">
+                        <h3>Ubicación del Chofer</h3>
+                        <div style="height:200px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+                            <div class="map-grid" style="position:absolute;"></div>
+                            <div class="map-marker" style="top:50%;left:55%;"></div>
+                            <div style="position:relative;z-index:1;background:var(--surface);padding:8px 16px;border-radius:8px;font-size:12px;">
+                                <i class="fas fa-satellite-dish" style="color:var(--success)"></i> Ana Martínez en ruta — Llegando en ~15 min
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 10: CFDI -->
+        <div class="scene" id="scene10">
+            <div class="dashboard-page">
+                <div class="dash-sidebar">
+                    <div class="brand"><i class="fas fa-cube" style="color:var(--accent)"></i> LastMile</div>
+                    <div class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+                    <div class="nav-item"><i class="fas fa-box"></i> Pedidos</div>
+                    <div class="nav-item"><i class="fas fa-map"></i> Mapa GPS</div>
+                    <div class="nav-item"><i class="fas fa-truck"></i> Choferes</div>
+                    <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+                    <div class="nav-item active"><i class="fas fa-file-invoice"></i> Facturación</div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h1>Facturación CFDI 4.0</h1>
+                    </div>
+                    <div class="cfdi-card">
+                        <div class="cfdi-header">
+                            <div>
+                                <div class="cfdi-logo"><i class="fas fa-file-invoice"></i> Last Mile</div>
+                                <div style="font-size:12px;color:var(--text2)">RFC: LMA230303ABC</div>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="font-weight:600;">Factura #000127</div>
+                                <div class="cfdi-uuid">UUID: 8a7b6c5d-4e3f-2a1b-0c9d-8e7f6a5b4c3d</div>
+                            </div>
+                        </div>
+                        <div class="cfdi-row"><span class="label">Fecha:</span><span>16/07/2026 14:32:15</span></div>
+                        <div class="cfdi-row"><span class="label">Receptor:</span><span>María García - MG850101XYZ</span></div>
+                        <div class="cfdi-row"><span class="label">Régimen:</span><span>612 - Personas Físicas con Actividades Empresariales</span></div>
+                        <div class="cfdi-row"><span class="label">Concepto:</span><span>Servicio de envío #PED-2026-062</span></div>
+                        <div class="cfdi-row"><span class="label">Subtotal:</span><span>$301.72 MXN</span></div>
+                        <div class="cfdi-row"><span class="label">IVA (16%):</span><span>$48.28 MXN</span></div>
+                        <div class="cfdi-total">$350.00 MXN</div>
+                        <div class="cfdi-stamp">
+                            <i class="fas fa-stamp"></i> TIMBRADO SAT ✓<br>
+                            <span style="font-size:11px;font-weight:400;color:var(--text2)">Fecha timbrado: 16/07/2026 14:32:18</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 11: Closing -->
+        <div class="scene" id="scene11">
+            <div class="closing">
+                <div class="big-logo"><i class="fas fa-cube"></i> Last Mile Delivery</div>
+                <div class="url">lastmile-platform.onrender.com</div>
+                <div class="cta">Comienza tu prueba gratuita hoy</div>
+                <div class="price">Desde <strong>$999</strong> MXN/mes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="playPauseBtn" class="active"><i class="fas fa-play"></i></button>
+        <button id="prevBtn"><i class="fas fa-backward"></i></button>
+        <button id="nextBtn"><i class="fas fa-forward"></i></button>
+        <span class="timer" id="timerDisplay">0:00 / 2:45</span>
+        <button id="restartBtn"><i class="fas fa-redo"></i></button>
+    </div>
+
+    <script>
+    // ========================================
+    // DEMO VIDEO ENGINE
+    // ========================================
+    const TOTAL_DURATION = 165000; // 2:45
+    const SCENE_COUNT = 11;
+    let currentScene = 1;
+    let isPlaying = true;
+    let startTime = Date.now();
+    let pauseTime = 0;
+
+    const scenes = [
+        { id: 1, start: 0, end: 20000, title: "Landing Page", voiceover: "Last Mile Delivery es la plataforma SaaS que necesitas para gestionar tu negocio de entregas de última milla" },
+        { id: 2, start: 20000, end: 45000, title: "Registro de Empresa", voiceover: "Registra tu empresa en 60 segundos. Solo necesitas tu RFC y los datos de tu administrador" },
+        { id: 3, start: 45000, end: 55000, title: "Login", voiceover: "Accede desde cualquier dispositivo, en cualquier momento" },
+        { id: 4, start: 55000, end: 70000, title: "Dashboard", voiceover: "Dashboard en tiempo real con todas tus métricas clave. Pedidos, ingresos, rendimiento de choferes" },
+        { id: 5, start: 70000, end: 90000, title: "Crear Pedido", voiceover: "Crea pedidos en segundos. El sistema calcula automáticamente el costo y asigna un número de seguimiento" },
+        { id: 6, start: 90000, end: 105000, title: "Asignar Chofer", voiceover: "Asigna pedidos a tus choferes con un solo click. El chofer recibe la notificación en su teléfono" },
+        { id: 7, start: 105000, end: 125000, title: "GPS Tracking", voiceover: "GPS en tiempo real para que sepas dónde está cada entrega. Velocidad, ubicación, batería" },
+        { id: 8, start: 125000, end: 140000, title: "Cambiar Estado", voiceover: "Actualiza el estado y notifica al cliente automáticamente. Sin llamadas, sin mensajes manuales" },
+        { id: 9, start: 140000, end: 155000, title: "Panel Cliente", voiceover: "Tus clientes pueden rastrear sus pedidos en tiempo real. Mayor satisfacción" },
+        { id: 10, start: 155000, end: 170000, title: "Facturación CFDI", voiceover: "Genera facturas electrónicas CFDI 4.0 automáticamente. Cumple con el SAT sin complicaciones" },
+        { id: 11, start: 170000, end: 195000, title: "Cierre", voiceover: "Last Mile Delivery. Tu negocio de entregas, en la palma de tu mano. Comienza tu prueba gratuita hoy" }
+    ];
+
+    // Elements
+    const progressBar = document.getElementById('progressBar');
+    const sceneTitle = document.getElementById('sceneTitle');
+    const voiceover = document.getElementById('voiceover');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+
+    function formatTime(ms) {
+        const s = Math.floor(ms / 1000);
+        const m = Math.floor(s / 60);
+        return `${m}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    function showScene(id) {
+        document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+        const scene = document.getElementById('scene' + id);
+        if (scene) scene.classList.add('active');
+
+        const data = scenes.find(s => s.id === id);
+        if (data) {
+            sceneTitle.textContent = data.title;
+            sceneTitle.classList.add('visible');
+            voiceover.textContent = data.voiceover;
+            voiceover.classList.add('visible');
+        }
+
+        // Trigger scene animations
+        if (id === 1) animateLanding();
+        if (id === 2) animateRegister();
+        if (id === 3) animateLogin();
+        if (id === 4) animateDashboard();
+        if (id === 5) animatePedidos();
+        if (id === 6) animateAsignar();
+        if (id === 7) animateMap();
+        if (id === 8) animateEstado();
+    }
+
+    // Animation functions
+    function animateLanding() {
+        const cards = document.querySelectorAll('.feature-card');
+        cards.forEach((c, i) => {
+            setTimeout(() => c.classList.add('show'), 300 + i * 200);
+        });
+    }
+
+    function animateRegister() {
+        const fields = [
+            { el: document.getElementById('reg-empresa'), text: 'Paquetería Express GDL' },
+            { el: document.getElementById('reg-rfc'), text: 'PEG230303ABC' },
+            { el: document.getElementById('reg-ciudad'), text: 'Guadalajara, JAL' }
+        ];
+        fields.forEach((f, i) => {
+            setTimeout(() => {
+                f.el.classList.add('typing');
+                typeText(f.el, f.text, () => f.el.classList.remove('typing'));
+            }, 500 + i * 1200);
+        });
+    }
+
+    function animateLogin() {
+        setTimeout(() => {
+            typeText(document.getElementById('login-user'), 'admin');
+        }, 500);
+        setTimeout(() => {
+            typeText(document.getElementById('login-pass'), '••••••');
+        }, 1500);
+    }
+
+    function animateDashboard() {
+        animateCounter('kpi1', 0, 23, 1500);
+        animateCounter('kpi2', 0, 5, 1200);
+        animateCounter('kpi3', 0, 12480, 1800, '$');
+        animateCounter('kpi4', 0, 156, 1600);
+    }
+
+    function animatePedidos() {
+        const pedidos = [
+            { num: 'PED-2026-060', cliente: 'Distribuidora Norte', destino: 'Blvd. Insurgentes 890', estado: 'ENTREGADO', chofer: 'Carlos R.', total: '$720' },
+            { num: 'PED-2026-061', cliente: 'Comercial ABC', destino: 'Calle 5 de Mayo 120', estado: 'EN_RUTA', chofer: 'Maria L.', total: '$180' },
+            { num: 'PED-2026-062', cliente: 'María García', destino: 'Av. Vallarta 2000', estado: 'PENDIENTE', chofer: '-', total: '$350' },
+            { num: 'PED-2026-063', cliente: 'Tech Solutions', destino: 'Av. Reforma 255', estado: 'EN_RUTA', chofer: 'Ana M.', total: '$450' },
+            { num: 'PED-2026-064', cliente: 'Grupo Logístico MX', destino: 'Periférico Sur 1200', estado: 'PENDIENTE', chofer: '-', total: '$560' },
+        ];
+        const tbody = document.getElementById('pedidosTable');
+        tbody.innerHTML = '';
+        pedidos.forEach((p, i) => {
+            setTimeout(() => {
+                const badge = p.estado === 'ENTREGADO' ? 'badge-success' : p.estado === 'EN_RUTA' ? 'badge-warning' : 'badge-info';
+                tbody.innerHTML += `<tr class="row-highlight">
+                    <td><strong>${p.num}</strong></td>
+                    <td>${p.cliente}</td>
+                    <td>${p.destino}</td>
+                    <td><span class="badge ${badge}">${p.estado}</span></td>
+                    <td>${p.chofer}</td>
+                    <td><strong>${p.total}</strong></td>
+                </tr>`;
+            }, 300 + i * 400);
+        });
+    }
+
+    function animateAsignar() {
+        setTimeout(() => {
+            document.getElementById('select-chofer').value = '3';
+        }, 1000);
+    }
+
+    function animateMap() {
+        const markers = document.querySelectorAll('.map-marker');
+        let popupShown = false;
+
+        // Move markers slightly
+        markers.forEach((m, i) => {
+            setInterval(() => {
+                const top = parseFloat(m.style.top);
+                const left = parseFloat(m.style.left);
+                m.style.top = (top + (Math.random() - 0.5) * 0.3) + '%';
+                m.style.left = (left + (Math.random() - 0.5) * 0.3) + '%';
+            }, 2000 + i * 500);
+        });
+
+        // Show popup on marker click
+        markers.forEach((m, i) => {
+            m.addEventListener('click', () => {
+                const popup = document.getElementById('mapPopup');
+                const names = ['Carlos Rodriguez', 'Maria Lopez', 'Ana Martinez', 'Pedro Sanchez', 'Jose Hernandez'];
+                const speeds = [45, 32, 58, 0, 41];
+                const batteries = [78, 92, 65, 100, 45];
+                document.getElementById('popupName').textContent = names[i];
+                document.getElementById('popupSpeed').textContent = speeds[i];
+                document.getElementById('popupBattery').textContent = batteries[i];
+                const rect = m.getBoundingClientRect();
+                popup.style.left = (rect.left + 20) + 'px';
+                popup.style.top = (rect.top - 10) + 'px';
+                popup.classList.add('show');
+                setTimeout(() => popup.classList.remove('show'), 3000);
+            });
+        });
+
+        // Auto-show popup after 2 seconds
+        setTimeout(() => {
+            markers[0].click();
+        }, 2000);
+    }
+
+    function animateEstado() {
+        // Already showing the timeline
+    }
+
+    // Utility functions
+    function typeText(el, text, callback) {
+        el.value = '';
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                el.value += text[i];
+                i++;
+            } else {
+                clearInterval(interval);
+                if (callback) callback();
+            }
+        }, 50);
+    }
+
+    function animateCounter(id, from, to, duration, prefix = '') {
+        const el = document.getElementById(id);
+        const start = Date.now();
+        const step = () => {
+            const elapsed = Date.now() - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(from + (to - from) * eased);
+            el.textContent = prefix + current.toLocaleString();
+            if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
+
+    // Playback control
+    function updatePlayback() {
+        if (!isPlaying) return;
+
+        const elapsed = Date.now() - startTime - pauseTime;
+        const progress = Math.min(elapsed / TOTAL_DURATION, 1);
+        progressBar.style.width = (progress * 100) + '%';
+
+        const currentTime = elapsed;
+        timerDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(TOTAL_DURATION)}`;
+
+        // Find current scene
+        const scene = scenes.find(s => currentTime >= s.start && currentTime < s.end);
+        if (scene && scene.id !== currentScene) {
+            currentScene = scene.id;
+            showScene(scene.id);
+        }
+
+        if (progress < 1) {
+            requestAnimationFrame(updatePlayback);
+        }
+    }
+
+    function play() {
+        isPlaying = true;
+        pauseTime += Date.now() - (pauseTime || Date.now());
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        playPauseBtn.classList.add('active');
+        requestAnimationFrame(updatePlayback);
+    }
+
+    function pause() {
+        isPlaying = false;
+        pauseTime = Date.now() - startTime;
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        playPauseBtn.classList.remove('active');
+    }
+
+    // Event listeners
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) pause(); else play();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        const next = scenes.find(s => s.start > startTime + pauseTime);
+        if (next) {
+            startTime = Date.now() - next.start;
+            pauseTime = 0;
+            showScene(next.id);
+            currentScene = next.id;
+        }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        const prev = [...scenes].reverse().find(s => s.start < startTime + pauseTime - 1000);
+        if (prev) {
+            startTime = Date.now() - prev.start;
+            pauseTime = 0;
+            showScene(prev.id);
+            currentScene = prev.id;
+        }
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+        startTime = Date.now();
+        pauseTime = 0;
+        currentScene = 1;
+        showScene(1);
+    });
+
+    // Start
+    showScene(1);
+    requestAnimationFrame(updatePlayback);
+
+    // Auto-play
+    document.addEventListener('click', () => {
+        if (!isPlaying) play();
+    }, { once: true });
+    </script>
+</body>
+</html>

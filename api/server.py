@@ -196,6 +196,10 @@ def terminos_page():
 def privacidad_page():
     return send_from_directory('web', 'privacidad.html')
 
+@app.route('/demo')
+def demo_video():
+    return send_from_directory('web', 'demo-video.html')
+
 
 @app.route('/api/onboarding/register', methods=['POST'])
 def onboarding_register():
