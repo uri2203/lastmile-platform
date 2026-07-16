@@ -288,8 +288,32 @@ def onboarding_register():
              usr_data['nombre'], usr_data['email'],
              usr_data.get('telefono', '')]
         )
+        # Get the newly created user ID
+        usr_row = query("SELECT MAX(USR_ID) as id FROM USUARIOS WHERE USU_EMP_ID=?", [emp_id])
+        usr_id = usr_row[0].get('ID', usr_row[0].get('id', 0)) if usr_row else 0
     except Exception as e:
         return jsonify({'success': False, 'error': f'Error creando usuario: {str(e)[:100]}'}), 500
+
+    # Record legal acceptance for legal protection
+    legal_data = data.get('legal', {})
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr or 'unknown')
+    user_agent = request.headers.get('User-Agent', 'unknown')
+    try:
+        execute(
+            "INSERT INTO LEGAL_ACCEPTANCE (EMP_ID, USR_ID, LA_IP, LA_USER_AGENT, "
+            "LA_TERMINOS, LA_PRIVACIDAD, LA_PAGOS, LA_DESLINDE, LA_SLA, LA_COOKIES, "
+            "LA_FECHA, LA_ACCEPTED_ALL) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'S')",
+            [emp_id, usr_id, client_ip, user_agent,
+             'S' if legal_data.get('terminos') else 'N',
+             'S' if legal_data.get('privacidad') else 'N',
+             'S' if legal_data.get('pagos') else 'N',
+             'S' if legal_data.get('deslinde') else 'N',
+             'S' if legal_data.get('sla') else 'N',
+             'S' if legal_data.get('cookies') else 'N']
+        )
+    except Exception:
+        pass
 
     # Create subscription - look up PLAN_ID from SAAS_PLANES
     try:
@@ -455,6 +479,85 @@ def admin_tenants_usage():
             "FROM EMPRESAS e WHERE e.EMP_ESTATUS='ACTIVA' ORDER BY e.EMP_ID"
         )
         return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/admin/legal-acceptance', methods=['GET'])
+def admin_legal_acceptance():
+    """Get all legal acceptance records for legal protection."""
+    try:
+        emp_id = request.args.get('emp_id')
+        if emp_id:
+            rows = query(
+                "SELECT la.*, u.USU_NOMBRE, u.USU_EMAIL, e.EMP_NOMBRE "
+                "FROM LEGAL_ACCEPTANCE la "
+                "LEFT JOIN USUARIOS u ON la.USR_ID = u.USR_ID "
+                "LEFT JOIN EMPRESAS e ON la.EMP_ID = e.EMP_ID "
+                "WHERE la.EMP_ID=? ORDER BY la.LA_FECHA DESC", [emp_id]
+            )
+        else:
+            rows = query(
+                "SELECT la.*, u.USU_NOMBRE, u.USU_EMAIL, e.EMP_NOMBRE "
+                "FROM LEGAL_ACCEPTANCE la "
+                "LEFT JOIN USUARIOS u ON la.USR_ID = u.USR_ID "
+                "LEFT JOIN EMPRESAS e ON la.EMP_ID = e.EMP_ID "
+                "ORDER BY la.LA_FECHA DESC LIMIT 500"
+            )
+        return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/legal/my-acceptance', methods=['GET'])
+def my_legal_acceptance():
+    """Get current user's legal acceptance records."""
+    emp_id = request.headers.get('X-Emp-Id')
+    usr_id = request.args.get('usr_id')
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'Emp ID required'}), 400
+    try:
+        if usr_id:
+            rows = query(
+                "SELECT * FROM LEGAL_ACCEPTANCE WHERE EMP_ID=? AND USR_ID=? ORDER BY LA_FECHA DESC",
+                [emp_id, usr_id]
+            )
+        else:
+            rows = query(
+                "SELECT * FROM LEGAL_ACCEPTANCE WHERE EMP_ID=? ORDER BY LA_FECHA DESC",
+                [emp_id]
+            )
+        return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/legal/verify/<int:usr_id>', methods=['GET'])
+def verify_legal_acceptance(usr_id):
+    """Verify if a user has accepted all legal documents."""
+    try:
+        rows = query(
+            "SELECT LA_TERMINOS, LA_PRIVACIDAD, LA_PAGOS, LA_DESLINDE, LA_SLA, LA_COOKIES, "
+            "LA_FECHA, LA_IP, LA_ACCEPTED_ALL "
+            "FROM LEGAL_ACCEPTANCE WHERE USR_ID=? ORDER BY LA_FECHA DESC LIMIT 1",
+            [usr_id]
+        )
+        if rows:
+            r = rows[0]
+            all_accepted = all([
+                r.get('LA_TERMINOS') == 'S',
+                r.get('LA_PRIVACIDAD') == 'S',
+                r.get('LA_PAGOS') == 'S',
+                r.get('LA_DESLINDE') == 'S',
+                r.get('LA_SLA') == 'S',
+                r.get('LA_COOKIES') == 'S'
+            ])
+            return jsonify({
+                'success': True,
+                'accepted': all_accepted,
+                'details': r
+            })
+        return jsonify({'success': True, 'accepted': False, 'details': None})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

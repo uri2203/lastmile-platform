@@ -303,6 +303,19 @@
         const API = window.location.origin;
         let currentStep = 1;
         let selectedPlan = 'STARTER';
+        const docsRead = { terminos: false, privacidad: false, pagos: false, deslinde: false, sla: false, cookies: false };
+
+        document.querySelectorAll('.legal-link').forEach(link => {
+            link.addEventListener('click', function() {
+                const href = this.getAttribute('href');
+                if (href === '/terminos') docsRead.terminos = true;
+                else if (href === '/privacidad') docsRead.privacidad = true;
+                else if (href === '/pagos') docsRead.pagos = true;
+                else if (href === '/deslinde') docsRead.deslinde = true;
+                else if (href === '/sla') docsRead.sla = true;
+                else if (href === '/cookies') docsRead.cookies = true;
+            });
+        });
 
         function nextStep(step) {
             if (step === 2) {
@@ -381,7 +394,15 @@
                     usuario: document.getElementById('usrUsuario').value.trim() || 'admin',
                     password: document.getElementById('usrPass').value
                 },
-                plan: selectedPlan
+                plan: selectedPlan,
+                legal: {
+                    terminos: !!docsRead.terminos,
+                    privacidad: !!docsRead.privacidad,
+                    pagos: !!docsRead.pagos,
+                    deslinde: !!docsRead.deslinde,
+                    sla: !!docsRead.sla,
+                    cookies: !!docsRead.cookies
+                }
             };
 
             fetch(API + '/api/onboarding/register', {
