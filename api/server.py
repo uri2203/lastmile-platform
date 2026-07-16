@@ -245,7 +245,7 @@ def onboarding_register():
     password_hash = hashlib.sha256(usr_data['password'].encode()).hexdigest()
     try:
         execute(
-            "INSERT INTO USUARIOS (EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, "
+            "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, "
             "USU_TELEFONO, USU_ROL, USU_ACTIVO, USU_CREATED) "
             "VALUES (?, ?, ?, ?, ?, ?, 'admin', 'S', NOW())",
             [emp_id, usr_data.get('usuario', 'admin'), password_hash,
