@@ -94,6 +94,8 @@
             align-items: center; justify-content: center; margin: 0 auto 20px;
         }
         .success-icon i { font-size: 36px; color: var(--success); }
+        .legal-link:hover { background: rgba(99,102,241,0.15) !important; border-color: var(--accent) !important; }
+        .legal-check:hover { border-color: var(--accent) !important; background: rgba(99,102,241,0.1) !important; }
         .error-msg {
             background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);
             color: var(--danger); padding: 12px; border-radius: 8px;
@@ -224,10 +226,48 @@
                         <div class="plan-price">$5,999/mes</div>
                     </div>
                 </div>
-                <div style="margin: 20px 0; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
-                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
-                        <input type="checkbox" id="legalAccept" style="margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent);">
-                        <span>Acepto los <a href="/terminos" target="_blank" style="color: var(--accent); text-decoration: underline;">Términos y Condiciones</a>, la <a href="/privacidad" target="_blank" style="color: var(--accent); text-decoration: underline;">Política de Privacidad</a>, la <a href="/pagos" target="_blank" style="color: var(--accent); text-decoration: underline;">Política de Pagos</a> y el <a href="/deslinde" target="_blank" style="color: var(--accent); text-decoration: underline;">Deslinde de Responsabilidades</a>.</span>
+                <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border: 1px solid rgba(99,102,241,0.3); border-radius: 14px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                        <i class="fas fa-shield-halved" style="color: var(--accent); font-size: 18px;"></i>
+                        <span style="font-weight: 700; font-size: 14px; color: var(--text);">Documentos Legales</span>
+                    </div>
+                    <div style="display: grid; gap: 8px; margin-bottom: 16px;">
+                        <a href="/terminos" target="_blank" class="legal-link" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; transition: all 0.2s;">
+                            <i class="fas fa-file-contract" style="color: var(--accent); width: 16px;"></i>
+                            <span>Términos y Condiciones</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 10px; opacity: 0.5;"></i>
+                        </a>
+                        <a href="/privacidad" target="_blank" class="legal-link" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; transition: all 0.2s;">
+                            <i class="fas fa-user-shield" style="color: var(--accent); width: 16px;"></i>
+                            <span>Política de Privacidad (LFPDPPP)</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 10px; opacity: 0.5;"></i>
+                        </a>
+                        <a href="/pagos" target="_blank" class="legal-link" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; transition: all 0.2s;">
+                            <i class="fas fa-credit-card" style="color: var(--accent); width: 16px;"></i>
+                            <span>Política de Pagos y Reembolsos</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 10px; opacity: 0.5;"></i>
+                        </a>
+                        <a href="/deslinde" target="_blank" class="legal-link" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; transition: all 0.2s;">
+                            <i class="fas fa-triangle-exclamation" style="color: var(--accent); width: 16px;"></i>
+                            <span>Deslinde de Responsabilidades</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 10px; opacity: 0.5;"></i>
+                        </a>
+                        <a href="/sla" target="_blank" class="legal-link" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; transition: all 0.2s;">
+                            <i class="fas fa-server" style="color: var(--accent); width: 16px;"></i>
+                            <span>Acuerdo de Nivel de Servicio (SLA)</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 10px; opacity: 0.5;"></i>
+                        </a>
+                        <a href="/cookies" target="_blank" class="legal-link" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; transition: all 0.2s;">
+                            <i class="fas fa-cookie-bite" style="color: var(--accent); width: 16px;"></i>
+                            <span>Política de Cookies</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 10px; opacity: 0.5;"></i>
+                        </a>
+                    </div>
+                    <label class="legal-check" style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border); transition: all 0.2s;">
+                        <input type="checkbox" id="legalAccept" style="margin-top: 2px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0;">
+                        <span style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                            <strong style="color: var(--text);">He leído y acepto</strong> todos los documentos legales listados arriba. Confirmo que soy mayor de 18 años y que la información proporcionada es veraz.
+                        </span>
                     </label>
                 </div>
                 <button class="btn btn-primary" onclick="submitRegistration()">
