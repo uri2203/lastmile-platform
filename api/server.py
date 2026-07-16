@@ -229,15 +229,13 @@ def onboarding_register():
     plan_config = {'STARTER': 10, 'PRO': 50, 'ENTERPRISE': 9999}
     try:
         execute(
-            "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_RAZON_SOCIAL, EMP_CIUDAD, EMP_CP, "
-            "EMP_ESTATUS, EMP_PLAN, EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_CREATED) "
-            "VALUES (?, ?, ?, ?, ?, 'ACTIVA', ?, ?, ?, ?, NOW())",
+            "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_EMAIL, EMP_ESTATUS, EMP_PLAN, "
+            "EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES) "
+            "VALUES (?, ?, ?, 'ACTIVA', ?, ?, ?, ?)",
             [emp_data['rfc'].upper(), emp_data['nombre'],
-             emp_data.get('razon_social', emp_data['nombre']),
-             emp_data.get('ciudad', ''), emp_data.get('cp', ''),
+             usr_data.get('email', ''),
              plan, 5, plan_config.get(plan, 10), 500]
         )
-        # Get the new emp_id
         r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
         emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
     except Exception as e:
@@ -257,12 +255,17 @@ def onboarding_register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Error creando usuario: {str(e)[:100]}'}), 500
 
-    # Create subscription
+    # Create subscription - look up PLAN_ID from SAAS_PLANES
     try:
+        plan_row = query("SELECT PLAN_ID FROM SAAS_PLANES WHERE PLAN_NOMBRE=? AND PLAN_ACTIVO='S'", [plan])
+        if plan_row:
+            pid = plan_row[0].get('PLAN_ID', plan_row[0].get('plan_id', 1))
+        else:
+            pid = 1
         execute(
             "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO) "
-            "VALUES (?, ?, 'ACTIVA', NOW())",
-            [emp_id, plan]
+            "VALUES (?, ?, 'ACTIVA', CURRENT_TIMESTAMP)",
+            [emp_id, pid]
         )
     except Exception:
         pass
@@ -283,10 +286,8 @@ def onboarding_register():
 
 def _seed_demo_data(emp_id):
     """Seed demo data for new tenant."""
-    from datetime import datetime, timedelta
     import random
 
-    # Sample clients
     clients = [
         ('Distribuidora Norte', 'DNO230303', 'Pedro Hernandez', 'pedidos@distnorte.mx', '5551111113', 'CDMX'),
         ('Tienda Express', 'TEX230303', 'Laura Sanchez', 'contacto@tienda.mx', '5551111114', 'CDMX'),
@@ -303,7 +304,6 @@ def _seed_demo_data(emp_id):
         except Exception:
             pass
 
-    # Sample choferes
     choferes = [
         ('Carlos', 'Rodriguez', '5551001001', 'carlos@delivery.mx', 'LIC-001'),
         ('Maria', 'Lopez', '5551001002', 'maria@delivery.mx', 'LIC-002'),
@@ -320,16 +320,16 @@ def _seed_demo_data(emp_id):
         except Exception:
             pass
 
-    # Sample orders
     for i in range(5):
         try:
             execute(
                 "INSERT INTO PEDIDOS (EMP_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR, "
                 "PED_DESTINO_CIUDAD, PED_BULTOS, PED_COSTO_TOTAL, PED_FORMA_PAGO, "
                 "PED_ESTADO, PED_FECHA_PEDIDO) "
-                "VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO', 'PENDIENTE', NOW() - INTERVAL '{} days')".format(i),
-                [emp_id, f'Cliente Demo {i+1}', f'Dirección {i+1}, Col. Centro',
-                 'CDMX', random.randint(1, 3), round(random.uniform(150, 800), 2)]
+                "VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO', 'PENDIENTE', "
+                "CURRENT_TIMESTAMP - INTERVAL '1 day' * %s)",
+                [emp_id, f'Cliente Demo {i+1}', f'Direccion {i+1}, Col. Centro',
+                 'CDMX', random.randint(1, 3), round(random.uniform(150, 800), 2), i]
             )
         except Exception:
             pass
