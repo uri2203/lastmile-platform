@@ -420,6 +420,29 @@
       { id: 5, nombre: 'Pedro Sánchez', estatus: 'ACTIVO', lat: 19.4350, lng: -99.1200, entregas: 9 },
     ];
 
+    async function fetchLiveTracking() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const empId = user.emp_id || localStorage.getItem('empId') || '1';
+        const res = await fetch(API_BASE + '/api/tracking/live?emp_id=' + empId);
+        const data = await res.json();
+        if (data.success && data.data && data.data.length > 0) {
+          return data.data.map(d => ({
+            id: d.CHO_ID,
+            nombre: d.CHO_NOMBRE || 'Chofer ' + d.CHO_ID,
+            estatus: 'ACTIVO',
+            lat: d.TRK_LATITUD,
+            lng: d.TRK_LONGITUD,
+            speed: d.TRK_VELOCIDAD || 0,
+            battery: d.TRK_BATERIA || 0,
+            lastUpdate: d.TRK_FECHA,
+            entregas: 0
+          }));
+        }
+      } catch(e) { console.log('GPS fetch failed, using demo'); }
+      return null;
+    }
+
     const DEMO_PEDIDOS = [
       { PED_ID: 1001, PED_NUMERO: 'PED-2026-001', PED_CLIENTE_NOMBRE: 'Tech Solutions SA', PED_DESTINO_DIR: 'Av. Reforma 255, Col. Centro', PED_DESTINO_COL: 'Centro', PED_BULTOS: 3, PED_COSTO_TOTAL: 450, PED_PRIORIDAD: 'URGENTE', PED_ESTADO: 'EN_RUTA', CHOFER_ASIGNADO: 'Carlos López', PED_FECHA_PEDIDO: new Date().toISOString() },
       { PED_ID: 1002, PED_NUMERO: 'PED-2026-002', PED_CLIENTE_NOMBRE: 'Comercial ABC', PED_DESTINO_DIR: 'Calle 5 de Mayo 120, Col. Juárez', PED_DESTINO_COL: 'Juárez', PED_BULTOS: 1, PED_COSTO_TOTAL: 180, PED_PRIORIDAD: 'NORMAL', PED_ESTADO: 'ENTREGADO', CHOFER_ASIGNADO: 'María García', PED_FECHA_PEDIDO: new Date(Date.now()-3600000).toISOString() },
@@ -450,7 +473,13 @@
       };
       document.getElementById('page-title').textContent = titles[section] || section;
 
-      if (section === 'mapa') setTimeout(() => initFullMap(), 100);
+      if (section === 'mapa') {
+        setTimeout(() => initFullMap(), 100);
+        if (window._mapRefresh) clearInterval(window._mapRefresh);
+        window._mapRefresh = setInterval(() => initFullMap(), 30000);
+      } else {
+        if (window._mapRefresh) { clearInterval(window._mapRefresh); window._mapRefresh = null; }
+      }
       if (section === 'reportes') loadReportes();
     }
 
@@ -520,7 +549,7 @@
         : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     }
 
-    function initDashboardMap() {
+    async function initDashboardMap() {
       if (map) { map.remove(); map = null; }
       const el = document.getElementById('dashboard-mini-map');
       if (!el) return;
@@ -531,17 +560,26 @@
       driverMarkers = [];
       driverBounds = L.latLngBounds();
 
-      DEMO_DRIVERS.forEach(d => {
+      const liveDrivers = await fetchLiveTracking();
+      const drivers = liveDrivers || DEMO_DRIVERS;
+
+      drivers.forEach(d => {
         const marker = L.circleMarker([d.lat, d.lng], {
           radius: 7, fillColor: '#10b981', color: '#065f46', weight: 2, fillOpacity: 0.9
         }).addTo(map);
-        marker.bindPopup(`
-          <div style="font-family:Inter,sans-serif;min-width:140px">
-            <strong>${d.nombre}</strong><br>
-            <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:4px 0">${d.estatus}</span><br>
-            <small>${d.entregas} entregas hoy</small>
-          </div>
-        `);
+        const popup = d.speed !== undefined
+          ? `<div style="font-family:Inter,sans-serif;min-width:140px">
+              <strong>${d.nombre}</strong><br>
+              <span class="badge badge-success" style="margin:4px 0">ACTIVO</span><br>
+              <small>${d.speed.toFixed(0)} km/h</small><br>
+              <small>${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
+            </div>`
+          : `<div style="font-family:Inter,sans-serif;min-width:140px">
+              <strong>${d.nombre}</strong><br>
+              <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:4px 0">${d.estatus}</span><br>
+              <small>${d.entregas} entregas hoy</small>
+            </div>`;
+        marker.bindPopup(popup);
         driverMarkers.push(marker);
         driverBounds.extend([d.lat, d.lng]);
       });
@@ -550,7 +588,7 @@
       setTimeout(() => map.invalidateSize(), 200);
     }
 
-    function initFullMap() {
+    async function initFullMap() {
       if (fullMap) { fullMap.remove(); fullMap = null; }
       const el = document.getElementById('full-map');
       if (!el) return;
@@ -558,18 +596,28 @@
       fullMap = L.map(el, { zoomControl: true, attributionControl: false }).setView([19.4326, -99.1332], 12);
       fullMap._tileLayer = L.tileLayer(getTileUrl(), { maxZoom: 19 }).addTo(fullMap);
 
-      DEMO_DRIVERS.forEach(d => {
+      const liveDrivers = await fetchLiveTracking();
+      const drivers = liveDrivers || DEMO_DRIVERS;
+
+      drivers.forEach(d => {
         const marker = L.circleMarker([d.lat, d.lng], {
           radius: 8, fillColor: '#10b981', color: '#065f46', weight: 2, fillOpacity: 0.9
         }).addTo(fullMap);
-        marker.bindPopup(`
-          <div style="font-family:Inter,sans-serif;min-width:160px">
-            <strong style="font-size:14px">${d.nombre}</strong><br>
-            <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:6px 0">${d.estatus}</span><br>
-            <small style="color:#6b7280">${d.entregas} entregas hoy</small><br>
-            <small style="color:#6b7280">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
-          </div>
-        `);
+        const popup = d.speed !== undefined
+          ? `<div style="font-family:Inter,sans-serif;min-width:160px">
+              <strong style="font-size:14px">${d.nombre}</strong><br>
+              <span class="badge badge-success" style="margin:6px 0">ACTIVO</span><br>
+              <small style="color:#6b7280">Velocidad: ${d.speed.toFixed(0)} km/h</small><br>
+              <small style="color:#6b7280">Bateria: ${d.battery}%</small><br>
+              <small style="color:#6b7280">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
+            </div>`
+          : `<div style="font-family:Inter,sans-serif;min-width:160px">
+              <strong style="font-size:14px">${d.nombre}</strong><br>
+              <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:6px 0">${d.estatus}</span><br>
+              <small style="color:#6b7280">${d.entregas} entregas hoy</small><br>
+              <small style="color:#6b7280">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
+            </div>`;
+        marker.bindPopup(popup);
       });
 
       setTimeout(() => fullMap.invalidateSize(), 200);
