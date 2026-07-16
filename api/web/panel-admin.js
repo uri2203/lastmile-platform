@@ -1159,10 +1159,38 @@ function refreshData(){
   setTimeout(()=>{
     loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
     renderClientes();renderCFDI();renderPagos();loadBilling();renderUsuarios();renderAudit();
-    loadNotifications();
+    renderReferidos();loadNotifications();
     showToast('Datos actualizados','success');
   },800);
 }
+
+/* ==========================================
+   REFERIDOS
+   ========================================== */
+async function renderReferidos(){
+  try{
+    const res=await fetch(API+'/api/referrals/stats',{headers:getHeaders()});
+    const data=await res.json();
+    if(!data.success) return;
+    document.getElementById('refMyCode').value=data.referral_code||'';
+    document.getElementById('refMyLink').value=window.location.origin+'/register?ref='+(data.referral_code||'');
+    document.getElementById('refTotalReferrals').textContent=data.total_referrals||0;
+    document.getElementById('refActiveReferrals').textContent=data.active_referrals||0;
+    const tbody=document.getElementById('refTableBody');
+    if(!data.referrals||data.referrals.length===0){
+      tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Aún no tienes referidos. ¡Comparte tu código!</td></tr>';
+      return;
+    }
+    tbody.innerHTML=data.referrals.map(r=>`<tr style="border-bottom:1px solid var(--border-primary);">
+      <td style="padding:10px 12px;font-size:13px;">${r.REFREFERRED_NAME||'N/A'}</td>
+      <td style="padding:10px 12px;font-size:12px;color:var(--text-muted);">${r.REFREFERRED_EMAIL||'N/A'}</td>
+      <td style="padding:10px 12px;font-size:12px;color:var(--text-muted);">${new Date(r.REF_FECHA).toLocaleDateString('es-MX')}</td>
+      <td style="padding:10px 12px;"><span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;background:${r.REF_STATUS==='ACTIVE'?'var(--success-bg)':'var(--danger-bg)'};color:${r.REF_STATUS==='ACTIVE'?'var(--success)':'var(--danger)'};">${r.REF_STATUS==='ACTIVE'?'Activo':'Inactivo'}</span></td>
+    </tr>`).join('');
+  }catch(e){console.error('Error loading referrals:',e);}
+}
+function copyRefCode(){navigator.clipboard.writeText(document.getElementById('refMyCode').value).then(()=>showToast('Código copiado','success'));}
+function copyRefLink(){navigator.clipboard.writeText(document.getElementById('refMyLink').value).then(()=>showToast('Link copiado','success'));}
 
 /* ==========================================
    INIT
@@ -1170,6 +1198,7 @@ function refreshData(){
 window.addEventListener('load',()=>{
   loadDashboard();renderPedidos();renderChoferes();renderVehiculos();
   renderClientes();renderCFDI();renderPagos();loadBilling();renderUsuarios();renderAudit();
+  renderReferidos();
   initCharts();initCancelChart();initActivityFeed();loadNotifications();
   setTimeout(()=>{initDashboardMap();initDashboardMapFromChofres();},500);
 });

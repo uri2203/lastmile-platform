@@ -163,6 +163,13 @@
                         <input type="text" id="empCp" placeholder="06600">
                     </div>
                 </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-gift" style="color: var(--accent); font-size: 12px;"></i>
+                        Código de referido (opcional)
+                    </label>
+                    <input type="text" id="empReferral" placeholder="Si te lo dieron, ingrésalo aquí" style="text-transform: uppercase;">
+                </div>
                 <button class="btn btn-primary" onclick="nextStep(2)">Siguiente <i class="fas fa-arrow-right" style="margin-left: 8px;"></i></button>
             </div>
 
@@ -283,10 +290,25 @@
                         <i class="fas fa-check"></i>
                     </div>
                     <h2 style="margin-bottom: 8px;">¡Cuenta creada!</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">
                         Tu empresa <strong id="successEmpresa"></strong> está lista.<br>
                         Ahora puedes iniciar sesión.
                     </p>
+                    <div style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-gift" style="color: var(--accent);"></i>
+                            <span style="font-weight: 600; font-size: 14px;">Tu código de referido</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <code id="successReferralCode" style="background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 8px; font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px;"></code>
+                            <button onclick="copyReferralCode()" style="background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 8px;">
+                            Comparte este código. Por cada amigo que se registre, ambos ganan <strong>2 semanas extra de prueba</strong>.
+                        </p>
+                    </div>
                     <a href="/login" class="btn btn-primary" style="display: inline-block; text-decoration: none; width: auto; padding: 14px 32px;">
                         <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i> Ir al login
                     </a>
@@ -303,7 +325,23 @@
         const API = window.location.origin;
         let currentStep = 1;
         let selectedPlan = 'STARTER';
+        let referralCodeFromURL = '';
         const docsRead = { terminos: false, privacidad: false, pagos: false, deslinde: false, sla: false, cookies: false };
+
+        // Detect referral code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        if (refParam) {
+            referralCodeFromURL = refParam.toUpperCase();
+            document.getElementById('empReferral').value = referralCodeFromURL;
+        }
+
+        function copyReferralCode() {
+            const code = document.getElementById('successReferralCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Código copiado al portapapeles');
+            });
+        }
 
         document.querySelectorAll('.legal-link').forEach(link => {
             link.addEventListener('click', function() {
@@ -385,7 +423,8 @@
                     rfc: document.getElementById('empRfc').value.trim().toUpperCase(),
                     razon_social: document.getElementById('empRazon').value.trim(),
                     ciudad: document.getElementById('empCiudad').value.trim(),
-                    cp: document.getElementById('empCp').value.trim()
+                    cp: document.getElementById('empCp').value.trim(),
+                    referral_code: document.getElementById('empReferral').value.trim().toUpperCase() || referralCodeFromURL
                 },
                 usuario: {
                     nombre: document.getElementById('usrNombre').value.trim(),
@@ -418,6 +457,9 @@
                     document.getElementById('dot3').classList.remove('active');
                     document.getElementById('dot3').classList.add('done');
                     document.getElementById('successEmpresa').textContent = data.empresa.nombre;
+                    if (res.referral_code) {
+                        document.getElementById('successReferralCode').textContent = res.referral_code;
+                    }
                 } else {
                     showError(res.error || 'Error al crear la cuenta');
                     btn.disabled = false;

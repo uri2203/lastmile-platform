@@ -262,20 +262,55 @@ def onboarding_register():
         pass
 
     # Create empresa
+    import string, random
     plan_config = {'STARTER': 10, 'PRO': 50, 'ENTERPRISE': 9999}
+    # Generate unique referral code
+    referral_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    try:
+        existing_code = query("SELECT EMP_ID FROM EMPRESAS WHERE EMP_REFERRAL_CODE=?", [referral_code])
+        if existing_code:
+            referral_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    except Exception:
+        pass
+
+    # Process referral if code provided
+    referrer_emp_id = None
+    input_referral_code = emp_data.get('referral_code', '').strip().upper()
+    if input_referral_code:
+        try:
+            referrer = query("SELECT EMP_ID, EMP_NOMBRE FROM EMPRESAS WHERE EMP_REFERRAL_CODE=?", [input_referral_code])
+            if referrer:
+                referrer_emp_id = referrer[0].get('EMP_ID', referrer[0].get('emp_id'))
+        except Exception:
+            pass
+
+    referred_by = referrer_emp_id if referrer_emp_id else None
     try:
         execute(
             "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_EMAIL, EMP_ESTATUS, EMP_PLAN, "
-            "EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES) "
-            "VALUES (?, ?, ?, 'ACTIVA', ?, ?, ?, ?)",
+            "EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_REFERRAL_CODE, EMP_REFERRED_BY) "
+            "VALUES (?, ?, ?, 'ACTIVA', ?, ?, ?, ?, ?, ?)",
             [emp_data['rfc'].upper(), emp_data['nombre'],
              usr_data.get('email', ''),
-             plan, 5, plan_config.get(plan, 10), 500]
+             plan, 5, plan_config.get(plan, 10), 500,
+             referral_code, referred_by]
         )
         r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
         emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
     except Exception as e:
         return jsonify({'success': False, 'error': f'Error creando empresa: {str(e)[:100]}'}), 500
+
+    # Record referral relationship
+    if referrer_emp_id:
+        try:
+            execute(
+                "INSERT INTO REFERRALS (REF_REFERRER_EMP_ID, REFREFERRED_EMP_ID, REFREFERRED_USR_ID, "
+                "REFREFERRED_NAME, REFREFERRED_EMAIL, REF_BONUS_DAYS) "
+                "VALUES (?, ?, 0, ?, ?, 14)",
+                [referrer_emp_id, emp_id, emp_data['nombre'], usr_data.get('email', '')]
+            )
+        except Exception:
+            pass
 
     # Create admin user
     password_hash = hashlib.sha256(usr_data['password'].encode()).hexdigest()
@@ -340,7 +375,8 @@ def onboarding_register():
         'success': True,
         'message': 'Cuenta creada exitosamente',
         'emp_id': emp_id,
-        'login': usr_data.get('usuario', 'admin')
+        'login': usr_data.get('usuario', 'admin'),
+        'referral_code': referral_code
     })
 
 
@@ -479,6 +515,68 @@ def admin_tenants_usage():
             "FROM EMPRESAS e WHERE e.EMP_ESTATUS='ACTIVA' ORDER BY e.EMP_ID"
         )
         return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/referrals/my-code', methods=['GET'])
+def my_referral_code():
+    """Get current user's referral code."""
+    emp_id = request.headers.get('X-Emp-Id')
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'Emp ID required'}), 400
+    try:
+        rows = query("SELECT EMP_REFERRAL_CODE FROM EMPRESAS WHERE EMP_ID=?", [emp_id])
+        if rows:
+            code = rows[0].get('EMP_REFERRAL_CODE', rows[0].get('emp_referral_code', ''))
+            return jsonify({'success': True, 'referral_code': code, 'referral_link': f'/register?ref={code}'})
+        return jsonify({'success': False, 'error': 'Empresa no encontrada'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/referrals/stats', methods=['GET'])
+def referral_stats():
+    """Get referral statistics for current user's company."""
+    emp_id = request.headers.get('X-Emp-Id')
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'Emp ID required'}), 400
+    try:
+        # Get referral code
+        code_rows = query("SELECT EMP_REFERRAL_CODE FROM EMPRESAS WHERE EMP_ID=?", [emp_id])
+        code = code_rows[0].get('EMP_REFERRAL_CODE', '') if code_rows else ''
+
+        # Get referrals made
+        referrals = query(
+            "SELECT r.*, e.EMP_NOMBRE as referrer_name "
+            "FROM REFERRALS r "
+            "LEFT JOIN EMPRESAS e ON r.REF_REFERRER_EMP_ID = e.EMP_ID "
+            "WHERE r.REF_REFERRER_EMP_ID=? "
+            "ORDER BY r.REF_FECHA DESC", [emp_id]
+        )
+
+        # Count total referrals and active
+        total_referrals = len(referrals) if referrals else 0
+        active_referrals = len([r for r in (referrals or []) if r.get('REF_STATUS') == 'ACTIVE'])
+
+        # Check if this company was referred by someone
+        referred_by_rows = query(
+            "SELECT e.EMP_NOMBRE, e.EMP_REFERRAL_CODE "
+            "FROM EMPRESAS e "
+            "WHERE e.EMP_ID = (SELECT EMP_REFERRED_BY FROM EMPRESAS WHERE EMP_ID=?)",
+            [emp_id]
+        )
+        referred_by = referred_by_rows[0].get('EMP_NOMBRE', 'N/A') if referred_by_rows else None
+
+        return jsonify({
+            'success': True,
+            'referral_code': code,
+            'referral_link': f'/register?ref={code}',
+            'total_referrals': total_referrals,
+            'active_referrals': active_referrals,
+            'referred_by': referred_by,
+            'referrals': referrals or []
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
