@@ -248,7 +248,7 @@ def get_billing_dashboard(emp_id):
             "SELECT e.EMP_PLAN, e.EMP_MAX_USUARIOS, e.EMP_MAX_CHOFERES, e.EMP_MAX_PEDIDOS_MES, "
             "p.PLAN_NOMBRE, p.PLAN_PRECIO_MENSUAL, p.PLAN_FEATURES "
             "FROM EMPRESAS e "
-            "LEFT JOIN SAAS_PLANES p ON e.EMP_PLAN = p.PLAN_NOMBRE "
+            "LEFT JOIN SAAS_PLANES p ON UPPER(e.EMP_PLAN) = UPPER(p.PLAN_NOMBRE) "
             "WHERE e.EMP_ID = ?", [emp_id]
         )
         if rows:
