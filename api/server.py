@@ -132,6 +132,14 @@ def get_emp_id():
 @app.before_request
 def before_request():
     request.start_time = time.time()
+    # Set tenant context for Row-Level Security
+    try:
+        emp_id = int(request.headers.get('X-Emp-Id', '0'))
+        if emp_id > 0:
+            from db import set_tenant_context
+            set_tenant_context(emp_id)
+    except (ValueError, TypeError):
+        pass
 
 
 @app.after_request
@@ -345,6 +353,94 @@ def _seed_demo_data(emp_id):
             )
         except Exception:
             pass
+
+
+# ========================================
+# MODULO: BILLING & USAGE DASHBOARD
+# ========================================
+@app.route('/api/billing/dashboard', methods=['GET'])
+def billing_dashboard():
+    """Get billing dashboard data for current tenant."""
+    emp_id = get_emp_id()
+    try:
+        from billing_service import get_billing_dashboard
+        data = get_billing_dashboard(emp_id)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/limits', methods=['GET'])
+def billing_limits():
+    """Check if tenant is within plan limits."""
+    emp_id = get_emp_id()
+    try:
+        from billing_service import check_limits
+        result = check_limits(emp_id)
+        return jsonify({'success': True, 'data': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/track', methods=['POST'])
+def billing_track():
+    """Track usage metric for current tenant."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    metric = data.get('metric', '')
+    count = data.get('count', 1)
+    if not metric:
+        return jsonify({'success': False, 'error': 'metric required'}), 400
+    try:
+        from billing_service import track_usage
+        track_usage(emp_id, metric, count)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/auto-charge', methods=['POST'])
+def auto_charge():
+    """Process all due subscription charges. Protected endpoint."""
+    # Simple API key protection
+    api_key = request.headers.get('X-Cron-Key', '')
+    if api_key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        from billing_service import run_auto_billing
+        result = run_auto_billing()
+        return jsonify({'success': True, 'data': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/usage', methods=['GET'])
+def billing_usage():
+    """Get current month usage for tenant."""
+    emp_id = get_emp_id()
+    try:
+        from billing_service import get_usage
+        usage = get_usage(emp_id)
+        return jsonify({'success': True, 'data': usage})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/admin/tenants-usage', methods=['GET'])
+def admin_tenants_usage():
+    """Get usage for all tenants (admin only)."""
+    try:
+        rows = query(
+            "SELECT e.EMP_ID, e.EMP_NOMBRE, e.EMP_PLAN, e.EMP_ESTATUS, "
+            "(SELECT COUNT(*) FROM USUARIOS u WHERE u.USU_EMP_ID = e.EMP_ID) as usuarios, "
+            "(SELECT COUNT(*) FROM CHOFERES c WHERE c.EMP_ID = e.EMP_ID) as choferes, "
+            "(SELECT COUNT(*) FROM PEDIDOS p WHERE p.EMP_ID = e.EMP_ID AND p.PED_FECHA_PEDIDO >= DATE_TRUNC('month', CURRENT_DATE)) as pedidos_mes, "
+            "(SELECT COALESCE(SUM(PED_COSTO_TOTAL), 0) FROM PEDIDOS p2 WHERE p2.EMP_ID = e.EMP_ID AND p2.PED_ESTADO='ENTREGADO' AND p2.PED_FECHA_PEDIDO >= DATE_TRUNC('month', CURRENT_DATE)) as ingresos_mes "
+            "FROM EMPRESAS e WHERE e.EMP_ESTATUS='ACTIVA' ORDER BY e.EMP_ID"
+        )
+        return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ========================================

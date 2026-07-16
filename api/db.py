@@ -43,6 +43,23 @@ def get_db():
         return conn
 
 
+def set_tenant_context(emp_id):
+    """Set the current tenant ID for Row-Level Security (PostgreSQL only)."""
+    if not USE_POSTGRES or emp_id is None:
+        return
+    try:
+        conn = get_db()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SET app.current_emp_id = %s", [str(emp_id)])
+            conn.commit()
+            cursor.close()
+        finally:
+            conn.close()
+    except Exception:
+        pass  # RLS not enabled or SQLite
+
+
 def _translate_sql(sql):
     """
     Translate SQLite-specific SQL to PostgreSQL-compatible SQL.
