@@ -228,19 +228,18 @@ def onboarding_register():
     # Create empresa
     plan_config = {'STARTER': 10, 'PRO': 50, 'ENTERPRISE': 9999}
     try:
-        emp_id = execute_returning(
+        execute(
             "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_RAZON_SOCIAL, EMP_CIUDAD, EMP_CP, "
             "EMP_ESTATUS, EMP_PLAN, EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_CREATED) "
-            "VALUES (?, ?, ?, ?, ?, 'ACTIVA', ?, ?, ?, ?, NOW()) RETURNING EMP_ID",
+            "VALUES (?, ?, ?, ?, ?, 'ACTIVA', ?, ?, ?, ?, NOW())",
             [emp_data['rfc'].upper(), emp_data['nombre'],
              emp_data.get('razon_social', emp_data['nombre']),
              emp_data.get('ciudad', ''), emp_data.get('cp', ''),
              plan, 5, plan_config.get(plan, 10), 500]
         )
-        if not emp_id:
-            # Fallback: get the ID
-            r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
-            emp_id = r[0]['id'] if r else 1
+        # Get the new emp_id
+        r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
+        emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
     except Exception as e:
         return jsonify({'success': False, 'error': f'Error creando empresa: {str(e)[:100]}'}), 500
 
