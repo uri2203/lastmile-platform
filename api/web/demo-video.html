@@ -1205,14 +1205,14 @@
 
     <script>
     // ========================================
-    // DEMO VIDEO ENGINE
+    // DEMO VIDEO ENGINE (Fixed)
     // ========================================
-    const TOTAL_DURATION = 165000; // 2:45
-    const SCENE_COUNT = 11;
-    let currentScene = 1;
-    let isPlaying = true;
-    let startTime = Date.now();
-    let pauseTime = 0;
+    const TOTAL_DURATION = 165000;
+    let currentScene = 0;
+    let isPlaying = false;
+    let elapsed = 0;
+    let lastTick = null;
+    let timer = null;
 
     const scenes = [
         { id: 1, start: 0, end: 20000, title: "Landing Page", voiceover: "Last Mile Delivery es la plataforma SaaS que necesitas para gestionar tu negocio de entregas de última milla" },
@@ -1228,33 +1228,28 @@
         { id: 11, start: 170000, end: 195000, title: "Cierre", voiceover: "Last Mile Delivery. Tu negocio de entregas, en la palma de tu mano. Comienza tu prueba gratuita hoy" }
     ];
 
-    // Elements
     const progressBar = document.getElementById('progressBar');
     const sceneTitle = document.getElementById('sceneTitle');
-    const voiceover = document.getElementById('voiceover');
+    const voiceoverEl = document.getElementById('voiceover');
     const timerDisplay = document.getElementById('timerDisplay');
     const playPauseBtn = document.getElementById('playPauseBtn');
 
-    function formatTime(ms) {
+    function fmt(ms) {
         const s = Math.floor(ms / 1000);
-        const m = Math.floor(s / 60);
-        return `${m}:${String(s % 60).padStart(2, '0')}`;
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
     }
 
     function showScene(id) {
         document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-        const scene = document.getElementById('scene' + id);
-        if (scene) scene.classList.add('active');
-
+        const el = document.getElementById('scene' + id);
+        if (el) el.classList.add('active');
         const data = scenes.find(s => s.id === id);
         if (data) {
             sceneTitle.textContent = data.title;
             sceneTitle.classList.add('visible');
-            voiceover.textContent = data.voiceover;
-            voiceover.classList.add('visible');
+            voiceoverEl.textContent = data.voiceover;
+            voiceoverEl.classList.add('visible');
         }
-
-        // Trigger scene animations
         if (id === 1) animateLanding();
         if (id === 2) animateRegister();
         if (id === 3) animateLogin();
@@ -1262,17 +1257,63 @@
         if (id === 5) animatePedidos();
         if (id === 6) animateAsignar();
         if (id === 7) animateMap();
-        if (id === 8) animateEstado();
     }
 
-    // Animation functions
+    function tick() {
+        if (!isPlaying) return;
+        const now = Date.now();
+        elapsed += now - lastTick;
+        lastTick = now;
+        if (elapsed >= TOTAL_DURATION) {
+            elapsed = TOTAL_DURATION;
+            pause();
+        }
+        const pct = Math.min(elapsed / TOTAL_DURATION * 100, 100);
+        progressBar.style.width = pct + '%';
+        timerDisplay.textContent = fmt(elapsed) + ' / ' + fmt(TOTAL_DURATION);
+        const scene = scenes.find(s => elapsed >= s.start && elapsed < s.end);
+        if (scene && scene.id !== currentScene) {
+            currentScene = scene.id;
+            showScene(scene.id);
+        }
+    }
+
+    function play() {
+        if (elapsed >= TOTAL_DURATION) { elapsed = 0; currentScene = 0; }
+        isPlaying = true;
+        lastTick = Date.now();
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        if (!timer) timer = setInterval(tick, 100);
+    }
+
+    function pause() {
+        isPlaying = false;
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    playPauseBtn.addEventListener('click', () => { isPlaying ? pause() : play(); });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        const next = scenes.find(s => s.start > elapsed);
+        if (next) { elapsed = next.start; showScene(next.id); currentScene = next.id; }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        const prev = [...scenes].reverse().find(s => s.start < elapsed - 500);
+        if (prev) { elapsed = prev.start; showScene(prev.id); currentScene = prev.id; }
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+        elapsed = 0; currentScene = 0; showScene(1); currentScene = 1;
+    });
+
+    // Animations
     function animateLanding() {
-        const cards = document.querySelectorAll('.feature-card');
-        cards.forEach((c, i) => {
+        document.querySelectorAll('.feature-card').forEach((c, i) => {
             setTimeout(() => c.classList.add('show'), 300 + i * 200);
         });
     }
-
     function animateRegister() {
         const fields = [
             { el: document.getElementById('reg-empresa'), text: 'Paquetería Express GDL' },
@@ -1280,29 +1321,19 @@
             { el: document.getElementById('reg-ciudad'), text: 'Guadalajara, JAL' }
         ];
         fields.forEach((f, i) => {
-            setTimeout(() => {
-                f.el.classList.add('typing');
-                typeText(f.el, f.text, () => f.el.classList.remove('typing'));
-            }, 500 + i * 1200);
+            setTimeout(() => typeText(f.el, f.text), 500 + i * 1200);
         });
     }
-
     function animateLogin() {
-        setTimeout(() => {
-            typeText(document.getElementById('login-user'), 'admin');
-        }, 500);
-        setTimeout(() => {
-            typeText(document.getElementById('login-pass'), '••••••');
-        }, 1500);
+        setTimeout(() => typeText(document.getElementById('login-user'), 'admin'), 500);
+        setTimeout(() => typeText(document.getElementById('login-pass'), '••••••'), 1500);
     }
-
     function animateDashboard() {
         animateCounter('kpi1', 0, 23, 1500);
         animateCounter('kpi2', 0, 5, 1200);
         animateCounter('kpi3', 0, 12480, 1800, '$');
         animateCounter('kpi4', 0, 156, 1600);
     }
-
     function animatePedidos() {
         const pedidos = [
             { num: 'PED-2026-060', cliente: 'Distribuidora Norte', destino: 'Blvd. Insurgentes 890', estado: 'ENTREGADO', chofer: 'Carlos R.', total: '$720' },
@@ -1315,174 +1346,51 @@
         tbody.innerHTML = '';
         pedidos.forEach((p, i) => {
             setTimeout(() => {
-                const badge = p.estado === 'ENTREGADO' ? 'badge-success' : p.estado === 'EN_RUTA' ? 'badge-warning' : 'badge-info';
-                tbody.innerHTML += `<tr class="row-highlight">
-                    <td><strong>${p.num}</strong></td>
-                    <td>${p.cliente}</td>
-                    <td>${p.destino}</td>
-                    <td><span class="badge ${badge}">${p.estado}</span></td>
-                    <td>${p.chofer}</td>
-                    <td><strong>${p.total}</strong></td>
-                </tr>`;
+                const b = p.estado === 'ENTREGADO' ? 'badge-success' : p.estado === 'EN_RUTA' ? 'badge-warning' : 'badge-info';
+                tbody.innerHTML += `<tr class="row-highlight"><td><strong>${p.num}</strong></td><td>${p.cliente}</td><td>${p.destino}</td><td><span class="badge ${b}">${p.estado}</span></td><td>${p.chofer}</td><td><strong>${p.total}</strong></td></tr>`;
             }, 300 + i * 400);
         });
     }
-
     function animateAsignar() {
-        setTimeout(() => {
-            document.getElementById('select-chofer').value = '3';
-        }, 1000);
+        setTimeout(() => { document.getElementById('select-chofer').value = '3'; }, 1000);
     }
-
     function animateMap() {
-        const markers = document.querySelectorAll('.map-marker');
-        let popupShown = false;
-
-        // Move markers slightly
+        const markers = document.querySelectorAll('#scene7 .map-marker');
         markers.forEach((m, i) => {
             setInterval(() => {
-                const top = parseFloat(m.style.top);
-                const left = parseFloat(m.style.left);
-                m.style.top = (top + (Math.random() - 0.5) * 0.3) + '%';
-                m.style.left = (left + (Math.random() - 0.5) * 0.3) + '%';
+                const t = parseFloat(m.style.top) + (Math.random() - 0.5) * 0.3;
+                const l = parseFloat(m.style.left) + (Math.random() - 0.5) * 0.3;
+                m.style.top = t + '%'; m.style.left = l + '%';
             }, 2000 + i * 500);
         });
-
-        // Show popup on marker click
-        markers.forEach((m, i) => {
-            m.addEventListener('click', () => {
-                const popup = document.getElementById('mapPopup');
-                const names = ['Carlos Rodriguez', 'Maria Lopez', 'Ana Martinez', 'Pedro Sanchez', 'Jose Hernandez'];
-                const speeds = [45, 32, 58, 0, 41];
-                const batteries = [78, 92, 65, 100, 45];
-                document.getElementById('popupName').textContent = names[i];
-                document.getElementById('popupSpeed').textContent = speeds[i];
-                document.getElementById('popupBattery').textContent = batteries[i];
-                const rect = m.getBoundingClientRect();
-                popup.style.left = (rect.left + 20) + 'px';
-                popup.style.top = (rect.top - 10) + 'px';
-                popup.classList.add('show');
-                setTimeout(() => popup.classList.remove('show'), 3000);
-            });
-        });
-
-        // Auto-show popup after 2 seconds
         setTimeout(() => {
-            markers[0].click();
+            const popup = document.getElementById('mapPopup');
+            const rect = markers[0].getBoundingClientRect();
+            popup.style.left = (rect.left + 20) + 'px';
+            popup.style.top = (rect.top - 10) + 'px';
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 3000);
         }, 2000);
     }
-
-    function animateEstado() {
-        // Already showing the timeline
+    function typeText(el, text) {
+        el.value = ''; let i = 0;
+        const iv = setInterval(() => { if (i < text.length) { el.value += text[i++]; } else clearInterval(iv); }, 50);
     }
-
-    // Utility functions
-    function typeText(el, text, callback) {
-        el.value = '';
-        let i = 0;
-        const interval = setInterval(() => {
-            if (i < text.length) {
-                el.value += text[i];
-                i++;
-            } else {
-                clearInterval(interval);
-                if (callback) callback();
-            }
-        }, 50);
-    }
-
-    function animateCounter(id, from, to, duration, prefix = '') {
-        const el = document.getElementById(id);
-        const start = Date.now();
+    function animateCounter(id, from, to, dur, pre = '') {
+        const el = document.getElementById(id); const s = Date.now();
         const step = () => {
-            const elapsed = Date.now() - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const current = Math.round(from + (to - from) * eased);
-            el.textContent = prefix + current.toLocaleString();
-            if (progress < 1) requestAnimationFrame(step);
+            const p = Math.min((Date.now() - s) / dur, 1);
+            el.textContent = pre + Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))).toLocaleString();
+            if (p < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
     }
 
-    // Playback control
-    function updatePlayback() {
-        if (!isPlaying) return;
-
-        const elapsed = Date.now() - startTime - pauseTime;
-        const progress = Math.min(elapsed / TOTAL_DURATION, 1);
-        progressBar.style.width = (progress * 100) + '%';
-
-        const currentTime = elapsed;
-        timerDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(TOTAL_DURATION)}`;
-
-        // Find current scene
-        const scene = scenes.find(s => currentTime >= s.start && currentTime < s.end);
-        if (scene && scene.id !== currentScene) {
-            currentScene = scene.id;
-            showScene(scene.id);
-        }
-
-        if (progress < 1) {
-            requestAnimationFrame(updatePlayback);
-        }
-    }
-
-    function play() {
-        isPlaying = true;
-        pauseTime += Date.now() - (pauseTime || Date.now());
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        playPauseBtn.classList.add('active');
-        requestAnimationFrame(updatePlayback);
-    }
-
-    function pause() {
-        isPlaying = false;
-        pauseTime = Date.now() - startTime;
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        playPauseBtn.classList.remove('active');
-    }
-
-    // Event listeners
-    playPauseBtn.addEventListener('click', () => {
-        if (isPlaying) pause(); else play();
-    });
-
-    document.getElementById('nextBtn').addEventListener('click', () => {
-        const next = scenes.find(s => s.start > startTime + pauseTime);
-        if (next) {
-            startTime = Date.now() - next.start;
-            pauseTime = 0;
-            showScene(next.id);
-            currentScene = next.id;
-        }
-    });
-
-    document.getElementById('prevBtn').addEventListener('click', () => {
-        const prev = [...scenes].reverse().find(s => s.start < startTime + pauseTime - 1000);
-        if (prev) {
-            startTime = Date.now() - prev.start;
-            pauseTime = 0;
-            showScene(prev.id);
-            currentScene = prev.id;
-        }
-    });
-
-    document.getElementById('restartBtn').addEventListener('click', () => {
-        startTime = Date.now();
-        pauseTime = 0;
-        currentScene = 1;
-        showScene(1);
-    });
-
-    // Start
+    // Init
     showScene(1);
-    requestAnimationFrame(updatePlayback);
-
-    // Auto-play
-    document.addEventListener('click', () => {
-        if (!isPlaying) play();
-    }, { once: true });
+    currentScene = 1;
+    // Auto-play after 1 second
+    setTimeout(play, 1000);
     </script>
 </body>
 </html>
