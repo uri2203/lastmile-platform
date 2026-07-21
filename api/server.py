@@ -7,6 +7,7 @@ Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones
 """
 
 from flask import Flask, request, jsonify, send_from_directory, g
+from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -14,7 +15,6 @@ from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
 from auth import generate_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash
-import hashlib
 import os
 import time
 import logging
@@ -235,8 +235,16 @@ def after_request(response):
     return response
 
 
+@app.errorhandler(429)
+def handle_rate_limit(e):
+    return jsonify({'success': False, 'error': 'Demasiados intentos. Espera un momento e intenta de nuevo.'}), 429
+
+
 @app.errorhandler(Exception)
 def handle_exception(e):
+    # Respeta los errores HTTP (429, 404, 400, ...); no los enmascares como 500.
+    if isinstance(e, HTTPException):
+        return e
     error_logger.error(f'Unhandled: {str(e)}', exc_info=True)
     return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
@@ -308,7 +316,6 @@ def demo_video():
 @app.route('/api/onboarding/register', methods=['POST'])
 def onboarding_register():
     """Register a new tenant with admin user."""
-    import hashlib
     data = request.get_json() or {}
 
     emp_data = data.get('empresa', {})
@@ -1951,7 +1958,6 @@ def delete_usuario(usu_id):
 @app.route('/api/usuarios', methods=['POST'])
 def create_usuario():
     emp_id = get_emp_id()
-    import hashlib
     u = request.json
     if not u:
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
@@ -1980,7 +1986,6 @@ def create_usuario():
 @app.route('/api/usuarios/<int:usu_id>', methods=['PUT'])
 def update_usuario(usu_id):
     emp_id = get_emp_id()
-    import hashlib
     u = request.json
     if not u:
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
@@ -2330,7 +2335,6 @@ def create_saas_tenant():
     if emp_id:
         admin_user = data.get('admin_user', 'admin')
         admin_pass = data.get('admin_pass', 'admin123')
-        import hashlib
         pass_hash = hash_password(admin_pass.strip())
         execute("INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?, ?, ?, ?, ?, 'admin')",
                 [emp_id, admin_user, pass_hash, f'Admin {nombre}', data.get('email', '')])
