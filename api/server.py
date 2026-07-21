@@ -6,12 +6,13 @@ Multi-tenant: cada request lleva X-Emp-Id
 Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, g
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
+from auth import generate_token, current_identity, requiere_auth, requiere_rol
 import hashlib
 import os
 import time
@@ -120,24 +121,101 @@ else:
 
 
 def get_emp_id():
-    try:
-        return int(request.headers.get('X-Emp-Id', '1'))
-    except (ValueError, TypeError):
-        return 1
+    """Tenant de la request, derivado del TOKEN verificado (nunca del header)."""
+    return getattr(g, 'emp_id', None)
+
+
+def get_rol():
+    """Rol del usuario autenticado, derivado del token."""
+    return getattr(g, 'rol', None)
 
 
 # ========================================
-# REQUEST MIDDLEWARE
+# CONTROL DE ACCESO
+# ========================================
+# Rutas /api publicas: no requieren token.
+PUBLIC_API_PATHS = {
+    '/api/health',
+    '/api/auth/login',
+    '/api/onboarding/register',
+    '/api/saas/planes',            # catalogo de planes (landing / registro)
+    '/api/billing/planes',
+    '/api/billing/webhook/stripe',       # verificado por firma Stripe
+    '/api/billing/webhook/mercadopago',  # verificado re-consultando el pago
+    '/api/pagos/mercado-pago/webhook',
+}
+# Prefijos publicos: tracking del cliente final por token opaco en la URL.
+PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes')
+# Endpoint(s) servicio-a-servicio: autenticados por CRON_API_KEY, no por JWT.
+CRON_API_PATHS = {'/api/billing/auto-charge'}
+# Prefijos que exigen rol 'admin'.
+ADMIN_API_PREFIXES = ('/api/admin/', '/api/saas/')
+SETUP_API_PREFIX = '/api/setup/'
+
+
+def _is_public_api(path, method):
+    if method == 'OPTIONS':
+        return True  # preflight CORS
+    if path in PUBLIC_API_PATHS:
+        return True
+    return any(path.startswith(p) for p in PUBLIC_API_PREFIXES)
+
+
+# ========================================
+# REQUEST MIDDLEWARE (gate de autenticacion/autorizacion, fail-closed)
 # ========================================
 @app.before_request
 def before_request():
     request.start_time = time.time()
-    # Set tenant context for Row-Level Security
+    path = request.path
+    method = request.method
+
+    # Rutas no-/api => paginas estaticas / landing (publicas).
+    if not path.startswith('/api/'):
+        return
+
+    # Endpoints publicos legitimos.
+    if _is_public_api(path, method):
+        return
+
+    # Cron: autenticado por CRON_API_KEY dentro del propio handler.
+    if path in CRON_API_PATHS:
+        return
+
+    # A partir de aqui se EXIGE un token valido.
+    ident = current_identity()
+    if not ident:
+        return jsonify({'success': False, 'error': 'No autenticado'}), 401
+    g.emp_id = ident.get('emp_id')
+    g.rol = ident.get('rol')
+    g.usu_id = ident.get('usu_id')
+    g.usuario = ident.get('usuario', '')
+
+    # Endpoints destructivos /api/setup/*: admin + ALLOW_SETUP=true.
+    if path.startswith(SETUP_API_PREFIX):
+        if g.rol != 'admin':
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+        if os.environ.get('ALLOW_SETUP', '').lower() != 'true':
+            return jsonify({'success': False, 'error': 'Setup deshabilitado (ALLOW_SETUP no activo)'}), 403
+    # Endpoints administrativos / SaaS: solo rol admin.
+    elif any(path.startswith(p) for p in ADMIN_API_PREFIXES):
+        if g.rol != 'admin':
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+
+    # Anti-IDOR: si la URL trae emp_id, un no-admin solo accede al suyo.
+    view_args = request.view_args or {}
+    if 'emp_id' in view_args and g.rol != 'admin':
+        try:
+            if int(view_args['emp_id']) != int(g.emp_id):
+                return jsonify({'success': False, 'error': 'No autorizado'}), 403
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+
+    # Contexto de tenant para RLS (best-effort; no-op en SQLite).
     try:
-        emp_id = int(request.headers.get('X-Emp-Id', '0'))
-        if emp_id > 0:
+        if g.emp_id:
             from db import set_tenant_context
-            set_tenant_context(emp_id)
+            set_tenant_context(int(g.emp_id))
     except (ValueError, TypeError):
         pass
 
@@ -149,7 +227,7 @@ def after_request(response):
         status = response.status_code
         path = request.path
         method = request.method
-        emp_id = request.headers.get('X-Emp-Id', '-')
+        emp_id = getattr(g, 'emp_id', '-')
         ip = request.remote_addr or '-'
         request_logger.info(f'{method} {path} => {status} [{elapsed}ms] emp={emp_id} ip={ip}')
     return response
@@ -480,7 +558,8 @@ def auto_charge():
     """Process all due subscription charges. Protected endpoint."""
     # Simple API key protection
     api_key = request.headers.get('X-Cron-Key', '')
-    if api_key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+    expected = os.environ.get('CRON_API_KEY')
+    if not expected or api_key != expected:
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
     try:
         from billing_service import run_auto_billing
@@ -503,6 +582,7 @@ def billing_usage():
 
 
 @app.route('/api/admin/tenants-usage', methods=['GET'])
+@requiere_rol('admin')
 def admin_tenants_usage():
     """Get usage for all tenants (admin only)."""
     try:
@@ -522,7 +602,7 @@ def admin_tenants_usage():
 @app.route('/api/referrals/my-code', methods=['GET'])
 def my_referral_code():
     """Get current user's referral code."""
-    emp_id = request.headers.get('X-Emp-Id')
+    emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'success': False, 'error': 'Emp ID required'}), 400
     try:
@@ -538,7 +618,7 @@ def my_referral_code():
 @app.route('/api/referrals/stats', methods=['GET'])
 def referral_stats():
     """Get referral statistics for current user's company."""
-    emp_id = request.headers.get('X-Emp-Id')
+    emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'success': False, 'error': 'Emp ID required'}), 400
     try:
@@ -582,6 +662,7 @@ def referral_stats():
 
 
 @app.route('/api/admin/legal-acceptance', methods=['GET'])
+@requiere_rol('admin')
 def admin_legal_acceptance():
     """Get all legal acceptance records for legal protection."""
     try:
@@ -610,7 +691,7 @@ def admin_legal_acceptance():
 @app.route('/api/legal/my-acceptance', methods=['GET'])
 def my_legal_acceptance():
     """Get current user's legal acceptance records."""
-    emp_id = request.headers.get('X-Emp-Id')
+    emp_id = get_emp_id()
     usr_id = request.args.get('usr_id')
     if not emp_id:
         return jsonify({'success': False, 'error': 'Emp ID required'}), 400
@@ -729,8 +810,12 @@ def auth_login():
     if not matched:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
 
+    token = generate_token(
+        matched['USU_ID'], matched['USU_EMP_ID'], matched['USU_ROL'], matched['USU_USUARIO']
+    )
     return jsonify({
         'success': True,
+        'token': token,
         'data': {
             'emp_id': matched['USU_EMP_ID'],
             'usuario': matched['USU_USUARIO'],
@@ -746,6 +831,7 @@ def auth_login():
 # ========================================
 @app.route('/api/setup/usuarios', methods=['POST'])
 @limiter.limit("2 per hour")
+@requiere_rol('admin')
 def setup_usuarios():
     """Crea la tabla USUARIOS y carga datos de prueba."""
     try:
@@ -827,6 +913,7 @@ def setup_usuarios():
 # ========================================
 @app.route('/api/setup/zonas', methods=['POST'])
 @limiter.limit("2 per hour")
+@requiere_rol('admin')
 def setup_zonas():
     """Crea las tablas de zonas y tarifas."""
     try:
