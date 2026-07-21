@@ -1,6 +1,6 @@
 """
 LAST MILE DELIVERY - SQLite Database Schema
-Migracion desde AS/400 DB2/400 -> SQLite
+Migracion desde sistema legacy -> SQLite
 Todas las tablas y vistas del sistema.
 """
 

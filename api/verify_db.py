@@ -1,4 +1,4 @@
-"""Verify all data migrated from AS/400 to SQLite"""
+"""Verify all data migrated from the legacy system to SQLite"""
 import sqlite3, os
 
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lastmile.db')

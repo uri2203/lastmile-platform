@@ -1,18 +1,20 @@
 """
 LAST MILE DELIVERY SYSTEM - Backend API v3.0 (Python/Flask + SQLite/PostgreSQL)
-Migrado desde AS/400 DB2/400 a SQLite local.
+Migrado desde un sistema legacy a SQLite/PostgreSQL.
 Multi-database: SQLite (dev) + PostgreSQL/Supabase (produccion via DATABASE_URL).
 Multi-tenant: cada request lleva X-Emp-Id
 Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, g
+from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
-import hashlib
+from auth import generate_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
+from security import hash_password, verify_password, is_legacy_hash
 import os
 import time
 import logging
@@ -120,24 +122,102 @@ else:
 
 
 def get_emp_id():
-    try:
-        return int(request.headers.get('X-Emp-Id', '1'))
-    except (ValueError, TypeError):
-        return 1
+    """Tenant de la request, derivado del TOKEN verificado (nunca del header)."""
+    return getattr(g, 'emp_id', None)
+
+
+def get_rol():
+    """Rol del usuario autenticado, derivado del token."""
+    return getattr(g, 'rol', None)
 
 
 # ========================================
-# REQUEST MIDDLEWARE
+# CONTROL DE ACCESO
+# ========================================
+# Rutas /api publicas: no requieren token.
+PUBLIC_API_PATHS = {
+    '/api/health',
+    '/api/auth/login',
+    '/api/onboarding/register',
+    '/api/saas/planes',            # catalogo de planes (landing / registro)
+    '/api/billing/planes',
+    '/api/billing/webhook/stripe',       # verificado por firma Stripe
+    '/api/billing/webhook/mercadopago',  # verificado re-consultando el pago
+    '/api/pagos/mercado-pago/webhook',
+}
+# Prefijos publicos: tracking del cliente final por token opaco en la URL.
+PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes')
+# Endpoint(s) servicio-a-servicio: autenticados por CRON_API_KEY, no por JWT.
+CRON_API_PATHS = {'/api/billing/auto-charge'}
+# Prefijos de gestion GLOBAL de la plataforma: solo 'superadmin'.
+# El admin de un tenant cliente NO puede gestionar otros tenants ni la plataforma.
+SUPERADMIN_API_PREFIXES = ('/api/admin/', '/api/saas/')
+SETUP_API_PREFIX = '/api/setup/'
+
+
+def _is_public_api(path, method):
+    if method == 'OPTIONS':
+        return True  # preflight CORS
+    if path in PUBLIC_API_PATHS:
+        return True
+    return any(path.startswith(p) for p in PUBLIC_API_PREFIXES)
+
+
+# ========================================
+# REQUEST MIDDLEWARE (gate de autenticacion/autorizacion, fail-closed)
 # ========================================
 @app.before_request
 def before_request():
     request.start_time = time.time()
-    # Set tenant context for Row-Level Security
+    path = request.path
+    method = request.method
+
+    # Rutas no-/api => paginas estaticas / landing (publicas).
+    if not path.startswith('/api/'):
+        return
+
+    # Endpoints publicos legitimos.
+    if _is_public_api(path, method):
+        return
+
+    # Cron: autenticado por CRON_API_KEY dentro del propio handler.
+    if path in CRON_API_PATHS:
+        return
+
+    # A partir de aqui se EXIGE un token valido.
+    ident = current_identity()
+    if not ident:
+        return jsonify({'success': False, 'error': 'No autenticado'}), 401
+    g.emp_id = ident.get('emp_id')
+    g.rol = ident.get('rol')
+    g.usu_id = ident.get('usu_id')
+    g.usuario = ident.get('usuario', '')
+
+    # Endpoints destructivos /api/setup/* (DROP TABLE global): superadmin + ALLOW_SETUP=true.
+    if path.startswith(SETUP_API_PREFIX):
+        if g.rol != 'superadmin':
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+        if os.environ.get('ALLOW_SETUP', '').lower() != 'true':
+            return jsonify({'success': False, 'error': 'Setup deshabilitado (ALLOW_SETUP no activo)'}), 403
+    # Gestion global de la plataforma (/api/admin/*, /api/saas/*): solo superadmin.
+    elif any(path.startswith(p) for p in SUPERADMIN_API_PREFIXES):
+        if g.rol != 'superadmin':
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+
+    # Anti-IDOR: si la URL trae emp_id, solo el superadmin accede a otros tenants.
+    view_args = request.view_args or {}
+    if 'emp_id' in view_args and g.rol != 'superadmin':
+        try:
+            if int(view_args['emp_id']) != int(g.emp_id):
+                return jsonify({'success': False, 'error': 'No autorizado'}), 403
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+
+    # Contexto de tenant para RLS (best-effort; no-op en SQLite).
     try:
-        emp_id = int(request.headers.get('X-Emp-Id', '0'))
-        if emp_id > 0:
+        if g.emp_id:
             from db import set_tenant_context
-            set_tenant_context(emp_id)
+            set_tenant_context(int(g.emp_id))
     except (ValueError, TypeError):
         pass
 
@@ -149,14 +229,22 @@ def after_request(response):
         status = response.status_code
         path = request.path
         method = request.method
-        emp_id = request.headers.get('X-Emp-Id', '-')
+        emp_id = getattr(g, 'emp_id', '-')
         ip = request.remote_addr or '-'
         request_logger.info(f'{method} {path} => {status} [{elapsed}ms] emp={emp_id} ip={ip}')
     return response
 
 
+@app.errorhandler(429)
+def handle_rate_limit(e):
+    return jsonify({'success': False, 'error': 'Demasiados intentos. Espera un momento e intenta de nuevo.'}), 429
+
+
 @app.errorhandler(Exception)
 def handle_exception(e):
+    # Respeta los errores HTTP (429, 404, 400, ...); no los enmascares como 500.
+    if isinstance(e, HTTPException):
+        return e
     error_logger.error(f'Unhandled: {str(e)}', exc_info=True)
     return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
@@ -228,7 +316,6 @@ def demo_video():
 @app.route('/api/onboarding/register', methods=['POST'])
 def onboarding_register():
     """Register a new tenant with admin user."""
-    import hashlib
     data = request.get_json() or {}
 
     emp_data = data.get('empresa', {})
@@ -313,7 +400,7 @@ def onboarding_register():
             pass
 
     # Create admin user
-    password_hash = hashlib.sha256(usr_data['password'].encode()).hexdigest()
+    password_hash = hash_password(usr_data['password'])
     try:
         execute(
             "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, "
@@ -480,7 +567,8 @@ def auto_charge():
     """Process all due subscription charges. Protected endpoint."""
     # Simple API key protection
     api_key = request.headers.get('X-Cron-Key', '')
-    if api_key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+    expected = os.environ.get('CRON_API_KEY')
+    if not expected or api_key != expected:
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
     try:
         from billing_service import run_auto_billing
@@ -503,6 +591,7 @@ def billing_usage():
 
 
 @app.route('/api/admin/tenants-usage', methods=['GET'])
+@requiere_superadmin
 def admin_tenants_usage():
     """Get usage for all tenants (admin only)."""
     try:
@@ -522,7 +611,7 @@ def admin_tenants_usage():
 @app.route('/api/referrals/my-code', methods=['GET'])
 def my_referral_code():
     """Get current user's referral code."""
-    emp_id = request.headers.get('X-Emp-Id')
+    emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'success': False, 'error': 'Emp ID required'}), 400
     try:
@@ -538,7 +627,7 @@ def my_referral_code():
 @app.route('/api/referrals/stats', methods=['GET'])
 def referral_stats():
     """Get referral statistics for current user's company."""
-    emp_id = request.headers.get('X-Emp-Id')
+    emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'success': False, 'error': 'Emp ID required'}), 400
     try:
@@ -582,6 +671,7 @@ def referral_stats():
 
 
 @app.route('/api/admin/legal-acceptance', methods=['GET'])
+@requiere_superadmin
 def admin_legal_acceptance():
     """Get all legal acceptance records for legal protection."""
     try:
@@ -610,7 +700,7 @@ def admin_legal_acceptance():
 @app.route('/api/legal/my-acceptance', methods=['GET'])
 def my_legal_acceptance():
     """Get current user's legal acceptance records."""
-    emp_id = request.headers.get('X-Emp-Id')
+    emp_id = get_emp_id()
     usr_id = request.args.get('usr_id')
     if not emp_id:
         return jsonify({'success': False, 'error': 'Emp ID required'}), 400
@@ -697,7 +787,7 @@ def auth_login():
     if not user or not passwd:
         return jsonify({'success': False, 'error': 'Usuario y contrasena requeridos'})
 
-    pass_hash = hashlib.sha256(passwd.strip().encode()).hexdigest()
+    plain = passwd.strip()
 
     try:
         sql = (
@@ -718,19 +808,31 @@ def auth_login():
     if not rows:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
 
-    # Check password for each matching user (handles duplicate usernames across tenants)
+    # Verifica la contrasena de cada usuario que coincide (usuarios duplicados entre tenants)
     matched = None
     for row in rows:
         db_pass = str(row.get('USU_PASS', '')).strip()
-        if db_pass == pass_hash:
+        if verify_password(plain, db_pass):
             matched = row
             break
 
     if not matched:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
 
+    # Migracion transparente: si el hash almacenado era SHA-256 heredado, re-hashea a bcrypt.
+    if is_legacy_hash(str(matched.get('USU_PASS', '')).strip()):
+        try:
+            execute("UPDATE USUARIOS SET USU_PASS=? WHERE USU_ID=?",
+                    [hash_password(plain), matched['USU_ID']])
+        except Exception:
+            pass
+
+    token = generate_token(
+        matched['USU_ID'], matched['USU_EMP_ID'], matched['USU_ROL'], matched['USU_USUARIO']
+    )
     return jsonify({
         'success': True,
+        'token': token,
         'data': {
             'emp_id': matched['USU_EMP_ID'],
             'usuario': matched['USU_USUARIO'],
@@ -746,6 +848,7 @@ def auth_login():
 # ========================================
 @app.route('/api/setup/usuarios', methods=['POST'])
 @limiter.limit("2 per hour")
+@requiere_superadmin
 def setup_usuarios():
     """Crea la tabla USUARIOS y carga datos de prueba."""
     try:
@@ -811,7 +914,7 @@ def setup_usuarios():
         ]
 
         for u in users:
-            hashed_pass = hashlib.sha256(u[2].strip().encode()).hexdigest()
+            hashed_pass = hash_password(u[2].strip())
             execute(
                 "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?,?,?,?,?,?)",
                 [u[0], u[1], hashed_pass, u[3], u[4], u[5]]
@@ -827,6 +930,7 @@ def setup_usuarios():
 # ========================================
 @app.route('/api/setup/zonas', methods=['POST'])
 @limiter.limit("2 per hour")
+@requiere_superadmin
 def setup_zonas():
     """Crea las tablas de zonas y tarifas."""
     try:
@@ -1854,7 +1958,6 @@ def delete_usuario(usu_id):
 @app.route('/api/usuarios', methods=['POST'])
 def create_usuario():
     emp_id = get_emp_id()
-    import hashlib
     u = request.json
     if not u:
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
@@ -1865,7 +1968,7 @@ def create_usuario():
         return jsonify({'success': False, 'error': 'Usuario y nombre requeridos'}), 400
     if not password:
         return jsonify({'success': False, 'error': 'Password requerido'}), 400
-    pass_hash = hashlib.sha256(password.encode()).hexdigest()
+    pass_hash = hash_password(password)
     try:
         execute(
             "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_TELEFONO, USU_ROL, USU_ACTIVO) VALUES (?,?,?,?,?,?,?,?)",
@@ -1883,14 +1986,13 @@ def create_usuario():
 @app.route('/api/usuarios/<int:usu_id>', methods=['PUT'])
 def update_usuario(usu_id):
     emp_id = get_emp_id()
-    import hashlib
     u = request.json
     if not u:
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     password = u.get('password', u.get('USU_PASS', ''))
     try:
         if password:
-            pass_hash = hashlib.sha256(password.encode()).hexdigest()
+            pass_hash = hash_password(password)
             execute(
                 "UPDATE USUARIOS SET USU_USUARIO=?, USU_PASS=?, USU_NOMBRE=?, USU_EMAIL=?, USU_TELEFONO=?, USU_ROL=?, USU_ACTIVO=? WHERE USU_ID=? AND USU_EMP_ID=?",
                 [u.get('usuario', u.get('USU_USUARIO', '')), pass_hash,
@@ -2024,6 +2126,7 @@ def export_custom():
 # MODULO: SaaS ADMIN
 # ========================================
 @app.route('/api/saas/tenants', methods=['GET'])
+@requiere_superadmin
 def get_saas_tenants():
     return jsonify({'success': True, 'data': query('''SELECT E.*,
         (SELECT COUNT(*) FROM PEDIDOS P WHERE P.EMP_ID = E.EMP_ID) as TOTAL_PEDIDOS,
@@ -2216,6 +2319,7 @@ def get_saas_tenant(emp_id):
 
 
 @app.route('/api/saas/tenants', methods=['POST'])
+@requiere_superadmin
 def create_saas_tenant():
     data = request.json or {}
     nombre = data.get('nombre', '').strip()
@@ -2231,8 +2335,7 @@ def create_saas_tenant():
     if emp_id:
         admin_user = data.get('admin_user', 'admin')
         admin_pass = data.get('admin_pass', 'admin123')
-        import hashlib
-        pass_hash = hashlib.sha256(admin_pass.strip().encode()).hexdigest()
+        pass_hash = hash_password(admin_pass.strip())
         execute("INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?, ?, ?, ?, ?, 'admin')",
                 [emp_id, admin_user, pass_hash, f'Admin {nombre}', data.get('email', '')])
 
@@ -2240,6 +2343,7 @@ def create_saas_tenant():
 
 
 @app.route('/api/saas/tenants/<int:emp_id>', methods=['PUT'])
+@requiere_superadmin
 def update_saas_tenant(emp_id):
     data = request.json or {}
     execute("UPDATE EMPRESAS SET EMP_NOMBRE=?, EMP_RFC=?, EMP_EMAIL=?, EMP_TELEFONO=?, EMP_ESTATUS=?, EMP_PLAN=? WHERE EMP_ID=?",
@@ -2249,6 +2353,7 @@ def update_saas_tenant(emp_id):
 
 
 @app.route('/api/saas/tenants/<int:emp_id>/suspend', methods=['POST'])
+@requiere_superadmin
 def suspend_saas_tenant(emp_id):
     execute("UPDATE EMPRESAS SET EMP_ESTATUS='SUSPENDIDA' WHERE EMP_ID=?", [emp_id])
     try:
@@ -2259,6 +2364,7 @@ def suspend_saas_tenant(emp_id):
 
 
 @app.route('/api/saas/tenants/<int:emp_id>/activate', methods=['POST'])
+@requiere_superadmin
 def activate_saas_tenant(emp_id):
     execute("UPDATE EMPRESAS SET EMP_ESTATUS='ACTIVA' WHERE EMP_ID=?", [emp_id])
     return jsonify({'success': True, 'message': 'Tenant activado'})

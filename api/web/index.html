@@ -241,6 +241,7 @@
       .then(data => {
         if (data.success && data.data) {
           const d = data.data;
+          sessionStorage.setItem('lm_token', data.token || '');
           localStorage.setItem('empId', d.emp_id);
           localStorage.setItem('empNombre', d.empresa || '');
           localStorage.setItem('user', d.usuario || user);

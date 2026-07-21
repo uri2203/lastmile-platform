@@ -1,11 +1,12 @@
 """
 SEED DATA: Creates all tables + inserts demo data directly.
-No dependency on AS/400 backup files.
+No dependency on legacy backup files.
 Runs on first server start in cloud environments.
 """
 import sqlite3
 import os
 import hashlib
+from security import hash_password
 import json
 from datetime import datetime, timedelta
 import random
@@ -408,8 +409,8 @@ def seed():
     for e in empresas:
         c.execute("INSERT INTO EMPRESAS (EMP_ID,EMP_NOMBRE,EMP_RFC,EMP_DIRECCION,EMP_TELEFONO,EMP_EMAIL,EMP_CONTACTO) VALUES (?,?,?,?,?,?,?)", list(e))
 
-    # Usuarios (SHA-256 hashed passwords)
-    def h(p): return hashlib.sha256(p.encode()).hexdigest()
+    # Usuarios (bcrypt hashed passwords)
+    def h(p): return hash_password(p)
     usuarios = [
         (1,'admin',h('admin123'),'Administrador','admin@delivery.mx','5551001001','admin'),
         (1,'operador',h('oper123'),'Operador General','ops@delivery.mx','5551001002','operacion'),
@@ -606,7 +607,7 @@ def seed_pg():
     cur = conn.cursor()
 
     def h(p):
-        return hashlib.sha256(p.encode()).hexdigest()
+        return hash_password(p)
 
     # Empresas
     empresas = [
