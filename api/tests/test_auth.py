@@ -25,6 +25,8 @@ from auth import decode_token   # noqa: E402
 @pytest.fixture(scope='module')
 def client():
     app.config['TESTING'] = True
+    from server import limiter
+    limiter.enabled = False   # evita el rate-limit del login durante los tests
     return app.test_client()
 
 

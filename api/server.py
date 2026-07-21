@@ -13,6 +13,7 @@ from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
 from auth import generate_token, current_identity, requiere_auth, requiere_rol
+from security import hash_password, verify_password, is_legacy_hash
 import hashlib
 import os
 import time
@@ -391,7 +392,7 @@ def onboarding_register():
             pass
 
     # Create admin user
-    password_hash = hashlib.sha256(usr_data['password'].encode()).hexdigest()
+    password_hash = hash_password(usr_data['password'])
     try:
         execute(
             "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, "
@@ -778,7 +779,7 @@ def auth_login():
     if not user or not passwd:
         return jsonify({'success': False, 'error': 'Usuario y contrasena requeridos'})
 
-    pass_hash = hashlib.sha256(passwd.strip().encode()).hexdigest()
+    plain = passwd.strip()
 
     try:
         sql = (
@@ -799,16 +800,24 @@ def auth_login():
     if not rows:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
 
-    # Check password for each matching user (handles duplicate usernames across tenants)
+    # Verifica la contrasena de cada usuario que coincide (usuarios duplicados entre tenants)
     matched = None
     for row in rows:
         db_pass = str(row.get('USU_PASS', '')).strip()
-        if db_pass == pass_hash:
+        if verify_password(plain, db_pass):
             matched = row
             break
 
     if not matched:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
+
+    # Migracion transparente: si el hash almacenado era SHA-256 heredado, re-hashea a bcrypt.
+    if is_legacy_hash(str(matched.get('USU_PASS', '')).strip()):
+        try:
+            execute("UPDATE USUARIOS SET USU_PASS=? WHERE USU_ID=?",
+                    [hash_password(plain), matched['USU_ID']])
+        except Exception:
+            pass
 
     token = generate_token(
         matched['USU_ID'], matched['USU_EMP_ID'], matched['USU_ROL'], matched['USU_USUARIO']
@@ -897,7 +906,7 @@ def setup_usuarios():
         ]
 
         for u in users:
-            hashed_pass = hashlib.sha256(u[2].strip().encode()).hexdigest()
+            hashed_pass = hash_password(u[2].strip())
             execute(
                 "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?,?,?,?,?,?)",
                 [u[0], u[1], hashed_pass, u[3], u[4], u[5]]
@@ -1952,7 +1961,7 @@ def create_usuario():
         return jsonify({'success': False, 'error': 'Usuario y nombre requeridos'}), 400
     if not password:
         return jsonify({'success': False, 'error': 'Password requerido'}), 400
-    pass_hash = hashlib.sha256(password.encode()).hexdigest()
+    pass_hash = hash_password(password)
     try:
         execute(
             "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_TELEFONO, USU_ROL, USU_ACTIVO) VALUES (?,?,?,?,?,?,?,?)",
@@ -1977,7 +1986,7 @@ def update_usuario(usu_id):
     password = u.get('password', u.get('USU_PASS', ''))
     try:
         if password:
-            pass_hash = hashlib.sha256(password.encode()).hexdigest()
+            pass_hash = hash_password(password)
             execute(
                 "UPDATE USUARIOS SET USU_USUARIO=?, USU_PASS=?, USU_NOMBRE=?, USU_EMAIL=?, USU_TELEFONO=?, USU_ROL=?, USU_ACTIVO=? WHERE USU_ID=? AND USU_EMP_ID=?",
                 [u.get('usuario', u.get('USU_USUARIO', '')), pass_hash,
@@ -2319,7 +2328,7 @@ def create_saas_tenant():
         admin_user = data.get('admin_user', 'admin')
         admin_pass = data.get('admin_pass', 'admin123')
         import hashlib
-        pass_hash = hashlib.sha256(admin_pass.strip().encode()).hexdigest()
+        pass_hash = hash_password(admin_pass.strip())
         execute("INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, USU_ROL) VALUES (?, ?, ?, ?, ?, 'admin')",
                 [emp_id, admin_user, pass_hash, f'Admin {nombre}', data.get('email', '')])
 
