@@ -117,12 +117,11 @@ def test_admin_only_rechaza_no_admin(client):
     assert r.status_code == 403
 
 
-def test_admin_only_permite_admin(client):
-    tok = token_for(client, 'admin', 'admin123')     # rol admin
+def test_admin_de_tenant_no_accede_a_admin_global(client):
+    # Tras separar el rol superadmin: el admin de un tenant NO accede a la gestion global.
+    tok = token_for(client, 'admin', 'admin123')     # rol admin (de un tenant cliente)
     r = client.get('/api/admin/tenants-usage', headers={'Authorization': f'Bearer {tok}'})
-    # El admin pasa el control de acceso (no 401/403). El handler usa DATE_TRUNC
-    # (sintaxis PostgreSQL) y devuelve 500 en SQLite: bug preexistente ajeno al auth.
-    assert r.status_code not in (401, 403)
+    assert r.status_code == 403
 
 
 def test_saas_prefijo_rechaza_no_admin(client):

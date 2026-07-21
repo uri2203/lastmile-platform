@@ -94,3 +94,11 @@ def requiere_rol(*roles):
             return fn(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def requiere_superadmin(fn):
+    """
+    Exige rol 'superadmin' (operador de la plataforma).
+    Para la gestion GLOBAL de tenants: un admin de un tenant cliente NO pasa.
+    """
+    return requiere_rol('superadmin')(fn)

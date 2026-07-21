@@ -12,7 +12,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
-from auth import generate_token, current_identity, requiere_auth, requiere_rol
+from auth import generate_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash
 import hashlib
 import os
@@ -149,8 +149,9 @@ PUBLIC_API_PATHS = {
 PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes')
 # Endpoint(s) servicio-a-servicio: autenticados por CRON_API_KEY, no por JWT.
 CRON_API_PATHS = {'/api/billing/auto-charge'}
-# Prefijos que exigen rol 'admin'.
-ADMIN_API_PREFIXES = ('/api/admin/', '/api/saas/')
+# Prefijos de gestion GLOBAL de la plataforma: solo 'superadmin'.
+# El admin de un tenant cliente NO puede gestionar otros tenants ni la plataforma.
+SUPERADMIN_API_PREFIXES = ('/api/admin/', '/api/saas/')
 SETUP_API_PREFIX = '/api/setup/'
 
 
@@ -192,20 +193,20 @@ def before_request():
     g.usu_id = ident.get('usu_id')
     g.usuario = ident.get('usuario', '')
 
-    # Endpoints destructivos /api/setup/*: admin + ALLOW_SETUP=true.
+    # Endpoints destructivos /api/setup/* (DROP TABLE global): superadmin + ALLOW_SETUP=true.
     if path.startswith(SETUP_API_PREFIX):
-        if g.rol != 'admin':
+        if g.rol != 'superadmin':
             return jsonify({'success': False, 'error': 'No autorizado'}), 403
         if os.environ.get('ALLOW_SETUP', '').lower() != 'true':
             return jsonify({'success': False, 'error': 'Setup deshabilitado (ALLOW_SETUP no activo)'}), 403
-    # Endpoints administrativos / SaaS: solo rol admin.
-    elif any(path.startswith(p) for p in ADMIN_API_PREFIXES):
-        if g.rol != 'admin':
+    # Gestion global de la plataforma (/api/admin/*, /api/saas/*): solo superadmin.
+    elif any(path.startswith(p) for p in SUPERADMIN_API_PREFIXES):
+        if g.rol != 'superadmin':
             return jsonify({'success': False, 'error': 'No autorizado'}), 403
 
-    # Anti-IDOR: si la URL trae emp_id, un no-admin solo accede al suyo.
+    # Anti-IDOR: si la URL trae emp_id, solo el superadmin accede a otros tenants.
     view_args = request.view_args or {}
-    if 'emp_id' in view_args and g.rol != 'admin':
+    if 'emp_id' in view_args and g.rol != 'superadmin':
         try:
             if int(view_args['emp_id']) != int(g.emp_id):
                 return jsonify({'success': False, 'error': 'No autorizado'}), 403
@@ -583,7 +584,7 @@ def billing_usage():
 
 
 @app.route('/api/admin/tenants-usage', methods=['GET'])
-@requiere_rol('admin')
+@requiere_superadmin
 def admin_tenants_usage():
     """Get usage for all tenants (admin only)."""
     try:
@@ -663,7 +664,7 @@ def referral_stats():
 
 
 @app.route('/api/admin/legal-acceptance', methods=['GET'])
-@requiere_rol('admin')
+@requiere_superadmin
 def admin_legal_acceptance():
     """Get all legal acceptance records for legal protection."""
     try:
@@ -840,7 +841,7 @@ def auth_login():
 # ========================================
 @app.route('/api/setup/usuarios', methods=['POST'])
 @limiter.limit("2 per hour")
-@requiere_rol('admin')
+@requiere_superadmin
 def setup_usuarios():
     """Crea la tabla USUARIOS y carga datos de prueba."""
     try:
@@ -922,7 +923,7 @@ def setup_usuarios():
 # ========================================
 @app.route('/api/setup/zonas', methods=['POST'])
 @limiter.limit("2 per hour")
-@requiere_rol('admin')
+@requiere_superadmin
 def setup_zonas():
     """Crea las tablas de zonas y tarifas."""
     try:
@@ -2120,6 +2121,7 @@ def export_custom():
 # MODULO: SaaS ADMIN
 # ========================================
 @app.route('/api/saas/tenants', methods=['GET'])
+@requiere_superadmin
 def get_saas_tenants():
     return jsonify({'success': True, 'data': query('''SELECT E.*,
         (SELECT COUNT(*) FROM PEDIDOS P WHERE P.EMP_ID = E.EMP_ID) as TOTAL_PEDIDOS,
@@ -2312,6 +2314,7 @@ def get_saas_tenant(emp_id):
 
 
 @app.route('/api/saas/tenants', methods=['POST'])
+@requiere_superadmin
 def create_saas_tenant():
     data = request.json or {}
     nombre = data.get('nombre', '').strip()
@@ -2336,6 +2339,7 @@ def create_saas_tenant():
 
 
 @app.route('/api/saas/tenants/<int:emp_id>', methods=['PUT'])
+@requiere_superadmin
 def update_saas_tenant(emp_id):
     data = request.json or {}
     execute("UPDATE EMPRESAS SET EMP_NOMBRE=?, EMP_RFC=?, EMP_EMAIL=?, EMP_TELEFONO=?, EMP_ESTATUS=?, EMP_PLAN=? WHERE EMP_ID=?",
@@ -2345,6 +2349,7 @@ def update_saas_tenant(emp_id):
 
 
 @app.route('/api/saas/tenants/<int:emp_id>/suspend', methods=['POST'])
+@requiere_superadmin
 def suspend_saas_tenant(emp_id):
     execute("UPDATE EMPRESAS SET EMP_ESTATUS='SUSPENDIDA' WHERE EMP_ID=?", [emp_id])
     try:
@@ -2355,6 +2360,7 @@ def suspend_saas_tenant(emp_id):
 
 
 @app.route('/api/saas/tenants/<int:emp_id>/activate', methods=['POST'])
+@requiere_superadmin
 def activate_saas_tenant(emp_id):
     execute("UPDATE EMPRESAS SET EMP_ESTATUS='ACTIVA' WHERE EMP_ID=?", [emp_id])
     return jsonify({'success': True, 'message': 'Tenant activado'})
