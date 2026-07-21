@@ -45,8 +45,6 @@ reportes/
 !reportes/.gitkeep
 
 # Archivos locales
-ejecutar.bat
-ejecutar_app.bat
 
 # Node (si se usa en el futuro)
 node_modules/
@@ -58,7 +56,7 @@ package-lock.json
 # Backups
 api/backups/
 
-# SQLite database (migrated from AS/400)
+# SQLite database (local dev)
 api/lastmile.db
 api/lastmile.db-wal
 api/lastmile.db-shm

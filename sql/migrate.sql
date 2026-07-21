@@ -1,6 +1,6 @@
 -- ============================================
 -- LAST MILE PLATFORM - PostgreSQL Schema
--- Migracion desde AS/400 TESTLIB
+-- Migracion desde sistema legacy
 -- ============================================
 
 -- ========================================

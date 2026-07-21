@@ -37,5 +37,4 @@ python server.py
 - `api/server.py` - Backend Flask
 - `api/web/` - Frontend HTML/CSS/JS
 - `sql/migrate.sql` - Schema PostgreSQL
-- `src/` - Java AS/400 (exploradores y reportes)
 - `docs/` - Landing page para GitHub Pages

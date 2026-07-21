@@ -1,5 +1,5 @@
 """
-MIGRATION SCRIPT: AS/400 (JSON backup) -> SQLite
+MIGRATION SCRIPT: legacy JSON backup -> SQLite
 Importa todos los datos del backup JSON a la base SQLite.
 """
 import sqlite3
@@ -48,10 +48,10 @@ def clean_value(v):
         return None
     if isinstance(v, str):
         v = v.strip()
-        # Handle DB2/400 specific values
+        # Handle legacy-specific empty values
         if v == '':
             return None
-        # Handle numeric strings that came from DB2
+        # Handle numeric strings from the legacy export
         # Try to preserve as-is, SQLite is flexible
     # Handle dict/list (JSON fields)
     if isinstance(v, (dict, list)):
@@ -63,7 +63,7 @@ def migrate():
     """Run the full migration."""
     if not os.path.exists(BACKUP_DIR):
         print(f"Backup directory not found: {BACKUP_DIR}")
-        print("Run backup.py first to export data from AS/400")
+        print("Ensure the JSON backup export exists first")
         return
 
     conn = sqlite3.connect(DB_PATH)

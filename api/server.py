@@ -1,6 +1,6 @@
 """
 LAST MILE DELIVERY SYSTEM - Backend API v3.0 (Python/Flask + SQLite/PostgreSQL)
-Migrado desde AS/400 DB2/400 a SQLite local.
+Migrado desde un sistema legacy a SQLite/PostgreSQL.
 Multi-database: SQLite (dev) + PostgreSQL/Supabase (produccion via DATABASE_URL).
 Multi-tenant: cada request lleva X-Emp-Id
 Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones

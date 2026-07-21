@@ -35,7 +35,7 @@ Plataforma SaaS de ultima milla para empresas de delivery en Mexico.
 
 - **Backend**: Python/Flask (70+ endpoints REST)
 - **Frontend**: HTML/CSS/JS vanilla (sin dependencias)
-- **DB**: PostgreSQL 15 (migracion desde DB2/400 AS/400)
+- **DB**: PostgreSQL 15 / Supabase (SQLite en desarrollo)
 - **Cache**: Redis
 - **Deploy**: Docker Compose
 - **CI/CD**: GitHub Actions
@@ -93,11 +93,6 @@ lastmile-platform/
 │   └── index.html             # Landing para GitHub Pages
 ├── sql/
 │   └── migrate.sql            # Migracion a PostgreSQL
-├── dashboard/
-│   └── index.html             # Dashboard
-├── config/
-│   └── alertas.properties     # Configuracion de alertas
-├── src/                       # Java AS/400 (exploradores, reportes)
 ├── .github/
 │   └── workflows/
 │       ├── pages.yml          # Deploy landing a GitHub Pages

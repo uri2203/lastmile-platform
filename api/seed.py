@@ -1,6 +1,6 @@
 """
 SEED DATA: Creates all tables + inserts demo data directly.
-No dependency on AS/400 backup files.
+No dependency on legacy backup files.
 Runs on first server start in cloud environments.
 """
 import sqlite3
