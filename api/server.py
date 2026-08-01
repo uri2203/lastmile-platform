@@ -270,7 +270,7 @@ def handle_exception(e):
 # ========================================
 @app.route('/')
 def root():
-    return send_from_directory('web', 'landing-v2.html')
+    return send_from_directory('web', 'landing.html')
 
 
 @app.route('/login')
