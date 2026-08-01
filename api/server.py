@@ -3618,7 +3618,7 @@ def get_payment_countries():
 # MIGRATION ENDPOINT
 # ========================================
 
-@app.route('/api/system/migrate', methods=['POST'])
+@app.route('/api/admin/migrate', methods=['POST'])
 def run_migration():
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
