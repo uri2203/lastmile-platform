@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
 from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
+from webhooks import webhook_bp
 import os
 import time
 import logging
@@ -46,6 +47,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Servir archivos estaticos desde /web
 app = Flask(__name__, static_folder='web', static_url_path='')
+app.register_blueprint(webhook_bp)
 
 # Max request body size: 10MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
