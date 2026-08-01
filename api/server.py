@@ -13,8 +13,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
-from auth import generate_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
-from security import hash_password, verify_password, is_legacy_hash
+from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
+from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 import os
 import time
 import logging
@@ -114,6 +114,29 @@ console_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefm
 request_logger.addHandler(console_handler)
 
 # ========================================
+# AUDIT LOGGING: Sensitive operations tracking
+# ========================================
+audit_logger = logging.getLogger('audit')
+audit_logger.setLevel(logging.INFO)
+audit_handler = RotatingFileHandler(
+    os.path.join(LOG_DIR, 'audit.log'),
+    maxBytes=5*1024*1024, backupCount=10, encoding='utf-8'
+)
+audit_handler.setFormatter(logging.Formatter('%(asctime)s [AUDIT] %(message)s'))
+audit_logger.addHandler(audit_handler)
+
+
+def log_audit(action, details=None):
+    """Log a sensitive operation for audit trail."""
+    user = getattr(g, 'usuario', 'system')
+    emp = getattr(g, 'emp_id', '-')
+    ip = request.remote_addr or '-'
+    msg = f'action={action} user={user} emp={emp} ip={ip}'
+    if details:
+        msg += f' details={details}'
+    audit_logger.info(msg)
+
+# ========================================
 # DATABASE: Auto-detect SQLite or PostgreSQL via DATABASE_URL
 # ========================================
 
@@ -175,6 +198,8 @@ def get_rol():
 PUBLIC_API_PATHS = {
     '/api/health',
     '/api/auth/login',
+    '/api/auth/refresh',
+    '/api/docs',
     '/api/onboarding/register',
     '/api/saas/planes',            # catalogo de planes (landing / registro)
     '/api/billing/planes',
@@ -381,8 +406,10 @@ def onboarding_register():
         return jsonify({'success': False, 'error': 'RFC requerido'}), 400
     if not usr_data.get('email') or '@' not in usr_data.get('email', ''):
         return jsonify({'success': False, 'error': 'Email inválido'}), 400
-    if not usr_data.get('password') or len(usr_data.get('password', '')) < 6:
-        return jsonify({'success': False, 'error': 'Contraseña mínimo 6 caracteres'}), 400
+    pwd = usr_data.get('password', '')
+    pwd_ok, pwd_err = validate_password_strength(pwd)
+    if not pwd_ok:
+        return jsonify({'success': False, 'error': pwd_err}), 400
 
     # Check if RFC already exists
     try:
@@ -809,22 +836,58 @@ def verify_legal_acceptance(usr_id):
 # ========================================
 @app.route('/api/health', methods=['GET'])
 def health():
-    db_status = 'DISCONNECTED'
-    try:
-        query("SELECT 1")
-        db_status = 'CONNECTED'
-    except Exception as e:
-        db_status = f'ERROR: {str(e)[:80]}'
+    checks = {'database': 'UNKNOWN', 'stripe': 'NOT_CONFIGURED', 'mp': 'NOT_CONFIGURED'}
 
-    info = get_db_info()
+    # DB check
+    try:
+        start = time.time()
+        query("SELECT 1")
+        db_ms = round((time.time() - start) * 1000, 1)
+        checks['database'] = 'OK'
+        db_latency = f'{db_ms}ms'
+    except Exception as e:
+        checks['database'] = f'ERROR: {str(e)[:60]}'
+        db_latency = 'N/A'
+
+    # Stripe check
+    if os.environ.get('STRIPE_SECRET_KEY'):
+        checks['stripe'] = 'CONFIGURED'
+
+    # MercadoPago check
+    if os.environ.get('MP_ACCESS_TOKEN'):
+        checks['mp'] = 'CONFIGURED'
+
+    # DB info
+    db_info = get_db_info()
+
+    overall = 'OK' if checks['database'] == 'OK' else 'DEGRADED'
     return jsonify({
-        'status': 'OK' if db_status == 'CONNECTED' else 'DEGRADED',
+        'status': overall,
         'timestamp': datetime.now().isoformat(),
         'version': '3.0.0',
-        'database': f"{info['type']} ({db_status})",
-        'db_path': info.get('path', info.get('url', '')),
-        'rate_limit': '200/min'
+        'database': {
+            'engine': db_info['type'],
+            'status': checks['database'],
+            'latency': db_latency,
+        },
+        'services': {
+            'stripe': checks['stripe'],
+            'mercadopago': checks['mp'],
+            'rate_limit': '200/min',
+        }
     })
+
+
+@app.route('/api/docs', methods=['GET'])
+def api_docs():
+    """Serve the OpenAPI spec as JSON."""
+    import yaml
+    docs_path = os.path.join(os.path.dirname(__file__), 'openapi.yaml')
+    if os.path.exists(docs_path):
+        with open(docs_path, 'r') as f:
+            spec = yaml.safe_load(f)
+        return jsonify(spec)
+    return jsonify({'error': 'API docs not found'}), 404
 
 
 # ========================================
@@ -884,9 +947,14 @@ def auth_login():
     token = generate_token(
         matched['USU_ID'], matched['USU_EMP_ID'], matched['USU_ROL'], matched['USU_USUARIO']
     )
+    refresh = generate_refresh_token(
+        matched['USU_ID'], matched['USU_EMP_ID'], matched['USU_ROL'], matched['USU_USUARIO']
+    )
     return jsonify({
         'success': True,
         'token': token,
+        'refresh_token': refresh,
+        'expires_in': 43200,
         'data': {
             'emp_id': matched['USU_EMP_ID'],
             'usuario': matched['USU_USUARIO'],
@@ -895,6 +963,20 @@ def auth_login():
             'empresa': matched.get('EMP_NOMBRE', '')
         }
     })
+
+
+@app.route('/api/auth/refresh', methods=['POST'])
+@limiter.limit("30 per minute")
+def auth_refresh():
+    """Intercambia un refresh token por un nuevo access token."""
+    data = request.get_json() or {}
+    refresh_token = data.get('refresh_token') or ''
+    if not refresh_token:
+        return jsonify({'success': False, 'error': 'refresh_token requerido'}), 400
+    new_token, err = refresh_access_token(refresh_token)
+    if err:
+        return jsonify({'success': False, 'error': err}), 401
+    return jsonify({'success': True, 'token': new_token, 'expires_in': 43200})
 
 
 # ========================================
@@ -1153,6 +1235,7 @@ def delete_zona(zon_id):
     try:
         execute("UPDATE ZONAS SET ZON_ACTIVO='N', ZON_UPDATED=datetime('now') WHERE ZON_ID=? AND ZON_EMP_ID=?", [zon_id, emp_id])
         execute("UPDATE ZONA_TARIFAS SET ZTA_ACTIVO='N' WHERE ZTA_ZON_ID=? AND ZTA_EMP_ID=?", [zon_id, emp_id])
+        log_audit('zona_deleted', f'zon_id={zon_id}')
         return jsonify({'success': True, 'message': 'Zona eliminada'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1509,6 +1592,7 @@ def delete_chofer(cho_id):
     emp_id = get_emp_id()
     try:
         execute("DELETE FROM CHOFERES WHERE CHO_ID = ? AND EMP_ID = ?", [cho_id, emp_id])
+        log_audit('chofer_deleted', f'cho_id={cho_id}')
         return jsonify({'success': True, 'message': 'Chofer eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1575,6 +1659,7 @@ def delete_vehiculo(veh_id):
     emp_id = get_emp_id()
     try:
         execute("DELETE FROM VEHICULOS WHERE VEH_ID = ? AND EMP_ID = ?", [veh_id, emp_id])
+        log_audit('vehiculo_deleted', f'veh_id={veh_id}')
         return jsonify({'success': True, 'message': 'Vehiculo eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1643,6 +1728,7 @@ def delete_cliente(cli_id):
     emp_id = get_emp_id()
     try:
         execute("DELETE FROM CLIENTES_LM WHERE CLI_ID = ? AND EMP_ID = ?", [cli_id, emp_id])
+        log_audit('cliente_deleted', f'cli_id={cli_id}')
         return jsonify({'success': True, 'message': 'Cliente eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1878,6 +1964,7 @@ def cancelar_factura(fac_id):
     from cfdi_service import cfdi_service
     result = cfdi_service.cancel_invoice(fac_id, emp_id, motivo)
     if result.get('success'):
+        log_audit('factura_cancelled', f'fac_id={fac_id} motivo={motivo[:50]}')
         return jsonify({'success': True, 'message': 'Factura cancelada'})
     else:
         return jsonify({'success': False, 'error': result.get('error', 'Error al cancelar')}), 400
@@ -1979,6 +2066,7 @@ def delete_pago(pag_id):
     try:
         emp_id = get_emp_id()
         execute("DELETE FROM PAGOS_TRANSACCIONES WHERE TRP_ID = ? AND EMP_ID = ?", [pag_id, emp_id])
+        log_audit('pago_deleted', f'pag_id={pag_id}')
         return jsonify({'success': True, 'message': 'Pago eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -2036,6 +2124,7 @@ def delete_usuario(usu_id):
     emp_id = get_emp_id()
     try:
         execute("DELETE FROM USUARIOS WHERE USU_ID = ? AND USU_EMP_ID = ?", [usu_id, emp_id])
+        log_audit('usuario_deleted', f'usu_id={usu_id}')
         return jsonify({'success': True, 'message': 'Usuario eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -2464,6 +2553,7 @@ def suspend_saas_tenant(emp_id):
         execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='SUSPENDIDA' WHERE EMP_ID=? AND SUS_ESTADO='ACTIVA'", [emp_id])
     except Exception:
         pass
+    log_audit('tenant_suspended', f'emp_id={emp_id}')
     return jsonify({'success': True, 'message': 'Tenant suspendido'})
 
 
@@ -2471,6 +2561,7 @@ def suspend_saas_tenant(emp_id):
 @requiere_superadmin
 def activate_saas_tenant(emp_id):
     execute("UPDATE EMPRESAS SET EMP_ESTATUS='ACTIVA' WHERE EMP_ID=?", [emp_id])
+    log_audit('tenant_activated', f'emp_id={emp_id}')
     return jsonify({'success': True, 'message': 'Tenant activado'})
 
 
@@ -2722,6 +2813,7 @@ def delete_pedido(ped_id):
     try:
         emp_id = get_emp_id()
         execute("DELETE FROM PEDIDOS WHERE PED_ID = ? AND EMP_ID = ?", [ped_id, emp_id])
+        log_audit('pedido_deleted', f'ped_id={ped_id}')
         return jsonify({'success': True, 'message': 'Pedido eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -2923,6 +3015,7 @@ def cancelar_suscripcion():
         stripe_service.cancel_subscription(sus['SUS_EXTERNAL_ID'])
 
     cancel_suscripcion(emp_id)
+    log_audit('subscription_cancelled', f'emp_id={emp_id} plan={sus.get("SUS_PLAN", "")}')
     return jsonify({'success': True, 'message': 'Suscripcion cancelada, plan revertido a Starter'})
 
 

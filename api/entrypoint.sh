@@ -16,5 +16,9 @@ exec gunicorn server:app \
     --bind "0.0.0.0:${PORT:-8080}" \
     --workers "${GUNICORN_WORKERS:-4}" \
     --timeout "${GUNICORN_TIMEOUT:-120}" \
+    --graceful-timeout 30 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
     --access-logfile - \
     --error-logfile -

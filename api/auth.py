@@ -32,8 +32,39 @@ def generate_token(usu_id, emp_id, rol, usuario=''):
         'usuario': usuario,
         'iat': now,
         'exp': now + TOKEN_TTL_SECONDS,
+        'type': 'access',
     }
     return jwt.encode(payload, _secret(), algorithm=ALGORITHM)
+
+
+def generate_refresh_token(usu_id, emp_id, rol, usuario=''):
+    """Emite un refresh token con vida larga (7 dias)."""
+    now = int(time.time())
+    refresh_ttl = 7 * 24 * 3600  # 7 dias
+    payload = {
+        'usu_id': usu_id,
+        'emp_id': emp_id,
+        'rol': rol,
+        'usuario': usuario,
+        'iat': now,
+        'exp': now + refresh_ttl,
+        'type': 'refresh',
+    }
+    return jwt.encode(payload, _secret(), algorithm=ALGORITHM)
+
+
+def refresh_access_token(refresh_token):
+    """Intercambia un refresh token por un nuevo access token. Devuelve (token, error)."""
+    payload = decode_token(refresh_token)
+    if not payload:
+        return None, 'Token invalido o expirado'
+    if payload.get('type') != 'refresh':
+        return None, 'No es un refresh token'
+    new_token = generate_token(
+        payload['usu_id'], payload['emp_id'],
+        payload['rol'], payload.get('usuario', '')
+    )
+    return new_token, None
 
 
 def decode_token(token):

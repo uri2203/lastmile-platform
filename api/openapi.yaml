@@ -1,0 +1,746 @@
+openapi: 3.0.3
+info:
+  title: Last Mile Delivery Platform API
+  description: |
+    API REST para la plataforma SaaS de last mile delivery en Mexico/LATAM.
+    Multi-tenant con autenticacion JWT, facturacion CFDI 4.0, pagos Stripe/MercadoPago.
+  version: 3.0.0
+  contact:
+    name: Last Mile Support
+    email: soporte@lastmile.mx
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://lastmile-platform.onrender.com
+    description: Production
+  - url: http://localhost:8080
+    description: Development
+
+tags:
+  - name: Auth
+    description: Autenticacion y tokens
+  - name: Health
+    description: Health checks
+  - name: Pedidos
+    description: Gestion de pedidos/envios
+  - name: Zonas
+    description: Zonas y tarifas
+  - name: Choferes
+    description: Gestion de choferes
+  - name: Vehiculos
+    description: Gestion de vehiculos
+  - name: Clientes
+    description: Clientes del tenant
+  - name: Billing
+    description: Facturacion SaaS y planes
+  - name: CFDI
+    description: Facturacion electronica CFDI 4.0
+  - name: Pagos
+    description: Pagos y transacciones
+  - name: Usuarios
+    description: Gestion de usuarios del tenant
+  - name: SuperAdmin
+    description: Gestion global de tenants (solo superadmin)
+  - name: Tracking
+    description: Tracking publico para clientes finales
+  - name: Referidos
+    description: Sistema de referidos
+
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check del sistema
+      security: []
+      responses:
+        '200':
+          description: Sistema operativo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user, pass]
+              properties:
+                user:
+                  type: string
+                  example: admin
+                pass:
+                  type: string
+                  example: admin123
+                emp_id:
+                  type: integer
+                  description: ID de empresa (opcional, para multi-tenant)
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refrescar access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Nuevo access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  expires_in:
+                    type: integer
+        '401':
+          description: Refresh token invalido
+
+  /api/pedidos:
+    get:
+      tags: [Pedidos]
+      summary: Listar pedidos del tenant
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limite
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: estado
+          in: query
+          schema:
+            type: string
+            enum: [PENDIENTE, ASIGNADO, RECOGIENDO, EN_RUTA, ENTREGADO, CANCELADO]
+      responses:
+        '200':
+          description: Lista de pedidos
+    post:
+      tags: [Pedidos]
+      summary: Crear un pedido/envio
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoCreate'
+      responses:
+        '200':
+          description: Pedido creado
+
+  /api/pedidos/{ped_id}:
+    delete:
+      tags: [Pedidos]
+      summary: Eliminar un pedido
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ped_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Pedido eliminado
+
+  /api/zonas:
+    get:
+      tags: [Zonas]
+      summary: Listar zonas del tenant
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de zonas
+    post:
+      tags: [Zonas]
+      summary: Crear zona
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+                coordenadas:
+                  type: string
+      responses:
+        '200':
+          description: Zona creada
+
+  /api/zonas/cotizar:
+    post:
+      tags: [Zonas]
+      summary: Cotizar envio por zona
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                zona_id:
+                  type: integer
+                servicio:
+                  type: string
+                  enum: [ESTANDAR, EXPRESS, SAME_DAY]
+                peso_kg:
+                  type: number
+                distancia_km:
+                  type: number
+                valor_declarado:
+                  type: number
+      responses:
+        '200':
+          description: Cotizacion
+
+  /api/choferes:
+    get:
+      tags: [Choferes]
+      summary: Listar choferes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de choferes
+    post:
+      tags: [Choferes]
+      summary: Crear chofer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChoferCreate'
+      responses:
+        '200':
+          description: Chofer creado
+
+  /api/choferes/{cho_id}:
+    delete:
+      tags: [Choferes]
+      summary: Eliminar chofer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Chofer eliminado
+
+  /api/vehiculos:
+    get:
+      tags: [Vehiculos]
+      summary: Listar vehiculos
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de vehiculos
+    post:
+      tags: [Vehiculos]
+      summary: Crear vehiculo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculoCreate'
+      responses:
+        '200':
+          description: Vehiculo creado
+
+  /api/vehiculos/{veh_id}:
+    delete:
+      tags: [Vehiculos]
+      summary: Eliminar vehiculo
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: veh_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Vehiculo eliminado
+
+  /api/clientes:
+    get:
+      tags: [Clientes]
+      summary: Listar clientes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de clientes
+    post:
+      tags: [Clientes]
+      summary: Crear cliente
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteCreate'
+      responses:
+        '200':
+          description: Cliente creado
+
+  /api/clientes/{cli_id}:
+    delete:
+      tags: [Clientes]
+      summary: Eliminar cliente
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cli_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cliente eliminado
+
+  /api/usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios del tenant
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+
+  /api/usuarios/{usu_id}:
+    delete:
+      tags: [Usuarios]
+      summary: Eliminar usuario
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usu_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario eliminado
+
+  /api/billing/planes:
+    get:
+      tags: [Billing]
+      summary: Listar planes disponibles
+      security: []
+      responses:
+        '200':
+          description: Lista de planes
+
+  /api/billing/mis-limites:
+    get:
+      tags: [Billing]
+      summary: Ver limites del plan actual
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Limites del tenant
+
+  /api/billing/stats:
+    get:
+      tags: [Billing]
+      summary: Estadisticas de uso del tenant
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estadisticas
+
+  /api/billing/webhook/stripe:
+    post:
+      tags: [Billing]
+      summary: Webhook de Stripe (verificado por firma)
+      security: []
+      responses:
+        '200':
+          description: Webhook procesado
+
+  /api/cfdi/status:
+    get:
+      tags: [CFDI]
+      summary: Estado del servicio de facturacion
+      security: []
+      responses:
+        '200':
+          description: Estado CFDI
+
+  /api/cfdi/facturas:
+    get:
+      tags: [CFDI]
+      summary: Listar facturas emitidas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de facturas
+
+  /api/cfdi/facturas/{fac_id}/cancelar:
+    post:
+      tags: [CFDI]
+      summary: Cancelar factura
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: fac_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motivo:
+                  type: string
+      responses:
+        '200':
+          description: Factura cancelada
+
+  /api/pagos/transacciones:
+    get:
+      tags: [Pagos]
+      summary: Listar transacciones de pago
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de transacciones
+
+  /api/pagos/transacciones/{pag_id}:
+    delete:
+      tags: [Pagos]
+      summary: Eliminar transaccion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transaccion eliminada
+
+  /api/billing/cancelar:
+    post:
+      tags: [Billing]
+      summary: Cancelar suscripcion SaaS
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Suscripcion cancelada
+
+  /api/onboarding/register:
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo tenant con admin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Tenant registrado
+
+  /api/saas/tenants:
+    get:
+      tags: [SuperAdmin]
+      summary: Listar todos los tenants (solo superadmin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de tenants
+
+  /api/saas/tenants/{emp_id}/suspend:
+    post:
+      tags: [SuperAdmin]
+      summary: Suspender tenant (solo superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tenant suspendido
+
+  /api/saas/tenants/{emp_id}/activate:
+    post:
+      tags: [SuperAdmin]
+      summary: Activar tenant (solo superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tenant activado
+
+  /api/tracking/{token}:
+    get:
+      tags: [Tracking]
+      summary: Obtener estado del pedido por token de tracking
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estado del pedido
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT del login
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [OK, DEGRADED]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        database:
+          type: object
+          properties:
+            engine:
+              type: string
+            status:
+              type: string
+            latency:
+              type: string
+        services:
+          type: object
+          properties:
+            stripe:
+              type: string
+            mercadopago:
+              type: string
+            rate_limit:
+              type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+          example: 43200
+        data:
+          type: object
+          properties:
+            emp_id:
+              type: integer
+            usuario:
+              type: string
+            nombre:
+              type: string
+            rol:
+              type: string
+            empresa:
+              type: string
+
+    PedidoCreate:
+      type: object
+      required: [pedNumero, clienteNombre, clienteTelefono, destinoDir]
+      properties:
+        pedNumero:
+          type: string
+        clienteNombre:
+          type: string
+        clienteTelefono:
+          type: string
+        clienteEmail:
+          type: string
+        destinoDir:
+          type: string
+        destinoCol:
+          type: string
+        destinoCiudad:
+          type: string
+        destinoCp:
+          type: string
+        pesoKg:
+          type: number
+        bultos:
+          type: integer
+        largoCm:
+          type: number
+        anchoCm:
+          type: number
+        altoCm:
+          type: number
+        costoTotal:
+          type: number
+        formaPago:
+          type: string
+          enum: [EFECTIVO, TARJETA, TRANSFERENCIA, OXXO]
+        prioridad:
+          type: string
+          enum: [NORMAL, URGENTE, EXPRESS]
+        notas:
+          type: string
+
+    ChoferCreate:
+      type: object
+      required: [nombre, telefono]
+      properties:
+        nombre:
+          type: string
+        telefono:
+          type: string
+        email:
+          type: string
+        licencia:
+          type: string
+
+    VehiculoCreate:
+      type: object
+      required: [placa, tipo]
+      properties:
+        placa:
+          type: string
+        tipo:
+          type: string
+        marca:
+          type: string
+        modelo:
+          type: string
+        color:
+          type: string
+        capacidad_kg:
+          type: number
+
+    ClienteCreate:
+      type: object
+      required: [nombre, telefono]
+      properties:
+        nombre:
+          type: string
+        telefono:
+          type: string
+        email:
+          type: string
+        direccion:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [empresa, usuario]
+      properties:
+        empresa:
+          type: object
+          required: [nombre, rfc]
+          properties:
+            nombre:
+              type: string
+            rfc:
+              type: string
+        usuario:
+          type: object
+          required: [email, password]
+          properties:
+            email:
+              type: string
+              format: email
+            password:
+              type: string
+              minLength: 8
+              description: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit
+        plan:
+          type: string
+          enum: [STARTER, PRO, ENTERPRISE]
+          default: STARTER
