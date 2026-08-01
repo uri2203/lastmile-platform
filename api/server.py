@@ -3128,6 +3128,493 @@ def get_ots_mantto():
 
 
 # ========================================
+# MULTI-COUNTRY FISCAL
+# ========================================
+
+@app.route('/api/fiscal/countries', methods=['GET'])
+def get_fiscal_countries():
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+    countries = service.get_available_countries()
+    return jsonify({'success': True, 'data': countries})
+
+
+@app.route('/api/fiscal/catalogs/<country_code>', methods=['GET'])
+def get_fiscal_catalogs(country_code):
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+    result = service.get_tax_catalogs(country_code.upper())
+    return jsonify(result)
+
+
+@app.route('/api/fiscal/config', methods=['GET'])
+@require_auth
+def get_fiscal_config():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    config = query(
+        "SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id]
+    )
+    fiscal_data = query(
+        "SELECT * FROM TENANT_FISCAL_DATA WHERE EMP_ID=?", [emp_id]
+    )
+
+    return jsonify({
+        'success': True,
+        'config': config[0] if config else None,
+        'fiscal_data': fiscal_data[0] if fiscal_data else None
+    })
+
+
+@app.route('/api/fiscal/config', methods=['PUT'])
+@require_auth
+def update_fiscal_config():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    data = request.get_json()
+    country_code = data.get('country_code', 'MX')
+    provider = data.get('provider', 'MEXICO')
+    api_key = data.get('api_key', '')
+    api_secret = data.get('api_secret', '')
+    base_url = data.get('base_url', '')
+    test_mode = data.get('test_mode', 'S')
+    custom_config = json.dumps(data.get('custom_config', {}))
+
+    existing = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+
+    if existing:
+        query(
+            """UPDATE TENANT_FISCAL_CONFIG SET
+            TFC_COUNTRY_CODE=?, TFC_PROVIDER=?, TFC_API_KEY=?, TFC_API_SECRET=?,
+            TFC_BASE_URL=?, TFC_TEST_MODE=?, TFC_CUSTOM_CONFIG=?,
+            TFC_FECHA_ACTUALIZACION=NOW()
+            WHERE EMP_ID=?""",
+            [country_code, provider, api_key, api_secret, base_url, test_mode, custom_config, emp_id]
+        )
+    else:
+        query(
+            """INSERT INTO TENANT_FISCAL_CONFIG
+            (EMP_ID, TFC_COUNTRY_CODE, TFC_PROVIDER, TFC_API_KEY, TFC_API_SECRET, TFC_BASE_URL, TFC_TEST_MODE, TFC_CUSTOM_CONFIG)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            [emp_id, country_code, provider, api_key, api_secret, base_url, test_mode, custom_config]
+        )
+
+    log_audit(emp_id, 'FISCAL_CONFIG_UPDATED', 'TENANT_FISCAL_CONFIG', emp_id, f'country={country_code}, provider={provider}')
+
+    return jsonify({'success': True, 'message': 'Configuracion fiscal actualizada'})
+
+
+@app.route('/api/fiscal/data', methods=['PUT'])
+@require_auth
+def update_fiscal_data():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    data = request.get_json()
+
+    existing = query("SELECT * FROM TENANT_FISCAL_DATA WHERE EMP_ID=?", [emp_id])
+
+    fields = {
+        'TFD_RFC': data.get('rfc', ''),
+        'TFD_RAZON_SOCIAL': data.get('razon_social', ''),
+        'TFD_REGIMEN_FISCAL': data.get('regimen_fiscal', ''),
+        'TFD_CODIGO_POSTAL': data.get('codigo_postal', ''),
+        'TFD_COLONIA': data.get('colonia', ''),
+        'TFD_CALLE': data.get('calle', ''),
+        'TFD_NUMERO_EXTERIOR': data.get('numero_exterior', ''),
+        'TFD_MUNICIPIO': data.get('municipio', ''),
+        'TFD_ESTADO': data.get('estado', ''),
+        'TFD_TELEFONO': data.get('telefono', ''),
+        'TFD_EMAIL': data.get('email_fiscal', ''),
+        'TFD_CNPJ': data.get('cnpj', ''),
+        'TFD_IE': data.get('ie', ''),
+        'TFD_IM': data.get('im', ''),
+        'TFD_NIT': data.get('nit', ''),
+        'TFD_CUIT': data.get('cuit', ''),
+        'TFD_CONDICION_IVA': data.get('condicion_iva', ''),
+        'TFD_RUT': data.get('rut', ''),
+        'TFD_GIRO': data.get('giro', ''),
+        'TFD_COMUNA': data.get('comuna', ''),
+        'TFD_CIUDAD': data.get('ciudad', ''),
+        'TFD_REGION': data.get('region', ''),
+        'TFD_TIPO_PERSONA': data.get('tipo_persona', 'M')
+    }
+
+    if existing:
+        set_clause = ', '.join([f"{k}=?" for k in fields.keys()])
+        values = list(fields.values()) + [emp_id]
+        query(f"UPDATE TENANT_FISCAL_DATA SET {set_clause}, TFD_FECHA_ACTUALIZACION=NOW() WHERE EMP_ID=?", values)
+    else:
+        fields['EMP_ID'] = emp_id
+        cols = ', '.join(['EMP_ID'] + list(fields.keys()))
+        placeholders = ', '.join(['?'] * len(fields))
+        query(f"INSERT INTO TENANT_FISCAL_DATA ({cols}) VALUES ({placeholders})", list(fields.values()))
+
+    log_audit(emp_id, 'FISCAL_DATA_UPDATED', 'TENANT_FISCAL_DATA', emp_id, '')
+
+    return jsonify({'success': True, 'message': 'Datos fiscales actualizados'})
+
+
+@app.route('/api/fiscal/test', methods=['POST'])
+@require_auth
+def test_fiscal_connection():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion fiscal'})
+
+    cfg = config[0]
+    provider_config = {
+        'api_key': cfg.get('TFC_API_KEY', ''),
+        'base_url': cfg.get('TFC_BASE_URL', ''),
+        'api_secret': cfg.get('TFC_API_SECRET', '')
+    }
+
+    success = service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], provider_config)
+    if success:
+        provider = service.get_tenant_provider(emp_id)
+        result = provider.test_connection()
+        return jsonify(result)
+    else:
+        return jsonify({'success': False, 'error': 'No se pudo configurar el proveedor'})
+
+
+@app.route('/api/fiscal/emit', methods=['POST'])
+@require_auth
+def emit_fiscal_document():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion fiscal'})
+
+    cfg = config[0]
+    provider_config = {
+        'api_key': cfg.get('TFC_API_KEY', ''),
+        'base_url': cfg.get('TFC_BASE_URL', ''),
+        'api_secret': cfg.get('TFC_API_SECRET', '')
+    }
+
+    service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], provider_config)
+
+    invoice_data = request.get_json()
+    result = service.emit_invoice(emp_id, invoice_data)
+
+    if result.get('success'):
+        log_audit(emp_id, 'FISCAL_INVOICE_EMitted', 'FISCAL_DOCUMENTS', emp_id, f"doc_id={result.get('document_id')}")
+
+    return jsonify(result)
+
+
+@app.route('/api/fiscal/cancel', methods=['POST'])
+@require_auth
+def cancel_fiscal_document():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion fiscal'})
+
+    cfg = config[0]
+    provider_config = {
+        'api_key': cfg.get('TFC_API_KEY', ''),
+        'base_url': cfg.get('TFC_BASE_URL', ''),
+        'api_secret': cfg.get('TFC_API_SECRET', '')
+    }
+
+    service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], provider_config)
+
+    data = request.get_json()
+    document_id = data.get('document_id', '')
+    reason = data.get('reason', '')
+
+    result = service.cancel_invoice(emp_id, document_id, reason)
+
+    if result.get('success'):
+        log_audit(emp_id, 'FISCAL_INVOICE_CANCELLED', 'FISCAL_DOCUMENTS', emp_id, f"doc_id={document_id}")
+
+    return jsonify(result)
+
+
+@app.route('/api/fiscal/status/<document_id>', methods=['GET'])
+@require_auth
+def get_fiscal_document_status(document_id):
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion fiscal'})
+
+    cfg = config[0]
+    provider_config = {
+        'api_key': cfg.get('TFC_API_KEY', ''),
+        'base_url': cfg.get('TFC_BASE_URL', ''),
+        'api_secret': cfg.get('TFC_API_SECRET', '')
+    }
+
+    service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], provider_config)
+    result = service.get_document_status(emp_id, document_id)
+    return jsonify(result)
+
+
+# ========================================
+# MULTI-COUNTRY PAYMENTS
+# ========================================
+
+@app.route('/api/payments/providers/<country_code>', methods=['GET'])
+def get_payment_providers(country_code):
+    from payment_providers import PaymentProviderRegistry
+    providers = PaymentProviderRegistry.get_available_providers(country_code.upper())
+    return jsonify({'success': True, 'data': providers})
+
+
+@app.route('/api/payments/methods/<country_code>', methods=['GET'])
+def get_payment_methods(country_code):
+    from payment_providers import PaymentProviderRegistry
+    result = PaymentProviderRegistry.get_payment_methods(country_code.upper())
+    return jsonify(result)
+
+
+@app.route('/api/payments/config', methods=['GET'])
+@require_auth
+def get_payment_config():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    config = query(
+        "SELECT * FROM PAGOS_METODOS WHERE EMP_ID=?", [emp_id]
+    )
+
+    return jsonify({'success': True, 'data': config})
+
+
+@app.route('/api/payments/config', methods=['PUT'])
+@require_auth
+def update_payment_config():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    data = request.get_json()
+    provider = data.get('provider', 'stripe')
+    api_key = data.get('api_key', '')
+    api_secret = data.get('api_secret', '')
+    country_code = data.get('country_code', 'MX')
+
+    existing = query("SELECT * FROM PAGOS_METODOS WHERE EMP_ID=? AND PMT_TIPO=?", [emp_id, provider.upper()])
+
+    config_json = json.dumps({
+        'provider': provider,
+        'country_code': country_code,
+        'api_key': api_key,
+        'api_secret': api_secret
+    })
+
+    if existing:
+        query(
+            "UPDATE PAGOS_METODOS SET PMT_CONFIG=?, PMT_ACTIVO='S' WHERE EMP_ID=? AND PMT_TIPO=?",
+            [config_json, emp_id, provider.upper()]
+        )
+    else:
+        query(
+            "INSERT INTO PAGOS_METODOS (EMP_ID, PMT_TIPO, PMT_NOMBRE, PMT_CONFIG, PMT_ACTIVO) VALUES (?, ?, ?, ?, 'S')",
+            [emp_id, provider.upper(), provider.title(), config_json]
+        )
+
+    from payment_providers import get_payment_service
+    service = get_payment_service()
+    service.configure_tenant(emp_id, provider, {'api_key': api_key, 'api_secret': api_secret})
+
+    log_audit(emp_id, 'PAYMENT_CONFIG_UPDATED', 'PAGOS_METODOS', emp_id, f'provider={provider}')
+
+    return jsonify({'success': True, 'message': 'Configuracion de pagos actualizada'})
+
+
+@app.route('/api/payments/test', methods=['POST'])
+@require_auth
+def test_payment_connection():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from payment_providers import get_payment_service
+    service = get_payment_service()
+
+    config = query("SELECT * FROM PAGOS_METODOS WHERE EMP_ID=? AND PMT_ACTIVO='S'", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion de pagos'})
+
+    for cfg in config:
+        payment_config = json.loads(cfg.get('PMT_CONFIG', '{}'))
+        service.configure_tenant(emp_id, cfg['PMT_TIPO'].lower(), payment_config)
+
+    provider = service.get_tenant_provider(emp_id)
+    if provider:
+        result = provider.test_connection()
+        return jsonify(result)
+    else:
+        return jsonify({'success': False, 'error': 'No se pudo configurar el proveedor'})
+
+
+@app.route('/api/payments/charge', methods=['POST'])
+@require_auth
+def create_payment_charge():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from payment_providers import get_payment_service
+    service = get_payment_service()
+
+    config = query("SELECT * FROM PAGOS_METODOS WHERE EMP_ID=? AND PMT_ACTIVO='S'", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion de pagos'})
+
+    for cfg in config:
+        payment_config = json.loads(cfg.get('PMT_CONFIG', '{}'))
+        service.configure_tenant(emp_id, cfg['PMT_TIPO'].lower(), payment_config)
+
+    data = request.get_json()
+    amount = data.get('amount', 0)
+    currency = data.get('currency', 'MXN')
+    payment_method = data.get('payment_method', 'card')
+    metadata = data.get('metadata', {})
+
+    result = service.create_charge(emp_id, amount, currency, payment_method, metadata)
+
+    if result.get('success'):
+        log_audit(emp_id, 'PAYMENT_CHARGED', 'PAGOS_TRANSACCIONES', emp_id, f"charge_id={result.get('charge_id')}")
+
+    return jsonify(result)
+
+
+@app.route('/api/payments/refund', methods=['POST'])
+@require_auth
+def refund_payment():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from payment_providers import get_payment_service
+    service = get_payment_service()
+
+    config = query("SELECT * FROM PAGOS_METODOS WHERE EMP_ID=? AND PMT_ACTIVO='S'", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion de pagos'})
+
+    for cfg in config:
+        payment_config = json.loads(cfg.get('PMT_CONFIG', '{}'))
+        service.configure_tenant(emp_id, cfg['PMT_TIPO'].lower(), payment_config)
+
+    data = request.get_json()
+    charge_id = data.get('charge_id', '')
+    amount = data.get('amount')
+
+    result = service.refund(emp_id, charge_id, amount)
+
+    if result.get('success'):
+        log_audit(emp_id, 'PAYMENT_REFUNDED', 'PAGOS_TRANSACCIONES', emp_id, f"charge_id={charge_id}")
+
+    return jsonify(result)
+
+
+@app.route('/api/payments/status/<payment_id>', methods=['GET'])
+@require_auth
+def get_payment_status(payment_id):
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from payment_providers import get_payment_service
+    service = get_payment_service()
+
+    config = query("SELECT * FROM PAGOS_METODOS WHERE EMP_ID=? AND PMT_ACTIVO='S'", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion de pagos'})
+
+    for cfg in config:
+        payment_config = json.loads(cfg.get('PMT_CONFIG', '{}'))
+        service.configure_tenant(emp_id, cfg['PMT_TIPO'].lower(), payment_config)
+
+    result = service.get_payment_status(emp_id, payment_id)
+    return jsonify(result)
+
+
+@app.route('/api/payments/pix', methods=['POST'])
+@require_auth
+def create_pix_payment():
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'Empresa no encontrada'}), 400
+
+    from payment_providers import get_payment_service
+    service = get_payment_service()
+
+    config = query("SELECT * FROM PAGOS_METODOS WHERE EMP_ID=? AND PMT_ACTIVO='S'", [emp_id])
+    if not config:
+        return jsonify({'success': False, 'error': 'No hay configuracion de pagos'})
+
+    for cfg in config:
+        payment_config = json.loads(cfg.get('PMT_CONFIG', '{}'))
+        service.configure_tenant(emp_id, cfg['PMT_TIPO'].lower(), payment_config)
+
+    data = request.get_json()
+    amount = data.get('amount', 0)
+    currency = data.get('currency', 'BRL')
+    metadata = data.get('metadata', {})
+
+    provider = service.get_tenant_provider(emp_id)
+    if hasattr(provider, 'create_pix_payment'):
+        result = provider.create_pix_payment(amount, currency, metadata)
+    else:
+        result = service.create_charge(emp_id, amount, currency, 'pix', metadata)
+
+    if result.get('success'):
+        log_audit(emp_id, 'PAYMENT_PIX_CREATED', 'PAGOS_TRANSACCIONES', emp_id, f"charge_id={result.get('charge_id')}")
+
+    return jsonify(result)
+
+
+@app.route('/api/payments/countries', methods=['GET'])
+def get_payment_countries():
+    from payment_providers import PaymentProviderRegistry
+    countries = []
+    for country_code, providers in PaymentProviderRegistry.COUNTRY_PROVIDERS.items():
+        countries.append({
+            'code': country_code,
+            'providers': providers
+        })
+    return jsonify({'success': True, 'data': countries})
+
+
+# ========================================
 # INICIAR SERVIDOR
 # ========================================
 if __name__ == '__main__':
