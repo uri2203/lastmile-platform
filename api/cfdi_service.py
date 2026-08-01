@@ -35,8 +35,7 @@ class CFDIService:
         from db import query
         try:
             empresa = query(
-                "SELECT EMP_RFC, EMP_RAZON_SOCIAL, EMP_REGIMEN_FISCAL, EMP_CP, "
-                "EMP_EMAIL, EMP_DIRECCION, EMP_CIUDAD, EMP_ESTADO, EMP_PAIS "
+                "SELECT EMP_RFC, EMP_NOMBRE, EMP_EMAIL, EMP_DIRECCION "
                 "FROM EMPRESAS WHERE EMP_ID=?", [emp_id]
             )
             if empresa:
@@ -190,13 +189,13 @@ class CFDIService:
         from db import query
         try:
             cfdi = query(
-                "SELECT CFDI_UUID, CFDI_FOLIO_SERIE FROM CFDI_FACTURAS WHERE CFDI_ID=? AND EMP_ID=?",
+                "SELECT FAC_UUID, FAC_SERIE, FAC_FOLIO FROM CFDI_FACTURAS WHERE FAC_ID=? AND EMP_ID=?",
                 [cfdi_id, emp_id]
             )
             if not cfdi:
                 return {'success': False, 'error': 'CFDI no encontrado'}
 
-            uuid = cfdi[0].get('CFDI_UUID')
+            uuid = cfdi[0].get('FAC_UUID')
             if not uuid:
                 return {'success': False, 'error': 'UUID no disponible'}
 
@@ -209,11 +208,10 @@ class CFDIService:
             )
 
             if resp.status_code in (200, 204):
-                # Update DB
                 from db import execute
                 execute(
-                    "UPDATE CFDI_FACTURAS SET CFDI_ESTADO='CANCELADA', CFDI_FECHA_CANCELACION=NOW() WHERE CFDI_ID=? AND EMP_ID=?",
-                    [cfdi_id, emp_id]
+                    "UPDATE CFDI_FACTURAS SET FAC_ESTATUS='CANCELADA', FAC_MOTIVO_CANCELACION=? WHERE FAC_ID=? AND EMP_ID=?",
+                    [motivo, cfdi_id, emp_id]
                 )
                 return {'success': True, 'tipo': 'CANCELADA'}
             else:
@@ -261,8 +259,8 @@ class CFDIService:
             mock_folio = f'FAC-{emp_id}-{pedido_id}'
 
             execute(
-                "INSERT INTO CFDI_FACTURAS (EMP_ID, PED_ID, CFDI_UUID, CFDI_FOLIO, CFDI_FOLIO_SERIE, "
-                "CFDI_CLIENTE, CFDI_RFC, CFDI_IMPORTE, CFDI_ESTADO, CFDI_FECHA_EMISION) "
+                "INSERT INTO CFDI_FACTURAS (EMP_ID, FAC_PED_ID, FAC_UUID, FAC_FOLIO, FAC_SERIE, "
+                "FAC_RECEPTOR_RAZON, FAC_RECEPTOR_RFC, FAC_TOTAL, FAC_ESTATUS, FAC_FECHA_EMISION) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'TIMBRADA', NOW())",
                 [emp_id, pedido_id, mock_uuid, mock_folio, 'A',
                  p.get('PED_CLIENTE_NOMBRE', 'Publico General'),
@@ -286,8 +284,8 @@ class CFDIService:
         from db import execute
         try:
             execute(
-                "INSERT INTO CFDI_FACTURAS (EMP_ID, PED_ID, CFDI_UUID, CFDI_FOLIO, CFDI_FOLIO_SERIE, "
-                "CFDI_CLIENTE, CFDI_RFC, CFDI_IMPORTE, CFDI_ESTADO, CFDI_FECHA_EMISION, CFDI_XML) "
+                "INSERT INTO CFDI_FACTURAS (EMP_ID, FAC_PED_ID, FAC_UUID, FAC_FOLIO, FAC_SERIE, "
+                "FAC_RECEPTOR_RAZON, FAC_RECEPTOR_RFC, FAC_TOTAL, FAC_ESTATUS, FAC_FECHA_EMISION, FAC_XML_TIMBRADO) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'TIMBRADA', NOW(), ?)",
                 [emp_id, pedido_id,
                  data.get('uuid'),

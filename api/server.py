@@ -1955,7 +1955,23 @@ def create_oxxo():
 
 @app.route('/api/pagos/mercado-pago/webhook', methods=['POST'])
 def mp_webhook():
-    return jsonify({'success': True, 'message': 'Webhook procesado'})
+    data = request.get_json() or {}
+    action = data.get('action', '')
+    payment_id = data.get('data', {}).get('id')
+
+    if action == 'payment.created' and payment_id:
+        payment = mp_service.get_payment(payment_id)
+        if payment.get('status') == 'approved':
+            ext_ref = payment.get('external_reference', '')
+            if ext_ref.startswith('emp_'):
+                parts = ext_ref.split('_')
+                emp_id = int(parts[1]) if len(parts) > 1 else 0
+                plan_name = parts[2] if len(parts) > 2 else 'STARTER'
+                if emp_id:
+                    create_suscripcion(emp_id, plan_name, 'mercadopago', str(payment_id))
+                    create_pago(emp_id, payment.get('transaction_amount', 0), 'MERCADOPAGO', str(payment_id))
+
+    return jsonify({'received': True})
 
 
 # ========================================
@@ -2956,8 +2972,8 @@ def mercadopago_webhook():
 def billing_stats_all():
     stats = query('''
         SELECT E.EMP_ID, E.EMP_NOMBRE, E.EMP_PLAN,
-            (SELECT COUNT(*) FROM SUSCRIPCIONES S WHERE S.EMP_ID = E.EMP_ID AND S.SUS_ESTADO = 'ACTIVA') as activas,
-            (SELECT COALESCE(SUM(T.TRP_MONTO), 0) FROM PAGOS_TRANSACCIONES T WHERE T.EMP_ID = E.EMP_ID AND T.TRP_ESTATUS = 'COMPLETADO') as ingresos
+            (SELECT COUNT(*) FROM SAAS_SUSCRIPCIONES S WHERE S.EMP_ID = E.EMP_ID AND S.SUS_ESTADO = 'ACTIVA') as activas,
+            (SELECT COALESCE(SUM(C.COB_MONTO), 0) FROM SAAS_COBROS C WHERE C.EMP_ID = E.EMP_ID AND C.COB_ESTATUS = 'COMPLETADO') as ingresos
         FROM EMPRESAS E
         ORDER BY E.EMP_ID
     ''')

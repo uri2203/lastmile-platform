@@ -195,7 +195,7 @@ EXPORT_CONFIGS = {
             'VEH_MARCA': 'Marca',
             'VEH_MODELO': 'Modelo',
             'VEH_ANIO': 'Anio',
-            'VEH_KM': 'KM',
+            'VEH_CAPACIDAD_KG': 'Capacidad KG',
             'VEH_ESTATUS': 'Estatus',
         }
     },
@@ -217,7 +217,7 @@ EXPORT_CONFIGS = {
             'PED_ID': 'Pedido',
             'TRP_MONTO': 'Monto',
             'TRP_METODO': 'Metodo',
-            'TRP_REFERENCIA': 'Referencia',
+            'TRP_NUM_REFERENCIA': 'Referencia',
             'TRP_ESTATUS': 'Estatus',
             'TRP_FECHA_REGISTRO': 'Fecha',
         }
@@ -225,14 +225,14 @@ EXPORT_CONFIGS = {
     'facturas': {
         'title': 'Reporte de Facturas',
         'columns': {
-            'CFDI_ID': 'ID',
-            'CFDI_FOLIO': 'Folio',
-            'CFDI_UUID': 'UUID',
-            'CFDI_CLIENTE': 'Cliente',
-            'CFDI_RFC': 'RFC',
-            'CFDI_IMPORTE': 'Importe',
-            'CFDI_ESTADO': 'Estado',
-            'CFDI_FECHA_EMISION': 'Fecha Emision',
+            'FAC_ID': 'ID',
+            'FAC_FOLIO': 'Folio',
+            'FAC_UUID': 'UUID',
+            'FAC_RECEPTOR_RAZON': 'Cliente',
+            'FAC_RECEPTOR_RFC': 'RFC',
+            'FAC_TOTAL': 'Importe',
+            'FAC_ESTATUS': 'Estado',
+            'FAC_FECHA_EMISION': 'Fecha Emision',
         }
     }
 }
