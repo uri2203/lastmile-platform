@@ -287,41 +287,11 @@ def payment_status_summary():
 
 @webhook_bp.route('/api/analytics/multi-country', methods=['GET'])
 def multi_country_analytics():
-    from db import query
-    result = {'success': True, 'data': {}}
+    import traceback as _tb
     try:
-        result['data']['countries_supported'] = list(COUNTRY_CURRENCIES.keys())
-        result['data']['currencies'] = dict(COUNTRY_CURRENCIES)
+        from db import query as _q
+        rows = _q("SELECT COUNT(*) as cnt FROM EMPRESAS")
+        cnt = rows[0].get('cnt', 0) if rows else 0
+        return jsonify({'success': True, 'data': {'total_tenants': cnt, 'countries_supported': list(COUNTRY_CURRENCIES.keys())}})
     except Exception as e:
-        result['data']['_err1'] = str(e)
-    try:
-        rows = query("SELECT TFC_COUNTRY_CODE, COUNT(*) as cnt FROM TENANT_FISCAL_CONFIG GROUP BY TFC_COUNTRY_CODE")
-        result['data']['fiscal_configured'] = [{'country': r.get('TFC_COUNTRY_CODE',''), 'tenants': r.get('cnt',0)} for r in rows]
-    except Exception as e:
-        result['data']['fiscal_configured'] = []
-        result['data']['_err2'] = str(e)
-    try:
-        rows = query("SELECT FD_COUNTRY_CODE, FD_ESTATUS, COUNT(*) as cnt FROM FISCAL_DOCUMENTS GROUP BY FD_COUNTRY_CODE, FD_ESTATUS")
-        result['data']['fiscal_documents'] = [{'country': r.get('FD_COUNTRY_CODE',''), 'status': r.get('FD_ESTATUS',''), 'count': r.get('cnt',0)} for r in rows]
-    except Exception as e:
-        result['data']['fiscal_documents'] = []
-        result['data']['_err3'] = str(e)
-    try:
-        rows = query("SELECT PMC_COUNTRY_CODE, COUNT(*) as cnt FROM PAYMENT_METHODS_COUNTRY WHERE PMC_ACTIVO='S' GROUP BY PMC_COUNTRY_CODE")
-        result['data']['payment_methods'] = [{'country': r.get('PMC_COUNTRY_CODE',''), 'methods': r.get('cnt',0)} for r in rows]
-    except Exception as e:
-        result['data']['payment_methods'] = []
-        result['data']['_err4'] = str(e)
-    try:
-        rows = query("SELECT COUNT(*) as cnt FROM EMPRESAS")
-        result['data']['total_tenants'] = rows[0].get('cnt', 0) if rows else 0
-    except Exception as e:
-        result['data']['total_tenants'] = 0
-        result['data']['_err5'] = str(e)
-    try:
-        rows = query("SELECT PED_ESTADO, COUNT(*) as cnt, COALESCE(SUM(PED_COSTO_TOTAL), 0) as revenue FROM PEDIDOS GROUP BY PED_ESTADO ORDER BY cnt DESC LIMIT 10")
-        result['data']['orders_by_status'] = [{'status': r.get('PED_ESTADO',''), 'orders': r.get('cnt',0), 'revenue': float(r.get('revenue',0))} for r in rows]
-    except Exception as e:
-        result['data']['orders_by_status'] = []
-        result['data']['_err6'] = str(e)
-    return jsonify(result)
+        return jsonify({'success': False, 'error': str(e), 'trace': _tb.format_exc()}), 500
