@@ -3634,133 +3634,154 @@ def run_migration():
     if usuario != 'admin' and rol != 'admin':
         return jsonify({'error': 'Unauthorized - admin only'}), 401
 
-    statements = [
-        """CREATE TABLE IF NOT EXISTS TENANT_FISCAL_CONFIG (
-            TFC_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL UNIQUE REFERENCES EMPRESAS(EMP_ID),
-            TFC_COUNTRY_CODE TEXT NOT NULL DEFAULT 'MX',
-            TFC_PROVIDER TEXT NOT NULL DEFAULT 'MEXICO',
-            TFC_API_KEY TEXT,
-            TFC_API_SECRET TEXT,
-            TFC_BASE_URL TEXT,
-            TFC_ENABLED TEXT DEFAULT 'N',
-            TFC_TEST_MODE TEXT DEFAULT 'S',
-            TFC_CUSTOM_CONFIG TEXT DEFAULT '{}',
-            TFC_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
-            TFC_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW()
-        )""",
-        """CREATE TABLE IF NOT EXISTS TENANT_FISCAL_DATA (
-            TFD_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL UNIQUE REFERENCES EMPRESAS(EMP_ID),
-            TFD_RFC TEXT, TFD_RAZON_SOCIAL TEXT, TFD_REGIMEN_FISCAL TEXT,
-            TFD_CODIGO_POSTAL TEXT, TFD_COLONIA TEXT, TFD_CALLE TEXT,
-            TFD_NUMERO_EXTERIOR TEXT, TFD_MUNICIPIO TEXT, TFD_ESTADO TEXT,
-            TFD_TELEFONO TEXT, TFD_EMAIL TEXT, TFD_CNPJ TEXT, TFD_IE TEXT,
-            TFD_IM TEXT, TFD_CNAE TEXT, TFD_CODIGO_MUNICIPIO TEXT,
-            TFD_NIT TEXT, TFD_CODIGO_DOC_IDENTIFICACION TEXT,
-            TFD_NUMERO_DOC_IDENTIFICACION TEXT, TFD_CUIT TEXT,
-            TFD_CONDICION_IVA TEXT, TFD_CONDICION_INGRESOS_BRUTOS TEXT,
-            TFD_RUT TEXT, TFD_GIRO TEXT, TFD_COMUNA TEXT,
-            TFD_CIUDAD TEXT, TFD_REGION TEXT,
-            TFD_TIPO_PERSONA TEXT DEFAULT 'M', TFD_ESTATUS TEXT DEFAULT 'ACTIVO',
-            TFD_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
-            TFD_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW()
-        )""",
-        """CREATE TABLE IF NOT EXISTS FISCAL_DOCUMENTS (
-            FD_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID),
-            FD_DOCUMENT_ID TEXT, FD_DOCUMENT_TYPE TEXT DEFAULT 'FACTURA',
-            FD_COUNTRY_CODE TEXT NOT NULL, FD_UUID TEXT, FD_SERIE TEXT,
-            FD_FOLIO TEXT, FD_NUMERO TEXT, FD_FECHA_EMISION TIMESTAMP DEFAULT NOW(),
-            FD_FECHA_TIMBRADO TEXT, FD_MONEDA TEXT DEFAULT 'MXN',
-            FD_SUBTOTAL REAL DEFAULT 0, FD_DESCUENTO REAL DEFAULT 0,
-            FD_IMPUESTOS REAL DEFAULT 0, FD_TOTAL REAL DEFAULT 0,
-            FD_RECEPTOR_TIPO_DOC TEXT, FD_RECEPTOR_NUM_DOC TEXT,
-            FD_RECEPTOR_NOMBRE TEXT, FD_RECEPTOR_DIRECCION TEXT,
-            FD_RECEPTOR_EMAIL TEXT, FD_PED_ID INTEGER, FD_XML_URL TEXT,
-            FD_PDF_URL TEXT, FD_ESTATUS TEXT DEFAULT 'PENDIENTE',
-            FD_MOTIVO_CANCELACION TEXT, FD_UUID_SUSTITUCION TEXT,
-            FD_NOTAS TEXT, FD_FECHA_REGISTRO TIMESTAMP DEFAULT NOW()
-        )""",
-        """CREATE TABLE IF NOT EXISTS PAYMENT_METHODS_COUNTRY (
-            PMC_ID SERIAL PRIMARY KEY,
-            PMC_COUNTRY_CODE TEXT NOT NULL,
-            PMC_METHOD_CODE TEXT NOT NULL,
-            PMC_METHOD_NAME TEXT NOT NULL,
-            PMC_PROVIDER TEXT, PMC_CONFIG TEXT DEFAULT '{}',
-            PMC_ACTIVO TEXT DEFAULT 'S',
-            PMC_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
-            UNIQUE(PMC_COUNTRY_CODE, PMC_METHOD_CODE)
-        )""",
-        "CREATE INDEX IF NOT EXISTS IX_TFC_EMP ON TENANT_FISCAL_CONFIG(EMP_ID)",
-        "CREATE INDEX IF NOT EXISTS IX_TFC_COUNTRY ON TENANT_FISCAL_CONFIG(TFC_COUNTRY_CODE)",
-        "CREATE INDEX IF NOT EXISTS IX_TFD_EMP ON TENANT_FISCAL_DATA(EMP_ID)",
-        "CREATE INDEX IF NOT EXISTS IX_FD_EMP ON FISCAL_DOCUMENTS(EMP_ID)",
-        "CREATE INDEX IF NOT EXISTS IX_FD_COUNTRY ON FISCAL_DOCUMENTS(FD_COUNTRY_CODE)",
-        "CREATE INDEX IF NOT EXISTS IX_FD_ESTATUS ON FISCAL_DOCUMENTS(FD_ESTATUS)",
-        "CREATE INDEX IF NOT EXISTS IX_FD_FECHA ON FISCAL_DOCUMENTS(FD_FECHA_EMISION)"
-    ]
+    migration_sql = """
+    -- Tenant fiscal config
+    CREATE TABLE IF NOT EXISTS TENANT_FISCAL_CONFIG (
+        TFC_ID SERIAL PRIMARY KEY,
+        EMP_ID INTEGER NOT NULL UNIQUE REFERENCES EMPRESAS(EMP_ID),
+        TFC_COUNTRY_CODE TEXT NOT NULL DEFAULT 'MX',
+        TFC_PROVIDER TEXT NOT NULL DEFAULT 'MEXICO',
+        TFC_API_KEY TEXT,
+        TFC_API_SECRET TEXT,
+        TFC_BASE_URL TEXT,
+        TFC_ENABLED TEXT DEFAULT 'N',
+        TFC_TEST_MODE TEXT DEFAULT 'S',
+        TFC_CUSTOM_CONFIG TEXT DEFAULT '{}',
+        TFC_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
+        TFC_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS TENANT_FISCAL_DATA (
+        TFD_ID SERIAL PRIMARY KEY,
+        EMP_ID INTEGER NOT NULL UNIQUE REFERENCES EMPRESAS(EMP_ID),
+        TFD_RFC TEXT,
+        TFD_RAZON_SOCIAL TEXT,
+        TFD_REGIMEN_FISCAL TEXT,
+        TFD_CODIGO_POSTAL TEXT,
+        TFD_COLONIA TEXT,
+        TFD_CALLE TEXT,
+        TFD_NUMERO_EXTERIOR TEXT,
+        TFD_MUNICIPIO TEXT,
+        TFD_ESTADO TEXT,
+        TFD_TELEFONO TEXT,
+        TFD_EMAIL TEXT,
+        TFD_CNPJ TEXT,
+        TFD_IE TEXT,
+        TFD_IM TEXT,
+        TFD_CNAE TEXT,
+        TFD_CODIGO_MUNICIPIO TEXT,
+        TFD_NIT TEXT,
+        TFD_CODIGO_DOC_IDENTIFICACION TEXT,
+        TFD_NUMERO_DOC_IDENTIFICACION TEXT,
+        TFD_CUIT TEXT,
+        TFD_CONDICION_IVA TEXT,
+        TFD_CONDICION_INGRESOS_BRUTOS TEXT,
+        TFD_RUT TEXT,
+        TFD_GIRO TEXT,
+        TFD_COMUNA TEXT,
+        TFD_CIUDAD TEXT,
+        TFD_REGION TEXT,
+        TFD_TIPO_PERSONA TEXT DEFAULT 'M',
+        TFD_ESTATUS TEXT DEFAULT 'ACTIVO',
+        TFD_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
+        TFD_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS FISCAL_DOCUMENTS (
+        FD_ID SERIAL PRIMARY KEY,
+        EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID),
+        FD_DOCUMENT_ID TEXT,
+        FD_DOCUMENT_TYPE TEXT DEFAULT 'FACTURA',
+        FD_COUNTRY_CODE TEXT NOT NULL,
+        FD_UUID TEXT,
+        FD_SERIE TEXT,
+        FD_FOLIO TEXT,
+        FD_NUMERO TEXT,
+        FD_FECHA_EMISION TIMESTAMP DEFAULT NOW(),
+        FD_FECHA_TIMBRADO TEXT,
+        FD_MONEDA TEXT DEFAULT 'MXN',
+        FD_SUBTOTAL REAL DEFAULT 0,
+        FD_DESCUENTO REAL DEFAULT 0,
+        FD_IMPUESTOS REAL DEFAULT 0,
+        FD_TOTAL REAL DEFAULT 0,
+        FD_RECEPTOR_TIPO_DOC TEXT,
+        FD_RECEPTOR_NUM_DOC TEXT,
+        FD_RECEPTOR_NOMBRE TEXT,
+        FD_RECEPTOR_DIRECCION TEXT,
+        FD_RECEPTOR_EMAIL TEXT,
+        FD_PED_ID INTEGER,
+        FD_XML_URL TEXT,
+        FD_PDF_URL TEXT,
+        FD_ESTATUS TEXT DEFAULT 'PENDIENTE',
+        FD_MOTIVO_CANCELACION TEXT,
+        FD_UUID_SUSTITUCION TEXT,
+        FD_NOTAS TEXT,
+        FD_FECHA_REGISTRO TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS PAYMENT_METHODS_COUNTRY (
+        PMC_ID SERIAL PRIMARY KEY,
+        PMC_COUNTRY_CODE TEXT NOT NULL,
+        PMC_METHOD_CODE TEXT NOT NULL,
+        PMC_METHOD_NAME TEXT NOT NULL,
+        PMC_PROVIDER TEXT,
+        PMC_CONFIG TEXT DEFAULT '{}',
+        PMC_ACTIVO TEXT DEFAULT 'S',
+        PMC_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
+        UNIQUE(PMC_COUNTRY_CODE, PMC_METHOD_CODE)
+    );
+
+    CREATE INDEX IF NOT EXISTS IX_TFC_EMP ON TENANT_FISCAL_CONFIG(EMP_ID);
+    CREATE INDEX IF NOT EXISTS IX_TFC_COUNTRY ON TENANT_FISCAL_CONFIG(TFC_COUNTRY_CODE);
+    CREATE INDEX IF NOT EXISTS IX_TFD_EMP ON TENANT_FISCAL_DATA(EMP_ID);
+    CREATE INDEX IF NOT EXISTS IX_FD_EMP ON FISCAL_DOCUMENTS(EMP_ID);
+    CREATE INDEX IF NOT EXISTS IX_FD_COUNTRY ON FISCAL_DOCUMENTS(FD_COUNTRY_CODE);
+    CREATE INDEX IF NOT EXISTS IX_FD_ESTATUS ON FISCAL_DOCUMENTS(FD_ESTATUS);
+    CREATE INDEX IF NOT EXISTS IX_FD_FECHA ON FISCAL_DOCUMENTS(FD_FECHA_EMISION);
+
+    INSERT INTO PAYMENT_METHODS_COUNTRY (PMC_COUNTRY_CODE, PMC_METHOD_CODE, PMC_METHOD_NAME, PMC_PROVIDER) VALUES
+    ('MX', 'EFECTIVO', 'Efectivo', NULL),
+    ('MX', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('MX', 'TARJETA_DEBITO', 'Tarjeta de Debito', 'stripe'),
+    ('MX', 'TRANSFERENCIA', 'Transferencia Bancaria', NULL),
+    ('MX', 'MERCADOPAGO', 'MercadoPago', 'mercadopago'),
+    ('MX', 'OXXO', 'OXXO', 'stripe'),
+    ('BR', 'PIX', 'PIX', 'mercadopago'),
+    ('BR', 'BOLETO', 'Boleto Bancario', 'mercadopago'),
+    ('BR', 'CARTAO_CREDITO', 'Cartao de Credito', 'stripe'),
+    ('BR', 'CARTAO_DEBITO', 'Cartao de Debito', 'stripe'),
+    ('CO', 'PSE', 'PSE', 'mercadopago'),
+    ('CO', 'NEQUI', 'Nequi', NULL),
+    ('CO', 'DAVIPLATA', 'Daviplata', NULL),
+    ('CO', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('AR', 'MERCADOPAGO', 'MercadoPago', 'mercadopago'),
+    ('AR', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('AR', 'EFECTIVO', 'Efectivo (Rapipago)', NULL),
+    ('CL', 'WEBPAY', 'Webpay', 'stripe'),
+    ('CL', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('PE', 'YAPE', 'Yape', NULL),
+    ('PE', 'PLIN', 'Plin', NULL),
+    ('PE', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('UY', 'MERCADOPAGO', 'MercadoPago', 'mercadopago'),
+    ('UY', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('EC', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
+    ('EC', 'PICHINCHA', 'Pichincha', NULL)
+    ON CONFLICT (PMC_COUNTRY_CODE, PMC_METHOD_CODE) DO NOTHING;
+    """
 
     results = []
+    statements = [s.strip() for s in migration_sql.split(';') if s.strip()]
+
     for stmt in statements:
         try:
             query(stmt)
-            results.append({'status': 'OK', 'preview': stmt[:60].replace('\n', ' ')})
+            results.append({'statement': stmt[:50] + '...', 'status': 'OK'})
         except Exception as e:
-            results.append({'status': 'ERROR', 'error': str(e)[:200], 'preview': stmt[:60].replace('\n', ' ')})
+            results.append({'statement': stmt[:50] + '...', 'status': 'ERROR', 'error': str(e)[:200]})
 
-    payment_methods = [
-        ('MX', 'EFECTIVO', 'Efectivo', None),
-        ('MX', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('MX', 'TARJETA_DEBITO', 'Tarjeta de Debito', 'stripe'),
-        ('MX', 'TRANSFERENCIA', 'Transferencia Bancaria', None),
-        ('MX', 'MERCADOPAGO', 'MercadoPago', 'mercadopago'),
-        ('MX', 'OXXO', 'OXXO', 'stripe'),
-        ('BR', 'PIX', 'PIX', 'mercadopago'),
-        ('BR', 'BOLETO', 'Boleto Bancario', 'mercadopago'),
-        ('BR', 'CARTAO_CREDITO', 'Cartao de Credito', 'stripe'),
-        ('BR', 'CARTAO_DEBITO', 'Cartao de Debito', 'stripe'),
-        ('CO', 'PSE', 'PSE', 'mercadopago'),
-        ('CO', 'NEQUI', 'Nequi', None),
-        ('CO', 'DAVIPLATA', 'Daviplata', None),
-        ('CO', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('AR', 'MERCADOPAGO', 'MercadoPago', 'mercadopago'),
-        ('AR', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('AR', 'EFECTIVO', 'Efectivo (Rapipago)', None),
-        ('CL', 'WEBPAY', 'Webpay', 'stripe'),
-        ('CL', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('PE', 'YAPE', 'Yape', None),
-        ('PE', 'PLIN', 'Plin', None),
-        ('PE', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('UY', 'MERCADOPAGO', 'MercadoPago', 'mercadopago'),
-        ('UY', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('EC', 'TARJETA_CREDITO', 'Tarjeta de Credito', 'stripe'),
-        ('EC', 'PICHINCHA', 'Pichincha', None)
-    ]
+    log_audit(1, 'MIGRATION_RUN', 'SYSTEM', 0, 'multi-country fiscal tables')
 
-    pm_ok = 0
-    pm_err = 0
-    for pm in payment_methods:
-        try:
-            query(
-                "INSERT INTO PAYMENT_METHODS_COUNTRY (PMC_COUNTRY_CODE, PMC_METHOD_CODE, PMC_METHOD_NAME, PMC_PROVIDER) VALUES (?, ?, ?, ?) ON CONFLICT (PMC_COUNTRY_CODE, PMC_METHOD_CODE) DO NOTHING",
-                list(pm)
-            )
-            pm_ok += 1
-        except Exception as e:
-            pm_err += 1
-
-    log_audit(1, 'MIGRATION_RUN', 'SYSTEM', 0, f'multi-country fiscal: {len(statements)} DDL, {pm_ok} payment methods')
-
-    return jsonify({
-        'success': True,
-        'ddl_statements': len(results),
-        'ddl_ok': sum(1 for r in results if r['status'] == 'OK'),
-        'ddl_errors': sum(1 for r in results if r['status'] == 'ERROR'),
-        'payment_methods_ok': pm_ok,
-        'payment_methods_errors': pm_err,
-        'details': results
-    })
+    return jsonify({'success': True, 'results': results})
 
 
 # ========================================
