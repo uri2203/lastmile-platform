@@ -3197,15 +3197,13 @@ def cancel_fiscal_document():
 
 @app.route('/api/system/migrate', methods=['POST'])
 def run_migration():
-    import jwt as _jwt
+    from auth import decode_token
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
         return jsonify({'error': 'Unauthorized'}), 401
     token = auth_header.split(' ')[1]
-    try:
-        from auth import _secret
-        payload = _jwt.decode(token, _secret(), algorithms=['HS256'])
-    except Exception:
+    payload = decode_token(token)
+    if not payload:
         return jsonify({'error': 'Invalid token'}), 401
     if payload.get('usuario') != 'admin' and payload.get('rol') != 'admin':
         return jsonify({'error': 'Admin only'}), 401
