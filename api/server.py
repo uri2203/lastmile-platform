@@ -16,7 +16,6 @@ from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGR
 from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 import os
-import json
 import time
 import logging
 from logging.handlers import RotatingFileHandler
@@ -3279,81 +3278,6 @@ def get_unidades_mantto():
 @app.route('/api/mantenimiento/ots', methods=['GET'])
 def get_ots_mantto():
     return jsonify({'success': True, 'data': []})
-
-
-# ========================================
-# WEBHOOKS - PAGOS MULTI-PAIS
-# ========================================
-
-wh_logger = logging.getLogger('lastmile.webhooks')
-
-
-@app.route('/api/webhooks/stripe', methods=['POST'])
-def stripe_webhook():
-    payload = request.get_data(as_text=True)
-    sig = request.headers.get('Stripe-Signature', '')
-    secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-    if secret and sig:
-        try:
-            import stripe as _s
-            _s.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
-            ev = _s.Webhook.construct_event(payload, sig, secret)
-            wh_logger.info(f'Stripe: {ev["type"]}')
-            if ev['type'] == 'checkout.session.completed':
-                oid = ev['data']['object'].get('metadata', {}).get('order_id', '')
-                if oid:
-                    try:
-                        execute("UPDATE ORDENES SET ORD_ESTATUS='PAGADA' WHERE ORD_ID=?", [int(oid)])
-                    except Exception:
-                        pass
-        except Exception as e:
-            wh_logger.warning(f'Stripe wh err: {e}')
-            return jsonify({'error': str(e)}), 400
-    else:
-        try:
-            ev = json.loads(payload)
-            wh_logger.info(f'Stripe raw: {ev.get("type","?")}')
-        except Exception:
-            return jsonify({'error': 'bad payload'}), 400
-    log_audit('STRIPE_WEBHOOK')
-    return jsonify({'received': True})
-
-
-@app.route('/api/webhooks/mercadopago', methods=['POST'])
-def mercadopago_webhook():
-    data = request.get_json(silent=True) or {}
-    wh_logger.info(f'MP: {data.get("action","")} {data.get("resource","")}')
-    log_audit('MERCADOPAGO_WEBHOOK')
-    return jsonify({'received': True})
-
-
-@app.route('/api/payments/create', methods=['POST'])
-def create_payment():
-    data = request.get_json() or {}
-    return jsonify({'success': True, 'message': 'Payment endpoint ready', 'data': data})
-
-
-@app.route('/api/payments/status/<provider>/<payment_id>', methods=['GET'])
-def get_payment_status(provider, payment_id):
-    return jsonify({'success': True, 'provider': provider, 'payment_id': payment_id, 'status': 'unknown'})
-
-
-@app.route('/api/payments/refund', methods=['POST'])
-def refund_payment():
-    data = request.get_json() or {}
-    return jsonify({'success': True, 'message': 'Refund endpoint ready'})
-
-
-@app.route('/api/payments/methods/<country_code>', methods=['GET'])
-def get_country_payment_methods(country_code):
-    from payment_providers import get_payment_service
-    return jsonify({'success': True, 'data': get_payment_service().get_supported_methods(country_code)})
-
-
-@app.route('/api/payments/status-summary', methods=['GET'])
-def payment_status_summary():
-    from payment_providers import get_payment_service
-    return jsonify({'success': True, 'data': get_payment_service().get_status_summary()})
 
 
 # ========================================
