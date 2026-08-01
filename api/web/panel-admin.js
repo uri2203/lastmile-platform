@@ -1312,4 +1312,142 @@ async function apiFetch(endpoint){
 }
 
 function refreshNotifications(){loadNotifications();}
+
+/* ============================================
+   i18n + FISCAL MULTI-PAIS
+   ============================================ */
+const FISCAL_COUNTRIES=[
+  {code:'MX',name:'Mexico',flag:'🇲🇽',currency:'MXN',provider:'MexicoProvider'},
+  {code:'BR',name:'Brasil',flag:'🇧🇷',currency:'BRL',provider:'BrazilProvider'},
+  {code:'CO',name:'Colombia',flag:'🇨🇴',currency:'COP',provider:'ColombiaProvider'},
+  {code:'AR',name:'Argentina',flag:'🇦🇷',currency:'ARS',provider:'ArgentinaProvider'},
+  {code:'CL',name:'Chile',flag:'🇨🇱',currency:'CLP',provider:'ChileProvider'},
+  {code:'PE',name:'Peru',flag:'🇵🇪',currency:'PEN',provider:'PeruProvider'},
+  {code:'UY',name:'Uruguay',flag:'🇺🇾',currency:'UYU',provider:'UruguayProvider'},
+  {code:'EC',name:'Ecuador',flag:'🇪🇨',currency:'USD',provider:'EcuadorProvider'}
+];
+let selectedFiscalCountry=null;
+
+function switchLang(lang){
+  if(window.i18n){window.i18n.setLanguage(lang);}
+  document.querySelectorAll('#langSelector button').forEach(b=>{
+    b.style.background=b.dataset.lang===lang?'var(--accent)':'transparent';
+    b.style.color=b.dataset.lang===lang?'#fff':'var(--text-secondary)';
+    b.style.fontWeight=b.dataset.lang===lang?'600':'500';
+  });
+}
+
+function renderFiscalCountries(){
+  const grid=document.getElementById('fiscalCountryGrid');
+  if(!grid)return;
+  grid.innerHTML=FISCAL_COUNTRIES.map(c=>`
+    <div class="card" style="cursor:pointer;padding:16px;text-align:center;transition:all 0.2s;" 
+         onclick="selectFiscalCountry('${c.code}')" id="fc-card-${c.code}"
+         onmouseenter="this.style.borderColor='var(--border-secondary)'" onmouseleave="this.style.borderColor='var(--border-primary)'">
+      <div style="font-size:2rem;margin-bottom:6px;">${c.flag}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${c.name}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${c.currency}</div>
+      <div style="font-size:10px;color:var(--accent);margin-top:2px;">${c.provider}</div>
+    </div>
+  `).join('');
+}
+
+function selectFiscalCountry(code){
+  selectedFiscalCountry=FISCAL_COUNTRIES.find(c=>c.code===code);
+  document.getElementById('fiscalConfigPanel').style.display='block';
+  document.getElementById('fiscal-country').value=code;
+  onFiscalCountryChange();
+  document.querySelectorAll('#fiscalCountryGrid .card').forEach(c=>{
+    c.style.borderColor=c.id===`fc-card-${code}`?'var(--accent)':'var(--border-primary)';
+    c.style.background=c.id===`fc-card-${code}`?'var(--accent-bg)':'';
+  });
+  loadFiscalConfig();
+  loadPaymentMethods(code);
+}
+
+function onFiscalCountryChange(){
+  const code=document.getElementById('fiscal-country').value;
+  const c=FISCAL_COUNTRIES.find(x=>x.code===code);
+  if(c)document.getElementById('fiscal-provider-name').textContent=c.provider;
+}
+
+async function loadFiscalConfig(){
+  try{
+    const r=await apiGet('/api/fiscal/config');
+    if(r&&r.config){
+      document.getElementById('fiscal-country').value=r.config.TFC_COUNTRY_CODE||'MX';
+      document.getElementById('fiscal-api-key').value=r.config.TFC_API_KEY||'';
+      document.getElementById('fiscal-api-secret').value=r.config.TFC_API_SECRET||'';
+      document.getElementById('fiscal-base-url').value=r.config.TFC_BASE_URL||'';
+      onFiscalCountryChange();
+    }
+  }catch(e){console.error('Load fiscal config:',e);}
+}
+
+async function loadPaymentMethods(code){
+  try{
+    const r=await apiGet('/api/payment/methods/'+code);
+    const el=document.getElementById('fiscalPaymentMethods');
+    if(r&&r.data&&r.data.length){
+      el.innerHTML=r.data.map(m=>{
+        const cls=m.PMC_PROVIDER||'local';
+        const colors={stripe:'rgba(99,91,255,0.15)',mercadopago:'rgba(0,146,227,0.15)',local:'rgba(255,107,53,0.15)'};
+        const textColors={stripe:'#635bff',mercadopago:'#009ee3',local:'#ff6b35'};
+        return `<span style="padding:4px 12px;border-radius:12px;font-size:11px;font-weight:500;background:${colors[cls]||colors.local};color:${textColors[cls]||textColors.local};">${m.PMC_METHOD_NAME} <span style="opacity:0.6;">(${cls})</span></span>`;
+      }).join('');
+    }else{
+      el.innerHTML='<span style="font-size:12px;color:var(--text-muted);">No hay metodos configurados para este pais</span>';
+    }
+  }catch(e){console.error('Load payment methods:',e);}
+}
+
+async function testFiscalConnection(){
+  const box=document.getElementById('fiscal-status');
+  box.style.display='block';box.style.background='var(--accent-bg)';box.style.color='var(--accent)';box.textContent='Probando conexion...';
+  try{
+    const r=await apiPost('/api/fiscal/test-connection',{country_code:document.getElementById('fiscal-country').value});
+    if(r&&r.success){
+      box.style.background='var(--success-bg)';box.style.color='var(--success)';
+      box.textContent=`Conexion exitosa con ${r.provider}`;
+    }else{
+      box.style.background='var(--danger-bg)';box.style.color='var(--danger)';
+      box.textContent=`Error: ${r?r.error:'Sin respuesta'}`;
+    }
+  }catch(e){
+    box.style.background='var(--danger-bg)';box.style.color='var(--danger)';
+    box.textContent=`Error de red: ${e.message}`;
+  }
+}
+
+async function saveFiscalConfig(){
+  const box=document.getElementById('fiscal-status');
+  try{
+    const r=await apiPut('/api/fiscal/config',{
+      country_code:document.getElementById('fiscal-country').value,
+      api_key:document.getElementById('fiscal-api-key').value,
+      api_secret:document.getElementById('fiscal-api-secret').value,
+      base_url:document.getElementById('fiscal-base-url').value
+    });
+    if(r&&r.success){
+      box.style.display='block';box.style.background='var(--success-bg)';box.style.color='var(--success)';
+      box.textContent='Configuracion guardada exitosamente';
+      showToast('Config fiscal guardada','success');
+    }else{
+      box.style.display='block';box.style.background='var(--danger-bg)';box.style.color='var(--danger)';
+      box.textContent=`Error: ${r?r.error:'Desconocido'}`;
+    }
+  }catch(e){
+    box.style.display='block';box.style.background='var(--danger-bg)';box.style.color='var(--danger)';
+    box.textContent=`Error: ${e.message}`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderFiscalCountries();
+  if(window.i18n){
+    window.i18n.init();
+    const saved=localStorage.getItem('lastmile_lang')||'es';
+    switchLang(saved);
+  }
+});
 });
