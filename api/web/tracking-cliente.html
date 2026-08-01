@@ -418,6 +418,17 @@
       const ped = document.getElementById('pedidoInput').value.trim();
       if (!ped) { Utils.toast('Ingresa un numero de pedido', 'warning'); return; }
       Utils.toast('Buscando pedido: ' + ped, 'info');
+      try {
+        const API = window.location.origin;
+        const r = await fetch(`${API}/api/cliente-final?pedido=${encodeURIComponent(ped)}`);
+        const d = await r.json();
+        if (d.success && d.data) {
+          trackingData = d.data;
+          mostrarTracking(d.data);
+        } else {
+          Utils.toast('Pedido no encontrado. Verifica el numero.', 'error');
+        }
+      } catch(e) { Utils.toast('Error de conexion', 'error'); }
     }
 
     function mostrarTracking(d) {
@@ -523,13 +534,21 @@
     }
 
     function llamar() {
-      if (trackingData?.PED_CLIENTE_TELEFONO) {
-        window.location.href = `tel:${trackingData.PED_CLIENTE_TELEFONO}`;
+      const phone = trackingData?.CHO_TELEFONO || trackingData?.PED_CLIENTE_TELEFONO;
+      if (phone) {
+        window.location.href = `tel:${phone}`;
+      } else {
+        Utils.toast('Numero no disponible', 'warning');
       }
     }
 
     function whatsapp() {
-      window.open('https://wa.me/5215512345678?text=Hola, estoy rastreando mi envio', '_blank');
+      const phone = trackingData?.CHO_TELEFONO || '';
+      if (phone) {
+        window.open(`https://wa.me/52${phone.replace(/\D/g, '')}?text=Hola, estoy rastreando mi envio`, '_blank');
+      } else {
+        Utils.toast('Numero del chofer no disponible', 'warning');
+      }
     }
 
     function compartir() {

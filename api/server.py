@@ -28,7 +28,15 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Servir archivos estaticos desde /web
 app = Flask(__name__, static_folder='web', static_url_path='')
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'lastmile-dev-key-change-in-prod')
+
+# Validate FLASK_SECRET_KEY in production
+_secret_key = os.environ.get('FLASK_SECRET_KEY', '')
+if not _secret_key or _secret_key == 'lastmile-dev-key-change-in-prod':
+    if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER'):
+        import warnings
+        warnings.warn('[SECURITY] FLASK_SECRET_KEY is not set or using default! JWT tokens can be forged.')
+        print('[SECURITY] WARNING: Set FLASK_SECRET_KEY env var to a strong random value!')
+app.secret_key = _secret_key or 'lastmile-dev-key-change-in-prod'
 
 # ========================================
 # CORS: Restringido por origen en produccion
@@ -40,12 +48,20 @@ CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True,
 
 # ========================================
 # RATE LIMITING: 200 req/min por IP general, 10/min para auth
+# Intenta Redis para multi-worker, fallback a memory
 # ========================================
+_redis_url = os.environ.get('REDIS_URL', '')
+if _redis_url:
+    storage_uri = _redis_url
+    print(f'[RATELIMIT] Using Redis: {_redis_url[:30]}...')
+else:
+    storage_uri = "memory://"
+    print('[RATELIMIT] Using in-memory (single-worker only). Set REDIS_URL for multi-worker.')
 limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per minute"],
-    storage_uri="memory://",
+    storage_uri=storage_uri,
 )
 
 # ========================================
@@ -254,11 +270,6 @@ def handle_exception(e):
 # ========================================
 @app.route('/')
 def root():
-    return send_from_directory('web', 'landing.html')
-
-
-@app.route('/')
-def landing_page():
     return send_from_directory('web', 'landing-v2.html')
 
 
@@ -385,7 +396,8 @@ def onboarding_register():
         r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
         emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Error creando empresa: {str(e)[:100]}'}), 500
+        print(f'[ERROR] Creando empresa: {e}')
+        return jsonify({'success': False, 'error': 'Error al crear empresa. Intenta de nuevo.'}), 500
 
     # Record referral relationship
     if referrer_emp_id:
@@ -414,7 +426,8 @@ def onboarding_register():
         usr_row = query("SELECT MAX(USR_ID) as id FROM USUARIOS WHERE USU_EMP_ID=?", [emp_id])
         usr_id = usr_row[0].get('ID', usr_row[0].get('id', 0)) if usr_row else 0
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Error creando usuario: {str(e)[:100]}'}), 500
+        print(f'[ERROR] Creando usuario: {e}')
+        return jsonify({'success': False, 'error': 'Error al crear usuario. Intenta de nuevo.'}), 500
 
     # Record legal acceptance for legal protection
     legal_data = data.get('legal', {})
@@ -1280,6 +1293,8 @@ def get_pedido(ped_id):
 def create_pedido():
     emp_id = get_emp_id()
     p = request.json
+    if not p:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute(
         '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, CLI_ID, PED_CLIENTE_NOMBRE,
            PED_CLIENTE_TELEFONO, PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD,
@@ -1338,8 +1353,9 @@ def asignar_pedido(ped_id):
 @app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT', 'POST'])
 def update_estado_pedido(ped_id):
     emp_id = get_emp_id()
-    estado = request.json.get('estado')
-    usuario = request.json.get('usuario', 'SYSTEM')
+    data = request.json or {}
+    estado = data.get('estado')
+    usuario = data.get('usuario', 'SYSTEM')
 
     execute('UPDATE PEDIDOS SET PED_ESTADO = ? WHERE PED_ID = ? AND EMP_ID = ?', [estado, ped_id, emp_id])
     execute('INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO) VALUES (?, ?, ?)', [ped_id, estado, usuario])
@@ -1799,8 +1815,16 @@ def create_cfdi_factura():
 def timbrar_factura(fac_id):
     emp_id = get_emp_id()
     from cfdi_service import cfdi_service
-    result = cfdi_service.create_invoice(fac_id, emp_id)
+    fac_rows = query("SELECT FAC_PED_ID FROM CFDI_FACTURAS WHERE FAC_ID=? AND EMP_ID=?", [fac_id, emp_id])
+    if not fac_rows:
+        return jsonify({'success': False, 'error': 'Factura no encontrada'}), 404
+    pedido_id = fac_rows[0].get('FAC_PED_ID')
+    if not pedido_id:
+        return jsonify({'success': False, 'error': 'Factura sin pedido asociado'}), 400
+    result = cfdi_service.create_invoice(pedido_id, emp_id)
     if result.get('success'):
+        execute("UPDATE CFDI_FACTURAS SET FAC_UUID=?, FAC_ESTATUS='TIMBRADA' WHERE FAC_ID=? AND EMP_ID=?",
+                [result.get('uuid'), fac_id, emp_id])
         return jsonify({'success': True, 'uuid': result.get('uuid'), 'message': 'Factura timbrada correctamente'})
     else:
         return jsonify({'success': False, 'error': result.get('error', 'Error al timbrar')}), 400
@@ -1839,6 +1863,8 @@ def get_empresa_fiscal():
 def update_empresa_fiscal():
     emp_id = get_emp_id()
     f = request.json
+    if not f:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     existing = query('SELECT FISC_ID FROM CFDI_EMPRESA_FISCAL WHERE EMP_ID = ?', [emp_id])
     if existing:
         execute('''UPDATE CFDI_EMPRESA_FISCAL SET FISC_RFC=?, FISC_RAZON_SOCIAL=?, FISC_REGIMEN_FISCAL=?,
@@ -1889,6 +1915,8 @@ def get_pagos_transacciones():
 def create_pago_transaccion():
     emp_id = get_emp_id()
     p = request.json
+    if not p:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute('''INSERT INTO PAGOS_TRANSACCIONES (EMP_ID, PED_ID, FAC_ID, TRP_NUM_REFERENCIA,
         TRP_MONTO, TRP_MONEDA, TRP_METODO, TRP_ESTATUS)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
@@ -1908,7 +1936,8 @@ def get_pagos_resumen():
 @app.route('/api/pagos/transacciones/<int:pag_id>', methods=['DELETE'])
 def delete_pago(pag_id):
     try:
-        execute("DELETE FROM PAGOS_TRANSACCIONES WHERE TRP_ID = ?", [pag_id])
+        emp_id = get_emp_id()
+        execute("DELETE FROM PAGOS_TRANSACCIONES WHERE TRP_ID = ? AND EMP_ID = ?", [pag_id, emp_id])
         return jsonify({'success': True, 'message': 'Pago eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -2064,7 +2093,9 @@ def export_entity(entity):
         'vehiculos': 'VEHICULOS', 'usuarios': 'USUARIOS',
         'pagos': 'PAGOS_TRANSACCIONES', 'facturas': 'CFDI_FACTURAS'
     }
-    table = table_map.get(entity, entity.upper())
+    table = table_map.get(entity)
+    if not table:
+        return jsonify({'success': False, 'error': f'Entidad {entity} no soportada'}), 400
 
     try:
         data = query(f"SELECT * FROM {table} WHERE EMP_ID=? ORDER BY 1 DESC LIMIT 5000", [emp_id])
@@ -2093,23 +2124,37 @@ def export_custom():
     if not export_service:
         return jsonify({'success': False, 'error': 'Export service not configured'}), 503
     data = request.json or {}
-    sql = data.get('sql', '')
+    report_type = data.get('report_type', '')
+    params = data.get('params', {})
     columns = data.get('columns', {})
     title = data.get('title', 'Reporte')
     fmt = data.get('format', 'csv')
+    emp_id = get_emp_id()
 
-    if not sql:
-        return jsonify({'success': False, 'error': 'SQL requerido'}), 400
+    ALLOWED_REPORTS = {
+        'pedidos_por_estado': "SELECT PED_ESTADO, COUNT(*) as TOTAL, SUM(PED_COSTO_TOTAL) as MONTO FROM PEDIDOS WHERE EMP_ID=? GROUP BY PED_ESTADO",
+        'choferes_por_empresa': "SELECT C.CHO_NOMBRE, C.CHO_TELEFONO, C.CHO_ESTATUS FROM CHOFERES C WHERE C.EMP_ID=?",
+        'pagos_por_metodo': "SELECT TRP_METODO, COUNT(*) as TOTAL, SUM(TRP_MONTO) as MONTO FROM PAGOS_TRANSACCIONES WHERE EMP_ID=? GROUP BY TRP_METODO",
+        'clientes_top': "SELECT PED_CLIENTE_NOMBRE, COUNT(*) as PEDIDOS, SUM(PED_COSTO_TOTAL) as GASTO FROM PEDIDOS WHERE EMP_ID=? GROUP BY PED_CLIENTE_NOMBRE ORDER BY GASTO DESC LIMIT 10",
+        'ingresos_mensuales': "SELECT strftime('%Y-%m', PED_FECHA_PEDIDO) as MES, SUM(PED_COSTO_TOTAL) as INGRESOS, COUNT(*) as PEDIDOS FROM PEDIDOS WHERE EMP_ID=? GROUP BY MES ORDER BY MES DESC LIMIT 12",
+    }
+
+    if not report_type:
+        return jsonify({'success': False, 'error': 'report_type requerido', 'available': list(ALLOWED_REPORTS.keys())}), 400
+
+    sql_template = ALLOWED_REPORTS.get(report_type)
+    if not sql_template:
+        return jsonify({'success': False, 'error': f'Reporte no valido. Disponibles: {list(ALLOWED_REPORTS.keys())}'}), 400
 
     try:
-        result_data = query(sql)
+        result_data = query(sql_template, [emp_id])
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
     if fmt == 'pdf':
         result = export_service.to_pdf(result_data, columns, title=title)
     else:
-        result = export_service.to_csv(result_data, list(columns.keys()))
+        result = export_service.to_csv(result_data, list(columns.keys()) if columns else None)
 
     if not result.get('success'):
         return jsonify({'success': False, 'error': result.get('error')}), 400
@@ -2212,6 +2257,8 @@ def get_uso_recursos(emp_id):
 def registrar_uso():
     emp_id = get_emp_id()
     u = request.json
+    if not u:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute("INSERT INTO SAAS_USO_RECURSOS (EMP_ID, USR_PEDIDOS_CREADOS, USR_PEDIDOS_ENTREGADOS, USR_ENVIOS_SMS, USR_ENVIOS_EMAIL, USR_API_CALLS) VALUES (?, ?, ?, ?, ?, ?)",
             [emp_id, u.get('pedidosCreados', 0), u.get('pedidosEntregados', 0), u.get('enviosSms', 0), u.get('enviosEmail', 0), u.get('apiCalls', 0)])
     return jsonify({'success': True, 'message': 'Uso registrado'})
@@ -2453,6 +2500,8 @@ def get_notif_push():
 def send_notif_push():
     emp_id = get_emp_id()
     n = request.json
+    if not n:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute("INSERT INTO NOTIF_PUSH (EMP_ID, USR_ID, CHO_ID, NPUSH_TIPO, NPUSH_TITULO, NPUSH_CUERPO, NPUSH_DATA) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [emp_id, n.get('usrId'), n.get('choId'), n.get('tipo'), n.get('titulo'), n.get('cuerpo'), n.get('data', '{}')])
     return jsonify({'success': True, 'message': 'Notificacion enviada'})
@@ -2462,6 +2511,8 @@ def send_notif_push():
 def register_device():
     emp_id = get_emp_id()
     d = request.json
+    if not d:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute("INSERT INTO NOTIF_DISPOSITIVOS (EMP_ID, USR_ID, CHO_ID, DISP_TOKEN, DISP_PLATAFORMA) VALUES (?, ?, ?, ?, ?)",
             [emp_id, d.get('usrId'), d.get('choId'), d.get('token'), d.get('plataforma', 'WEB')])
     return jsonify({'success': True, 'message': 'Dispositivo registrado'})
@@ -2487,6 +2538,8 @@ def get_emails():
 def send_email():
     emp_id = get_emp_id()
     e = request.json
+    if not e:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute("INSERT INTO EMAIL_ENVIADOS (EMP_ID, PED_ID, EMAIL_DESTINATARIO, EMAIL_ASUNTO, EMAIL_TIPO, EMAIL_BODY_HTML, EMAIL_ENVIADO) VALUES (?, ?, ?, ?, ?, ?, 'S')",
             [emp_id, e.get('pedId'), e.get('destinatario'), e.get('asunto'), e.get('tipo'), e.get('bodyHtml')])
     return jsonify({'success': True, 'message': 'Email enviado'})
@@ -2508,6 +2561,8 @@ def get_sms():
 def send_sms():
     emp_id = get_emp_id()
     s = request.json
+    if not s:
+        return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     execute("INSERT INTO SMS_ENVIADOS (EMP_ID, PED_ID, SMS_TELEFONO, SMS_MENSAJE, SMS_PLATAFORMA, SMS_ENVIADO) VALUES (?, ?, ?, ?, ?, 'S')",
             [emp_id, s.get('pedId'), s.get('telefono'), s.get('mensaje'), s.get('plataforma', 'SMS')])
     return jsonify({'success': True, 'message': 'SMS enviado'})
@@ -2608,7 +2663,8 @@ def create_cliente_final():
 @app.route('/api/pedidos/<int:ped_id>', methods=['DELETE'])
 def delete_pedido(ped_id):
     try:
-        execute("DELETE FROM PEDIDOS WHERE PED_ID = ?", [ped_id])
+        emp_id = get_emp_id()
+        execute("DELETE FROM PEDIDOS WHERE PED_ID = ? AND EMP_ID = ?", [ped_id, emp_id])
         return jsonify({'success': True, 'message': 'Pedido eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -2632,6 +2688,13 @@ try:
 except Exception as _notif_err:
     notification_service = None
     print(f'[WARN] Notification service disabled: {_notif_err}')
+
+
+try:
+    from ai_endpoints import ai_bp
+    app.register_blueprint(ai_bp)
+except Exception as _ai_err:
+    print(f'[WARN] AI endpoints disabled: {_ai_err}')
 
 
 @app.route('/api/notifications/send', methods=['POST'])
@@ -2857,7 +2920,7 @@ def stripe_webhook():
     elif event['type'] == 'customer.subscription.deleted':
         sub = event['data']['object']
         sub_id = sub.get('id')
-        rows = query("SELECT EMP_ID FROM SUSCRIPCIONES WHERE SUS_EXTERNAL_ID=? AND SUS_ESTADO='ACTIVA'", [sub_id])
+        rows = query("SELECT EMP_ID FROM SAAS_SUSCRIPCIONES WHERE SUS_EXTERNAL_ID=? AND SUS_ESTADO='ACTIVA'", [sub_id])
         if rows:
             cancel_suscripcion(rows[0]['EMP_ID'])
 

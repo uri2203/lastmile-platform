@@ -2,10 +2,12 @@
 LAST MILE DELIVERY - Database Abstraction Layer
 Soporte dual: SQLite (desarrollo/local) y PostgreSQL (Supabase/produccion).
 Detecta automaticamente via variable de entorno DATABASE_URL.
+Connection pooling para PostgreSQL. Thread-local connections.
 """
 
 import os
 import re
+import threading
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
@@ -17,6 +19,7 @@ USE_POSTGRES = DATABASE_URL.startswith('postgres://') or DATABASE_URL.startswith
 if USE_POSTGRES:
     import psycopg2
     import psycopg2.extras
+    import psycopg2.pool
     print(f'[DB] Using PostgreSQL (Supabase)')
 else:
     import sqlite3
@@ -25,14 +28,63 @@ else:
     print(f'[DB] Using SQLite ({DB_PATH})')
 
 
+# ========================================
+# CONNECTION POOLING (PostgreSQL)
+# ========================================
+_pool = None
+_pool_lock = threading.Lock()
+
+def _get_pool():
+    """Get or create the connection pool (thread-safe, lazy init)."""
+    global _pool
+    if _pool is None:
+        with _pool_lock:
+            if _pool is None:
+                try:
+                    url = DATABASE_URL
+                    if 'sslmode' not in url:
+                        url += '&sslmode=require' if '?' in url else '?sslmode=require'
+                    _pool = psycopg2.pool.ThreadedConnectionPool(
+                        minconn=2,
+                        maxconn=10,
+                        dsn=url,
+                        connect_timeout=10
+                    )
+                    print('[DB] Connection pool created (2-10 connections)')
+                except Exception as e:
+                    print(f'[DB] WARNING: Pool creation failed: {e}. Falling back to direct connections.')
+                    _pool = None
+    return _pool
+
+
+# ========================================
+# THREAD-LOCAL CONNECTIONS
+# ========================================
+_thread_local = threading.local()
+
 def get_db():
-    """Get database connection (PostgreSQL or SQLite)."""
+    """Get database connection (PostgreSQL or SQLite).
+    For PostgreSQL: uses connection pooling with thread-local connections.
+    Each thread gets its own connection that persists for the request lifecycle.
+    """
     if USE_POSTGRES:
-        url = DATABASE_URL
-        if 'sslmode' not in url:
-            url += '&sslmode=require' if '?' in url else '?sslmode=require'
-        conn = psycopg2.connect(url, connect_timeout=10)
+        # Check if current thread already has an open connection
+        conn = getattr(_thread_local, 'pg_conn', None)
+        if conn and not conn.closed:
+            return conn
+
+        # Get from pool or create direct
+        pool = _get_pool()
+        if pool:
+            conn = pool.getconn()
+        else:
+            url = DATABASE_URL
+            if 'sslmode' not in url:
+                url += '&sslmode=require' if '?' in url else '?sslmode=require'
+            conn = psycopg2.connect(url, connect_timeout=10)
+
         conn.autocommit = False
+        _thread_local.pg_conn = conn
         return conn
     else:
         conn = sqlite3.connect(DB_PATH)
@@ -44,20 +96,38 @@ def get_db():
 
 
 def set_tenant_context(emp_id):
-    """Set the current tenant ID for Row-Level Security (PostgreSQL only)."""
+    """Set the current tenant ID for Row-Level Security (PostgreSQL only).
+    Sets the session variable on the SAME connection used for subsequent queries.
+    """
     if not USE_POSTGRES or emp_id is None:
         return
     try:
         conn = get_db()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SET app.current_emp_id = %s", [str(emp_id)])
-            conn.commit()
-            cursor.close()
-        finally:
-            conn.close()
+        cursor = conn.cursor()
+        cursor.execute("SET app.current_emp_id = %s", [str(emp_id)])
+        conn.commit()
+        cursor.close()
     except Exception:
         pass  # RLS not enabled or SQLite
+
+
+def _release_conn():
+    """Release the current thread's PostgreSQL connection back to the pool."""
+    conn = getattr(_thread_local, 'pg_conn', None)
+    if conn is None or conn.closed:
+        return
+    pool = _get_pool()
+    if pool:
+        try:
+            pool.putconn(conn)
+        except Exception:
+            pass
+    else:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    _thread_local.pg_conn = None
 
 
 def _translate_sql(sql):
@@ -116,7 +186,10 @@ def query(sql, params=None):
         cursor.close()
         return result
     finally:
-        conn.close()
+        if USE_POSTGRES:
+            _release_conn()
+        else:
+            conn.close()
 
 
 def execute(sql, params=None):
@@ -131,7 +204,10 @@ def execute(sql, params=None):
         cursor.close()
         return affected
     finally:
-        conn.close()
+        if USE_POSTGRES:
+            _release_conn()
+        else:
+            conn.close()
 
 
 def execute_returning(sql, params=None):
@@ -150,7 +226,7 @@ def execute_returning(sql, params=None):
         cursor.close()
         return result[0] if result else None
     finally:
-        conn.close()
+        _release_conn()
 
 
 def init_schema():
@@ -176,7 +252,7 @@ def _init_postgres_schema():
             cursor.close()
             print('[DB] PostgreSQL schema initialized')
         finally:
-            conn.close()
+            _release_conn()
     else:
         print('[DB] WARNING: schema_postgres.sql not found')
 
@@ -196,7 +272,8 @@ def get_db_info():
         return {
             'type': 'PostgreSQL',
             'url': DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else 'connected',
-            'path': 'Supabase Cloud'
+            'path': 'Supabase Cloud',
+            'pool_active': _pool is not None
         }
     else:
         return {

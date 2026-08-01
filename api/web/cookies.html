@@ -44,12 +44,16 @@
             </div>
             <table>
                 <tr><th>Tipo</th><th>Cookie</th><th>Finalidad</th><th>Duración</th></tr>
-                <tr><td><strong>Esencial</strong></td><td>session_token</td><td>Mantener la sesión del Usuario autenticado</td><td>Sesión (se elimina al cerrar navegador)</td></tr>
-                <tr><td><strong>Esencial</strong></td><td>csrf_token</td><td>Protección contra ataques CSRF</td><td>Sesión</td></tr>
-                <tr><td><strong>Funcional</strong></td><td>theme</td><td>Recordar preferencia de tema (oscuro/claro)</td><td>1 año</td></tr>
-                <tr><td><strong>Funcional</strong></td><td>language</td><td>Recordar preferencia de idioma</td><td>1 año</td></tr>
-                <tr><td><strong>Funcional</strong></td><td>sidebar_state</td><td>Recordar estado del menú lateral</td><td>30 días</td></tr>
+                <tr><td><strong>Esencial</strong></td><td>session_token</td><td>Mantener la sesion del Usuario autenticado via JWT</td><td>Sesion (12 horas)</td></tr>
             </table>
+            <div class="highlight" style="margin-top: 16px;">
+                <p><strong>Nota:</strong> La plataforma utiliza preferencias almacenadas en <code>localStorage</code> del navegador (no cookies) para:</p>
+                <ul style="margin-top: 8px;">
+                    <li><strong>theme:</strong> Preferencia de tema (oscuro/claro)</li>
+                    <li><strong>sidebar_state:</strong> Estado del menu lateral</li>
+                </ul>
+                <p style="margin-top: 8px;">Estos datos se almacenan localmente en su navegador y no son transmitidos a nuestros servidores.</p>
+            </div>
         </div>
 
         <div class="legal-section">

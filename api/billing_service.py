@@ -72,27 +72,31 @@ def check_limits(emp_id):
     warnings = []
     blocked = False
 
+    count_usuarios = 0
+    count_choferes = 0
+    count_pedidos = 0
+
     # Check usuarios
     try:
         r = query("SELECT COUNT(*) as total FROM USUARIOS WHERE USU_EMP_ID=?", [emp_id])
-        actual = r[0].get('TOTAL', 0) if r else 0
-        if actual >= max_usuarios:
+        count_usuarios = r[0].get('TOTAL', 0) if r else 0
+        if count_usuarios >= max_usuarios:
             blocked = True
-            warnings.append(f'Usuarios: {actual}/{max_usuarios} (LIMITE ALCANZADO)')
-        elif actual >= max_usuarios * 0.8:
-            warnings.append(f'Usuarios: {actual}/{max_usuarios} (cerca del limite)')
+            warnings.append(f'Usuarios: {count_usuarios}/{max_usuarios} (LIMITE ALCANZADO)')
+        elif count_usuarios >= max_usuarios * 0.8:
+            warnings.append(f'Usuarios: {count_usuarios}/{max_usuarios} (cerca del limite)')
     except Exception:
         pass
 
     # Check choferes
     try:
         r = query("SELECT COUNT(*) as total FROM CHOFERES WHERE EMP_ID=?", [emp_id])
-        actual = r[0].get('TOTAL', 0) if r else 0
-        if actual >= max_choferes:
+        count_choferes = r[0].get('TOTAL', 0) if r else 0
+        if count_choferes >= max_choferes:
             blocked = True
-            warnings.append(f'Choferes: {actual}/{max_choferes} (LIMITE ALCANZADO)')
-        elif actual >= max_choferes * 0.8:
-            warnings.append(f'Choferes: {actual}/{max_choferes} (cerca del limite)')
+            warnings.append(f'Choferes: {count_choferes}/{max_choferes} (LIMITE ALCANZADO)')
+        elif count_choferes >= max_choferes * 0.8:
+            warnings.append(f'Choferes: {count_choferes}/{max_choferes} (cerca del limite)')
     except Exception:
         pass
 
@@ -102,12 +106,12 @@ def check_limits(emp_id):
             "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= DATE_TRUNC('month', CURRENT_DATE)",
             [emp_id]
         )
-        actual = r[0].get('TOTAL', 0) if r else 0
-        if actual >= max_pedidos:
+        count_pedidos = r[0].get('TOTAL', 0) if r else 0
+        if count_pedidos >= max_pedidos:
             blocked = True
-            warnings.append(f'Pedidos mes: {actual}/{max_pedidos} (LIMITE ALCANZADO)')
-        elif actual >= max_pedidos * 0.8:
-            warnings.append(f'Pedidos mes: {actual}/{max_pedidos} (cerca del limite)')
+            warnings.append(f'Pedidos mes: {count_pedidos}/{max_pedidos} (LIMITE ALCANZADO)')
+        elif count_pedidos >= max_pedidos * 0.8:
+            warnings.append(f'Pedidos mes: {count_pedidos}/{max_pedidos} (cerca del limite)')
     except Exception:
         pass
 
@@ -116,9 +120,9 @@ def check_limits(emp_id):
         'warnings': warnings,
         'plan': plan,
         'limits': {
-            'usuarios': {'used': actual if 'actual' in dir() else 0, 'max': max_usuarios},
-            'choferes': {'used': actual if 'actual' in dir() else 0, 'max': max_choferes},
-            'pedidos_mes': {'used': actual if 'actual' in dir() else 0, 'max': max_pedidos},
+            'usuarios': {'used': count_usuarios, 'max': max_usuarios},
+            'choferes': {'used': count_choferes, 'max': max_choferes},
+            'pedidos_mes': {'used': count_pedidos, 'max': max_pedidos},
         }
     }
 

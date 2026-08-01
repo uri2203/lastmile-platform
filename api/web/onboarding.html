@@ -579,6 +579,7 @@
       const email = document.getElementById('usr-email').value;
       const pass = document.getElementById('usr-pass').value;
       const pass2 = document.getElementById('usr-pass2').value;
+      const telefono = document.getElementById('emp-telefono')?.value || '';
 
       if (!nombre || !rfc || !email) {
         Utils.toast('Por favor completa los campos obligatorios', 'warning');
@@ -595,12 +596,50 @@
         return;
       }
 
-      document.getElementById('res-empresa').textContent = nombre;
-      document.getElementById('res-plan').textContent = selectedPlan.toUpperCase();
-      document.getElementById('res-email').textContent = email;
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
 
-      goStep(5);
-      Utils.toast('¡Empresa creada exitosamente!', 'success');
+      try {
+        const API = window.location.origin;
+        const res = await fetch(`${API}/api/onboarding/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            empresa: {
+              nombre: nombre,
+              rfc: rfc,
+              telefono: telefono,
+              plan: selectedPlan.toUpperCase()
+            },
+            usuario: {
+              nombre: nombre,
+              email: email,
+              password: pass,
+              telefono: telefono
+            },
+            plan: selectedPlan.toUpperCase()
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('res-empresa').textContent = nombre;
+          document.getElementById('res-plan').textContent = selectedPlan.toUpperCase();
+          document.getElementById('res-email').textContent = email;
+          goStep(5);
+          Utils.toast('¡Empresa creada exitosamente!', 'success');
+        } else {
+          Utils.toast(data.error || 'Error al crear empresa', 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-rocket"></i> Crear Mi Empresa';
+        }
+      } catch(e) {
+        Utils.toast('Error de conexion. Intenta de nuevo.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-rocket"></i> Crear Mi Empresa';
+      }
     }
   </script>
 </body>

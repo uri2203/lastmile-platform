@@ -103,55 +103,55 @@ RULES = {
 # Business query patterns (for tenant assistant)
 BUSINESS_RULES = {
     r'(cuantos|cuantas).*(envio|pedido|entrega).*hoy': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE PED_FECHA = CURRENT_DATE",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND DATE(PED_FECHA_PEDIDO) = CURRENT_DATE",
         'template': 'Hoy tienes **{total} envios** registrados.'
     },
     r'(cuantos|cuantas).*(envio|pedido|entrega).*(semana|esta semana)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE PED_FECHA >= DATE('now', '-7 days')",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '7 days'",
         'template': 'Esta semana tienes **{total} envios**.'
     },
     r'(cuantos|cuantas).*(envio|pedido|entrega).*(mes|este mes)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE strftime('%Y-%m', PED_FECHA) = strftime('%Y-%m', 'now')",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND DATE_TRUNC('month', PED_FECHA_PEDIDO) = DATE_TRUNC('month', CURRENT_DATE)",
         'template': 'Este mes tienes **{total} envios**.'
     },
     r'(entregados|exitosos|completados).*hoy': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE PED_ESTADO = 'ENTREGADO' AND PED_FECHA = CURRENT_DATE",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO = 'ENTREGADO' AND DATE(PED_FECHA_PEDIDO) = CURRENT_DATE",
         'template': 'Hoy tienes **{total} entregas exitosas**.'
     },
     r'(pendientes|por entregar|en transito)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE PED_ESTADO IN ('CREADO','ASIGNADO','EN_TRANSITO')",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO','EN_RUTA')",
         'template': 'Tienes **{total} envios pendientes** (creados, asignados o en transito).'
     },
     r'(fallidos|no entregados|devueltos)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE PED_ESTADO = 'FALLIDO'",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO = 'CANCELADO'",
         'template': 'Tienes **{total} envios fallidos**.'
     },
     r'(cancelados|cancelacion)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_PEDIDOS WHERE PED_ESTADO = 'CANCELADO'",
+        'sql': "SELECT COUNT(*) as total FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO = 'CANCELADO'",
         'template': 'Tienes **{total} envios cancelados**.'
     },
     r'(mejor chofer|mejor.*rendimiento|mas entregas)': {
-        'sql': "SELECT CHO_NOMBRE, COUNT(*) as entregas FROM LM_PEDIDOS p JOIN LM_CHOFERES c ON p.CHO_ID = c.CHO_ID WHERE p.PED_ESTADO = 'ENTREGADO' GROUP BY CHO_NOMBRE ORDER BY entregas DESC LIMIT 1",
+        'sql': "SELECT CHOFER_ASIGNADO as CHO_NOMBRE, COUNT(*) as entregas FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO = 'ENTREGADO' AND CHOFER_ASIGNADO IS NOT NULL GROUP BY CHOFER_ASIGNADO ORDER BY entregas DESC LIMIT 1",
         'template': 'Tu mejor chofer es **{CHO_NOMBRE}** con **{entregas} entregas**.'
     },
     r'(peor chofer|menos entregas|menor rendimiento)': {
-        'sql': "SELECT CHO_NOMBRE, COUNT(*) as entregas FROM LM_PEDIDOS p JOIN LM_CHOFERES c ON p.CHO_ID = c.CHO_ID WHERE p.PED_ESTADO = 'ENTREGADO' GROUP BY CHO_NOMBRE ORDER BY entregas ASC LIMIT 1",
+        'sql': "SELECT CHOFER_ASIGNADO as CHO_NOMBRE, COUNT(*) as entregas FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO = 'ENTREGADO' AND CHOFER_ASIGNADO IS NOT NULL GROUP BY CHOFER_ASIGNADO ORDER BY entregas ASC LIMIT 1",
         'template': 'El chofer con menos entregas es **{CHO_NOMBRE}** con **{entregas} entregas**.'
     },
     r'(revenue|ingreso|ganancia|facturado).*(hoy|dia)': {
-        'sql': "SELECT COALESCE(SUM(PED_COSTO),0) as total FROM LM_PEDIDOS WHERE PED_FECHA = CURRENT_DATE",
+        'sql': "SELECT COALESCE(SUM(PED_COSTO_TOTAL),0) as total FROM PEDIDOS WHERE EMP_ID=? AND DATE(PED_FECHA_PEDIDO) = CURRENT_DATE",
         'template': 'Tu revenue de hoy es **${total:,.2f}** MXN.'
     },
     r'(revenue|ingreso|ganancia|facturado).*(mes|este mes)': {
-        'sql': "SELECT COALESCE(SUM(PED_COSTO),0) as total FROM LM_PEDIDOS WHERE strftime('%Y-%m', PED_FECHA) = strftime('%Y-%m', 'now')",
+        'sql': "SELECT COALESCE(SUM(PED_COSTO_TOTAL),0) as total FROM PEDIDOS WHERE EMP_ID=? AND DATE_TRUNC('month', PED_FECHA_PEDIDO) = DATE_TRUNC('month', CURRENT_DATE)",
         'template': 'Tu revenue de este mes es **${total:,.2f}** MXN.'
     },
     r'(cuantos chofer|choferes activos|total chofer)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_CHOFERES WHERE CHO_ESTATUS = 'ACTIVO'",
+        'sql': "SELECT COUNT(*) as total FROM CHOFERES WHERE EMP_ID=? AND CHO_ESTATUS = 'ACTIVO'",
         'template': 'Tienes **{total} choferes activos**.'
     },
     r'(cuantos vehiculo|vehiculos activos|total vehiculo)': {
-        'sql': "SELECT COUNT(*) as total FROM LM_VEHICULOS WHERE VEH_ESTATUS = 'ACTIVO'",
+        'sql': "SELECT COUNT(*) as total FROM VEHICULOS WHERE EMP_ID=? AND VEH_ESTATUS = 'ACTIVO'",
         'template': 'Tienes **{total} vehiculos activos**.'
     },
 }
@@ -370,14 +370,18 @@ def chat(user_message, context=None, chat_history=None):
     if is_business:
         for pattern, rule in BUSINESS_RULES.items():
             if re.search(pattern, msg_lower):
-                # In real app, execute SQL and format
-                # For demo, return template with mock data
                 try:
-                    result = rule['template'].format(
-                        total=47,  # Mock data
-                        CHO_NOMBRE='Carlos Lopez',
-                        entregas=23
-                    )
+                    from db import query as db_query
+                    emp_id = context.get('emp_id', 0)
+                    sql = rule.get('sql', '')
+                    if emp_id and sql:
+                        rows = db_query(sql, [emp_id])
+                        if rows:
+                            result = rule['template'].format(**rows[0])
+                        else:
+                            result = rule['template'].format(total=0, CHO_NOMBRE='N/A', entregas=0)
+                    else:
+                        result = rule['template'].format(total=0, CHO_NOMBRE='N/A', entregas=0)
                     response = {
                         'response': result,
                         'type': 'data',
@@ -386,7 +390,7 @@ def chat(user_message, context=None, chat_history=None):
                     }
                     cache_set(ckey, response)
                     return response
-                except:
+                except Exception as e:
                     pass
     
     # Check general rules
