@@ -3147,22 +3147,31 @@ def update_fiscal_config():
         execute("UPDATE TENANT_FISCAL_CONFIG SET TFC_COUNTRY_CODE=?, TFC_PROVIDER=?, TFC_API_KEY=?, TFC_BASE_URL=?, TFC_TEST_MODE=?, TFC_FECHA_ACTUALIZACION=NOW() WHERE EMP_ID=?", [cc, provider, api_key, base_url, test_mode, emp_id])
     else:
         execute("INSERT INTO TENANT_FISCAL_CONFIG (EMP_ID, TFC_COUNTRY_CODE, TFC_PROVIDER, TFC_API_KEY, TFC_BASE_URL, TFC_TEST_MODE) VALUES (?, ?, ?, ?, ?, ?)", [emp_id, cc, provider, api_key, base_url, test_mode])
-    log_audit(emp_id, 'FISCAL_CONFIG_UPDATED', 'TENANT_FISCAL_CONFIG', emp_id, f'country={cc}')
+    log_audit('FISCAL_CONFIG_UPDATED')
     return jsonify({'success': True})
 
 
-@app.route('/api/fiscal/test', methods=['POST'])
+@app.route('/api/fiscal/providers', methods=['GET'])
+def get_fiscal_providers():
+    from fiscal_providers import FiscalProviderRegistry
+    return jsonify({'success': True, 'data': FiscalProviderRegistry.get_available_countries()})
+
+
+@app.route('/api/fiscal/test-connection', methods=['POST'])
 def test_fiscal_connection():
     emp_id = g.emp_id
-    from fiscal_providers import MultiCountryFiscalService
-    service = MultiCountryFiscalService()
+    data = request.get_json() or {}
+    country_code = data.get('country_code')
+    from fiscal_providers import FiscalProviderRegistry
+    if country_code:
+        provider = FiscalProviderRegistry.get_provider(country_code, {'api_key': 'test', 'base_url': ''})
+        if provider: return jsonify(provider.test_connection())
+        return jsonify({'success': False, 'error': f'Provider {country_code} not found'})
     config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
-    if not config: return jsonify({'success': False, 'error': 'No config'})
+    if not config: return jsonify({'success': False, 'error': 'No config for this tenant'})
     cfg = config[0]
-    ok = service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], {'api_key': cfg.get('TFC_API_KEY', ''), 'base_url': cfg.get('TFC_BASE_URL', '')})
-    if ok:
-        p = service.get_tenant_provider(emp_id)
-        return jsonify(p.test_connection())
+    provider = FiscalProviderRegistry.get_provider(cfg['TFC_COUNTRY_CODE'], {'api_key': cfg.get('TFC_API_KEY', ''), 'base_url': cfg.get('TFC_BASE_URL', '')})
+    if provider: return jsonify(provider.test_connection())
     return jsonify({'success': False, 'error': 'Provider not found'})
 
 
@@ -3177,7 +3186,7 @@ def emit_fiscal_document():
     service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], {'api_key': cfg.get('TFC_API_KEY', ''), 'base_url': cfg.get('TFC_BASE_URL', '')})
     result = service.emit_invoice(emp_id, request.get_json())
     if result.get('success'):
-        log_audit(emp_id, 'FISCAL_INVOICE_EMITTED', 'FISCAL_DOCUMENTS', emp_id, f"doc_id={result.get('document_id')}")
+        log_audit('FISCAL_INVOICE_EMITTED')
     return jsonify(result)
 
 
@@ -3193,6 +3202,18 @@ def cancel_fiscal_document():
     data = request.get_json()
     result = service.cancel_invoice(emp_id, data.get('document_id', ''), data.get('reason', ''))
     return jsonify(result)
+
+
+@app.route('/api/payment/countries', methods=['GET'])
+def get_payment_countries():
+    rows = query("SELECT DISTINCT PMC_COUNTRY_CODE FROM PAYMENT_METHODS_COUNTRY WHERE PMC_ACTIVO='S' ORDER BY PMC_COUNTRY_CODE")
+    return jsonify({'success': True, 'data': [r['PMC_COUNTRY_CODE'] for r in rows]})
+
+
+@app.route('/api/payment/methods/<country_code>', methods=['GET'])
+def get_payment_methods(country_code):
+    rows = query("SELECT * FROM PAYMENT_METHODS_COUNTRY WHERE PMC_COUNTRY_CODE=? AND PMC_ACTIVO='S'", [country_code.upper()])
+    return jsonify({'success': True, 'data': rows})
 
 
 @app.route('/api/system/migrate', methods=['POST'])
