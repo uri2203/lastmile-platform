@@ -3708,7 +3708,7 @@ def run_migration():
     results = []
     for stmt in statements:
         try:
-            execute(stmt)
+            query(stmt)
             results.append({'status': 'OK', 'preview': stmt[:60].replace('\n', ' ')})
         except Exception as e:
             results.append({'status': 'ERROR', 'error': str(e)[:200], 'preview': stmt[:60].replace('\n', ' ')})
@@ -3746,7 +3746,7 @@ def run_migration():
     pm_err = 0
     for pm in payment_methods:
         try:
-            execute(
+            query(
                 "INSERT INTO PAYMENT_METHODS_COUNTRY (PMC_COUNTRY_CODE, PMC_METHOD_CODE, PMC_METHOD_NAME, PMC_PROVIDER) VALUES (?, ?, ?, ?) ON CONFLICT (PMC_COUNTRY_CODE, PMC_METHOD_CODE) DO NOTHING",
                 list(pm)
             )
