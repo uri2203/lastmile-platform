@@ -11,9 +11,8 @@
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/theme.js"></script>
-<script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
   <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);overflow:hidden;-webkit-font-smoothing:antialiased}
@@ -109,7 +108,7 @@ html[data-theme="dark"]{color-scheme:dark}
     <div class="nav-section"><div class="nav-section-title">Principal</div><div class="nav-item active" data-section="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</div></div>
     <div class="nav-section"><div class="nav-section-title">Operaciones</div><div class="nav-item" data-section="pedidos"><i class="fas fa-box"></i> Pedidos</div><div class="nav-item" data-section="choferes"><i class="fas fa-id-card"></i> Choferes</div><div class="nav-item" data-section="vehiculos"><i class="fas fa-truck"></i> Vehiculos</div><div class="nav-item" data-section="rutas"><i class="fas fa-route"></i> Rutas y Zonas</div></div>
     <div class="nav-section"><div class="nav-section-title">Clientes</div><div class="nav-item" data-section="clientes"><i class="fas fa-building"></i> Clientes / Tenants</div></div>
-    <div class="nav-section"><div class="nav-section-title">Finanzas</div><div class="nav-item" data-section="facturacion"><i class="fas fa-file-invoice-dollar"></i> Facturacion CFDI</div><div class="nav-item" data-section="fiscal"><i class="fas fa-globe"></i> Fiscal Multi-Pais</div><div class="nav-item" data-section="pagos"><i class="fas fa-credit-card"></i> Pagos y Cobranza</div><div class="nav-item" data-section="billing"><i class="fas fa-coins"></i> Billing SaaS</div><div class="nav-item" data-section="cancelacion"><i class="fas fa-ban"></i> Politica Cancelacion</div></div>
+    <div class="nav-section"><div class="nav-section-title">Finanzas</div><div class="nav-item" data-section="facturacion"><i class="fas fa-file-invoice-dollar"></i> Facturacion CFDI</div><div class="nav-item" data-section="pagos"><i class="fas fa-credit-card"></i> Pagos y Cobranza</div><div class="nav-item" data-section="billing"><i class="fas fa-coins"></i> Billing SaaS</div><div class="nav-item" data-section="cancelacion"><i class="fas fa-ban"></i> Politica Cancelacion</div></div>
     <div class="nav-section"><div class="nav-section-title">Configuracion</div><div class="nav-item" data-section="referidos"><i class="fas fa-gift"></i> Referidos</div><div class="nav-item" data-section="reportes"><i class="fas fa-chart-bar"></i> Reportes</div><div class="nav-item" data-section="config"><i class="fas fa-cog"></i> Config Sistema</div><div class="nav-item" data-section="notificaciones"><i class="fas fa-bell"></i> Notificaciones</div></div>
     <div class="nav-section"><div class="nav-section-title">Admin</div><div class="nav-item" data-section="usuarios"><i class="fas fa-users-gear"></i> Usuarios y Roles</div><div class="nav-item" data-section="soporte"><i class="fas fa-headset"></i> Soporte</div><div class="nav-item" data-section="auditoria"><i class="fas fa-clipboard-list"></i> Auditoria</div></div>
   </nav>
@@ -128,11 +127,6 @@ html[data-theme="dark"]{color-scheme:dark}
       <div style="position:relative;"><i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;"></i><input type="text" placeholder="Buscar..." class="input" style="width:260px;padding-left:34px;"></div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;">
-      <div style="display:flex;gap:2px;background:var(--bg-card);border:1px solid var(--border-primary);border-radius:6px;padding:2px;" id="langSelector">
-        <button class="btn btn-sm" data-lang="es" onclick="switchLang('es')" style="padding:3px 8px;font-size:10px;font-weight:600;border:none;background:var(--accent);color:#fff;border-radius:4px;">ES</button>
-        <button class="btn btn-sm" data-lang="en" onclick="switchLang('en')" style="padding:3px 8px;font-size:10px;font-weight:500;border:none;background:transparent;color:var(--text-secondary);border-radius:4px;">EN</button>
-        <button class="btn btn-sm" data-lang="pt" onclick="switchLang('pt')" style="padding:3px 8px;font-size:10px;font-weight:500;border:none;background:transparent;color:var(--text-secondary);border-radius:4px;">PT</button>
-      </div>
       <button class="btn btn-ghost btn-sm" onclick="refreshData()" title="Actualizar"><i class="fas fa-sync-alt" style="font-size:11px;"></i></button>
       <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
       <div id="notif-bell" style="position:relative;cursor:pointer;" onclick="toggleNotifDropdown()">
@@ -296,72 +290,6 @@ html[data-theme="dark"]{color-scheme:dark}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;">
       <div class="card"><h3 style="font-size:13px;font-weight:600;margin-bottom:12px;">Uso Mensual</h3><canvas id="chartUsageBilling" height="150"></canvas></div>
       <div class="card"><h3 style="font-size:13px;font-weight:600;margin-bottom:12px;">Ingresos</h3><canvas id="chartRevenueBilling" height="150"></canvas></div>
-    </div>
-  </div>
-  <div class="section" id="section-fiscal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
-      <h2 style="font-size:18px;font-weight:600;"><i class="fas fa-globe" style="margin-right:8px;color:var(--accent);"></i> Fiscal Multi-Pais</h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost" onclick="loadFiscalConfig()"><i class="fas fa-sync-alt" style="font-size:10px;"></i> Actualizar</button>
-      </div>
-    </div>
-
-    <!-- Paises Disponibles -->
-    <div style="margin-bottom:20px;">
-      <h3 style="font-size:13px;font-weight:600;margin-bottom:12px;">Seleccionar Pais</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="fiscalCountryGrid"></div>
-    </div>
-
-    <!-- Config del Pais Seleccionado -->
-    <div id="fiscalConfigPanel" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-        <div class="card">
-          <h3 style="font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-            <i class="fas fa-key" style="color:var(--accent);font-size:13px;"></i> Credenciales del Proveedor
-          </h3>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div><label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Pais</label>
-              <select class="input" id="fiscal-country" onchange="onFiscalCountryChange()">
-                <option value="MX">Mexico (MXN)</option><option value="BR">Brasil (BRL)</option><option value="CO">Colombia (COP)</option>
-                <option value="AR">Argentina (ARS)</option><option value="CL">Chile (CLP)</option><option value="PE">Peru (PEN)</option>
-                <option value="UY">Uruguay (UYU)</option><option value="EC">Ecuador (USD)</option>
-              </select>
-            </div>
-            <div><label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Proveedor</label>
-              <div style="padding:8px 12px;background:var(--bg-primary);border:1px solid var(--border-primary);border-radius:6px;font-size:12px;color:var(--accent);" id="fiscal-provider-name">MexicoProvider</div>
-            </div>
-            <div><label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">API Key</label>
-              <input type="password" class="input" id="fiscal-api-key" placeholder="Ingrese su API Key del proveedor fiscal">
-            </div>
-            <div><label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">API Secret (opcional)</label>
-              <input type="password" class="input" id="fiscal-api-secret" placeholder="Clave secreta">
-            </div>
-            <div><label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">URL Base</label>
-              <input type="text" class="input" id="fiscal-base-url" placeholder="URL base de la API">
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:16px;">
-            <button class="btn btn-success btn-sm" onclick="testFiscalConnection()"><i class="fas fa-plug" style="font-size:10px;"></i> Probar Conexion</button>
-            <button class="btn btn-primary btn-sm" onclick="saveFiscalConfig()"><i class="fas fa-save" style="font-size:10px;"></i> Guardar</button>
-          </div>
-          <div id="fiscal-status" style="margin-top:12px;padding:10px;border-radius:6px;font-size:12px;display:none;"></div>
-        </div>
-
-        <div class="card">
-          <h3 style="font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-            <i class="fas fa-credit-card" style="color:var(--success);font-size:13px;"></i> Metodos de Pago Disponibles
-          </h3>
-          <div id="fiscalPaymentMethods" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-
-          <h3 style="font-size:13px;font-weight:600;margin-top:20px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
-            <i class="fas fa-file-invoice" style="color:var(--warning);font-size:13px;"></i> Documentos Fiscales
-          </h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="kpi-card" style="padding:12px;text-align:center;"><div style="font-size:20px;font-weight:600;color:var(--accent);" id="fiscal-docs-emitidos">0</div><div style="font-size:10px;color:var(--text-muted);">Emitidos</div></div>
-            <div class="kpi-card" style="padding:12px;text-align:center;"><div style="font-size:20px;font-weight:600;color:var(--danger);" id="fiscal-docs-cancelados">0</div><div style="font-size:10px;color:var(--text-muted);">Cancelados</div></div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
   <div class="section" id="section-cancelacion">

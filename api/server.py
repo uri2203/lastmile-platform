@@ -114,10 +114,6 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%H:%M:%S'))
 request_logger.addHandler(console_handler)
 
-logger = logging.getLogger('lastmile.webhooks')
-logger.setLevel(logging.INFO)
-logger.addHandler(console_handler)
-
 # ========================================
 # AUDIT LOGGING: Sensitive operations tracking
 # ========================================
@@ -3289,49 +3285,39 @@ def get_ots_mantto():
 # WEBHOOKS - PAGOS MULTI-PAIS
 # ========================================
 
+webhook_logger = logging.getLogger('lastmile.webhooks')
+webhook_logger.setLevel(logging.INFO)
+
+
 @app.route('/api/webhooks/stripe', methods=['POST'])
 def stripe_webhook():
-    import os
-    import hmac
-    import hashlib
-    stripe_secret = os.environ.get('STRIPE_SECRET_KEY', '')
-    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature', '')
-    event = None
-    if webhook_secret:
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    if webhook_secret and sig_header:
         try:
-            import stripe
-            stripe.api_key = stripe_secret
-            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+            import stripe as _stripe
+            _stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
+            event = _stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+            event_type = event['type']
+            data = event['data']['object']
+            webhook_logger.info(f'Stripe event: {event_type}')
+            if event_type == 'checkout.session.completed':
+                order_id = data.get('metadata', {}).get('order_id', '')
+                if order_id:
+                    try:
+                        execute("UPDATE ORDENES SET ORD_ESTATUS='PAGADA' WHERE ORD_ID=?", [int(order_id)])
+                    except Exception:
+                        pass
         except Exception as e:
-            logger.warning(f'Stripe webhook signature verification failed: {e}')
-            return jsonify({'error': 'Invalid signature'}), 400
+            webhook_logger.warning(f'Stripe webhook error: {e}')
+            return jsonify({'error': str(e)}), 400
     else:
         try:
             event = json.loads(payload)
+            webhook_logger.info(f'Stripe event (no-sig): {event.get("type", "unknown")}')
         except Exception:
             return jsonify({'error': 'Invalid payload'}), 400
-    event_type = event.get('type', '') if isinstance(event, dict) else getattr(event, 'type', '')
-    data = event.get('data', {}).get('object', {}) if isinstance(event, dict) else {}
-    if event_type == 'checkout.session.completed':
-        order_id = data.get('metadata', {}).get('order_id', '')
-        amount = data.get('amount_total', 0) / 100
-        currency = (data.get('currency', 'mxn')).upper()
-        logger.info(f'Stripe payment OK: order={order_id} amount={amount} {currency}')
-        if order_id:
-            try:
-                execute("UPDATE ORDENES SET ORD_ESTATUS='PAGADA', ORD_MONEDA=?, ORD_TOTAL=? WHERE ORD_ID=?", [currency, amount, int(order_id)])
-            except Exception:
-                pass
-    elif event_type == 'payment_intent.succeeded':
-        pi_id = data.get('id', '')
-        logger.info(f'Stripe PI succeeded: {pi_id}')
-    elif event_type == 'charge.refunded':
-        refund_id = data.get('id', '')
-        logger.info(f'Stripe refund: {refund_id}')
-    elif event_type in ('payment_intent.payment_failed', 'charge.dispute.created'):
-        logger.warning(f'Stripe alert: {event_type} - {data.get("id", "")}')
     log_audit('STRIPE_WEBHOOK')
     return jsonify({'received': True})
 
@@ -3341,32 +3327,7 @@ def mercadopago_webhook():
     data = request.get_json(silent=True) or {}
     action = data.get('action', '')
     resource = data.get('resource', '')
-    logger.info(f'MP webhook: action={action} resource={resource}')
-    if action == 'payment.created' or action == 'payment.updated':
-        mp_token = os.environ.get('MERCADOPAGO_ACCESS_TOKEN', '')
-        if mp_token and resource:
-            try:
-                import requests
-                payment_id = resource.split('/')[-1] if '/' in resource else resource
-                r = requests.get(
-                    f'https://api.mercadopago.com/v1/payments/{payment_id}',
-                    headers={'Authorization': f'Bearer {mp_token}'},
-                    timeout=15,
-                )
-                if r.status_code == 200:
-                    pay = r.json()
-                    status = pay.get('status', '')
-                    order_id = pay.get('external_reference', '')
-                    amount = pay.get('transaction_amount', 0)
-                    currency = pay.get('currency_id', 'MXN')
-                    logger.info(f'MP payment: id={payment_id} status={status} order={order_id} amount={amount} {currency}')
-                    if status == 'approved' and order_id:
-                        try:
-                            execute("UPDATE ORDENES SET ORD_ESTATUS='PAGADA', ORD_MONEDA=?, ORD_TOTAL=? WHERE ORD_ID=?", [currency, amount, int(order_id)])
-                        except Exception:
-                            pass
-            except Exception as e:
-                logger.error(f'MP webhook fetch error: {e}')
+    webhook_logger.info(f'MP webhook: action={action} resource={resource}')
     log_audit('MERCADOPAGO_WEBHOOK')
     return jsonify({'received': True})
 
