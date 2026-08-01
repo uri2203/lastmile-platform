@@ -210,7 +210,7 @@ PUBLIC_API_PATHS = {
     '/api/pagos/mercado-pago/webhook',
 }
 # Prefijos publicos: tracking del cliente final por token opaco en la URL.
-PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes')
+PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes', '/api/webhooks/')
 # Endpoint(s) servicio-a-servicio: autenticados por CRON_API_KEY, no por JWT.
 CRON_API_PATHS = {'/api/billing/auto-charge'}
 # Prefijos de gestion GLOBAL de la plataforma: solo 'superadmin'.
