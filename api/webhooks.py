@@ -288,35 +288,40 @@ def payment_status_summary():
 @webhook_bp.route('/api/analytics/multi-country', methods=['GET'])
 def multi_country_analytics():
     from db import query
+    result = {'success': True, 'data': {}}
     try:
-        fiscal_countries = query("SELECT TFC_COUNTRY_CODE, COUNT(*) as count FROM TENANT_FISCAL_CONFIG GROUP BY TFC_COUNTRY_CODE")
-    except Exception:
-        fiscal_countries = []
+        result['data']['countries_supported'] = list(COUNTRY_CURRENCIES.keys())
+        result['data']['currencies'] = dict(COUNTRY_CURRENCIES)
+    except Exception as e:
+        result['data']['_err1'] = str(e)
     try:
-        fiscal_docs = query("SELECT FD_COUNTRY_CODE, FD_ESTATUS, COUNT(*) as count FROM FISCAL_DOCUMENTS GROUP BY FD_COUNTRY_CODE, FD_ESTATUS")
-    except Exception:
-        fiscal_docs = []
+        rows = query("SELECT TFC_COUNTRY_CODE, COUNT(*) as cnt FROM TENANT_FISCAL_CONFIG GROUP BY TFC_COUNTRY_CODE")
+        result['data']['fiscal_configured'] = [{'country': r.get('TFC_COUNTRY_CODE',''), 'tenants': r.get('cnt',0)} for r in rows]
+    except Exception as e:
+        result['data']['fiscal_configured'] = []
+        result['data']['_err2'] = str(e)
     try:
-        payment_methods = query("SELECT PMC_COUNTRY_CODE, COUNT(*) as count FROM PAYMENT_METHODS_COUNTRY WHERE PMC_ACTIVO='S' GROUP BY PMC_COUNTRY_CODE")
-    except Exception:
-        payment_methods = []
+        rows = query("SELECT FD_COUNTRY_CODE, FD_ESTATUS, COUNT(*) as cnt FROM FISCAL_DOCUMENTS GROUP BY FD_COUNTRY_CODE, FD_ESTATUS")
+        result['data']['fiscal_documents'] = [{'country': r.get('FD_COUNTRY_CODE',''), 'status': r.get('FD_ESTATUS',''), 'count': r.get('cnt',0)} for r in rows]
+    except Exception as e:
+        result['data']['fiscal_documents'] = []
+        result['data']['_err3'] = str(e)
     try:
-        empresas = query("SELECT COUNT(*) as total FROM EMPRESAS")
-    except Exception:
-        empresas = [{'total': 0}]
+        rows = query("SELECT PMC_COUNTRY_CODE, COUNT(*) as cnt FROM PAYMENT_METHODS_COUNTRY WHERE PMC_ACTIVO='S' GROUP BY PMC_COUNTRY_CODE")
+        result['data']['payment_methods'] = [{'country': r.get('PMC_COUNTRY_CODE',''), 'methods': r.get('cnt',0)} for r in rows]
+    except Exception as e:
+        result['data']['payment_methods'] = []
+        result['data']['_err4'] = str(e)
     try:
-        orders_by_country = query("SELECT PED_ESTADO, COUNT(*) as count, COALESCE(SUM(PED_COSTO_TOTAL), 0) as revenue FROM PEDIDOS GROUP BY PED_ESTADO ORDER BY count DESC LIMIT 10")
-    except Exception:
-        orders_by_country = []
-    return jsonify({
-        'success': True,
-        'data': {
-            'fiscal_configured': [{'country': r['TFC_COUNTRY_CODE'], 'tenants': r['count']} for r in fiscal_countries],
-            'fiscal_documents': [{'country': r['FD_COUNTRY_CODE'], 'status': r['FD_ESTATUS'], 'count': r['count']} for r in fiscal_docs],
-            'payment_methods': [{'country': r['PMC_COUNTRY_CODE'], 'methods': r['count']} for r in payment_methods],
-            'total_tenants': empresas[0]['total'] if empresas else 0,
-            'orders_by_status': [{'status': r['PED_ESTADO'], 'orders': r['count'], 'revenue': r['revenue']} for r in orders_by_country],
-            'countries_supported': list(COUNTRY_CURRENCIES.keys()),
-            'currencies': COUNTRY_CURRENCIES,
-        }
-    })
+        rows = query("SELECT COUNT(*) as cnt FROM EMPRESAS")
+        result['data']['total_tenants'] = rows[0].get('cnt', 0) if rows else 0
+    except Exception as e:
+        result['data']['total_tenants'] = 0
+        result['data']['_err5'] = str(e)
+    try:
+        rows = query("SELECT PED_ESTADO, COUNT(*) as cnt, COALESCE(SUM(PED_COSTO_TOTAL), 0) as revenue FROM PEDIDOS GROUP BY PED_ESTADO ORDER BY cnt DESC LIMIT 10")
+        result['data']['orders_by_status'] = [{'status': r.get('PED_ESTADO',''), 'orders': r.get('cnt',0), 'revenue': float(r.get('revenue',0))} for r in rows]
+    except Exception as e:
+        result['data']['orders_by_status'] = []
+        result['data']['_err6'] = str(e)
+    return jsonify(result)
