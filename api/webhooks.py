@@ -281,3 +281,30 @@ def payment_status_summary():
         'mercadopago': {'configured': bool(MERCADOPAGO_ACCESS_TOKEN), 'countries': list(COUNTRY_PAYMENT_METHODS.keys())},
     }
     return jsonify({'success': True, 'data': summary})
+
+
+# ===== MULTI-COUNTRY ANALYTICS =====
+
+@webhook_bp.route('/api/analytics/multi-country', methods=['GET'])
+def multi_country_analytics():
+    from db import query
+    fiscal_countries = query("SELECT TFC_COUNTRY_CODE, COUNT(*) as count FROM TENANT_FISCAL_CONFIG GROUP BY TFC_COUNTRY_CODE")
+    fiscal_docs = query("SELECT FD_COUNTRY_CODE, FD_ESTATUS, COUNT(*) as count FROM FISCAL_DOCUMENTS GROUP BY FD_COUNTRY_CODE, FD_ESTATUS")
+    payment_methods = query("SELECT PMC_COUNTRY_CODE, COUNT(*) as count FROM PAYMENT_METHODS_COUNTRY WHERE PMC_ACTIVO='S' GROUP BY PMC_COUNTRY_CODE")
+    empresas = query("SELECT COUNT(*) as total FROM EMPRESAS")
+    orders_by_country = query("""
+        SELECT SUBSTRING(ORD_DESTINO FROM 1 FOR 20) as region, COUNT(*) as count, COALESCE(SUM(ORD_TOTAL), 0) as revenue
+        FROM ORDENES GROUP BY region ORDER BY count DESC LIMIT 10
+    """)
+    return jsonify({
+        'success': True,
+        'data': {
+            'fiscal_configured': [{'country': r['TFC_COUNTRY_CODE'], 'tenants': r['count']} for r in fiscal_countries],
+            'fiscal_documents': [{'country': r['FD_COUNTRY_CODE'], 'status': r['FD_ESTATUS'], 'count': r['count']} for r in fiscal_docs],
+            'payment_methods': [{'country': r['PMC_COUNTRY_CODE'], 'methods': r['count']} for r in payment_methods],
+            'total_tenants': empresas[0]['total'] if empresas else 0,
+            'orders_by_region': [{'region': r['region'], 'orders': r['count'], 'revenue': r['revenue']} for r in orders_by_country],
+            'countries_supported': list(COUNTRY_CURRENCIES.keys()),
+            'currencies': COUNTRY_CURRENCIES,
+        }
+    })

@@ -384,6 +384,21 @@ Direccion no encontrada</textarea></div>
       <div><label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Tenant</label><select class="input"><option>Todos</option><option>Express Logistics</option><option>Transporte MX</option></select></div>
       <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="showToast('Generando reporte...','info')"><i class="fas fa-file-excel" style="font-size:10px;"></i> Excel</button><button class="btn btn-danger" onclick="showToast('Generando reporte...','info')"><i class="fas fa-file-pdf" style="font-size:10px;"></i> PDF</button></div>
     </div></div>
+
+    <!-- Analytics Multi-Pais -->
+    <div style="margin-top:24px;">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:16px;"><i class="fas fa-globe" style="margin-right:8px;color:var(--accent);"></i> Analytics Multi-Pais</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+        <div class="kpi-card" style="padding:14px;text-align:center;"><div style="font-size:20px;font-weight:600;color:var(--accent);" id="mc-tenants">0</div><div style="font-size:10px;color:var(--text-muted);">Tenants Totales</div></div>
+        <div class="kpi-card" style="padding:14px;text-align:center;"><div style="font-size:20px;font-weight:600;color:var(--success);" id="mc-countries">0</div><div style="font-size:10px;color:var(--text-muted);">Paises Activos</div></div>
+        <div class="kpi-card" style="padding:14px;text-align:center;"><div style="font-size:20px;font-weight:600;color:var(--warning);" id="mc-docs">0</div><div style="font-size:10px;color:var(--text-muted);">Docs Fiscales</div></div>
+        <div class="kpi-card" style="padding:14px;text-align:center;"><div style="font-size:20px;font-weight:600;color:#8b5cf6;" id="mc-methods">0</div><div style="font-size:10px;color:var(--text-muted);">Metodos de Pago</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card"><h3 style="font-size:13px;font-weight:600;margin-bottom:12px;">Configuracion Fiscal por Pais</h3><div id="mc-fiscal-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div></div>
+        <div class="card"><h3 style="font-size:13px;font-weight:600;margin-bottom:12px;">Metodos de Pago por Pais</h3><div id="mc-payment-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div></div>
+      </div>
+    </div>
   </div>
   <div class="section" id="section-config">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;"><h2 style="font-size:18px;font-weight:600;">Configuracion del Sistema</h2></div>

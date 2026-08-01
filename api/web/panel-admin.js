@@ -1312,4 +1312,36 @@ async function apiFetch(endpoint){
 }
 
 function refreshNotifications(){loadNotifications();}
+
+/* ============================================
+   MULTI-COUNTRY ANALYTICS
+   ============================================ */
+async function loadMultiCountryAnalytics(){
+  try{
+    const r=await apiGet('/api/analytics/multi-country');
+    if(!r||!r.success)return;
+    const d=r.data;
+    document.getElementById('mc-tenants').textContent=d.total_tenants||0;
+    document.getElementById('mc-countries').textContent=(d.countries_supported||[]).length;
+    const totalDocs=(d.fiscal_documents||[]).reduce((s,x)=>s+x.count,0);
+    document.getElementById('mc-docs').textContent=totalDocs;
+    const totalMethods=(d.payment_methods||[]).reduce((s,x)=>s+x.methods,0);
+    document.getElementById('mc-methods').textContent=totalMethods;
+    const fiscalGrid=document.getElementById('mc-fiscal-grid');
+    if(fiscalGrid&&(d.fiscal_configured||[]).length){
+      const flags={MX:'🇲🇽',BR:'🇧🇷',CO:'🇨🇴',AR:'🇦🇷',CL:'🇨🇱',PE:'🇵🇪',UY:'🇺🇾',EC:'🇪🇨'};
+      fiscalGrid.innerHTML=d.fiscal_configured.map(x=>`<div style="padding:6px 12px;border-radius:8px;background:var(--accent-bg);font-size:12px;"><strong>${flags[x.country]||''} ${x.country}</strong> <span style="color:var(--text-muted);">${x.tenants} tenant(s)</span></div>`).join('');
+    }else if(fiscalGrid){
+      fiscalGrid.innerHTML='<span style="font-size:12px;color:var(--text-muted);">No hay configuracion fiscal ainda</span>';
+    }
+    const payGrid=document.getElementById('mc-payment-grid');
+    if(payGrid&&(d.payment_methods||[]).length){
+      const flags={MX:'🇲🇽',BR:'🇧🇷',CO:'🇨🇴',AR:'🇦🇷',CL:'🇨🇱',PE:'🇵🇪',UY:'🇺🇾',EC:'🇪🇨'};
+      payGrid.innerHTML=d.payment_methods.map(x=>`<div style="padding:6px 12px;border-radius:8px;background:var(--success-bg);font-size:12px;"><strong>${flags[x.country]||''} ${x.country}</strong> <span style="color:var(--text-muted);">${x.methods} metodo(s)</span></div>`).join('');
+    }else if(payGrid){
+      payGrid.innerHTML='<span style="font-size:12px;color:var(--text-muted);">Cargando metodos de pago...</span>';
+    }
+  }catch(e){console.error('Multi-country analytics:',e);}
+}
+document.addEventListener('DOMContentLoaded',()=>{loadMultiCountryAnalytics();});
 });
