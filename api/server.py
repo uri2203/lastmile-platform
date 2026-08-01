@@ -2912,11 +2912,16 @@ def stripe_webhook():
         if emp_id:
             create_suscripcion(emp_id, plan_name, 'stripe', session.get('subscription'))
             create_pago(emp_id, PLANS.get(plan_name, {}).get('price_mxn', 0), 'STRIPE', session.get('payment_intent'))
-    elif event['type'] == 'invoice.payment_succeeded':
+    elif event['type'] == 'invoice.paid':
         invoice = event['data']['object']
         emp_id = int(invoice.get('metadata', {}).get('emp_id', 0))
         if emp_id:
             create_pago(emp_id, invoice.get('amount_paid', 0) / 100, 'STRIPE', invoice.get('payment_intent'), 'Renovacion automatica')
+    elif event['type'] == 'invoice.payment_failed':
+        invoice = event['data']['object']
+        emp_id = int(invoice.get('metadata', {}).get('emp_id', 0))
+        if emp_id:
+            create_pago(emp_id, invoice.get('amount_due', 0) / 100, 'STRIPE', invoice.get('payment_intent'), 'Pago fallido')
     elif event['type'] == 'customer.subscription.deleted':
         sub = event['data']['object']
         sub_id = sub.get('id')
