@@ -13,7 +13,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
-from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin, decode_token
+from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 import os
 import time
@@ -3620,13 +3620,17 @@ def get_payment_countries():
 
 @app.route('/api/system/migrate', methods=['POST'])
 def run_migration():
+    import jwt as _jwt
+    from auth import _secret
+
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
         return jsonify({'error': 'Unauthorized'}), 401
 
     token = auth_header.split(' ')[1]
-    payload = decode_token(token)
-    if not payload:
+    try:
+        payload = _jwt.decode(token, _secret(), algorithms=['HS256'])
+    except Exception:
         return jsonify({'error': 'Invalid token'}), 401
 
     usuario = payload.get('usuario', '')
