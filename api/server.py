@@ -3115,6 +3115,140 @@ def billing_stats_all():
 
 
 # ========================================
+# MULTI-COUNTRY FISCAL
+# ========================================
+
+@app.route('/api/fiscal/countries', methods=['GET'])
+def get_fiscal_countries():
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+    return jsonify({'success': True, 'data': service.get_available_countries()})
+
+
+@app.route('/api/fiscal/config', methods=['GET'])
+def get_fiscal_config():
+    emp_id = g.emp_id
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    fiscal_data = query("SELECT * FROM TENANT_FISCAL_DATA WHERE EMP_ID=?", [emp_id])
+    return jsonify({'success': True, 'config': config[0] if config else None, 'fiscal_data': fiscal_data[0] if fiscal_data else None})
+
+
+@app.route('/api/fiscal/config', methods=['PUT'])
+def update_fiscal_config():
+    emp_id = g.emp_id
+    data = request.get_json()
+    cc = data.get('country_code', 'MX')
+    provider = data.get('provider', 'MEXICO')
+    api_key = data.get('api_key', '')
+    base_url = data.get('base_url', '')
+    test_mode = data.get('test_mode', 'S')
+    existing = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if existing:
+        execute("UPDATE TENANT_FISCAL_CONFIG SET TFC_COUNTRY_CODE=?, TFC_PROVIDER=?, TFC_API_KEY=?, TFC_BASE_URL=?, TFC_TEST_MODE=?, TFC_FECHA_ACTUALIZACION=NOW() WHERE EMP_ID=?", [cc, provider, api_key, base_url, test_mode, emp_id])
+    else:
+        execute("INSERT INTO TENANT_FISCAL_CONFIG (EMP_ID, TFC_COUNTRY_CODE, TFC_PROVIDER, TFC_API_KEY, TFC_BASE_URL, TFC_TEST_MODE) VALUES (?, ?, ?, ?, ?, ?)", [emp_id, cc, provider, api_key, base_url, test_mode])
+    log_audit(emp_id, 'FISCAL_CONFIG_UPDATED', 'TENANT_FISCAL_CONFIG', emp_id, f'country={cc}')
+    return jsonify({'success': True})
+
+
+@app.route('/api/fiscal/test', methods=['POST'])
+def test_fiscal_connection():
+    emp_id = g.emp_id
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config: return jsonify({'success': False, 'error': 'No config'})
+    cfg = config[0]
+    ok = service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], {'api_key': cfg.get('TFC_API_KEY', ''), 'base_url': cfg.get('TFC_BASE_URL', '')})
+    if ok:
+        p = service.get_tenant_provider(emp_id)
+        return jsonify(p.test_connection())
+    return jsonify({'success': False, 'error': 'Provider not found'})
+
+
+@app.route('/api/fiscal/emit', methods=['POST'])
+def emit_fiscal_document():
+    emp_id = g.emp_id
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config: return jsonify({'success': False, 'error': 'No config'})
+    cfg = config[0]
+    service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], {'api_key': cfg.get('TFC_API_KEY', ''), 'base_url': cfg.get('TFC_BASE_URL', '')})
+    result = service.emit_invoice(emp_id, request.get_json())
+    if result.get('success'):
+        log_audit(emp_id, 'FISCAL_INVOICE_EMITTED', 'FISCAL_DOCUMENTS', emp_id, f"doc_id={result.get('document_id')}")
+    return jsonify(result)
+
+
+@app.route('/api/fiscal/cancel', methods=['POST'])
+def cancel_fiscal_document():
+    emp_id = g.emp_id
+    from fiscal_providers import MultiCountryFiscalService
+    service = MultiCountryFiscalService()
+    config = query("SELECT * FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+    if not config: return jsonify({'success': False, 'error': 'No config'})
+    cfg = config[0]
+    service.configure_tenant(emp_id, cfg['TFC_COUNTRY_CODE'], {'api_key': cfg.get('TFC_API_KEY', ''), 'base_url': cfg.get('TFC_BASE_URL', '')})
+    data = request.get_json()
+    result = service.cancel_invoice(emp_id, data.get('document_id', ''), data.get('reason', ''))
+    return jsonify(result)
+
+
+@app.route('/api/system/migrate', methods=['POST'])
+def run_migration():
+    import jwt as _jwt
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Unauthorized'}), 401
+    token = auth_header.split(' ')[1]
+    try:
+        from auth import _secret
+        payload = _jwt.decode(token, _secret(), algorithms=['HS256'])
+    except Exception:
+        return jsonify({'error': 'Invalid token'}), 401
+    if payload.get('usuario') != 'admin' and payload.get('rol') != 'admin':
+        return jsonify({'error': 'Admin only'}), 401
+
+    stmts = [
+        "CREATE TABLE IF NOT EXISTS TENANT_FISCAL_CONFIG (TFC_ID SERIAL PRIMARY KEY, EMP_ID INTEGER NOT NULL UNIQUE REFERENCES EMPRESAS(EMP_ID), TFC_COUNTRY_CODE TEXT NOT NULL DEFAULT 'MX', TFC_PROVIDER TEXT NOT NULL DEFAULT 'MEXICO', TFC_API_KEY TEXT, TFC_API_SECRET TEXT, TFC_BASE_URL TEXT, TFC_ENABLED TEXT DEFAULT 'N', TFC_TEST_MODE TEXT DEFAULT 'S', TFC_CUSTOM_CONFIG TEXT DEFAULT '{}', TFC_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(), TFC_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW())",
+        "CREATE TABLE IF NOT EXISTS TENANT_FISCAL_DATA (TFD_ID SERIAL PRIMARY KEY, EMP_ID INTEGER NOT NULL UNIQUE REFERENCES EMPRESAS(EMP_ID), TFD_RFC TEXT, TFD_RAZON_SOCIAL TEXT, TFD_REGIMEN_FISCAL TEXT, TFD_CODIGO_POSTAL TEXT, TFD_CALLE TEXT, TFD_MUNICIPIO TEXT, TFD_ESTADO TEXT, TFD_TELEFONO TEXT, TFD_EMAIL TEXT, TFD_CNPJ TEXT, TFD_IE TEXT, TFD_NIT TEXT, TFD_CUIT TEXT, TFD_CONDICION_IVA TEXT, TFD_RUT TEXT, TFD_GIRO TEXT, TFD_COMUNA TEXT, TFD_CIUDAD TEXT, TFD_REGION TEXT, TFD_TIPO_PERSONA TEXT DEFAULT 'M', TFD_FECHA_REGISTRO TIMESTAMP DEFAULT NOW())",
+        "CREATE TABLE IF NOT EXISTS FISCAL_DOCUMENTS (FD_ID SERIAL PRIMARY KEY, EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID), FD_DOCUMENT_ID TEXT, FD_DOCUMENT_TYPE TEXT DEFAULT 'FACTURA', FD_COUNTRY_CODE TEXT NOT NULL, FD_UUID TEXT, FD_SERIE TEXT, FD_NUMERO TEXT, FD_FECHA_EMISION TIMESTAMP DEFAULT NOW(), FD_MONEDA TEXT DEFAULT 'MXN', FD_SUBTOTAL REAL DEFAULT 0, FD_TOTAL REAL DEFAULT 0, FD_RECEPTOR_NOMBRE TEXT, FD_ESTATUS TEXT DEFAULT 'PENDIENTE', FD_FECHA_REGISTRO TIMESTAMP DEFAULT NOW())",
+        "CREATE TABLE IF NOT EXISTS PAYMENT_METHODS_COUNTRY (PMC_ID SERIAL PRIMARY KEY, PMC_COUNTRY_CODE TEXT NOT NULL, PMC_METHOD_CODE TEXT NOT NULL, PMC_METHOD_NAME TEXT NOT NULL, PMC_PROVIDER TEXT, PMC_ACTIVO TEXT DEFAULT 'S', UNIQUE(PMC_COUNTRY_CODE, PMC_METHOD_CODE))",
+        "CREATE INDEX IF NOT EXISTS IX_TFC_EMP ON TENANT_FISCAL_CONFIG(EMP_ID)",
+        "CREATE INDEX IF NOT EXISTS IX_FD_EMP ON FISCAL_DOCUMENTS(EMP_ID)",
+    ]
+    results = []
+    for s in stmts:
+        try:
+            execute(s)
+            results.append({'status': 'OK', 'preview': s[:50]})
+        except Exception as e:
+            results.append({'status': 'ERROR', 'error': str(e)[:200], 'preview': s[:50]})
+
+    pms = [
+        ('MX','EFECTIVO','Efectivo',None),('MX','TARJETA','Tarjeta','stripe'),('MX','OXXO','OXXO','stripe'),('MX','MERCADOPAGO','MercadoPago','mercadopago'),
+        ('BR','PIX','PIX','mercadopago'),('BR','BOLETO','Boleto','mercadopago'),('BR','CARTAO','Cartao','stripe'),
+        ('CO','PSE','PSE','mercadopago'),('CO','NEQUI','Nequi',None),('CO','TARJETA','Tarjeta','stripe'),
+        ('AR','MERCADOPAGO','MercadoPago','mercadopago'),('AR','TARJETA','Tarjeta','stripe'),('AR','EFECTIVO','Rapipago',None),
+        ('CL','WEBPAY','Webpay','stripe'),('CL','TARJETA','Tarjeta','stripe'),
+        ('PE','YAPE','Yape',None),('PE','PLIN','Plin',None),('PE','TARJETA','Tarjeta','stripe'),
+        ('UY','MERCADOPAGO','MercadoPago','mercadopago'),('UY','TARJETA','Tarjeta','stripe'),
+        ('EC','TARJETA','Tarjeta','stripe'),('EC','PICHINCHA','Pichincha',None),
+    ]
+    pm_ok = 0
+    for pm in pms:
+        try:
+            execute("INSERT INTO PAYMENT_METHODS_COUNTRY (PMC_COUNTRY_CODE, PMC_METHOD_CODE, PMC_METHOD_NAME, PMC_PROVIDER) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING", list(pm))
+            pm_ok += 1
+        except Exception:
+            pass
+
+    log_audit(1, 'MIGRATION_RUN', 'SYSTEM', 0, f'{len(results)} DDL, {pm_ok} PMs')
+    return jsonify({'success': True, 'ddl_ok': sum(1 for r in results if r['status'] == 'OK'), 'payment_methods': pm_ok, 'details': results})
+
+
+# ========================================
 # MANTENIMIENTO (EDGAR data - simulado)
 # ========================================
 @app.route('/api/mantenimiento/unidades', methods=['GET'])
