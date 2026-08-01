@@ -1,0 +1,165 @@
+{
+  "app_name": "Last Mile Delivery",
+  "tagline": "Plataforma de Delivery Whitelabel",
+  "login": {
+    "title": "Iniciar Sesion",
+    "username": "Usuario",
+    "password": "Contrasena",
+    "button": "Entrar",
+    "error": "Credenciales incorrectas"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "orders": "Ordenes",
+    "drivers": "Choferes",
+    "clients": "Clientes",
+    "tracking": "Rastreo",
+    "reports": "Reportes",
+    "billing": "Facturacion",
+    "settings": "Configuracion",
+    "fiscal": "Facturacion Fiscal",
+    "logout": "Cerrar Sesion"
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "active_orders": "Ordenes Activas",
+    "total_drivers": "Choferes Totales",
+    "revenue_today": "Ingresos Hoy",
+    "pending_orders": "Ordenes Pendientes"
+  },
+  "orders": {
+    "title": "Gestion de Ordenes",
+    "new_order": "Nueva Orden",
+    "order_id": "ID Orden",
+    "status": "Estado",
+    "pickup": "Recogida",
+    "delivery": "Entrega",
+    "driver": "Chofer",
+    "client": "Cliente",
+    "total": "Total",
+    "created": "Fecha Creacion",
+    "statuses": {
+      "pending": "Pendiente",
+      "assigned": "Asignada",
+      "pickup": "En Recogida",
+      "in_transit": "En Transito",
+      "delivered": "Entregada",
+      "cancelled": "Cancelada"
+    }
+  },
+  "drivers": {
+    "title": "Gestion de Choferes",
+    "add_driver": "Agregar Chofer",
+    "name": "Nombre",
+    "phone": "Telefono",
+    "vehicle": "Vehiculo",
+    "status": "Estado",
+    "rating": "Calificacion",
+    "available": "Disponible",
+    "busy": "Ocupado",
+    "offline": "Fuera de Linea"
+  },
+  "clients": {
+    "title": "Gestion de Clientes",
+    "add_client": "Agregar Cliente",
+    "name": "Nombre",
+    "email": "Correo",
+    "phone": "Telefono",
+    "address": "Direccion",
+    "orders_count": "Total Ordenes"
+  },
+  "tracking": {
+    "title": "Rastreo en Tiempo Real",
+    "live_map": "Mapa en Vivo",
+    "driver_location": "Ubicacion del Chofer",
+    "eta": "Tiempo Estimado",
+    "no_active_tracking": "Sin rastreo activo"
+  },
+  "reports": {
+    "title": "Reportes",
+    "daily": "Diario",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "revenue": "Ingresos",
+    "orders_by_status": "Ordenes por Estado",
+    "driver_performance": "Rendimiento de Choferes",
+    "export_csv": "Exportar CSV",
+    "export_pdf": "Exportar PDF"
+  },
+  "billing": {
+    "title": "Facturacion",
+    "plan": "Plan",
+    "usage": "Uso",
+    "limits": "Limites",
+    "invoices": "Facturas",
+    "next_payment": "Proximo Pago",
+    "amount": "Monto",
+    "starter": "Starter",
+    "pro": "Pro",
+    "enterprise": "Enterprise"
+  },
+  "fiscal": {
+    "title": "Configuracion Fiscal Multi-Pais",
+    "country": "Pais",
+    "provider": "Proveedor",
+    "api_key": "Clave API",
+    "api_secret": "Clave Secreta",
+    "base_url": "URL Base",
+    "test_connection": "Probar Conexion",
+    "save_config": "Guardar Configuracion",
+    "emit_invoice": "Emitir Factura",
+    "cancel_invoice": "Cancelar Factura",
+    "document_status": "Estado del Documento",
+    "countries": {
+      "MX": "Mexico",
+      "BR": "Brasil",
+      "CO": "Colombia",
+      "AR": "Argentina",
+      "CL": "Chile",
+      "PE": "Peru",
+      "UY": "Uruguay",
+      "EC": "Ecuador"
+    }
+  },
+  "settings": {
+    "title": "Configuracion",
+    "company": "Empresa",
+    "notifications": "Notificaciones",
+    "integrations": "Integraciones",
+    "language": "Idioma",
+    "timezone": "Zona Horaria",
+    "currency": "Moneda"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "loading": "Cargando...",
+    "no_data": "Sin datos",
+    "success": "Exito",
+    "error": "Error",
+    "confirm": "Confirmar",
+    "yes": "Si",
+    "no": "No",
+    "back": "Atras",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "refresh": "Actualizar",
+    "export": "Exportar",
+    "import": "Importar"
+  },
+  "currency": {
+    "MXN": "Peso Mexicano",
+    "BRL": "Real Brasileño",
+    "COP": "Peso Colombiano",
+    "ARS": "Peso Argentino",
+    "CLP": "Peso Chileno",
+    "PEN": "Sol Peruano",
+    "UYU": "Peso Uruguayo",
+    "USD": "Dolar Americano"
+  }
+}

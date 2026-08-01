@@ -1,0 +1,165 @@
+{
+  "app_name": "Last Mile Delivery",
+  "tagline": "Whitelabel Delivery Platform",
+  "login": {
+    "title": "Sign In",
+    "username": "Username",
+    "password": "Password",
+    "button": "Enter",
+    "error": "Invalid credentials"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "drivers": "Drivers",
+    "clients": "Clients",
+    "tracking": "Tracking",
+    "reports": "Reports",
+    "billing": "Billing",
+    "settings": "Settings",
+    "fiscal": "Fiscal Invoicing",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "active_orders": "Active Orders",
+    "total_drivers": "Total Drivers",
+    "revenue_today": "Revenue Today",
+    "pending_orders": "Pending Orders"
+  },
+  "orders": {
+    "title": "Order Management",
+    "new_order": "New Order",
+    "order_id": "Order ID",
+    "status": "Status",
+    "pickup": "Pickup",
+    "delivery": "Delivery",
+    "driver": "Driver",
+    "client": "Client",
+    "total": "Total",
+    "created": "Created Date",
+    "statuses": {
+      "pending": "Pending",
+      "assigned": "Assigned",
+      "pickup": "Picking Up",
+      "in_transit": "In Transit",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
+  },
+  "drivers": {
+    "title": "Driver Management",
+    "add_driver": "Add Driver",
+    "name": "Name",
+    "phone": "Phone",
+    "vehicle": "Vehicle",
+    "status": "Status",
+    "rating": "Rating",
+    "available": "Available",
+    "busy": "Busy",
+    "offline": "Offline"
+  },
+  "clients": {
+    "title": "Client Management",
+    "add_client": "Add Client",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "orders_count": "Total Orders"
+  },
+  "tracking": {
+    "title": "Live Tracking",
+    "live_map": "Live Map",
+    "driver_location": "Driver Location",
+    "eta": "Estimated Time",
+    "no_active_tracking": "No active tracking"
+  },
+  "reports": {
+    "title": "Reports",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "revenue": "Revenue",
+    "orders_by_status": "Orders by Status",
+    "driver_performance": "Driver Performance",
+    "export_csv": "Export CSV",
+    "export_pdf": "Export PDF"
+  },
+  "billing": {
+    "title": "Billing",
+    "plan": "Plan",
+    "usage": "Usage",
+    "limits": "Limits",
+    "invoices": "Invoices",
+    "next_payment": "Next Payment",
+    "amount": "Amount",
+    "starter": "Starter",
+    "pro": "Pro",
+    "enterprise": "Enterprise"
+  },
+  "fiscal": {
+    "title": "Multi-Country Fiscal Settings",
+    "country": "Country",
+    "provider": "Provider",
+    "api_key": "API Key",
+    "api_secret": "API Secret",
+    "base_url": "Base URL",
+    "test_connection": "Test Connection",
+    "save_config": "Save Configuration",
+    "emit_invoice": "Emit Invoice",
+    "cancel_invoice": "Cancel Invoice",
+    "document_status": "Document Status",
+    "countries": {
+      "MX": "Mexico",
+      "BR": "Brazil",
+      "CO": "Colombia",
+      "AR": "Argentina",
+      "CL": "Chile",
+      "PE": "Peru",
+      "UY": "Uruguay",
+      "EC": "Ecuador"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "company": "Company",
+    "notifications": "Notifications",
+    "integrations": "Integrations",
+    "language": "Language",
+    "timezone": "Timezone",
+    "currency": "Currency"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "no_data": "No data",
+    "success": "Success",
+    "error": "Error",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import"
+  },
+  "currency": {
+    "MXN": "Mexican Peso",
+    "BRL": "Brazilian Real",
+    "COP": "Colombian Peso",
+    "ARS": "Argentine Peso",
+    "CLP": "Chilean Peso",
+    "PEN": "Peruvian Sol",
+    "UYU": "Uruguayan Peso",
+    "USD": "US Dollar"
+  }
+}
