@@ -36,8 +36,12 @@ tags:
     description: Facturacion SaaS y planes
   - name: CFDI
     description: Facturacion electronica CFDI 4.0
+  - name: Fiscal
+    description: Sistema fiscal multi-pais (MX, BR, CO, AR, CL, PE, UY, EC)
   - name: Pagos
-    description: Pagos y transacciones
+    description: Pagos y transacciones multi-pais
+  - name: Webhooks
+    description: Webhooks de Stripe y MercadoPago
   - name: Usuarios
     description: Gestion de usuarios del tenant
   - name: SuperAdmin
@@ -567,6 +571,244 @@ paths:
       responses:
         '200':
           description: Estado del pedido
+
+  # ===== MULTI-COUNTRY FISCAL =====
+  /api/fiscal/countries:
+    get:
+      tags: [Fiscal]
+      summary: Listar paises con soporte fiscal
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de 8 paises (MX, BR, CO, AR, CL, PE, UY, EC)
+
+  /api/fiscal/providers:
+    get:
+      tags: [Fiscal]
+      summary: Listar proveedores fiscales disponibles
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Proveedores con monedas
+
+  /api/fiscal/config:
+    get:
+      tags: [Fiscal]
+      summary: Obtener configuracion fiscal del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Configuracion fiscal
+    put:
+      tags: [Fiscal]
+      summary: Guardar configuracion fiscal del tenant
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [country_code]
+              properties:
+                country_code:
+                  type: string
+                  enum: [MX, BR, CO, AR, CL, PE, UY, EC]
+                api_key:
+                  type: string
+                api_secret:
+                  type: string
+                base_url:
+                  type: string
+      responses:
+        '200':
+          description: Configuracion guardada
+
+  /api/fiscal/test-connection:
+    post:
+      tags: [Fiscal]
+      summary: Probar conexion con proveedor fiscal
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                country_code:
+                  type: string
+      responses:
+        '200':
+          description: Resultado de prueba de conexion
+
+  /api/fiscal/emit:
+    post:
+      tags: [Fiscal]
+      summary: Emitir documento fiscal
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Documento emitido
+
+  /api/fiscal/cancel:
+    post:
+      tags: [Fiscal]
+      summary: Cancelar documento fiscal
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                document_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Documento cancelado
+
+  /api/system/migrate:
+    post:
+      tags: [Fiscal]
+      summary: Ejecutar migracion de tablas fiscales (admin)
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Migracion ejecutada
+
+  # ===== MULTI-COUNTRY PAYMENTS =====
+  /api/payment/countries:
+    get:
+      tags: [Pagos]
+      summary: Listar paises con metodos de pago
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de paises con pagos
+
+  /api/payment/methods/{country_code}:
+    get:
+      tags: [Pagos]
+      summary: Metodos de pago por pais
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metodos de pago del pais
+
+  /api/payments/create:
+    post:
+      tags: [Pagos]
+      summary: Crear pago multi-pais
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, country_code]
+              properties:
+                amount:
+                  type: number
+                country_code:
+                  type: string
+                payment_method:
+                  type: string
+                description:
+                  type: string
+                order_id:
+                  type: string
+      responses:
+        '200':
+          description: Sesion de pago creada
+
+  /api/payments/status/{provider}/{payment_id}:
+    get:
+      tags: [Pagos]
+      summary: Consultar estado de pago
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [stripe, mercadopago]
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estado del pago
+
+  /api/payments/refund:
+    post:
+      tags: [Pagos]
+      summary: Reembolsar pago
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, payment_id]
+              properties:
+                provider:
+                  type: string
+                payment_id:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Reembolso procesado
+
+  /api/payments/status-summary:
+    get:
+      tags: [Pagos]
+      summary: Estado de configuracion de proveedores de pago
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Resumen de estado
+
+  # ===== WEBHOOKS (PUBLIC - NO AUTH) =====
+  /api/webhooks/stripe:
+    post:
+      tags: [Webhooks]
+      summary: Webhook de Stripe (pagos, reembolsos, etc)
+      security: []
+      responses:
+        '200':
+          description: Evento procesado
+
+  /api/webhooks/mercadopago:
+    post:
+      tags: [Webhooks]
+      summary: Webhook de MercadoPago (pagos, etc)
+      security: []
+      responses:
+        '200':
+          description: Evento procesado
 
 components:
   securitySchemes:

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Fiscal | Last Mile Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg-primary,#0f0f1a);color:var(--text-primary,#e4e4e7);min-height:100vh;display:flex;align-items:center;justify-content:center}
+        .wizard{max-width:680px;width:100%;padding:40px}
+        .wizard-header{text-align:center;margin-bottom:40px}
+        .wizard-header h1{font-size:24px;font-weight:700;margin-bottom:8px}
+        .wizard-header p{color:var(--text-muted,#71717a);font-size:14px}
+        .steps{display:flex;justify-content:center;gap:8px;margin-bottom:36px}
+        .step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:2px solid var(--border-primary,#27272a);color:var(--text-muted,#71717a);transition:all .3s}
+        .step-dot.active{border-color:var(--accent,#ff6b35);color:var(--accent,#ff6b35);background:rgba(255,107,53,0.1)}
+        .step-dot.done{border-color:var(--success,#10b981);color:#fff;background:var(--success,#10b981)}
+        .step-line{width:40px;height:2px;background:var(--border-primary,#27272a);align-self:center}
+        .card{background:var(--bg-card,#1a1a2e);border:1px solid var(--border-primary,#27272a);border-radius:12px;padding:32px;margin-bottom:24px}
+        .card h2{font-size:16px;font-weight:600;margin-bottom:6px}
+        .card .subtitle{font-size:13px;color:var(--text-muted,#71717a);margin-bottom:20px}
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted,#71717a);font-weight:500;margin-bottom:6px}
+        .input{width:100%;padding:10px 14px;background:var(--bg-primary,#0f0f1a);border:1px solid var(--border-primary,#27272a);border-radius:8px;color:var(--text-primary,#e4e4e7);font-size:14px;outline:none;transition:border-color .2s}
+        .input:focus{border-color:var(--accent,#ff6b35)}
+        select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+        .country-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+        .country-card{border:2px solid var(--border-primary,#27272a);border-radius:10px;padding:16px 8px;text-align:center;cursor:pointer;transition:all .2s}
+        .country-card:hover{border-color:var(--accent,#ff6b35);transform:translateY(-2px)}
+        .country-card.selected{border-color:var(--accent,#ff6b35);background:rgba(255,107,53,0.08)}
+        .country-card .flag{font-size:1.8rem;margin-bottom:6px}
+        .country-card .name{font-size:12px;font-weight:600}
+        .country-card .curr{font-size:10px;color:var(--text-muted,#71717a);margin-top:2px}
+        .btn{padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+        .btn-primary{background:var(--accent,#ff6b35);color:#fff}.btn-primary:hover{background:#e55a2b}
+        .btn-secondary{background:var(--bg-primary,#0f0f1a);color:var(--text-secondary,#a1a1aa);border:1px solid var(--border-primary,#27272a)}.btn-secondary:hover{border-color:var(--accent,#ff6b35)}
+        .btn-success{background:var(--success,#10b981);color:#fff}.btn-success:hover{background:#059669}
+        .btn-group{display:flex;justify-content:space-between;margin-top:24px}
+        .status-box{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:16px;display:none}
+        .status-box.show{display:flex;align-items:center;gap:8px}
+        .status-box.success{background:rgba(16,185,129,0.1);color:var(--success,#10b981);border:1px solid rgba(16,185,129,0.2)}
+        .status-box.error{background:rgba(239,68,68,0.1);color:var(--danger,#ef4444);border:1px solid rgba(239,68,68,0.2)}
+        .status-box.info{background:rgba(99,102,241,0.1);color:var(--accent,#6366f1);border:1px solid rgba(99,102,241,0.2)}
+        .success-screen{text-align:center;padding:40px 0}
+        .success-screen .icon{font-size:48px;margin-bottom:16px}
+        .success-screen h2{font-size:20px;margin-bottom:8px}
+        .success-screen p{color:var(--text-muted,#71717a);font-size:14px;margin-bottom:24px}
+        .hidden{display:none}
+        .tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;margin:2px}
+        .tag-stripe{background:rgba(99,91,255,0.15);color:#635bff}
+        .tag-mp{background:rgba(0,146,227,0.15);color:#009ee3}
+        .tag-local{background:rgba(255,107,53,0.15);color:var(--accent,#ff6b35)}
+    </style>
+</head>
+<body>
+<div class="wizard">
+    <div class="wizard-header">
+        <h1><i class="fas fa-globe" style="color:var(--accent,#ff6b35);margin-right:8px;"></i> Configuracion Fiscal</h1>
+        <p>Configura la facturacion electronica para tu pais en 4 pasos</p>
+    </div>
+    <div class="steps">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="dot-4">4</div>
+    </div>
+
+    <!-- STEP 1: PAIS -->
+    <div class="step" id="step-1">
+        <div class="card">
+            <h2>Selecciona tu Pais</h2>
+            <div class="subtitle">El proveedor fiscal se configurara automaticamente</div>
+            <div class="country-grid" id="countryGrid"></div>
+            <div id="selectedInfo" style="padding:12px;border-radius:8px;background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.15);display:none">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i class="fas fa-check-circle" style="color:var(--success,#10b981)"></i><span id="selCountryName" style="font-weight:600"></span></div>
+                <div style="font-size:12px;color:var(--text-muted,#71717a)" id="selCountryDetail"></div>
+                <div style="margin-top:8px" id="selPaymentMethods"></div>
+            </div>
+        </div>
+        <div class="btn-group"><div></div><button class="btn btn-primary" onclick="goStep(2)" id="btn-step1" disabled>Siguiente <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
+    </div>
+
+    <!-- STEP 2: CREDENCIALES -->
+    <div class="step hidden" id="step-2">
+        <div class="card">
+            <h2>Credenciales del Proveedor</h2>
+            <div class="subtitle" id="step2Subtitle">Ingresa las credenciales de tu proveedor fiscal</div>
+            <div class="form-group"><label>API Key / Token *</label><input type="password" class="input" id="fiscal-api-key" placeholder="Tu API key del proveedor fiscal"></div>
+            <div class="form-group"><label>API Secret (opcional)</label><input type="password" class="input" id="fiscal-api-secret" placeholder="Clave secreta si aplica"></div>
+            <div class="form-group"><label>URL Base (opcional)</label><input type="text" class="input" id="fiscal-base-url" placeholder="URL base de la API"></div>
+            <div class="form-group" style="padding:12px;background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:8px">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><i class="fas fa-info-circle" style="color:var(--accent,#6366f1);font-size:12px"></i><span style="font-size:12px;font-weight:500;color:var(--accent,#6366f1)">Donde obtengo mis credenciales?</span></div>
+                <p style="font-size:11px;color:var(--text-muted,#71717a)" id="credentialHelp">Consulta la documentacion de tu proveedor fiscal para obtener las credenciales de acceso a la API.</p>
+            </div>
+        </div>
+        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(1)"><i class="fas fa-arrow-left" style="font-size:11px"></i> Atras</button><button class="btn btn-primary" onclick="goStep(3)">Siguiente <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
+    </div>
+
+    <!-- STEP 3: PROBAR -->
+    <div class="step hidden" id="step-3">
+        <div class="card">
+            <h2>Probar Conexion</h2>
+            <div class="subtitle">Verifica que las credenciales sean correctas</div>
+            <button class="btn btn-primary" onclick="testConnection()" id="btn-test"><i class="fas fa-plug" style="font-size:11px"></i> Probar Conexion</button>
+            <div class="status-box" id="testStatus"></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(2)"><i class="fas fa-arrow-left" style="font-size:11px"></i> Atras</button><button class="btn btn-primary" onclick="goStep(4)">Siguiente <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
+    </div>
+
+    <!-- STEP 4: GUARDAR -->
+    <div class="step hidden" id="step-4">
+        <div class="card">
+            <h2>Guardar Configuracion</h2>
+            <div class="subtitle">Revisa y guarda la configuracion fiscal</div>
+            <div id="summary" style="padding:16px;border-radius:8px;background:var(--bg-primary,#0f0f1a);border:1px solid var(--border-primary,#27272a)"></div>
+            <div class="status-box" id="saveStatus"></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(3)"><i class="fas fa-arrow-left" style="font-size:11px"></i> Atras</button><button class="btn btn-success" onclick="saveConfig()"><i class="fas fa-save" style="font-size:11px"></i> Guardar y Activar</button></div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="step hidden" id="step-done">
+        <div class="card">
+            <div class="success-screen">
+                <div class="icon">🎉</div>
+                <h2>Configuracion Fiscal Activada</h2>
+                <p>Tu plataforma ya puede emitir documentos fiscales en <strong id="doneCountry"></strong></p>
+                <div id="doneSummary" style="text-align:left;padding:16px;border-radius:8px;background:var(--bg-primary,#0f0f1a);border:1px solid var(--border-primary,#27272a);margin-bottom:20px"></div>
+                <button class="btn btn-primary" onclick="window.location.href='panel-admin.html'"><i class="fas fa-arrow-right" style="font-size:11px"></i> Ir al Panel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const TOKEN = localStorage.getItem('lm_token') || '';
+const API = window.location.origin;
+const COUNTRIES = [
+    {code:'MX',name:'Mexico',flag:'🇲🇽',currency:'MXN',provider:'MexicoProvider',help:'Obten tu API key en facturapi.io/dashboard > API Keys'},
+    {code:'BR',name:'Brasil',flag:'🇧🇷',currency:'BRL',provider:'BrazilProvider',help:'Obten tu API key en nfe.io > Settings > API'},
+    {code:'CO',name:'Colombia',flag:'🇨🇴',currency:'COP',provider:'ColombiaProvider',help:'Registrate en api.dian.gov.co > Credenciales'},
+    {code:'AR',name:'Argentina',flag:'🇦🇷',currency:'ARS',provider:'ArgentinaProvider',help:'Obten acceso en fiscalapi.com > Developer'},
+    {code:'CL',name:'Chile',flag:'🇨🇱',currency:'CLP',provider:'ChileProvider',help:'Registrate en api.sii.cl > Credenciales'},
+    {code:'PE',name:'Peru',flag:'🇵🇪',currency:'PEN',provider:'PeruProvider',help:'Accede en api.sunat.gob.pe > Clave SOL'},
+    {code:'UY',name:'Uruguay',flag:'🇺🇾',currency:'UYU',provider:'UruguayProvider',help:'Registrate en api.dgi.gub.uy > Credenciales'},
+    {code:'EC',name:'Ecuador',flag:'🇪🇨',currency:'USD',provider:'EcuadorProvider',help:'Accede en api.sri.gob.ec > Certificados digitales'},
+];
+let selected = null;
+let currentStep = 1;
+
+function init() {
+    const grid = document.getElementById('countryGrid');
+    grid.innerHTML = COUNTRIES.map(c => `
+        <div class="country-card" onclick="selectCountry('${c.code}')" id="cc-${c.code}">
+            <div class="flag">${c.flag}</div>
+            <div class="name">${c.name}</div>
+            <div class="curr">${c.currency}</div>
+        </div>
+    `).join('');
+}
+
+function selectCountry(code) {
+    selected = COUNTRIES.find(c => c.code === code);
+    document.querySelectorAll('.country-card').forEach(c => c.classList.toggle('selected', c.id === `cc-${code}`));
+    document.getElementById('selectedInfo').style.display = 'block';
+    document.getElementById('selCountryName').textContent = `${selected.flag} ${selected.name} - ${selected.provider}`;
+    document.getElementById('selCountryDetail').textContent = `Moneda: ${selected.currency} | Proveedor fiscal: ${selected.provider}`;
+    document.getElementById('btn-step1').disabled = false;
+    document.getElementById('step2Subtitle').textContent = `Configura las credenciales para ${selected.name}`;
+    document.getElementById('credentialHelp').textContent = selected.help;
+}
+
+function goStep(n) {
+    if (n === 2 && !selected) return;
+    document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
+    document.getElementById(`step-${n}`).classList.remove('hidden');
+    for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+    }
+    if (n === 4) renderSummary();
+    currentStep = n;
+}
+
+async function testConnection() {
+    const box = document.getElementById('testStatus');
+    box.className = 'status-box show info';
+    box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando conexion...';
+    document.getElementById('btn-test').disabled = true;
+    try {
+        const r = await fetch(`${API}/api/fiscal/test-connection`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ country_code: selected.code }),
+        });
+        const d = await r.json();
+        if (d.success) {
+            box.className = 'status-box show success';
+            box.innerHTML = `<i class="fas fa-check-circle"></i> Conexion exitosa con <strong>${d.provider}</strong>`;
+        } else {
+            box.className = 'status-box show error';
+            box.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${d.error || 'Sin respuesta'}`;
+        }
+    } catch (e) {
+        box.className = 'status-box show error';
+        box.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error de red: ${e.message}`;
+    }
+    document.getElementById('btn-test').disabled = false;
+}
+
+function renderSummary() {
+    document.getElementById('summary').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+            <div><span style="color:var(--text-muted,#71717a)">Pais:</span> <strong>${selected.flag} ${selected.name}</strong></div>
+            <div><span style="color:var(--text-muted,#71717a)">Moneda:</span> <strong>${selected.currency}</strong></div>
+            <div><span style="color:var(--text-muted,#71717a)">Proveedor:</span> <strong>${selected.provider}</strong></div>
+            <div><span style="color:var(--text-muted,#71717a)">API Key:</span> <strong>${'*'.repeat(8)}${(document.getElementById('fiscal-api-key').value||'').slice(-4)}</strong></div>
+        </div>
+    `;
+}
+
+async function saveConfig() {
+    const box = document.getElementById('saveStatus');
+    box.className = 'status-box show info';
+    box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando configuracion...';
+    try {
+        const r = await fetch(`${API}/api/fiscal/config`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                country_code: selected.code,
+                api_key: document.getElementById('fiscal-api-key').value,
+                api_secret: document.getElementById('fiscal-api-secret').value,
+                base_url: document.getElementById('fiscal-base-url').value,
+            }),
+        });
+        const d = await r.json();
+        if (d.success) {
+            document.getElementById('doneCountry').textContent = `${selected.flag} ${selected.name}`;
+            document.getElementById('doneSummary').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+                    <div><span style="color:var(--text-muted,#71717a)">Pais:</span> ${selected.flag} ${selected.name}</div>
+                    <div><span style="color:var(--text-muted,#71717a)">Proveedor:</span> ${selected.provider}</div>
+                    <div><span style="color:var(--text-muted,#71717a)">Moneda:</span> ${selected.currency}</div>
+                    <div><span style="color:var(--text-muted,#71717a)">Estado:</span> <span style="color:var(--success,#10b981)">Activo</span></div>
+                </div>
+            `;
+            goStep(0);
+            document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
+            document.getElementById('step-done').classList.remove('hidden');
+        } else {
+            box.className = 'status-box show error';
+            box.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${d.error || 'Desconocido'}`;
+        }
+    } catch (e) {
+        box.className = 'status-box show error';
+        box.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${e.message}`;
+    }
+}
+
+init();
+</script>
+</body>
+</html>
