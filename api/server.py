@@ -3237,12 +3237,12 @@ def run_migration():
     pm_ok = 0
     for pm in pms:
         try:
-            execute("INSERT INTO PAYMENT_METHODS_COUNTRY (PMC_COUNTRY_CODE, PMC_METHOD_CODE, PMC_METHOD_NAME, PMC_PROVIDER) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING", list(pm))
+            execute("INSERT INTO PAYMENT_METHODS_COUNTRY (PMC_COUNTRY_CODE, PMC_METHOD_CODE, PMC_METHOD_NAME, PMC_PROVIDER) VALUES (?, ?, ?, ?) ON CONFLICT (PMC_COUNTRY_CODE, PMC_METHOD_CODE) DO NOTHING", list(pm))
             pm_ok += 1
         except Exception:
             pass
 
-    log_audit(1, 'MIGRATION_RUN', 'SYSTEM', 0, f'{len(results)} DDL, {pm_ok} PMs')
+    log_audit('MIGRATION_RUN')
     return jsonify({'success': True, 'ddl_ok': sum(1 for r in results if r['status'] == 'OK'), 'payment_methods': pm_ok, 'details': results})
 
 
