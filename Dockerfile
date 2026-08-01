@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ .
 
 # Create data directory
-RUN mkdir -p /data
+RUN mkdir -p /data && chmod +x entrypoint.sh
 
 # Set environment
 ENV DATA_DIR=/data
@@ -19,4 +19,4 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120"]
+CMD ["./entrypoint.sh"]

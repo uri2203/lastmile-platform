@@ -22,12 +22,33 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
 # ========================================
+# SENTRY: Error monitoring (optional)
+# ========================================
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.flask import FlaskIntegration
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=0.1,
+            environment=os.environ.get('FLASK_ENV', 'production'),
+        )
+        print('[SENTRY] Error monitoring enabled')
+    except Exception as e:
+        print(f'[SENTRY] Init failed: {e}')
+
+# ========================================
 # CARGAR VARIABLES DE ENTORNO
 # ========================================
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Servir archivos estaticos desde /web
 app = Flask(__name__, static_folder='web', static_url_path='')
+
+# Max request body size: 10MB
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
 # Validate FLASK_SECRET_KEY in production
 _secret_key = os.environ.get('FLASK_SECRET_KEY', '')
@@ -240,6 +261,15 @@ def before_request():
 
 @app.after_request
 def after_request(response):
+    # Security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER'):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    if request.path.startswith('/api/'):
+        response.headers['Content-Security-Policy'] = "default-src 'none'"
     if hasattr(request, 'start_time'):
         elapsed = round((time.time() - request.start_time) * 1000, 1)
         status = response.status_code
@@ -256,9 +286,20 @@ def handle_rate_limit(e):
     return jsonify({'success': False, 'error': 'Demasiados intentos. Espera un momento e intenta de nuevo.'}), 429
 
 
+@app.errorhandler(404)
+def handle_not_found(e):
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'error': 'Endpoint no encontrado'}), 404
+    return e
+
+
+@app.errorhandler(413)
+def handle_too_large(e):
+    return jsonify({'success': False, 'error': 'Request demasiado grande. Maximo 10MB.'}), 413
+
+
 @app.errorhandler(Exception)
 def handle_exception(e):
-    # Respeta los errores HTTP (429, 404, 400, ...); no los enmascares como 500.
     if isinstance(e, HTTPException):
         return e
     error_logger.error(f'Unhandled: {str(e)}', exc_info=True)
