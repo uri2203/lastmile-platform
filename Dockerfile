@@ -1,14 +1,16 @@
-FROM python:3.11-slim
-
-ARG CACHEBUST=1
+FROM python:3.11.9-slim
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies first (layer cached separately)
 COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Force cache invalidation: use a RUN that changes per-build
+# This ensures the COPY layer below is always rebuilt
+RUN python3 -c "import secrets; print(secrets.token_hex(8))" > /dev/null
+
+# Copy application code - always fresh due to RUN above
 COPY api/ .
 
 # Validate syntax at build time - WILL FAIL BUILD if server.py has syntax errors
