@@ -17,29 +17,12 @@ from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGR
 from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 from webhooks import webhook_bp
+from monitoring import init_monitoring
 import os
 import time
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
-
-# ========================================
-# SENTRY: Error monitoring (optional)
-# ========================================
-SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
-if SENTRY_DSN:
-    try:
-        import sentry_sdk
-        from sentry_sdk.integrations.flask import FlaskIntegration
-        sentry_sdk.init(
-            dsn=SENTRY_DSN,
-            integrations=[FlaskIntegration()],
-            traces_sample_rate=0.1,
-            environment=os.environ.get('FLASK_ENV', 'production'),
-        )
-        print('[SENTRY] Error monitoring enabled')
-    except Exception as e:
-        print(f'[SENTRY] Init failed: {e}')
 
 # ========================================
 # CARGAR VARIABLES DE ENTORNO
@@ -49,6 +32,11 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 # Servir archivos estaticos desde /web
 app = Flask(__name__, static_folder='web', static_url_path='')
 app.register_blueprint(webhook_bp)
+
+# ========================================
+# MONITORING: Sentry + metrics
+# ========================================
+init_monitoring(app)
 
 # Max request body size: 10MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
@@ -1073,6 +1061,12 @@ def api_docs():
             spec = yaml.safe_load(f)
         return jsonify(spec)
     return jsonify({'error': 'API docs not found'}), 404
+
+
+@app.route('/docs')
+def swagger_ui():
+    """Serve Swagger UI for API documentation."""
+    return send_from_directory('web', 'swagger.html')
 
 
 # ========================================

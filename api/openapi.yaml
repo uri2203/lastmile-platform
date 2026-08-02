@@ -1075,6 +1075,1177 @@ paths:
         '200':
           description: Lista de usuarios
 
+  # ===== EMPRESAS =====
+  /api/empresas:
+    get:
+      tags: [Pedidos]
+      summary: Listar todas las empresas
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de empresas
+
+  /api/empresas/{emp_id}:
+    get:
+      tags: [Pedidos]
+      summary: Obtener empresa por ID
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Empresa encontrada
+
+  # ===== PEDIDOS DETALLE =====
+  /api/pedidos/{ped_id}/asignar:
+    post:
+      tags: [Pedidos]
+      summary: Asignar chofer a pedido
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ped_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cho_id:
+                  type: integer
+                veh_id:
+                  type: integer
+                notas:
+                  type: string
+      responses:
+        '200':
+          description: Chofer asignado
+
+  /api/pedidos/{ped_id}/estado:
+    put:
+      tags: [Pedidos]
+      summary: Actualizar estado del pedido
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ped_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado:
+                  type: string
+                  enum: [PENDIENTE, ASIGNADO, RECOGIENDO, EN_RUTA, ENTREGADO, CANCELADO]
+                usuario:
+                  type: string
+      responses:
+        '200':
+          description: Estado actualizado
+
+  /api/pedidos/estadisticas:
+    get:
+      tags: [Pedidos]
+      summary: Estadisticas de pedidos del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas
+
+  # ===== DASHBOARD =====
+  /api/dashboard/{emp_id}:
+    get:
+      tags: [Health]
+      summary: Dashboard de resumen del tenant
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos del dashboard
+
+  /api/dashboard/{emp_id}/charts:
+    get:
+      tags: [Health]
+      summary: Datos de graficas del dashboard
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos de graficas
+
+  # ===== CHOFERES DETALLE =====
+  /api/choferes/rendimiento:
+    get:
+      tags: [Choferes]
+      summary: Rendimiento de choferes (paginado)
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Rendimiento con paginacion
+
+  # ===== VEHICULOS DETALLE =====
+  /api/vehiculos/flota:
+    get:
+      tags: [Vehiculos]
+      summary: Estado de la flota
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estado de flota
+
+  # ===== CLIENTES DETALLE =====
+  /api/clientes/top:
+    get:
+      tags: [Clientes]
+      summary: Top clientes por gasto
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de top clientes
+
+  # ===== USUARIOS DETALLE =====
+  /api/usuarios/{usu_id}:
+    get:
+      tags: [Usuarios]
+      summary: Obtener usuario por ID
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: usu_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario encontrado
+    put:
+      tags: [Usuarios]
+      summary: Actualizar usuario
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: usu_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioUpdate'
+      responses:
+        '200':
+          description: Usuario actualizado
+
+  # ===== RUTAS / ENTREGAS =====
+  /api/rutas:
+    get:
+      tags: [Pedidos]
+      summary: Costos por ruta
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de rutas con costos
+
+  /api/entregas:
+    get:
+      tags: [Pedidos]
+      summary: Historial de entregas (paginado)
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Lista de entregas
+
+  /api/entregas/chofer/{cho_id}:
+    get:
+      tags: [Choferes]
+      summary: Entregas por chofer
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Entregas del chofer
+
+  # ===== KPIs =====
+  /api/kpis:
+    get:
+      tags: [Health]
+      summary: KPIs consolidados del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: KPIs
+
+  /api/kpis/diario:
+    get:
+      tags: [Health]
+      summary: KPIs diarios (ultimos 30 dias)
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: KPIs diarios
+
+  # ===== INCIDENCIAS =====
+  /api/incidencias:
+    get:
+      tags: [Pedidos]
+      summary: Lista de incidencias
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de incidencias
+
+  /api/incidencias/resumen:
+    get:
+      tags: [Pedidos]
+      summary: Resumen de incidencias
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Resumen
+
+  # ===== TRACKING DETALLE =====
+  /api/tracking:
+    post:
+      tags: [Tracking]
+      summary: Registrar posicion GPS
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [choId, latitud, longitud]
+              properties:
+                choId:
+                  type: integer
+                vehId:
+                  type: integer
+                latitud:
+                  type: number
+                longitud:
+                  type: number
+                velocidad:
+                  type: number
+                rumbo:
+                  type: number
+                bateria:
+                  type: integer
+      responses:
+        '200':
+          description: Tracking registrado
+
+  /api/tracking/live:
+    get:
+      tags: [Tracking]
+      summary: Posicion en tiempo real de todos los choferes
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Posiciones actuales
+
+  /api/tracking/route/{cho_id}:
+    get:
+      tags: [Tracking]
+      summary: Historial de ruta de un chofer (24h)
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Historial de ruta
+
+  /api/tracking/{token}:
+    get:
+      tags: [Tracking]
+      summary: Tracking publico del cliente final por token
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estado del pedido
+
+  # ===== AUDITORIA =====
+  /api/audit:
+    get:
+      tags: [SuperAdmin]
+      summary: Log de auditoria del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Registros de auditoria
+
+  # ===== CFDI DETALLE =====
+  /api/cfdi/facturas/{fac_id}/timbrar:
+    post:
+      tags: [CFDI]
+      summary: Timbrar factura CFDI
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: fac_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Factura timbrada
+
+  /api/cfdi/catalogo:
+    get:
+      tags: [CFDI]
+      summary: Catalogo de conceptos CFDI
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Catalogo
+
+  /api/cfdi/empresa-fiscal:
+    get:
+      tags: [CFDI]
+      summary: Datos fiscales de la empresa
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Datos fiscales
+    put:
+      tags: [CFDI]
+      summary: Actualizar datos fiscales de la empresa
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rfc:
+                  type: string
+                razonSocial:
+                  type: string
+                regimenFiscal:
+                  type: string
+                codigoPostal:
+                  type: string
+      responses:
+        '200':
+          description: Datos actualizados
+
+  /api/cfdi/folios:
+    get:
+      tags: [CFDI]
+      summary: Folios disponibles
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de folios
+
+  /api/cfdi/timbrado-log:
+    get:
+      tags: [CFDI]
+      summary: Log de timbrado
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Log de timbrado
+
+  # ===== PAGOS DETALLE =====
+  /api/pagos/metodos:
+    get:
+      tags: [Pagos]
+      summary: Metodos de pago configurados
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Metodos de pago
+
+  /api/pagos/resumen:
+    get:
+      tags: [Pagos]
+      summary: Resumen de pagos por metodo
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Resumen
+
+  /api/pagos/oxxo:
+    post:
+      tags: [Pagos]
+      summary: Crear referencia de pago OXXO
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pedId:
+                  type: integer
+                monto:
+                  type: number
+      responses:
+        '200':
+          description: Referencia OXXO generada
+
+  # ===== WHITELABEL =====
+  /api/whitelabel/{emp_id}:
+    get:
+      tags: [SuperAdmin]
+      summary: Configuracion whitelabel del tenant
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Config whitelabel
+
+  /api/whitelabel/config:
+    post:
+      tags: [SuperAdmin]
+      summary: Actualizar configuracion whitelabel
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                logo_url:
+                  type: string
+                color_primary:
+                  type: string
+                color_secondary:
+                  type: string
+      responses:
+        '200':
+          description: Whitelabel actualizado
+
+  # ===== NOTIFICACIONES DETALLE =====
+  /api/notif/push:
+    get:
+      tags: [Usuarios]
+      summary: Notificaciones push del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de notificaciones
+    post:
+      tags: [Usuarios]
+      summary: Enviar notificacion push
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                titulo:
+                  type: string
+                cuerpo:
+                  type: string
+      responses:
+        '200':
+          description: Notificacion enviada
+
+  /api/notif/dispositivos:
+    post:
+      tags: [Usuarios]
+      summary: Registrar dispositivo push
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Dispositivo registrado
+
+  /api/notif/stats:
+    get:
+      tags: [Usuarios]
+      summary: Estadisticas de notificaciones
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas
+
+  # ===== EMAIL / SMS =====
+  /api/email/enviados:
+    get:
+      tags: [Usuarios]
+      summary: Emails enviados
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de emails
+
+  /api/email/enviar:
+    post:
+      tags: [Usuarios]
+      summary: Enviar email
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                destinatario:
+                  type: string
+                asunto:
+                  type: string
+                bodyHtml:
+                  type: string
+      responses:
+        '200':
+          description: Email enviado
+
+  /api/email/stats:
+    get:
+      tags: [Usuarios]
+      summary: Estadisticas de emails
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas
+
+  /api/sms/enviados:
+    get:
+      tags: [Usuarios]
+      summary: SMS enviados
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de SMS
+
+  /api/sms/enviar:
+    post:
+      tags: [Usuarios]
+      summary: Enviar SMS
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                telefono:
+                  type: string
+                mensaje:
+                  type: string
+      responses:
+        '200':
+          description: SMS enviado
+
+  /api/sms/stats:
+    get:
+      tags: [Usuarios]
+      summary: Estadisticas de SMS
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas
+
+  # ===== EXPORTACION =====
+  /api/export/{entity}:
+    get:
+      tags: [Pedidos]
+      summary: Exportar entidad como CSV/PDF
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: entity
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [pedidos, clientes, choferes, vehiculos, usuarios, pagos, facturas]
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, pdf]
+            default: csv
+      responses:
+        '200':
+          description: Archivo exportado
+
+  /api/export/custom:
+    post:
+      tags: [Pedidos]
+      summary: Exportar reporte personalizado
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                report_type:
+                  type: string
+                format:
+                  type: string
+                  enum: [csv, pdf]
+      responses:
+        '200':
+          description: Reporte exportado
+
+  # ===== BILLING DETALLE =====
+  /api/billing/estado:
+    get:
+      tags: [Billing]
+      summary: Estado de facturacion del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estado de billing
+
+  /api/billing/checkout:
+    post:
+      tags: [Billing]
+      summary: Crear sesion de checkout (Stripe/MercadoPago)
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan:
+                  type: string
+                provider:
+                  type: string
+                  enum: [stripe, mercadopago]
+      responses:
+        '200':
+          description: Sesion de checkout
+
+  /api/billing/suscripcion:
+    post:
+      tags: [Billing]
+      summary: Activar suscripcion manual
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan:
+                  type: string
+      responses:
+        '200':
+          description: Suscripcion activada
+
+  /api/billing/pagos:
+    get:
+      tags: [Billing]
+      summary: Historial de pagos del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de pagos
+
+  /api/billing/pago:
+    post:
+      tags: [Billing]
+      summary: Registrar un pago
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                monto:
+                  type: number
+                metodo:
+                  type: string
+                referencia:
+                  type: string
+      responses:
+        '200':
+          description: Pago registrado
+
+  /api/billing/stats-all:
+    get:
+      tags: [Billing]
+      summary: Estadisticas de billing global
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas globales
+
+  # ===== CLIENTE FINAL =====
+  /api/cliente-final:
+    post:
+      tags: [Tracking]
+      summary: Generar token de tracking para cliente
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pedId:
+                  type: integer
+                nombre:
+                  type: string
+                telefono:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Token generado
+
+  /api/cliente-final/{token}/timeline:
+    get:
+      tags: [Tracking]
+      summary: Timeline del pedido por token
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Timeline del pedido
+
+  # ===== SAASTAANTS DETALLE =====
+  /api/saas/plan-usage/{emp_id}:
+    get:
+      tags: [SuperAdmin]
+      summary: Uso del plan de un tenant
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Uso del plan
+
+  /api/saas/health:
+    get:
+      tags: [SuperAdmin]
+      summary: Health check del sistema SaaS
+      security: []
+      responses:
+        '200':
+          description: Estado del SaaS
+
+  /api/saas/tenants/{emp_id}:
+    get:
+      tags: [SuperAdmin]
+      summary: Detalle de un tenant
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalle del tenant
+    put:
+      tags: [SuperAdmin]
+      summary: Actualizar tenant
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                estatus:
+                  type: string
+                plan:
+                  type: string
+      responses:
+        '200':
+          description: Tenant actualizado
+
+  /api/saas/uso/{emp_id}:
+    get:
+      tags: [SuperAdmin]
+      summary: Uso de recursos de un tenant
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Uso de recursos
+
+  /api/saas/uso:
+    post:
+      tags: [SuperAdmin]
+      summary: Registrar uso de recursos
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pedidosCreados:
+                  type: integer
+                pedidosEntregados:
+                  type: integer
+      responses:
+        '200':
+          description: Uso registrado
+
+  /api/saas/dashboard-billing:
+    get:
+      tags: [SuperAdmin]
+      summary: Dashboard de billing SaaS
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Dashboard de billing
+
+  /api/saas/tenants-chart:
+    get:
+      tags: [SuperAdmin]
+      summary: Grafica de distribucion de tenants
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Datos de grafica
+
+  # ===== VAPID / PUSH =====
+  /api/vapid-public-key:
+    get:
+      tags: [Health]
+      summary: Clave publica VAPID para push
+      security: []
+      responses:
+        '200':
+          description: Clave publica
+
+  /api/push/subscribe:
+    post:
+      tags: [Health]
+      summary: Suscribir dispositivo a push
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                subscription:
+                  type: object
+      responses:
+        '200':
+          description: Suscripcion registrada
+
+  # ===== CRON =====
+  /api/cron/backup:
+    post:
+      tags: [Health]
+      summary: Backup de la base de datos (cron)
+      security: []
+      parameters:
+        - name: X-Cron-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup generado
+
+  /api/cron/backup/download:
+    get:
+      tags: [Health]
+      summary: Descargar backup como JSON
+      security: []
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Archivo JSON de backup
+
+  # ===== ZONAS DETALLE =====
+  /api/zonas/{zon_id}:
+    get:
+      tags: [Zonas]
+      summary: Obtener zona por ID
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: zon_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Zona encontrada
+    put:
+      tags: [Zonas]
+      summary: Actualizar zona
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: zon_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+      responses:
+        '200':
+          description: Zona actualizada
+    delete:
+      tags: [Zonas]
+      summary: Eliminar zona
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: zon_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Zona eliminada
+
+  /api/tarifas:
+    get:
+      tags: [Zonas]
+      summary: Listar todas las tarifas del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de tarifas
+
+  # ===== LEGAL =====
+  /api/legal/my-acceptance:
+    get:
+      tags: [Usuarios]
+      summary: Aceptacion legal del usuario actual
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Aceptaciones legales
+
+  /api/legal/verify/{usr_id}:
+    get:
+      tags: [Usuarios]
+      summary: Verificar aceptacion legal de un usuario
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: usr_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Estado de aceptacion
+
+  /api/admin/legal-acceptance:
+    get:
+      tags: [SuperAdmin]
+      summary: Todas las aceptaciones legales (superadmin)
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: emp_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Aceptaciones legales
+
+  # ===== REFERIDOS =====
+  /api/referrals/my-code:
+    get:
+      tags: [Referidos]
+      summary: Obtener codigo de referido del usuario
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Codigo de referido
+
+  /api/referrals/stats:
+    get:
+      tags: [Referidos]
+      summary: Estadisticas de referidos
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas de referidos
+
+  # ===== BILLING LIMITS / USAGE / DASHBOARD =====
+  /api/billing/dashboard:
+    get:
+      tags: [Billing]
+      summary: Dashboard de billing del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Dashboard
+
+  /api/billing/limits:
+    get:
+      tags: [Billing]
+      summary: Verificar limites del plan
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Limites
+
+  /api/billing/track:
+    post:
+      tags: [Billing]
+      summary: Registrar uso de metrica
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metric:
+                  type: string
+                count:
+                  type: integer
+      responses:
+        '200':
+          description: Uso registrado
+
+  /api/billing/usage:
+    get:
+      tags: [Billing]
+      summary: Uso del mes actual
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Uso actual
+
+  /api/billing/auto-charge:
+    post:
+      tags: [Billing]
+      summary: Procesar cobros automaticos (cron)
+      security: []
+      responses:
+        '200':
+          description: Cobros procesados
+
+  # ===== ADMIN =====
+  /api/admin/tenants-usage:
+    get:
+      tags: [SuperAdmin]
+      summary: Uso de todos los tenants (superadmin)
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Uso de tenants
+
+  /api/admin/legal-acceptance:
+    get:
+      tags: [SuperAdmin]
+      summary: Registros de aceptacion legal global
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Aceptaciones
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1236,6 +2407,8 @@ components:
               type: string
             rfc:
               type: string
+            referral_code:
+              type: string
         usuario:
           type: object
           required: [email, password]
@@ -1247,7 +2420,133 @@ components:
               type: string
               minLength: 8
               description: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit
+            nombre:
+              type: string
+            telefono:
+              type: string
         plan:
           type: string
           enum: [STARTER, PRO, ENTERPRISE]
           default: STARTER
+        legal:
+          type: object
+          properties:
+            terminos:
+              type: boolean
+            privacidad:
+              type: boolean
+            pagos:
+              type: boolean
+            deslinde:
+              type: boolean
+            sla:
+              type: boolean
+            cookies:
+              type: boolean
+
+    UsuarioUpdate:
+      type: object
+      properties:
+        usuario:
+          type: string
+        nombre:
+          type: string
+        email:
+          type: string
+        telefono:
+          type: string
+        rol:
+          type: string
+          enum: [admin, operacion, chofer, cliente]
+        activo:
+          type: string
+          enum: ['S', 'N']
+        password:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    Pedido:
+      type: object
+      properties:
+        PED_ID:
+          type: integer
+        PED_NUMERO:
+          type: string
+        PED_CLIENTE_NOMBRE:
+          type: string
+        PED_CLIENTE_TELEFONO:
+          type: string
+        PED_DESTINO_DIR:
+          type: string
+        PED_DESTINO_COL:
+          type: string
+        PED_DESTINO_CIUDAD:
+          type: string
+        PED_PESO_KG:
+          type: number
+        PED_BULTOS:
+          type: integer
+        PED_COSTO_TOTAL:
+          type: number
+        PED_FORMA_PAGO:
+          type: string
+        PED_ESTADO:
+          type: string
+        PED_PRIORIDAD:
+          type: string
+        PED_FECHA_PEDIDO:
+          type: string
+          format: date-time
+
+    Chofer:
+      type: object
+      properties:
+        CHO_ID:
+          type: integer
+        CHO_NOMBRE:
+          type: string
+        CHO_APELLIDO:
+          type: string
+        CHO_TELEFONO:
+          type: string
+        CHO_EMAIL:
+          type: string
+        CHO_LICENCIA:
+          type: string
+        CHO_ESTATUS:
+          type: string
+
+    Cliente:
+      type: object
+      properties:
+        CLI_ID:
+          type: integer
+        CLI_RAZON_SOCIAL:
+          type: string
+        CLI_RFC:
+          type: string
+        CLI_CONTACTO:
+          type: string
+        CLI_TELEFONO:
+          type: string
+        CLI_EMAIL:
+          type: string
+        CLI_ESTATUS:
+          type: string

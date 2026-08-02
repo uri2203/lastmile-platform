@@ -98,13 +98,18 @@ def get_db():
 def set_tenant_context(emp_id):
     """Set the current tenant ID for Row-Level Security (PostgreSQL only).
     Sets the session variable on the SAME connection used for subsequent queries.
+    Prefers the SQL function set_current_tenant() (migration 004) when available,
+    falls back to raw SET for backward compatibility.
     """
     if not USE_POSTGRES or emp_id is None:
         return
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SET app.current_emp_id = %s", [str(emp_id)])
+        try:
+            cursor.execute("SELECT set_current_tenant(%s)", [int(emp_id)])
+        except Exception:
+            cursor.execute("SET app.current_emp_id = %s", [str(emp_id)])
         conn.commit()
         cursor.close()
     except Exception:
