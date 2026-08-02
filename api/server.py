@@ -565,6 +565,54 @@ def cookies_page():
 def demo_video():
     return send_from_directory('web', 'demo-video.html')
 
+@app.route('/proteccion-datos')
+def proteccion_datos():
+    return send_from_directory('web', 'proteccion-datos.html')
+
+@app.route('/regulaciones-ia')
+def regulaciones_ia():
+    return send_from_directory('web', 'regulaciones-ia.html')
+
+@app.route('/privacidad-eeuu')
+def privacidad_eeuu():
+    return send_from_directory('web', 'privacidad-eeuu.html')
+
+@app.route('/panel-admin')
+def panel_admin():
+    return send_from_directory('web', 'panel-admin.html')
+
+@app.route('/panel-ai')
+def panel_ai():
+    return send_from_directory('web', 'panel-ai.html')
+
+@app.route('/panel-chofer')
+def panel_chofer():
+    return send_from_directory('web', 'panel-chofer.html')
+
+@app.route('/panel-cliente')
+def panel_cliente():
+    return send_from_directory('web', 'panel-cliente.html')
+
+@app.route('/panel-operacion')
+def panel_operacion():
+    return send_from_directory('web', 'panel-operacion.html')
+
+@app.route('/panel-tenant')
+def panel_tenant():
+    return send_from_directory('web', 'panel-tenant.html')
+
+@app.route('/onboarding')
+def onboarding():
+    return send_from_directory('web', 'onboarding.html')
+
+@app.route('/tracking')
+def tracking_cliente():
+    return send_from_directory('web', 'tracking-cliente.html')
+
+@app.route('/ayuda')
+def ayuda_cliente():
+    return send_from_directory('web', 'ayuda-cliente.html')
+
 
 @app.route('/api/onboarding/register', methods=['POST'])
 def onboarding_register():
