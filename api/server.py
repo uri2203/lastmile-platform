@@ -76,6 +76,62 @@ CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True,
 socketio = SocketIO(app, cors_allowed_origins=ALLOWED_ORIGINS, async_mode='eventlet',
                     ping_timeout=30, ping_interval=25)
 
+# ========================================
+# VAPID: Push notifications keys (fallback)
+# ========================================
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', 'BJ_I-JQJFKAeuA4L3qgcJG2G76z_le8vbZdaOTl-890_eaBQS3Q57TrQXR2GPBPSlRD7rh-i4Hm6w4224IBW5Ek')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', 'YFDaER4aGEM2NKsHYMhA-koXvSKDE_SFX36SrRlaUB8')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@lastmile.app')
+
+@app.route('/api/vapid-public-key', methods=['GET'])
+def get_vapid_key():
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+@app.route('/api/push/subscribe', methods=['POST'])
+def subscribe_push():
+    emp_id = get_emp_id()
+    data = request.json
+    user_id = data.get('user_id')
+    subscription = data.get('subscription')
+    if not user_id or not subscription:
+        return jsonify({'error': 'Missing user_id or subscription'}), 400
+    try:
+        execute('''CREATE TABLE IF NOT EXISTS PUSH_SUBSCRIPTIONS (
+            id SERIAL PRIMARY KEY, emp_id INTEGER, user_id TEXT,
+            endpoint TEXT, p256dh TEXT, auth TEXT, created_at TIMESTAMP DEFAULT NOW()
+        )''', [])
+    except Exception:
+        pass
+    try:
+        keys = subscription.get('keys', {})
+        execute(
+            'INSERT INTO PUSH_SUBSCRIPTIONS (emp_id, user_id, endpoint, p256dh, auth) VALUES (?, ?, ?, ?, ?)',
+            [emp_id, user_id, subscription.get('endpoint', ''), keys.get('p256dh', ''), keys.get('auth', '')]
+        )
+    except Exception as e:
+        app.logger.warning(f'Push subscribe error: {e}')
+    return jsonify({'success': True})
+
+def send_push_notification(emp_id, user_id, title, body, url='/panel-chofer.html'):
+    try:
+        import py_vapid
+        from py_vapid import Vapid
+        subs = query('SELECT endpoint, p256dh, auth FROM PUSH_SUBSCRIPTIONS WHERE emp_id=? AND user_id=?', [emp_id, user_id])
+        if not subs:
+            return
+        vapid = Vapid()
+        vapid.private_key = VAPID_PRIVATE_KEY
+        for sub in subs:
+            try:
+                from webpush import webpush as wp
+                wp(subscription_info={'endpoint': sub['endpoint'], 'keys': {'p256dh': sub['p256dh'], 'auth': sub['auth']}},
+                   data=json.dumps({'title': title, 'body': body, 'url': url}),
+                   vapid_private_key=VAPID_PRIVATE_KEY, vapid_claims={'sub': VAPID_SUBJECT})
+            except Exception:
+                pass
+    except Exception:
+        pass
+
 @socketio.on('connect')
 def handle_connect():
     print(f'[WS] Client connected: {request.sid}')
