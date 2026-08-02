@@ -127,8 +127,61 @@ def send_push_notification(emp_id, user_id, title, body, url='/panel-chofer.html
                 wp(subscription_info={'endpoint': sub['endpoint'], 'keys': {'p256dh': sub['p256dh'], 'auth': sub['auth']}},
                    data=json.dumps({'title': title, 'body': body, 'url': url}),
                    vapid_private_key=VAPID_PRIVATE_KEY, vapid_claims={'sub': VAPID_SUBJECT})
+    except Exception:
+        pass
+
+# ========================================
+# BACKUP: Exportación de base de datos
+# ========================================
+@app.route('/api/cron/backup', methods=['POST'])
+def cron_backup():
+    """Export all tables as JSON for backup. Auth via CRON_API_KEY."""
+    key = request.headers.get('X-Cron-Key') or request.args.get('key')
+    if key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        import json
+        from datetime import datetime
+        tables = ['TENANTS', 'USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES', 'PEDIDOS',
+                  'TRACKING', 'FISCAL_CONFIG', 'FISCAL_DOCUMENTS', 'PUSH_SUBSCRIPTIONS']
+        backup = {'timestamp': datetime.now().isoformat(), 'tables': {}}
+        for table in tables:
+            try:
+                data = query(f'SELECT * FROM {table} LIMIT 5000', [])
+                backup['tables'][table] = data
             except Exception:
-                pass
+                backup['tables'][table] = []
+        return jsonify({'success': True, 'backup': backup, 'size': len(json.dumps(backup))})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cron/backup/download', methods=['GET'])
+def cron_backup_download():
+    """Download backup as JSON file."""
+    key = request.args.get('key')
+    if key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        import json
+        from datetime import datetime
+        from flask import Response
+        tables = ['TENANTS', 'USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES', 'PEDIDOS',
+                  'TRACKING', 'FISCAL_CONFIG', 'FISCAL_DOCUMENTS']
+        backup = {'timestamp': datetime.now().isoformat(), 'version': '1.0', 'tables': {}}
+        for table in tables:
+            try:
+                data = query(f'SELECT * FROM {table} LIMIT 5000', [])
+                backup['tables'][table] = data
+            except Exception:
+                backup['tables'][table] = []
+        filename = f'lastmile_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        return Response(
+            json.dumps(backup, default=str, ensure_ascii=False),
+            mimetype='application/json',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     except Exception:
         pass
 
@@ -344,7 +397,7 @@ PUBLIC_API_PATHS = {
 # Prefijos publicos: tracking del cliente final por token opaco en la URL.
 PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes', '/api/webhooks/')
 # Endpoint(s) servicio-a-servicio: autenticados por CRON_API_KEY, no por JWT.
-CRON_API_PATHS = {'/api/billing/auto-charge'}
+CRON_API_PATHS = {'/api/billing/auto-charge', '/api/cron/backup'}
 # Prefijos de gestion GLOBAL de la plataforma: solo 'superadmin'.
 # El admin de un tenant cliente NO puede gestionar otros tenants ni la plataforma.
 SUPERADMIN_API_PREFIXES = ('/api/admin/', '/api/saas/')

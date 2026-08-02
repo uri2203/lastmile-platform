@@ -1,0 +1,53 @@
+{
+  "title": "Webhook URLs para Configuración",
+  "version": "1.0",
+  "production_base": "https://lastmile-platform.onrender.com",
+  "webhooks": {
+    "stripe": {
+      "url": "https://lastmile-platform.onrender.com/api/billing/webhook/stripe",
+      "events_to_subscribe": [
+        "checkout.session.completed",
+        "invoice.paid",
+        "invoice.payment_failed",
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+        "payment_intent.succeeded",
+        "payment_intent.payment_failed"
+      ],
+      "secret_env_var": "STRIPE_WEBHOOK_SECRET",
+      "setup_instructions": [
+        "1. Ir a dashboard.stripe.com/webhooks",
+        "2. Click 'Add endpoint'",
+        "3. Pegar la URL de arriba",
+        "4. Seleccionar los eventos listados",
+        "5. Click 'Add endpoint'",
+        "6. Copiar el signing secret → configurar en STRIPE_WEBHOOK_SECRET"
+      ]
+    },
+    "mercadopago": {
+      "url": "https://lastmile-platform.onrender.com/api/billing/webhook/mercadopago",
+      "events_to_subscribe": [
+        "payment",
+        "payment.created",
+        "payment.updated"
+      ],
+      "secret_env_var": "MP_WEBHOOK_SECRET",
+      "setup_instructions": [
+        "1. Ir a mercadopago.com.ar/developers/app",
+        "2. Seleccionar tu aplicación",
+        "3. Ir a Webhooks",
+        "4. Agregar URL de notificación",
+        "5. Pegar la URL de arriba",
+        "6. Seleccionar evento 'Pagos'",
+        "7. Guardar"
+      ]
+    },
+    "stripe_dashboard_url": "https://dashboard.stripe.com/webhooks",
+    "mercadopago_dashboard_url": "https://www.mercadopago.com.ar/developers/app"
+  },
+  "test_webhooks": {
+    "stripe_test": "stripe listen --forward-to https://lastmile-platform.onrender.com/api/billing/webhook/stripe",
+    "mercadopago_test": "Usar ngrok o similar para exponer localmente"
+  }
+}

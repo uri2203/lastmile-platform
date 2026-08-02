@@ -853,15 +853,31 @@ function initDashboardMap(){
 }
 
 function initDashboardMapFromChofres(){
-  apiGet('/api/choferes?emp_id=1').then(res=>{
-    if(!res.data||!dashboardMap)return;
-    res.data.forEach(c=>{
-      const lat=19.43+(Math.random()-0.5)*0.08;
-      const lng=-99.13+(Math.random()-0.5)*0.08;
-      const nombre=c.CHF_NOMBRE||c.nombre||'-';
-      L.circleMarker([lat,lng],{radius:5,color:'#6366f1',fillColor:'#6366f1',fillOpacity:0.7}).addTo(dashboardMap).bindPopup('<b>'+nombre+'</b>');
+  apiGet('/api/tracking/live?emp_id=1').then(res=>{
+    if(!res.data||!res.data.length||!dashboardMap)return;
+    res.data.forEach(d=>{
+      const lat=d.TRK_LATITUD||19.43;
+      const lng=d.TRK_LONGITUD||-99.13;
+      const nombre=(d.CHO_NOMBRE||'')+' '+(d.CHO_APELLIDO||'');
+      L.circleMarker([lat,lng],{radius:6,color:'#10b981',fillColor:'#10b981',fillOpacity:0.9,weight:2})
+        .addTo(dashboardMap)
+        .bindPopup('<b>'+nombre+'</b><br>GPS: '+lat.toFixed(4)+', '+lng.toFixed(4)+'<br>Vel: '+(d.TRK_VELOCIDAD||0)+' km/h');
     });
-  }).catch(()=>{});
+    if(res.data.length>1){
+      const bounds=L.latLngBounds(res.data.map(d=>[d.TRK_LATITUD,d.TRK_LONGITUD]));
+      dashboardMap.fitBounds(bounds.pad(0.2));
+    }
+  }).catch(()=>{
+    apiGet('/api/choferes?emp_id=1').then(res=>{
+      if(!res.data||!dashboardMap)return;
+      res.data.forEach(c=>{
+        const lat=19.43+(Math.random()-0.5)*0.08;
+        const lng=-99.13+(Math.random()-0.5)*0.08;
+        const nombre=c.CHF_NOMBRE||c.nombre||'-';
+        L.circleMarker([lat,lng],{radius:5,color:'#6366f1',fillColor:'#6366f1',fillOpacity:0.7}).addTo(dashboardMap).bindPopup('<b>'+nombre+'</b>');
+      });
+    }).catch(()=>{});
+  });
 }
 
 function initActivityFeed(){
@@ -1344,4 +1360,42 @@ async function loadMultiCountryAnalytics(){
   }catch(e){console.error('Multi-country analytics:',e);}
 }
 document.addEventListener('DOMContentLoaded',()=>{loadMultiCountryAnalytics();});
+
+/* ==========================================
+   WEBSOCKET GPS - Admin real-time tracking
+   ========================================== */
+let adminWs = null;
+let adminWsMarkers = {};
+
+function connectAdminWS() {
+  try {
+    const API_BASE = window.location.origin;
+    adminWs = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true });
+    adminWs.on('connect', () => {
+      adminWs.emit('subscribe', { emp_id: 1 });
+      console.log('[WS-ADMIN] Connected');
+    });
+    adminWs.on('driver_location', (data) => {
+      if (!dashboardMap) return;
+      const id = 'admin_driver_' + data.choId;
+      if (adminWsMarkers[id]) {
+        adminWsMarkers[id].setLatLng([data.lat, data.lng]);
+        adminWsMarkers[id].setPopupContent(
+          '<b>' + data.nombre + ' ' + (data.apellido || '') + '</b><br>' +
+          'GPS: ' + data.lat.toFixed(4) + ', ' + data.lng.toFixed(4) + '<br>' +
+          'Vel: ' + data.speed + ' km/h<br>Bat: ' + data.battery + '%'
+        );
+      } else {
+        const marker = L.circleMarker([data.lat, data.lng], {
+          radius: 6, color: '#10b981', fillColor: '#10b981', fillOpacity: 0.9, weight: 2
+        }).addTo(dashboardMap);
+        marker.bindPopup(data.nombre);
+        adminWsMarkers[id] = marker;
+      }
+    });
+    adminWs.on('disconnect', () => { console.log('[WS-ADMIN] Disconnected'); });
+  } catch (e) { console.warn('[WS-ADMIN] Error:', e); }
+}
+
+setTimeout(() => { connectAdminWS(); }, 1000);
 });

@@ -1,0 +1,156 @@
+{
+  "title": "Configuración Fiscal - Guía del Tenant",
+  "version": "1.0",
+  "countries": {
+    "MX": {
+      "name": "México",
+      "provider": "FacturAPI",
+      "requirements": [
+        "RFC (Registro Federal de Contribuyentes)",
+        "Contraseña del SAT (CIEC)",
+        "Certificado .cer del SAT",
+        "Certificado .key del SAT",
+        "Razón social completa"
+      ],
+      "setup_url": "https://dash.facturapi.io",
+      "docs": "https://docs.facturapi.io",
+      "test_mode": true,
+      "notes": "En modo test usa facturapi.com/api/v2/test, en producción usa /api/v2/"
+    },
+    "BR": {
+      "name": "Brasil",
+      "provider": "NFe.io",
+      "requirements": [
+        "CNPJ (Cadastro Nacional de Pessoa Jurídica)",
+        "Inscrição Estadual",
+        "Certificate A1 digital",
+        "Razão social completa",
+        "Endereço fiscal"
+      ],
+      "setup_url": "https://nfe.io",
+      "docs": "https://docs.nfe.io",
+      "test_mode": true,
+      "notes": "NFe.io provee sandbox para pruebas"
+    },
+    "CO": {
+      "name": "Colombia",
+      "provider": "DIAN (API Directa)",
+      "requirements": [
+        "NIT (Número de Identificación Tributaria)",
+        "Certificado digital DIAN",
+        "PIN del certificado",
+        "Razón social",
+        "Dirección registrada"
+      ],
+      "setup_url": "https://dian.gov.co",
+      "docs": "https://documentacion.dian.gov.co",
+      "test_mode": true,
+      "notes": "Usar certificado de pruebas de DIAN"
+    },
+    "AR": {
+      "name": "Argentina",
+      "provider": "FacturAPI (compatible AFIP)",
+      "requirements": [
+        "CUIT (Clave Única de Identificación Tributaria)",
+        "Certificado digital AFIP",
+        "Clave fiscal",
+        "Razón social",
+        "Domicilio fiscal"
+      ],
+      "setup_url": "https://www.afip.gob.ar",
+      "docs": "https://docs.afip.gob.ar",
+      "test_mode": true,
+      "notes": "WSFE (Web Service Factura Electrónica)"
+    },
+    "CL": {
+      "name": "Chile",
+      "provider": "SII (Servicio de Impuestos Internos)",
+      "requirements": [
+        "RUT (Rol Único Tributario)",
+        "Certificado digital del SII",
+        "Clave tributaria",
+        "Razón social",
+        "Giro comercial"
+      ],
+      "setup_url": "https://www.sii.cl",
+      "docs": "https://zeus.sii.cl",
+      "test_mode": true,
+      "notes": "API SII para facturación electrónica"
+    },
+    "PE": {
+      "name": "Perú",
+      "provider": "SUNAT (API REST)",
+      "requirements": [
+        "RUC (Registro Único de Contribuyente)",
+        "Certificado digital SUNAT",
+        "Clave SOL",
+        "Razón social",
+        "Dirección fiscal"
+      ],
+      "setup_url": "https://e.sunat.gob.pe",
+      "docs": "https://api.sunat.gob.pe",
+      "test_mode": true,
+      "notes": "UBL 2.1 para facturación electrónica"
+    },
+    "UY": {
+      "name": "Uruguay",
+      "provider": "DGI (Dirección General de Impuestos)",
+      "requirements": [
+        "RUT (Registro Único Tributario)",
+        "Certificado digital DGI",
+        "Token de autenticación",
+        "Razón social",
+        "Domicilio fiscal"
+      ],
+      "setup_url": "https://www.gub.uy/dgi",
+      "docs": "https://dgi.gub.uy",
+      "test_mode": true,
+      "notes": "e-Factura del Uruguay"
+    },
+    "EC": {
+      "name": "Ecuador",
+      "provider": "SRI (Servicio de Rentas Internas)",
+      "requirements": [
+        "RUC (Registro Único de Contribuyentes)",
+        "Certificado digital del SRI",
+        "Clave de acceso",
+        "Razón social",
+        "Dirección del establecimiento"
+      ],
+      "setup_url": "https://www.sri.gob.ec",
+      "docs": "https://creditofiscal.sri.gob.ec",
+      "test_mode": true,
+      "notes": "XSD para comprobantes electrónicos"
+    }
+  },
+  "environment_variables": {
+    "MX": {
+      "FISCAL_API_KEY": "tu_facturapi_key_aqui",
+      "FISCAL_API_SECRET": "tu_facturapi_secret_aqui"
+    },
+    "BR": {
+      "FISCAL_API_KEY": "tu_nfeio_token_aqui"
+    },
+    "CO": {
+      "FISCAL_API_KEY": "tu_dian_api_key_aqui",
+      "FISCAL_API_SECRET": "tu_dian_api_secret_aqui"
+    },
+    "AR": {
+      "FISCAL_API_KEY": "tu_afip_token_aqui",
+      "FISCAL_API_SECRET": "tu_afip_secret_aqui"
+    },
+    "CL": {
+      "FISCAL_API_KEY": "tu_sii_token_aqui"
+    },
+    "PE": {
+      "FISCAL_API_KEY": "tu_sunat_user_aqui",
+      "FISCAL_API_SECRET": "tu_sunat_password_aqui"
+    },
+    "UY": {
+      "FISCAL_API_KEY": "tu_dgi_token_aqui"
+    },
+    "EC": {
+      "FISCAL_API_KEY": "tu_sri_token_aqui"
+    }
+  }
+}
