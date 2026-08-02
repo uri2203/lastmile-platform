@@ -333,11 +333,13 @@ PUBLIC_API_PATHS = {
     '/api/auth/refresh',
     '/api/docs',
     '/api/onboarding/register',
-    '/api/saas/planes',            # catalogo de planes (landing / registro)
+    '/api/saas/planes',
     '/api/billing/planes',
-    '/api/billing/webhook/stripe',       # verificado por firma Stripe
-    '/api/billing/webhook/mercadopago',  # verificado re-consultando el pago
+    '/api/billing/webhook/stripe',
+    '/api/billing/webhook/mercadopago',
     '/api/pagos/mercado-pago/webhook',
+    '/api/vapid-public-key',
+    '/api/push/subscribe',
 }
 # Prefijos publicos: tracking del cliente final por token opaco en la URL.
 PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes', '/api/webhooks/')
