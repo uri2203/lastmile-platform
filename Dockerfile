@@ -6,7 +6,8 @@ WORKDIR /app
 COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy application - bust cache
+ARG BUILD_DATE=undefined
 COPY api/ .
 
 # Create data directory
