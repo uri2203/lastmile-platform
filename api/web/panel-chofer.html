@@ -694,9 +694,89 @@
       document.getElementById('gps-status').innerHTML = `<i class="fas fa-pause"></i> ${window.i18n.t('chofer.gps_pausado')}`;
     }
 
+    /* ---- Offline IndexedDB ---- */
+    function openOfflineDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('lastmile_offline', 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('pending_deliveries')) {
+            db.createObjectStore('pending_deliveries', { keyPath: 'id', autoIncrement: true });
+          }
+          if (!db.objectStoreNames.contains('cached_orders')) {
+            db.createObjectStore('cached_orders', { keyPath: 'PED_ID' });
+          }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    function savePendingDelivery(deliveryData) {
+      return openOfflineDB().then(db => {
+        const tx = db.transaction('pending_deliveries', 'readwrite');
+        tx.objectStore('pending_deliveries').add({
+          url: deliveryData.url,
+          data: deliveryData.data,
+          token: deliveryData.token,
+          timestamp: Date.now()
+        });
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'ADD_PENDING_DELIVERY',
+            delivery: deliveryData
+          });
+        }
+      });
+    }
+
+    function cacheOrder(order) {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CACHE_ORDER',
+          order: order
+        });
+      }
+    }
+
+    function showOfflineIndicator() {
+      let bar = document.getElementById('offline-bar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'offline-bar';
+        bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:white;text-align:center;padding:6px;font-size:12px;font-weight:600;';
+        bar.textContent = window.i18n.t('chofer.sin_gps') + ' - Modo Offline';
+        document.body.prepend(bar);
+      }
+    }
+
+    function hideOfflineIndicator() {
+      const bar = document.getElementById('offline-bar');
+      if (bar) bar.remove();
+    }
+
+    window.addEventListener('online', () => {
+      hideOfflineIndicator();
+      showToast(window.i18n.t('chofer.gps_activo') + ' - Online', 'success');
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SYNC_NOW' });
+      }
+    });
+
+    window.addEventListener('offline', showOfflineIndicator);
+
+    if (!navigator.onLine) showOfflineIndicator();
+
     /* ---- PWA Service Worker ---- */
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        if ('sync' in reg) {
+          console.log('[PWA] Background Sync available');
+        }
+        if ('pushManager' in reg) {
+          console.log('[PWA] Push Notifications available');
+        }
+      }).catch(() => {});
     }
 
     /* ---- i18n ---- */
