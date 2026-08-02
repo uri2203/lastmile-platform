@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
   <style>
@@ -37,26 +38,26 @@
 
     <div class="sidebar-nav">
       <div class="nav-section">
-        <div class="nav-section-title">Principal</div>
+        <div class="nav-section-title" data-i18n="operacion.sidebar_principal">Principal</div>
       </div>
       <a class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
-        <i class="fas fa-th-large"></i> Dashboard
+        <i class="fas fa-th-large"></i> <span data-i18n="operacion.nav_dashboard">Dashboard</span>
       </a>
       <a class="nav-item" data-section="pedidos" onclick="showSection('pedidos')">
-        <i class="fas fa-box"></i> Pedidos
+        <i class="fas fa-box"></i> <span data-i18n="operacion.nav_pedidos">Pedidos</span>
       </a>
       <a class="nav-item" data-section="mapa" onclick="showSection('mapa')">
-        <i class="fas fa-map-marked-alt"></i> Mapa
+        <i class="fas fa-map-marked-alt"></i> <span data-i18n="operacion.nav_mapa">Mapa</span>
       </a>
 
       <div class="nav-section">
-        <div class="nav-section-title">Gestión</div>
+        <div class="nav-section-title" data-i18n="operacion.sidebar_gestion">Gestión</div>
       </div>
       <a class="nav-item" data-section="choferes" onclick="showSection('choferes')">
-        <i class="fas fa-users"></i> Choferes
+        <i class="fas fa-users"></i> <span data-i18n="operacion.nav_choferes">Choferes</span>
       </a>
       <a class="nav-item" data-section="reportes" onclick="showSection('reportes')">
-        <i class="fas fa-chart-bar"></i> Reportes
+        <i class="fas fa-chart-bar"></i> <span data-i18n="operacion.nav_reportes">Reportes</span>
       </a>
     </div>
 
@@ -66,13 +67,13 @@
           <input type="checkbox" id="sidebar-theme-toggle" onchange="ThemeManager.toggle()">
           <span class="toggle-slider"></span>
         </label>
-        <span class="text-xs text-muted">Tema</span>
+        <span class="text-xs text-muted" data-i18n="operacion.nav_tema">Tema</span>
       </div>
       <div class="flex items-center gap-sm">
         <div class="avatar sm" id="sidebar-avatar">OP</div>
         <div class="flex flex-col" style="min-width:0">
-          <span class="text-sm font-medium truncate" id="sidebar-user">Operador</span>
-          <a href="index.html" class="text-xs text-muted" style="text-decoration:none" onclick="localStorage.clear()">Cerrar sesión</a>
+          <span class="text-sm font-medium truncate" id="sidebar-user" data-i18n="operacion.nav_operador">Operador</span>
+          <a href="index.html" class="text-xs text-muted" style="text-decoration:none" onclick="localStorage.clear()" data-i18n="operacion.nav_logout">Cerrar sesión</a>
         </div>
       </div>
     </div>
@@ -91,12 +92,17 @@
       <div class="topbar-right">
         <div class="search-wrapper" style="width:220px">
           <i class="fas fa-search"></i>
-          <input type="text" class="input" placeholder="Buscar pedidos..." id="global-search" oninput="handleGlobalSearch(this.value)">
+            <input type="text" class="input" data-i18n-placeholder="operacion.search_placeholder" placeholder="Buscar pedidos..." id="global-search" oninput="handleGlobalSearch(this.value)">
         </div>
         <div class="relative cursor-pointer" onclick="toggleNotifications()">
           <i class="fas fa-bell" style="font-size:16px;color:var(--text-secondary)"></i>
           <span class="notif-dot" id="notif-dot"></span>
         </div>
+        <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+        </select>
         <button class="theme-toggle" id="theme-toggle-btn">
           <i class="fas fa-sun"></i>
         </button>
@@ -110,10 +116,10 @@
       <!-- ======================== DASHBOARD ======================== -->
       <div class="section active" id="section-dashboard">
         <div class="page-header">
-          <h1>Dashboard de Operación</h1>
+          <h1 data-i18n="operacion.dashboard_title">Dashboard de Operación</h1>
           <div class="page-header-actions">
             <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">
-              <i class="fas fa-sync-alt"></i> Actualizar
+              <i class="fas fa-sync-alt"></i> <span data-i18n="operacion.refresh">Actualizar</span>
             </button>
           </div>
         </div>
@@ -122,61 +128,61 @@
           <div class="kpi-card">
             <div class="kpi-icon accent"><i class="fas fa-box"></i></div>
             <div class="kpi-value" id="kpi-pedidos">0</div>
-            <div class="kpi-label">Pedidos Hoy</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_pedidos_hoy">Pedidos Hoy</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon warning"><i class="fas fa-truck"></i></div>
             <div class="kpi-value" id="kpi-ruta">0</div>
-            <div class="kpi-label">En Tránsito</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_en_transito">En Tránsito</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon success"><i class="fas fa-check-circle"></i></div>
             <div class="kpi-value" id="kpi-entregados">0</div>
-            <div class="kpi-label">Entregados</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_entregados">Entregados</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon info"><i class="fas fa-clock"></i></div>
             <div class="kpi-value" id="kpi-pendientes">0</div>
-            <div class="kpi-label">Pendientes</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_pendientes">Pendientes</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon accent"><i class="fas fa-users"></i></div>
             <div class="kpi-value" id="kpi-choferes">0</div>
-            <div class="kpi-label">Choferes Activos</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_choferes_activos">Choferes Activos</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon success"><i class="fas fa-stopwatch"></i></div>
             <div class="kpi-value" id="kpi-tiempo-prom">--</div>
-            <div class="kpi-label">Tiempo Prom.</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_tiempo_prom">Tiempo Prom.</div>
           </div>
         </div>
 
         <div class="grid grid-2 mb-xl">
           <div class="card">
             <div class="card-header">
-              <h3>Pedidos Recientes</h3>
-              <button class="btn btn-ghost btn-sm" onclick="showSection('pedidos')">Ver todos</button>
+              <h3 data-i18n="operacion.pedidos_recientes">Pedidos Recientes</h3>
+              <button class="btn btn-ghost btn-sm" onclick="showSection('pedidos')" data-i18n="operacion.ver_todos">Ver todos</button>
             </div>
             <div class="table-container">
               <table>
                 <thead>
                   <tr>
-                    <th>Número</th>
-                    <th>Cliente</th>
-                    <th>Estado</th>
-                    <th>Chofer</th>
-                    <th>Hora</th>
+                    <th data-i18n="operacion.col_numero">Número</th>
+                    <th data-i18n="operacion.col_cliente">Cliente</th>
+                    <th data-i18n="operacion.col_estado">Estado</th>
+                    <th data-i18n="operacion.col_chofer">Chofer</th>
+                    <th data-i18n="operacion.col_hora">Hora</th>
                   </tr>
                 </thead>
                 <tbody id="dashboard-pedidos-tbody">
-                  <tr><td colspan="5" class="text-center text-muted">Cargando...</td></tr>
+                  <tr><td colspan="5" class="text-center text-muted" data-i18n="operacion.cargando">Cargando...</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
           <div class="card">
             <div class="card-header">
-              <h3>Mapa de Cobertura</h3>
+              <h3 data-i18n="operacion.mapa_cobertura">Mapa de Cobertura</h3>
             </div>
             <div id="dashboard-mini-map" style="height:320px"></div>
           </div>
@@ -186,7 +192,7 @@
       <!-- ======================== PEDIDOS ======================== -->
       <div class="section" id="section-pedidos">
         <div class="page-header">
-          <h1>Gestión de Pedidos</h1>
+          <h1 data-i18n="operacion.gestion_pedidos">Gestión de Pedidos</h1>
           <div class="page-header-actions">
             <span class="text-sm text-muted" id="pedidos-count">0 pedidos</span>
           </div>
@@ -195,21 +201,21 @@
         <div class="filter-bar mb-xl">
           <div class="search-wrapper" style="min-width:200px;flex:1">
             <i class="fas fa-search"></i>
-            <input type="text" class="input" placeholder="Buscar por número, cliente..." id="pedido-search" oninput="filterPedidos()">
+            <input type="text" class="input" data-i18n-placeholder="operacion.search_pedido_placeholder" placeholder="Buscar por número, cliente..." id="pedido-search" oninput="filterPedidos()">
           </div>
           <select id="filtro-estado" onchange="loadPedidos(this.value)" style="min-width:140px">
-            <option value="">Todos</option>
-            <option value="PENDIENTE">Pendientes</option>
-            <option value="ASIGNADO">Asignados</option>
-            <option value="EN_RUTA">En Ruta</option>
-            <option value="ENTREGADO">Entregados</option>
-            <option value="FALLIDO">Fallidos</option>
+            <option value="" data-i18n="operacion.filter_todos">Todos</option>
+            <option value="PENDIENTE" data-i18n="operacion.filter_pendientes">Pendientes</option>
+            <option value="ASIGNADO" data-i18n="operacion.filter_asignados">Asignados</option>
+            <option value="EN_RUTA" data-i18n="operacion.filter_en_ruta">En Ruta</option>
+            <option value="ENTREGADO" data-i18n="operacion.filter_entregados">Entregados</option>
+            <option value="FALLIDO" data-i18n="operacion.filter_fallidos">Fallidos</option>
           </select>
           <select id="filtro-fecha" onchange="filterPedidos()" style="min-width:130px">
-            <option value="">Todas las fechas</option>
-            <option value="hoy">Hoy</option>
-            <option value="ayer">Ayer</option>
-            <option value="semana">Esta semana</option>
+            <option value="" data-i18n="operacion.filter_todas_fechas">Todas las fechas</option>
+            <option value="hoy" data-i18n="operacion.filter_hoy">Hoy</option>
+            <option value="ayer" data-i18n="operacion.filter_ayer">Ayer</option>
+            <option value="semana" data-i18n="operacion.filter_semana">Esta semana</option>
           </select>
         </div>
 
@@ -218,20 +224,20 @@
             <table>
               <thead>
                 <tr>
-                  <th>Número</th>
-                  <th>Cliente</th>
-                  <th>Destino</th>
-                  <th>Chofer</th>
-                  <th>Bultos</th>
-                  <th>Costo</th>
-                  <th>Prioridad</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
+                  <th data-i18n="operacion.col_numero">Número</th>
+                  <th data-i18n="operacion.col_cliente">Cliente</th>
+                  <th data-i18n="operacion.col_destino">Destino</th>
+                  <th data-i18n="operacion.col_chofer">Chofer</th>
+                  <th data-i18n="operacion.col_bultos">Bultos</th>
+                  <th data-i18n="operacion.col_costo">Costo</th>
+                  <th data-i18n="operacion.col_prioridad">Prioridad</th>
+                  <th data-i18n="operacion.col_estado">Estado</th>
+                  <th data-i18n="operacion.col_fecha">Fecha</th>
+                  <th data-i18n="operacion.col_acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody id="pedidos-tbody">
-                <tr><td colspan="10" class="table-empty">Cargando pedidos...</td></tr>
+                <tr><td colspan="10" class="table-empty" data-i18n="operacion.cargando_pedidos">Cargando pedidos...</td></tr>
               </tbody>
             </table>
           </div>
@@ -245,10 +251,10 @@
       <!-- ======================== MAPA ======================== -->
       <div class="section" id="section-mapa">
         <div class="page-header">
-          <h1>Mapa de Rastreo</h1>
+          <h1 data-i18n="operacion.mapa_rastreo">Mapa de Rastreo</h1>
           <div class="page-header-actions">
             <button class="btn btn-ghost btn-sm" onclick="map.fitBounds(driverBounds)">
-              <i class="fas fa-expand"></i> Ver todos
+              <i class="fas fa-expand"></i> <span data-i18n="operacion.ver_todos">Ver todos</span>
             </button>
           </div>
         </div>
@@ -260,10 +266,10 @@
       <!-- ======================== CHOFERES ======================== -->
       <div class="section" id="section-choferes">
         <div class="page-header">
-          <h1>Choferes</h1>
+          <h1 data-i18n="operacion.choferes">Choferes</h1>
           <div class="page-header-actions">
             <button class="btn btn-ghost btn-sm" onclick="loadChoferes()">
-              <i class="fas fa-sync-alt"></i> Actualizar
+              <i class="fas fa-sync-alt"></i> <span data-i18n="operacion.refresh">Actualizar</span>
             </button>
           </div>
         </div>
@@ -272,12 +278,12 @@
           <div class="kpi-card">
             <div class="kpi-icon success"><i class="fas fa-user-check"></i></div>
             <div class="kpi-value" id="cho-activos">0</div>
-            <div class="kpi-label">Choferes Activos</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_choferes_activos">Choferes Activos</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon info"><i class="fas fa-truck-loading"></i></div>
             <div class="kpi-value" id="cho-entregas-hoy">0</div>
-            <div class="kpi-label">Entregas Hoy</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_entregas_hoy">Entregas Hoy</div>
           </div>
         </div>
 
@@ -286,17 +292,17 @@
             <table>
               <thead>
                 <tr>
-                  <th>Chofer</th>
-                  <th>Estatus</th>
-                  <th>Ubicación</th>
-                  <th>Entregas Hoy</th>
-                  <th>Tasa Éxito</th>
-                  <th>Tiempo Prom.</th>
-                  <th>Acciones</th>
+                  <th data-i18n="operacion.col_chofer">Chofer</th>
+                  <th data-i18n="operacion.col_estatus">Estatus</th>
+                  <th data-i18n="operacion.col_ubicacion">Ubicación</th>
+                  <th data-i18n="operacion.col_entregas_hoy">Entregas Hoy</th>
+                  <th data-i18n="operacion.col_tasa_exito">Tasa Éxito</th>
+                  <th data-i18n="operacion.col_tiempo_prom">Tiempo Prom.</th>
+                  <th data-i18n="operacion.col_acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody id="choferes-tbody">
-                <tr><td colspan="7" class="table-empty">Cargando choferes...</td></tr>
+                <tr><td colspan="7" class="table-empty" data-i18n="operacion.cargando_choferes">Cargando choferes...</td></tr>
               </tbody>
             </table>
           </div>
@@ -306,7 +312,7 @@
       <!-- ======================== REPORTES ======================== -->
       <div class="section" id="section-reportes">
         <div class="page-header">
-          <h1>Reportes</h1>
+          <h1 data-i18n="operacion.reportes">Reportes</h1>
           <div class="page-header-actions">
             <button class="btn btn-ghost btn-sm" onclick="exportReport('pdf')">
               <i class="fas fa-file-pdf"></i> PDF
@@ -318,12 +324,12 @@
         </div>
 
         <div class="filter-bar mb-xl">
-          <label class="form-label" style="margin-bottom:0">Desde</label>
+          <label class="form-label" style="margin-bottom:0" data-i18n="operacion.desde">Desde</label>
           <input type="date" class="input" id="reporte-fecha-inicio" style="min-width:140px">
-          <label class="form-label" style="margin-bottom:0">Hasta</label>
+          <label class="form-label" style="margin-bottom:0" data-i18n="operacion.hasta">Hasta</label>
           <input type="date" class="input" id="reporte-fecha-fin" style="min-width:140px">
           <button class="btn btn-primary btn-sm" onclick="loadReportes()">
-            <i class="fas fa-filter"></i> Filtrar
+              <i class="fas fa-filter"></i> <span data-i18n="operacion.filtrar">Filtrar</span>
           </button>
         </div>
 
@@ -331,29 +337,29 @@
           <div class="kpi-card">
             <div class="kpi-icon accent"><i class="fas fa-shipping-fast"></i></div>
             <div class="kpi-value" id="rep-total-envios">0</div>
-            <div class="kpi-label">Total Envíos</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_total_envios">Total Envíos</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon success"><i class="fas fa-dollar-sign"></i></div>
             <div class="kpi-value" id="rep-ingresos">$0</div>
-            <div class="kpi-label">Ingresos</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_ingresos">Ingresos</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon danger"><i class="fas fa-percentage"></i></div>
             <div class="kpi-value" id="rep-tasa-exito">0%</div>
-            <div class="kpi-label">Tasa de Éxito</div>
+            <div class="kpi-label" data-i18n="operacion.kpi_tasa_exito">Tasa de Éxito</div>
           </div>
         </div>
 
         <div class="grid grid-2 mb-xl">
           <div class="card">
-            <div class="card-header"><h3>Pedidos por Día</h3></div>
+            <div class="card-header"><h3 data-i18n="operacion.pedidos_por_dia">Pedidos por Día</h3></div>
             <div class="card-body">
               <div class="chart-wrap"><canvas id="chart-pedidos-dia"></canvas></div>
             </div>
           </div>
           <div class="card">
-            <div class="card-header"><h3>Top Choferes</h3></div>
+            <div class="card-header"><h3 data-i18n="operacion.top_choferes">Top Choferes</h3></div>
             <div class="card-body">
               <div class="chart-wrap"><canvas id="chart-choferes-top"></canvas></div>
             </div>
@@ -368,16 +374,16 @@
   <div class="modal-overlay" id="modal-pedido">
     <div class="modal" style="max-width:600px">
       <div class="modal-header">
-        <h3><i class="fas fa-box text-accent"></i> Detalle del Pedido</h3>
+        <h3><i class="fas fa-box text-accent"></i> <span data-i18n="operacion.detalle_pedido">Detalle del Pedido</span></h3>
         <button class="modal-close" onclick="closeModal('modal-pedido')">&times;</button>
       </div>
       <div class="modal-body" id="pedido-detail">
-        <p class="text-muted text-center">Cargando...</p>
+        <p class="text-muted text-center" data-i18n="operacion.cargando">Cargando...</p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-pedido')">Cerrar</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-pedido')" data-i18n="operacion.cerrar">Cerrar</button>
         <button class="btn btn-primary btn-sm" id="modal-assign-btn" onclick="asignarPedido()">
-          <i class="fas fa-user-plus"></i> Asignar Chofer
+          <i class="fas fa-user-plus"></i> <span data-i18n="operacion.asignar_chofer">Asignar Chofer</span>
         </button>
       </div>
     </div>
@@ -388,6 +394,15 @@
 
   <script src="js/app.js"></script>
   <script>
+    /* ---- i18n ---- */
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+      loadDashboard();
+      loadPedidos();
+      loadChoferes();
+    });
+
     // ========================================
     // API HELPER
     // ========================================
@@ -466,11 +481,11 @@
       document.querySelector(`.nav-item[data-section="${section}"]`).classList.add('active');
 
       const titles = {
-        dashboard: 'Dashboard',
-        pedidos: 'Pedidos',
-        mapa: 'Mapa de Rastreo',
-        choferes: 'Choferes',
-        reportes: 'Reportes'
+        dashboard: window.i18n.t('operacion.nav_dashboard'),
+        pedidos: window.i18n.t('operacion.nav_pedidos'),
+        mapa: window.i18n.t('operacion.mapa_rastreo'),
+        choferes: window.i18n.t('operacion.nav_choferes'),
+        reportes: window.i18n.t('operacion.nav_reportes')
       };
       document.getElementById('page-title').textContent = titles[section] || section;
 
@@ -578,7 +593,7 @@
           : `<div style="font-family:Inter,sans-serif;min-width:140px">
               <strong>${d.nombre}</strong><br>
               <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:4px 0">${d.estatus}</span><br>
-              <small>${d.entregas} entregas hoy</small>
+              <small>${d.entregas} ${window.i18n.t('operacion.entregas_hoy')}</small>
             </div>`;
         marker.bindPopup(popup);
         driverMarkers.push(marker);
@@ -608,14 +623,14 @@
           ? `<div style="font-family:Inter,sans-serif;min-width:160px">
               <strong style="font-size:14px">${d.nombre}</strong><br>
               <span class="badge badge-success" style="margin:6px 0">ACTIVO</span><br>
-              <small style="color:#6b7280">Velocidad: ${d.speed.toFixed(0)} km/h</small><br>
-              <small style="color:#6b7280">Bateria: ${d.battery}%</small><br>
+              <small style="color:#6b7280">${window.i18n.t('operacion.velocidad')}: ${d.speed.toFixed(0)} km/h</small><br>
+              <small style="color:#6b7280">${window.i18n.t('operacion.bateria')}: ${d.battery}%</small><br>
               <small style="color:#6b7280">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
             </div>`
           : `<div style="font-family:Inter,sans-serif;min-width:160px">
               <strong style="font-size:14px">${d.nombre}</strong><br>
               <span class="badge badge-${d.estatus === 'ACTIVO' ? 'success' : 'info'}" style="margin:6px 0">${d.estatus}</span><br>
-              <small style="color:#6b7280">${d.entregas} entregas hoy</small><br>
+              <small style="color:#6b7280">${d.entregas} ${window.i18n.t('operacion.entregas_hoy')}</small><br>
               <small style="color:#6b7280">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</small>
             </div>`;
         marker.bindPopup(popup);
@@ -663,11 +678,11 @@
       const pageData = filteredPedidos.slice(start, start + PEDIDOS_PER_PAGE);
       const total = filteredPedidos.length;
 
-      document.getElementById('pedidos-count').textContent = `${total} pedidos`;
-      document.getElementById('pedidos-pagination-info').textContent = `Mostrando ${start + 1}-${Math.min(start + PEDIDOS_PER_PAGE, total)} de ${total}`;
+      document.getElementById('pedidos-count').textContent = `${total} ${window.i18n.t('operacion.pedidos')}`;
+      document.getElementById('pedidos-pagination-info').textContent = `${window.i18n.t('operacion.mostrando')} ${start + 1}-${Math.min(start + PEDIDOS_PER_PAGE, total)} ${window.i18n.t('operacion.de')} ${total}`;
 
       if (pageData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="table-empty"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:12px;opacity:0.3;display:block"></i>No se encontraron pedidos</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="10" class="table-empty"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:12px;opacity:0.3;display:block"></i>${window.i18n.t('operacion.no_encontrados')}</td></tr>`;
         document.getElementById('pedidos-pagination').innerHTML = '';
         return;
       }
@@ -728,7 +743,7 @@
           if (result.success && result.data) pedido = result.data;
         } catch(e) {}
       }
-      if (!pedido) { Utils.toast('Pedido no encontrado', 'error'); return; }
+      if (!pedido) { Utils.toast(window.i18n.t('operacion.toast_pedido_no_encontrado'), 'error'); return; }
 
       pendingPedidoId = pedId;
       document.getElementById('pedido-detail').innerHTML = `
@@ -740,38 +755,38 @@
           <hr class="divider">
           <div class="grid grid-2 gap-md">
             <div>
-              <span class="form-label">Cliente</span>
+              <span class="form-label">${window.i18n.t('operacion.detalle_cliente')}</span>
               <p class="text-sm">${pedido.PED_CLIENTE_NOMBRE || '-'}</p>
             </div>
             <div>
-              <span class="form-label">Teléfono</span>
+              <span class="form-label">${window.i18n.t('operacion.detalle_telefono')}</span>
               <p class="text-sm">${pedido.PED_CLIENTE_TELEFONO || '-'}</p>
             </div>
           </div>
           <div>
-            <span class="form-label">Destino</span>
+            <span class="form-label">${window.i18n.t('operacion.detalle_destino')}</span>
             <p class="text-sm">${pedido.PED_DESTINO_DIR || ''}, ${pedido.PED_DESTINO_COL || ''}</p>
           </div>
           <div class="grid grid-3 gap-md">
             <div>
-              <span class="form-label">Bultos</span>
+              <span class="form-label">${window.i18n.t('operacion.detalle_bultos')}</span>
               <p class="text-sm">${pedido.PED_BULTOS || 0}</p>
             </div>
             <div>
-              <span class="form-label">Peso</span>
+              <span class="form-label">${window.i18n.t('operacion.detalle_peso')}</span>
               <p class="text-sm">${pedido.PED_PESO_KG || 0} kg</p>
             </div>
             <div>
-              <span class="form-label">Costo</span>
+              <span class="form-label">${window.i18n.t('operacion.detalle_costo')}</span>
               <p class="text-sm font-semibold text-accent">${Utils.$(pedido.PED_COSTO_TOTAL)}</p>
             </div>
           </div>
           <div>
-            <span class="form-label">Chofer Asignado</span>
-            <p class="text-sm">${pedido.CHOFER_ASIGNADO || '<span class="text-muted">Sin asignar</span>'}</p>
+            <span class="form-label">${window.i18n.t('operacion.detalle_chofer_asignado')}</span>
+            <p class="text-sm">${pedido.CHOFER_ASIGNADO || `<span class="text-muted">${window.i18n.t('operacion.detalle_sin_asignar')}</span>`}</p>
           </div>
           <div>
-            <span class="form-label">Prioridad</span>
+            <span class="form-label">${window.i18n.t('operacion.detalle_prioridad')}</span>
             ${Utils.badge(pedido.PED_PRIORIDAD || 'NORMAL')}
           </div>
         </div>
@@ -785,7 +800,7 @@
     }
 
     function asignarPedido(pedId) {
-      Utils.toast('Función de asignación disponible en la versión completa', 'info');
+      Utils.toast(window.i18n.t('operacion.toast_asignacion_info'), 'info');
     }
 
     // ========================================
@@ -831,13 +846,13 @@
           <td>${tiempo} min</td>
           <td>
             <div class="flex gap-xs">
-              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('Llamando a ${nombre}', 'info')" title="Llamar">
+              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('${window.i18n.t('operacion.toast_llamando')}: ${nombre}', 'info')" title="Llamar">
                 <i class="fas fa-phone"></i>
               </button>
-              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('Mensaje enviado a ${nombre}', 'success')" title="Mensaje">
+              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('${window.i18n.t('operacion.toast_mensaje_enviado')}: ${nombre}', 'success')" title="Mensaje">
                 <i class="fas fa-comment"></i>
               </button>
-              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('Reasignación disponible en versión completa', 'info')" title="Reasignar">
+              <button class="btn btn-sm btn-ghost" onclick="Utils.toast('${window.i18n.t('operacion.toast_reasignacion_info')}', 'info')" title="Reasignar">
                 <i class="fas fa-exchange-alt"></i>
               </button>
             </div>
@@ -869,7 +884,7 @@
       if (!ctx) return;
       if (ctx._chart) ctx._chart.destroy();
 
-      const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      const labels = [window.i18n.t('operacion.dia_lun'), window.i18n.t('operacion.dia_mar'), window.i18n.t('operacion.dia_mie'), window.i18n.t('operacion.dia_jue'), window.i18n.t('operacion.dia_vie'), window.i18n.t('operacion.dia_sab'), window.i18n.t('operacion.dia_dom')];
       const data = [12, 19, 8, 15, 22, 14, 10];
       const theme = ThemeManager.get();
       const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
@@ -880,7 +895,7 @@
         data: {
           labels,
           datasets: [{
-            label: 'Pedidos',
+            label: window.i18n.t('operacion.pedidos'),
             data,
             borderColor: '#6366f1',
             backgroundColor: 'rgba(99,102,241,0.08)',
@@ -918,7 +933,7 @@
         data: {
           labels: names,
           datasets: [{
-            label: 'Entregas',
+            label: window.i18n.t('operacion.entregas'),
             data: entregas,
             backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
             borderRadius: 4,
@@ -968,11 +983,11 @@
     }
 
     function toggleNotifications() {
-      Utils.toast('3 notificaciones nuevas', 'info');
+      Utils.toast(window.i18n.t('operacion.toast_notificaciones'), 'info');
     }
 
     function exportReport(type) {
-      Utils.toast(`Exportando reporte como ${type.toUpperCase()}...`, 'info');
+      Utils.toast(`${window.i18n.t('operacion.toast_exportando')} ${type.toUpperCase()}...`, 'info');
     }
 
     // ========================================
@@ -985,10 +1000,6 @@
       document.getElementById('sidebar-user').textContent = userName;
       document.getElementById('sidebar-avatar').textContent = userName.substring(0, 2).toUpperCase();
       document.getElementById('topbar-avatar').textContent = userName.substring(0, 2).toUpperCase();
-
-      loadDashboard();
-      loadPedidos();
-      loadChoferes();
     });
 
     // Close sidebar on mobile when clicking outside

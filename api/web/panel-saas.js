@@ -31,8 +31,10 @@ function getTheme(){try{return typeof ThemeManager!=='undefined'?ThemeManager.ge
    HELPERS
    ========================================== */
 function statusBadge(s){
-  const c={ACTIVA:'badge-success',PENDIENTE:'badge-warning',COMPLETADO:'badge-success',PAGADO:'badge-success',TRIAL:'badge-info',SUSPENDIDA:'badge-danger',CANCELADA:'badge-danger',EN_RUTA:'badge-info',ENTREGADO:'badge-success',CANCELADO:'badge-danger',PENDIENTE:'badge-warning',admin:'badge-warning',operacion:'badge-info',chofer:'badge-success',cliente:'badge-gray'};
-  return '<span class="badge '+(c[s]||'badge-gray')+'">'+s+'</span>';
+  const c={ACTIVA:'badge-success',PENDIENTE:'badge-warning',COMPLETADO:'badge-success',PAGADO:'badge-success',TRIAL:'badge-info',SUSPENDIDA:'badge-danger',CANCELADA:'badge-danger',EN_RUTA:'badge-info',ENTREGADO:'badge-success',CANCELADO:'badge-danger',admin:'badge-warning',operacion:'badge-info',chofer:'badge-success',cliente:'badge-gray',activo:'badge-success',inactivo:'badge-gray'};
+  const labels={ACTIVA:'saas.estado_activo',PENDIENTE:'saas.filtro_pendiente',COMPLETADO:'saas.filtro_entregado',PAGADO:'saas.kpi_cobrado',TRIAL:'saas.kpi_trial',SUSPENDIDA:'saas.estado_suspendida',CANCELADA:'saas.kpi_canceladas',EN_RUTA:'saas.filtro_en_ruta',ENTREGADO:'saas.filtro_entregado',CANCELADO:'saas.filtro_cancelado',admin:'col_rol',operacion:'col_rol',chofer:'col_rol',cliente:'col_rol',activo:'saas.kpi_activos',inactivo:'saas.kpi_suspendidos'};
+  const lbl=window.i18n&&window.i18n.t?window.i18n.t(labels[s]||''):s;
+  return '<span class="badge '+(c[s]||'badge-gray')+'">'+lbl+'</span>';
 }
 function planBadge(p){
   const c={STARTER:'badge-gray',PRO:'badge-info',ENTERPRISE:'badge-warning',Starter:'badge-gray',Pro:'badge-info',Enterprise:'badge-warning'};
@@ -98,7 +100,7 @@ function loadDashboard(){
       return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-primary);">'+
         '<div class="avatar" style="background:'+color+'20;color:'+color+';">'+(t.EMP_NOMBRE||'?').substring(0,2).toUpperCase()+'</div>'+
         '<div style="flex:1;"><div style="font-size:12px;font-weight:500;">'+(t.EMP_NOMBRE||'-')+'</div><div style="font-size:10px;color:var(--text-muted);">'+(t.EMP_PLAN||'STARTER')+'</div></div>'+
-        '<div style="text-align:right;"><div style="font-size:12px;font-weight:600;">'+(t.TOTAL_PEDIDOS||0)+'</div><div style="font-size:10px;color:var(--text-muted);">pedidos</div></div></div>';
+        '<div style="text-align:right;"><div style="font-size:12px;font-weight:600;">'+(t.TOTAL_PEDIDOS||0)+'</div><div style="font-size:10px;color:var(--text-muted);">'+window.i18n.t('saas.col_pedidos')+'</div></div></div>';
     }).join('');
   });
 
@@ -112,7 +114,7 @@ function loadDashboard(){
       return '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-primary);">'+
         '<div style="width:6px;height:6px;border-radius:50%;background:'+color+';margin-top:5px;flex-shrink:0;"></div>'+
         '<div><div style="font-size:12px;">'+(a.AUD_ACCION||'')+'</div><div style="font-size:10px;color:var(--text-muted);">'+(a.AUD_FECHA||'')+'</div></div></div>';
-    }).join(''):'<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Sin actividad reciente</div>';
+    }).join(''):'<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">'+window.i18n.t('saas.actividad_reciente')+'</div>';
   });
 }
 
@@ -124,7 +126,7 @@ function initRevenueChart(data){
   const labels=data.map(d=>d.mes||'');
   const totals=data.map(d=>parseFloat(d.total||0));
   const cobrados=data.map(d=>parseFloat(d.cobrado||0));
-  chartRevenue=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Total',data:totals,backgroundColor:'rgba(99,102,241,0.5)',borderRadius:4},{label:'Cobrado',data:cobrados,backgroundColor:'rgba(16,185,129,0.5)',borderRadius:4}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{color:isDark?'#9ca3af':'#6b7280',font:{size:10}},grid:{color:isDark?'rgba(75,85,99,0.3)':'rgba(209,213,219,0.5)'}},x:{ticks:{color:isDark?'#9ca3af':'#6b7280',font:{size:10}},grid:{display:false}}},plugins:{legend:{labels:{color:isDark?'#9ca3af':'#6b7280',font:{size:11}}}}}});
+  chartRevenue=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:window.i18n.t('saas.col_total'),data:totals,backgroundColor:'rgba(99,102,241,0.5)',borderRadius:4},{label:window.i18n.t('saas.kpi_cobrado'),data:cobrados,backgroundColor:'rgba(16,185,129,0.5)',borderRadius:4}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{color:isDark?'#9ca3af':'#6b7280',font:{size:10}},grid:{color:isDark?'rgba(75,85,99,0.3)':'rgba(209,213,219,0.5)'}},x:{ticks:{color:isDark?'#9ca3af':'#6b7280',font:{size:10}},grid:{display:false}}},plugins:{legend:{labels:{color:isDark?'#9ca3af':'#6b7280',font:{size:11}}}}}});
 }
 
 function initPlanesChart(data){
@@ -197,10 +199,10 @@ function createTenant(){
     admin_user:document.getElementById('nt-user').value.trim()||'admin',
     admin_pass:document.getElementById('nt-pass').value||'admin123'
   };
-  if(!data.nombre){showToast('Nombre requerido','error');return;}
+  if(!data.nombre){showToast(window.i18n.t('saas.modal_empresa_nombre'),'error');return;}
   apiPost('/api/saas/tenants',data).then(res=>{
     if(res.success){
-      showToast('Tenant "'+data.nombre+'" creado','success');
+      showToast('Tenant "'+data.nombre+'" '+window.i18n.t('saas.btn_crear_tenant'),'success');
       closeModal('modalNuevoTenant');
       loadTenants();
       document.getElementById('nt-nombre').value='';
@@ -208,7 +210,7 @@ function createTenant(){
       document.getElementById('nt-email').value='';
       document.getElementById('nt-telefono').value='';
     }else{
-      showToast(res.error||'Error creando tenant','error');
+      showToast(res.error||window.i18n.t('common.error'),'error');
     }
   });
 }
@@ -237,54 +239,54 @@ function updateTenant(){
     estatus:document.getElementById('et-estatus').value
   }).then(res=>{
     if(res.success){
-      showToast('Tenant actualizado','success');
+      showToast(window.i18n.t('saas.btn_guardar')+' '+window.i18n.t('saas.modal_editar_tenant'),'success');
       closeModal('modalEditarTenant');
       loadTenants();
     }else{
-      showToast(res.error||'Error actualizando','error');
+      showToast(res.error||window.i18n.t('common.error'),'error');
     }
   });
 }
 
 function suspendTenant(id){
-  if(!confirm('Suspender este tenant? El usuario no podra acceder.'))return;
+  if(!confirm(window.i18n.t('saas.kpi_suspendidos')+'? '+window.i18n.t('saas.modal_detalle_tenant')))return;
   apiPost('/api/saas/tenants/'+id+'/suspend',{}).then(res=>{
-    if(res.success){showToast('Tenant suspendido','success');loadTenants();}
-    else showToast(res.error||'Error','error');
+    if(res.success){showToast(window.i18n.t('saas.kpi_suspendidos'),'success');loadTenants();}
+    else showToast(res.error||window.i18n.t('common.error'),'error');
   });
 }
 
 function activateTenant(id){
   apiPost('/api/saas/tenants/'+id+'/activate',{}).then(res=>{
-    if(res.success){showToast('Tenant activado','success');loadTenants();}
-    else showToast(res.error||'Error','error');
+    if(res.success){showToast(window.i18n.t('saas.kpi_activos'),'success');loadTenants();}
+    else showToast(res.error||window.i18n.t('common.error'),'error');
   });
 }
 
 function viewTenant(id){
   apiGet('/api/saas/tenants/'+id).then(res=>{
-    if(!res.success||!res.data){showToast('Error cargando detalle','error');return;}
+    if(!res.success||!res.data){showToast(window.i18n.t('common.error'),'error');return;}
     const t=res.data;
     document.getElementById('dt-title').textContent=t.EMP_NOMBRE||'Tenant #'+id;
     const body=document.getElementById('dt-body');
     const plan=t.suscripcion?{nombre:t.suscripcion.PLAN_NOMBRE,precio:t.suscripcion.PLAN_PRECIO_MENSUAL}:{nombre:t.EMP_PLAN,precio:0};
     body.innerHTML='<div style="padding:24px;">'+
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">'+
-        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:var(--accent);">'+(t.TOTAL_PEDIDOS||0)+'</div><div style="font-size:10px;color:var(--text-muted);">Pedidos</div></div>'+
-        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:var(--success);">'+(t.TOTAL_CHOFERES||0)+'</div><div style="font-size:10px;color:var(--text-muted);">Choferes</div></div>'+
-        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:var(--warning);">'+(t.TOTAL_CLIENTES||0)+'</div><div style="font-size:10px;color:var(--text-muted);">Clientes</div></div>'+
-        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:#8b5cf6;">'+(t.TOTAL_USUARIOS||0)+'</div><div style="font-size:10px;color:var(--text-muted);">Usuarios</div></div>'+
+        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:var(--accent);">'+(t.TOTAL_PEDIDOS||0)+'</div><div style="font-size:10px;color:var(--text-muted);">'+window.i18n.t('saas.col_pedidos')+'</div></div>'+
+        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:var(--success);">'+(t.TOTAL_CHOFERES||0)+'</div><div style="font-size:10px;color:var(--text-muted);">'+window.i18n.t('saas.col_choferes')+'</div></div>'+
+        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:var(--warning);">'+(t.TOTAL_CLIENTES||0)+'</div><div style="font-size:10px;color:var(--text-muted);">'+window.i18n.t('saas.col_clientes')+'</div></div>'+
+        '<div style="text-align:center;padding:16px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-primary);"><div style="font-size:22px;font-weight:700;color:#8b5cf6;">'+(t.TOTAL_USUARIOS||0)+'</div><div style="font-size:10px;color:var(--text-muted);">'+window.i18n.t('saas.usuarios_titulo')+'</div></div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">'+
-        '<div><h4 style="font-size:12px;font-weight:600;margin-bottom:8px;">Informacion</h4>'+
+        '<div><h4 style="font-size:12px;font-weight:600;margin-bottom:8px;">'+window.i18n.t('saas.config_nombre')+'</h4>'+
           '<div style="font-size:12px;line-height:2;color:var(--text-secondary);">'+
             '<div><span style="color:var(--text-muted);">RFC:</span> '+(t.EMP_RFC||'-')+'</div>'+
-            '<div><span style="color:var(--text-muted);">Email:</span> '+(t.EMP_EMAIL||'-')+'</div>'+
-            '<div><span style="color:var(--text-muted);">Telefono:</span> '+(t.EMP_TELEFONO||'-')+'</div>'+
-            '<div><span style="color:var(--text-muted);">Plan:</span> '+planBadge(t.EMP_PLAN||'STARTER')+' ('+formatCurrency(plan.precio)+'/mes)</div>'+
-            '<div><span style="color:var(--text-muted);">Estado:</span> '+statusBadge(t.EMP_ESTATUS)+'</div>'+
+            '<div><span style="color:var(--text-muted);">'+window.i18n.t('saas.col_email')+':</span> '+(t.EMP_EMAIL||'-')+'</div>'+
+            '<div><span style="color:var(--text-muted);">'+window.i18n.t('saas.modal_telefono')+':</span> '+(t.EMP_TELEFONO||'-')+'</div>'+
+            '<div><span style="color:var(--text-muted);">'+window.i18n.t('saas.col_plan')+':</span> '+planBadge(t.EMP_PLAN||'STARTER')+' ('+formatCurrency(plan.precio)+'/'+window.i18n.t('saas.kpi_pagos_pend').replace('.','').toLowerCase()+')</div>'+
+            '<div><span style="color:var(--text-muted);">'+window.i18n.t('saas.col_estado')+':</span> '+statusBadge(t.EMP_ESTATUS)+'</div>'+
           '</div></div>'+
-        '<div><h4 style="font-size:12px;font-weight:600;margin-bottom:8px;">Usuarios</h4>'+
+        '<div><h4 style="font-size:12px;font-weight:600;margin-bottom:8px;">'+window.i18n.t('saas.usuarios_titulo')+'</h4>'+
           (t.usuarios||[]).map(u=>'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-primary);">'+
             '<div class="avatar" style="background:var(--accent-bg);color:var(--accent);width:24px;height:24px;font-size:9px;">'+(u.USU_NOMBRE||'?').substring(0,2).toUpperCase()+'</div>'+
             '<div style="flex:1;"><div style="font-size:12px;font-weight:500;">'+(u.USU_NOMBRE||'-')+'</div><div style="font-size:10px;color:var(--text-muted);">'+(u.USU_USUARIO||'')+'</div></div>'+
@@ -292,8 +294,8 @@ function viewTenant(id){
           '</div>').join('')+
         '</div>'+
       '</div>'+
-      (t.pagos_recientes&&t.pagos_recientes.length?'<h4 style="font-size:12px;font-weight:600;margin-bottom:8px;">Pagos Recientes</h4>'+
-        '<table><thead><tr><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead><tbody>'+
+      (t.pagos_recientes&&t.pagos_recientes.length?'<h4 style="font-size:12px;font-weight:600;margin-bottom:8px;">'+window.i18n.t('saas.cobros_titulo')+'</h4>'+
+        '<table><thead><tr><th>'+window.i18n.t('saas.col_fecha')+'</th><th>'+window.i18n.t('saas.col_total')+'</th><th>'+window.i18n.t('saas.col_estado')+'</th></tr></thead><tbody>'+
         t.pagos_recientes.map(p=>'<tr><td>'+(p.COB_FECHA_COBRO||'-')+'</td><td style="font-weight:500;color:var(--success);">'+formatCurrency(p.COB_MONTO)+'</td><td>'+statusBadge(p.COB_ESTATUS||'PENDIENTE')+'</td></tr>').join('')+
         '</tbody></table>':'')+
       '</div>';
@@ -348,7 +350,7 @@ function loadPedidosGlobal(){
     const sel=document.getElementById('pedGlobalTenant');
     if(sel){
       const current=sel.value;
-      sel.innerHTML='<option value="">Todos los tenants</option>'+tenants.map(t=>'<option value="'+t+'">'+t+'</option>').join('');
+      sel.innerHTML='<option value="">'+window.i18n.t('saas.filtro_todos_tenants')+'</option>'+tenants.map(t=>'<option value="'+t+'">'+t+'</option>').join('');
       sel.value=current;
     }
     renderPedidosGlobal();
@@ -403,12 +405,12 @@ function renderSuscripciones(){
   tbody.innerHTML=DB_SUSCRIPCIONES.map(s=>'<tr>'+
     '<td style="font-weight:500;">'+(s.EMP_NOMBRE||'-')+'</td>'+
     '<td>'+planBadge(s.PLAN_NOMBRE||'')+'</td>'+
-    '<td style="font-weight:500;">'+formatCurrency(s.PLAN_PRECIO_MENSUAL||0)+'/mes</td>'+
+    '<td style="font-weight:500;">'+formatCurrency(s.PLAN_PRECIO_MENSUAL||0)+'/'+window.i18n.t('saas.kpi_pagos_pend').split('.')[0].toLowerCase()+'</td>'+
     '<td>'+statusBadge(s.SUS_ESTADO||'')+'</td>'+
     '<td style="font-size:11px;">'+(s.SUS_FECHA_INICIO||'-')+'</td>'+
     '<td style="font-size:11px;">'+(s.SUS_FECHA_PROXIMO_COBRO||'-')+'</td>'+
     '<td><div style="display:flex;gap:4px;">'+
-      '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Detalle suscripcion '+s.SUS_ID+'\',\'info\')" title="Ver"><i class="fas fa-eye" style="font-size:10px;"></i></button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="showToast(\''+window.i18n.t('saas.col_detalle')+' '+s.SUS_ID+'\',\'info\')" title="'+window.i18n.t('common.view')+'"><i class="fas fa-eye" style="font-size:10px;"></i></button>'+
     '</div></td>'+
   '</tr>').join('');
 }
@@ -480,14 +482,14 @@ function renderPlanes(planes){
       '<div style="width:48px;height:48px;background:var(--accent-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><i class="fas fa-'+(p.id==='ENTERPRISE'||p.PLAN_ID===3?'crown':'bolt')+'" style="color:var(--accent);font-size:18px;"></i></div>'+
       '<h3 style="font-size:16px;font-weight:600;margin-bottom:4px;">'+(p.name||p.PLAN_NOMBRE||'')+'</h3>'+
       '<div style="font-size:28px;font-weight:700;color:var(--accent);margin:8px 0;">$'+price.toLocaleString()+'<span style="font-size:12px;color:var(--text-muted);font-weight:400;">/mes</span></div>'+
-      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">'+maxP+' pedidos/mes</div>'+
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">'+maxP+' '+window.i18n.t('saas.kpi_pedidos_mes').toLowerCase()+'</div>'+
       '<div style="text-align:left;font-size:12px;color:var(--text-secondary);line-height:2.4;padding:0 16px;">'+
-        '<div><i class="fas fa-check" style="color:var(--success);margin-right:8px;font-size:10px;"></i> '+maxU+' usuarios</div>'+
-        '<div><i class="fas fa-check" style="color:var(--success);margin-right:8px;font-size:10px;"></i> '+maxC+' choferes</div>'+
+        '<div><i class="fas fa-check" style="color:var(--success);margin-right:8px;font-size:10px;"></i> '+maxU+' '+window.i18n.t('saas.col_choferes').toLowerCase()+'</div>'+
+        '<div><i class="fas fa-check" style="color:var(--success);margin-right:8px;font-size:10px;"></i> '+maxC+' '+window.i18n.t('saas.col_choferes').toLowerCase()+'</div>'+
         (Array.isArray(features)?features.slice(0,3).map(f=>'<div><i class="fas fa-check" style="color:var(--success);margin-right:8px;font-size:10px;"></i> '+f.replace(/_/g,' ')+'</div>').join(''):'')+
       '</div>'+
       '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-primary);font-size:11px;color:var(--text-muted);">'+
-        p.stripe_available||p.mp_available?'<i class="fas fa-credit-card" style="color:var(--success);margin-right:4px;"></i> Pagos activos':'<i class="fas fa-info-circle" style="color:var(--text-muted);margin-right:4px;"></i> Configurar pagos'+
+        p.stripe_available||p.mp_available?'<i class="fas fa-credit-card" style="color:var(--success);margin-right:4px;"></i> '+window.i18n.t('saas.kpi_cobrado'):'<i class="fas fa-info-circle" style="color:var(--text-muted);margin-right:4px;"></i> '+window.i18n.t('saas.btn_guardar_config')+
       '</div></div>';
   }).join('');
 }
@@ -535,10 +537,10 @@ function globalSearchFn(){
    REFRESH
    ========================================== */
 function refreshAll(){
-  showToast('Actualizando datos...','info');
+  showToast(window.i18n.t('saas.refresh')+'...','info');
   const active=document.querySelector('.nav-item.active');
   if(active)loadSection(active.getAttribute('data-section'));
-  setTimeout(()=>showToast('Datos actualizados','success'),600);
+  setTimeout(()=>showToast(window.i18n.t('saas.refresh'),'success'),600);
 }
 
 /* ==========================================

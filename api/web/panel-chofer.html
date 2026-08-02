@@ -14,6 +14,7 @@
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
   <style>
@@ -193,17 +194,22 @@
       <div class="logo-icon">LM</div>
       <div>
         <h1>Last Mile</h1>
-        <small>Chofer</small>
+        <small data-i18n="chofer.subtitle">Chofer</small>
       </div>
     </div>
     <div class="app-header-right">
-      <span class="gps-badge online" id="gps-status">
+      <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+      </select>
+      <span class="gps-badge online" id="gps-status" data-i18n="chofer.gps_activo">
         <i class="fas fa-satellite-dish"></i> GPS Activo
       </span>
-      <button class="theme-toggle" title="Cambiar tema">
+      <button class="theme-toggle" title="Cambiar tema" data-i18n="chofer.cambiar_tema">
         <i class="fas fa-sun"></i>
       </button>
-      <a href="index.html" onclick="localStorage.clear()" style="color:var(--text-muted);font-size:14px;" title="Cerrar sesion"><i class="fas fa-sign-out-alt"></i></a>
+      <a href="index.html" onclick="localStorage.clear()" style="color:var(--text-muted);font-size:14px;" title="Cerrar sesion" data-i18n="chofer.cerrar_sesion"><i class="fas fa-sign-out-alt"></i></a>
     </div>
   </header>
 
@@ -215,32 +221,32 @@
         <div class="kpi-card">
           <div class="kpi-icon accent"><i class="fas fa-box"></i></div>
           <div class="kpi-value" id="kpi-total">0</div>
-          <div class="kpi-label">Mis Pedidos</div>
+          <div class="kpi-label" data-i18n="chofer.kpi_mis_pedidos">Mis Pedidos</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-icon success"><i class="fas fa-check-circle"></i></div>
           <div class="kpi-value" id="kpi-entregados">0</div>
-          <div class="kpi-label">Entregados</div>
+          <div class="kpi-label" data-i18n="chofer.kpi_entregados">Entregados</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-icon warning"><i class="fas fa-clock"></i></div>
           <div class="kpi-value" id="kpi-pendientes">0</div>
-          <div class="kpi-label">Pendientes</div>
+          <div class="kpi-label" data-i18n="chofer.kpi_pendientes">Pendientes</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-icon info"><i class="fas fa-road"></i></div>
           <div class="kpi-value" id="kpi-km">0</div>
-          <div class="kpi-label">KM Hoy</div>
+          <div class="kpi-label" data-i18n="chofer.kpi_km_hoy">KM Hoy</div>
         </div>
       </div>
 
       <div class="section-title">
-        <i class="fas fa-box"></i> Mis Entregas de Hoy
+        <i class="fas fa-box"></i> <span data-i18n="chofer.section_entregas_hoy">Mis Entregas de Hoy</span>
       </div>
       <div id="entregas-list">
         <div class="empty-state">
           <i class="fas fa-truck-loading"></i>
-          <h3>Cargando entregas...</h3>
+          <h3 data-i18n="chofer.cargando_entregas">Cargando entregas...</h3>
         </div>
       </div>
     </section>
@@ -248,7 +254,7 @@
     <!-- SECTION: Mapa -->
     <section id="panel-mapa" class="section-panel">
       <div class="section-title">
-        <i class="fas fa-map-marked-alt"></i> Mapa en Vivo
+        <i class="fas fa-map-marked-alt"></i> <span data-i18n="chofer.section_mapa">Mapa en Vivo</span>
       </div>
       <div id="chofer-map"></div>
     </section>
@@ -256,7 +262,7 @@
     <!-- SECTION: Rendimiento -->
     <section id="panel-rendimiento" class="section-panel">
       <div class="section-title">
-        <i class="fas fa-chart-line"></i> Mi Rendimiento
+        <i class="fas fa-chart-line"></i> <span data-i18n="chofer.section_rendimiento">Mi Rendimiento</span>
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
         <div class="stat-card">
@@ -264,35 +270,35 @@
             <i class="fas fa-percentage"></i>
           </div>
           <div class="stat-value" id="rnd-tasa">0%</div>
-          <div class="stat-label">Tasa de Exito</div>
+          <div class="stat-label" data-i18n="chofer.stat_tasa_exito">Tasa de Exito</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:var(--success-bg);color:var(--success);">
             <i class="fas fa-check-double"></i>
           </div>
           <div class="stat-value" id="rnd-exitosas">0</div>
-          <div class="stat-label">Exitosas</div>
+          <div class="stat-label" data-i18n="chofer.stat_exitosas">Exitosas</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:var(--danger-bg);color:var(--danger);">
             <i class="fas fa-times-circle"></i>
           </div>
           <div class="stat-value" id="rnd-fallidas">0</div>
-          <div class="stat-label">Fallidas</div>
+          <div class="stat-label" data-i18n="chofer.stat_fallidas">Fallidas</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:var(--warning-bg);color:var(--warning);">
             <i class="fas fa-stopwatch"></i>
           </div>
           <div class="stat-value" id="rnd-espera">0m</div>
-          <div class="stat-label">Tiempo Espera</div>
+          <div class="stat-label" data-i18n="chofer.stat_tiempo_espera">Tiempo Espera</div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><h3><i class="fas fa-star"></i> Calificacion Promedio</h3></div>
+        <div class="card-header"><h3><i class="fas fa-star"></i> <span data-i18n="chofer.rating_titulo">Calificacion Promedio</span></h3></div>
         <div class="card-body" id="rnd-calificacion" style="text-align:center;">
           <div style="font-size:3rem;font-weight:800;color:var(--warning);" id="rnd-stars">--</div>
-          <div style="font-size:var(--font-xs);color:var(--text-muted);">ESTRELLAS</div>
+          <div style="font-size:var(--font-xs);color:var(--text-muted);" data-i18n="chofer.rating_estrellas">ESTRELLAS</div>
         </div>
       </div>
     </section>
@@ -300,12 +306,12 @@
     <!-- SECTION: Historial -->
     <section id="panel-historial" class="section-panel">
       <div class="section-title">
-        <i class="fas fa-history"></i> Historial
+        <i class="fas fa-history"></i> <span data-i18n="chofer.section_historial">Historial</span>
       </div>
       <div id="historial-list">
         <div class="empty-state">
           <i class="fas fa-clipboard-list"></i>
-          <h3>Cargando historial...</h3>
+          <h3 data-i18n="chofer.cargando_historial">Cargando historial...</h3>
         </div>
       </div>
     </section>
@@ -315,16 +321,16 @@
   <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <a class="bottom-nav-item active" data-section="panel-entregas">
-      <i class="fas fa-box"></i> Entregas
+      <i class="fas fa-box"></i> <span data-i18n="chofer.nav_entregas">Entregas</span>
     </a>
     <a class="bottom-nav-item" data-section="panel-mapa" id="nav-mapa">
-      <i class="fas fa-map"></i> Mapa
+      <i class="fas fa-map"></i> <span data-i18n="chofer.nav_mapa">Mapa</span>
     </a>
     <a class="bottom-nav-item" data-section="panel-rendimiento">
-      <i class="fas fa-chart-pie"></i> Rendimiento
+      <i class="fas fa-chart-pie"></i> <span data-i18n="chofer.nav_rendimiento">Rendimiento</span>
     </a>
     <a class="bottom-nav-item" data-section="panel-historial">
-      <i class="fas fa-history"></i> Historial
+      <i class="fas fa-history"></i> <span data-i18n="chofer.nav_historial">Historial</span>
     </a>
   </nav>
 
@@ -332,7 +338,7 @@
   <div class="modal-overlay" id="evidence-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3><i class="fas fa-camera"></i> Capturar Evidencia</h3>
+        <h3><i class="fas fa-camera"></i> <span data-i18n="chofer.modal_evidencia_titulo">Capturar Evidencia</span></h3>
         <button class="modal-close" onclick="closeEvidenceModal()"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
@@ -340,14 +346,14 @@
           <video id="camera-preview" autoplay playsinline style="width:100%;max-height:300px;border-radius:var(--radius-lg);background:var(--bg-input);"></video>
           <canvas id="camera-canvas" style="display:none;"></canvas>
           <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
-            <button class="btn btn-primary btn-lg" onclick="capturePhoto()"><i class="fas fa-camera"></i> Capturar</button>
+            <button class="btn btn-primary btn-lg" onclick="capturePhoto()"><i class="fas fa-camera"></i> <span data-i18n="chofer.btn_capturar">Capturar</span></button>
           </div>
           <img id="captured-photo" style="display:none;width:100%;border-radius:var(--radius-lg);margin-top:12px;">
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeEvidenceModal()">Cancelar</button>
-        <button class="btn btn-success" onclick="submitEvidence()"><i class="fas fa-check"></i> Confirmar</button>
+        <button class="btn btn-ghost" onclick="closeEvidenceModal()" data-i18n="common.cancel">Cancelar</button>
+        <button class="btn btn-success" onclick="submitEvidence()"><i class="fas fa-check"></i> <span data-i18n="chofer.btn_confirmar">Confirmar</span></button>
       </div>
     </div>
   </div>
@@ -356,18 +362,18 @@
   <div class="modal-overlay" id="signature-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3><i class="fas fa-signature"></i> Firma del Cliente</h3>
+        <h3><i class="fas fa-signature"></i> <span data-i18n="chofer.modal_firma_titulo">Firma del Cliente</span></h3>
         <button class="modal-close" onclick="closeSignatureModal()"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
         <div style="border:1px solid var(--border-primary);border-radius:var(--radius-lg);background:var(--bg-input);padding:8px;">
           <canvas id="signature-canvas" width="400" height="200" style="width:100%;height:200px;cursor:crosshair;border-radius:var(--radius-md);"></canvas>
         </div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="clearSignature()"><i class="fas fa-eraser"></i> Limpiar</button>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="clearSignature()"><i class="fas fa-eraser"></i> <span data-i18n="chofer.btn_limpiar">Limpiar</span></button>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeSignatureModal()">Cancelar</button>
-        <button class="btn btn-success" onclick="submitSignature()"><i class="fas fa-check"></i> Guardar Firma</button>
+        <button class="btn btn-ghost" onclick="closeSignatureModal()" data-i18n="common.cancel">Cancelar</button>
+        <button class="btn btn-success" onclick="submitSignature()"><i class="fas fa-check"></i> <span data-i18n="chofer.btn_guardar_firma">Guardar Firma</span></button>
       </div>
     </div>
   </div>
@@ -418,22 +424,22 @@
             <div class="delivery-address"><i class="fas fa-map-marker-alt" style="color:var(--accent);margin-right:4px;"></i>${e.PED_DESTINO_DIR || ''}, ${e.PED_DESTINO_COL || ''}</div>
             <div class="delivery-client"><i class="fas fa-user" style="margin-right:4px;"></i>${e.PED_CLIENTE_NOMBRE || ''} &middot; <a href="tel:${e.PED_CLIENTE_TELEFONO}" style="color:var(--accent);">${e.PED_CLIENTE_TELEFONO || ''}</a></div>
             <div class="delivery-meta">
-              <span><i class="fas fa-box"></i> ${e.PED_BULTOS || 0} bultos</span>
+              <span><i class="fas fa-box"></i> ${e.PED_BULTOS || 0} ${window.i18n.t('chofer.bultos')}</span>
               <span><i class="fas fa-dollar-sign"></i> ${Utils.$(e.PED_COSTO_TOTAL)}</span>
-              ${e.ENT_EVIDENCIA ? '<span><i class="fas fa-camera"></i> Evidencia</span>' : ''}
-              ${e.ENT_FIRMA ? '<span><i class="fas fa-signature"></i> Firmado</span>' : ''}
+              ${e.ENT_EVIDENCIA ? `<span><i class="fas fa-camera"></i> ${window.i18n.t('chofer.evidencia_badge')}</span>` : ''}
+              ${e.ENT_FIRMA ? `<span><i class="fas fa-signature"></i> ${window.i18n.t('chofer.firmado_badge')}</span>` : ''}
             </div>
             ${!esCompletada ? `
             <div class="delivery-actions">
-              <button class="btn btn-success" onclick="markDelivered(${e.ENT_ID})"><i class="fas fa-check"></i> Entregar</button>
-              <button class="btn btn-danger" onclick="markFailed(${e.ENT_ID})"><i class="fas fa-times"></i> Fallido</button>
-              <button class="btn btn-primary" onclick="openEvidenceModal(${e.ENT_ID})"><i class="fas fa-camera"></i> Foto</button>
-              <button class="btn btn-warning" onclick="openSignatureModal(${e.ENT_ID})"><i class="fas fa-signature"></i> Firma</button>
-              <button class="btn btn-ghost" onclick="navigate('${e.PED_DESTINO_DIR}')"><i class="fas fa-directions"></i> Ruta</button>
+              <button class="btn btn-success" onclick="markDelivered(${e.ENT_ID})"><i class="fas fa-check"></i> ${window.i18n.t('chofer.btn_entregar')}</button>
+              <button class="btn btn-danger" onclick="markFailed(${e.ENT_ID})"><i class="fas fa-times"></i> ${window.i18n.t('chofer.btn_fallido')}</button>
+              <button class="btn btn-primary" onclick="openEvidenceModal(${e.ENT_ID})"><i class="fas fa-camera"></i> ${window.i18n.t('chofer.btn_foto')}</button>
+              <button class="btn btn-warning" onclick="openSignatureModal(${e.ENT_ID})"><i class="fas fa-signature"></i> ${window.i18n.t('chofer.btn_firma')}</button>
+              <button class="btn btn-ghost" onclick="navigate('${e.PED_DESTINO_DIR}')"><i class="fas fa-directions"></i> ${window.i18n.t('chofer.btn_ruta')}</button>
             </div>
             ` : `
             <div style="display:flex;align-items:center;gap:6px;font-size:var(--font-sm);color:var(--success);font-weight:600;">
-              <i class="fas fa-check-circle"></i> Entregado ${e.ENT_HORA_ENTREGA ? Utils.datetime(e.ENT_HORA_ENTREGA) : ''}
+              <i class="fas fa-check-circle"></i> ${window.i18n.t('chofer.entregado_label')} ${e.ENT_HORA_ENTREGA ? Utils.datetime(e.ENT_HORA_ENTREGA) : ''}
             </div>
             `}
           `;
@@ -485,25 +491,25 @@
           container.appendChild(div);
         });
       } else {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>Sin historial</h3><p>No hay entregas completadas aun.</p></div>';
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h3>${window.i18n.t('chofer.sin_historial_titulo')}</h3><p>${window.i18n.t('chofer.sin_historial_desc')}</p></div>`;
       }
     }
 
     /* ---- Acciones ---- */
     async function markDelivered(entId) {
-      if (!confirm('Confirmar entrega exitosa?')) return;
+      if (!confirm(window.i18n.t('chofer.confirmar_entrega'))) return;
       const result = await Utils.api(`/api/entregas/${entId}`, {
         method: 'PUT',
         body: JSON.stringify({ estado: 'ENTREGADO', hora: new Date().toISOString(), evidencia: 'EVID_' + Date.now() })
       });
       if (result.success) {
         loadMisEntregas();
-        Utils.toast('Entrega registrada exitosamente', 'success');
+        Utils.toast(window.i18n.t('chofer.entrega_registrada'), 'success');
       }
     }
 
     async function markFailed(entId) {
-      const motivo = prompt('Motivo de falla:');
+      const motivo = prompt(window.i18n.t('chofer.motivo_falla'));
       if (!motivo) return;
       const result = await Utils.api(`/api/entregas/${entId}`, {
         method: 'PUT',
@@ -511,7 +517,7 @@
       });
       if (result.success) {
         loadMisEntregas();
-        Utils.toast('Incidencia registrada', 'warning');
+        Utils.toast(window.i18n.t('chofer.incidencia_registrada'), 'warning');
       }
     }
 
@@ -528,7 +534,7 @@
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
           .then(stream => { cameraStream = stream; video.srcObject = stream; })
-          .catch(() => Utils.toast('No se pudo acceder a la camara', 'error'));
+          .catch(() => Utils.toast(window.i18n.t('chofer.error_camara'), 'error'));
       }
     }
 
@@ -550,7 +556,7 @@
     }
 
     function submitEvidence() {
-      Utils.toast('Evidencia capturada correctamente', 'success');
+      Utils.toast(window.i18n.t('chofer.evidencia_capturada'), 'success');
       closeEvidenceModal();
     }
 
@@ -587,7 +593,7 @@
     }
 
     function submitSignature() {
-      Utils.toast('Firma capturada correctamente', 'success');
+      Utils.toast(window.i18n.t('chofer.firma_capturada'), 'success');
       closeSignatureModal();
     }
 
@@ -610,7 +616,7 @@
     function iniciarGPS() {
       if (!navigator.geolocation) {
         document.getElementById('gps-status').className = 'gps-badge offline';
-        document.getElementById('gps-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sin GPS';
+        document.getElementById('gps-status').innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${window.i18n.t('chofer.sin_gps')}`;
         return;
       }
       gpsWatchId = navigator.geolocation.watchPosition(
@@ -623,12 +629,12 @@
 
           // Update UI
           document.getElementById('gps-status').className = 'gps-badge online';
-          document.getElementById('gps-status').innerHTML = '<i class="fas fa-satellite-dish"></i> GPS Activo';
+          document.getElementById('gps-status').innerHTML = `<i class="fas fa-satellite-dish"></i> ${window.i18n.t('chofer.gps_activo')}`;
 
           // Update map marker
           if (map) {
             if (!window._gpsMarker) {
-              window._gpsMarker = L.marker([lat, lng]).addTo(map).bindPopup('Mi ubicacion');
+              window._gpsMarker = L.marker([lat, lng]).addTo(map).bindPopup(window.i18n.t('chofer.mi_ubicacion'));
             } else {
               window._gpsMarker.setLatLng([lat, lng]);
             }
@@ -644,8 +650,8 @@
         },
         err => {
           document.getElementById('gps-status').className = 'gps-badge offline';
-          const msg = err.code === 1 ? 'Permiso denegado' :
-                      err.code === 2 ? 'Senal debil' : 'Timeout GPS';
+          const msg = err.code === 1 ? window.i18n.t('chofer.permiso_denegado') :
+                      err.code === 2 ? window.i18n.t('chofer.senal_debil') : window.i18n.t('chofer.timeout_gps');
           document.getElementById('gps-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + msg;
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
@@ -685,7 +691,7 @@
         gpsWatchId = null;
       }
       document.getElementById('gps-status').className = 'gps-badge offline';
-      document.getElementById('gps-status').innerHTML = '<i class="fas fa-pause"></i> GPS Pausado';
+      document.getElementById('gps-status').innerHTML = `<i class="fas fa-pause"></i> ${window.i18n.t('chofer.gps_pausado')}`;
     }
 
     /* ---- PWA Service Worker ---- */
@@ -693,11 +699,15 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
-    /* ---- Init ---- */
-    loadMisEntregas();
-    loadRendimiento();
-    loadHistorial();
-    iniciarGPS();
+    /* ---- i18n ---- */
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+      loadMisEntregas();
+      loadRendimiento();
+      loadHistorial();
+      iniciarGPS();
+    });
   </script>
 </body>
 </html>

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
   <style>
@@ -113,40 +114,45 @@
       </div>
       <div class="sidebar-nav">
         <div class="nav-section">
-          <div class="nav-section-title">Principal</div>
+          <div class="nav-section-title" data-i18n="cliente.nav_principal">Principal</div>
         </div>
         <a class="nav-item active" data-section="sec-dashboard" onclick="switchSection(this, 'sec-dashboard')">
-          <i class="fas fa-th-large"></i> Dashboard
+          <i class="fas fa-th-large"></i> <span data-i18n="cliente.nav_dashboard">Dashboard</span>
         </a>
         <a class="nav-item" data-section="sec-nuevo" onclick="switchSection(this, 'sec-nuevo')">
-          <i class="fas fa-plus-circle"></i> Nuevo Envio
+          <i class="fas fa-plus-circle"></i> <span data-i18n="cliente.nav_nuevo_envio">Nuevo Envio</span>
         </a>
         <a class="nav-item" data-section="sec-envios" onclick="switchSection(this, 'sec-envios')">
-          <i class="fas fa-box"></i> Mis Envios
+          <i class="fas fa-box"></i> <span data-i18n="cliente.nav_mis_envios">Mis Envios</span>
         </a>
         <div class="nav-section">
-          <div class="nav-section-title">Seguimiento</div>
+          <div class="nav-section-title" data-i18n="cliente.nav_seguimiento">Seguimiento</div>
         </div>
         <a class="nav-item" data-section="sec-tracking" onclick="switchSection(this, 'sec-tracking')">
-          <i class="fas fa-map-marked-alt"></i> Tracking
+          <i class="fas fa-map-marked-alt"></i> <span data-i18n="cliente.nav_tracking">Tracking</span>
         </a>
         <a class="nav-item" data-section="sec-facturas" onclick="switchSection(this, 'sec-facturas')">
-          <i class="fas fa-file-invoice-dollar"></i> Facturas
+          <i class="fas fa-file-invoice-dollar"></i> <span data-i18n="cliente.nav_facturas">Facturas</span>
         </a>
         <div class="nav-section">
-          <div class="nav-section-title">Cuenta</div>
+          <div class="nav-section-title" data-i18n="cliente.nav_cuenta">Cuenta</div>
         </div>
         <a class="nav-item" data-section="sec-cuenta" onclick="switchSection(this, 'sec-cuenta')">
-          <i class="fas fa-user-circle"></i> Mi Cuenta
+          <i class="fas fa-user-circle"></i> <span data-i18n="cliente.nav_mi_cuenta">Mi Cuenta</span>
         </a>
       </div>
       <div class="sidebar-footer">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <a href="index.html" onclick="localStorage.clear()" style="color:var(--text-muted);font-size:var(--font-xs);text-decoration:none;display:flex;align-items:center;gap:6px;">
-            <i class="fas fa-sign-out-alt"></i> Cerrar sesion
+            <i class="fas fa-sign-out-alt"></i> <span data-i18n="cliente.nav_logout">Cerrar sesion</span>
           </a>
-          <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+          <button class="theme-toggle" title="Cambiar tema" data-i18n="cliente.cambiar_tema_title"><i class="fas fa-sun"></i></button>
         </div>
+        <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;width:100%;">
+          <option value="es">ES - Espanol</option>
+          <option value="en">EN - English</option>
+          <option value="pt">PT - Portugues</option>
+        </select>
       </div>
     </nav>
 
@@ -159,7 +165,7 @@
           <span class="topbar-title" id="topbar-title">Dashboard</span>
         </div>
         <div class="topbar-right">
-          <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+          <button class="theme-toggle" title="Cambiar tema" data-i18n="cliente.cambiar_tema_title"><i class="fas fa-sun"></i></button>
           <div class="avatar lg">MC</div>
         </div>
       </div>
@@ -169,41 +175,41 @@
         <!-- SECTION: Dashboard -->
         <section id="sec-dashboard" class="section active">
           <div class="page-header">
-            <h1>Dashboard</h1>
+            <h1 data-i18n="cliente.dashboard_title">Dashboard</h1>
             <div class="page-header-actions">
-              <button class="btn btn-ghost" onclick="loadDashboard()"><i class="fas fa-sync-alt"></i> Actualizar</button>
+              <button class="btn btn-ghost" onclick="loadDashboard()"><i class="fas fa-sync-alt"></i> <span data-i18n="cliente.refresh">Actualizar</span></button>
             </div>
           </div>
           <div class="grid grid-4" style="margin-bottom:24px;">
             <div class="kpi-card">
               <div class="kpi-icon accent"><i class="fas fa-box"></i></div>
               <div class="kpi-value" id="kpi-envios-mes">0</div>
-              <div class="kpi-label">Envios este Mes</div>
+              <div class="kpi-label" data-i18n="cliente.kpi_envios_mes">Envios este Mes</div>
               <div class="kpi-change up"><i class="fas fa-arrow-up"></i> +12%</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-icon warning"><i class="fas fa-clock"></i></div>
               <div class="kpi-value" id="kpi-pendientes">0</div>
-              <div class="kpi-label">Pendientes</div>
+              <div class="kpi-label" data-i18n="cliente.kpi_pendientes">Pendientes</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-icon success"><i class="fas fa-check-circle"></i></div>
               <div class="kpi-value" id="kpi-entregados">0</div>
-              <div class="kpi-label">Entregados</div>
+              <div class="kpi-label" data-i18n="cliente.kpi_entregados">Entregados</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-icon info"><i class="fas fa-dollar-sign"></i></div>
               <div class="kpi-value" id="kpi-facturacion">$0</div>
-              <div class="kpi-label">Facturacion</div>
+              <div class="kpi-label" data-i18n="cliente.kpi_facturacion">Facturacion</div>
             </div>
           </div>
           <div class="grid grid-2">
             <div class="card">
-              <div class="card-header"><h3><i class="fas fa-chart-bar"></i> Envios por Semana</h3></div>
+              <div class="card-header"><h3><i class="fas fa-chart-bar"></i> <span data-i18n="cliente.chart_envios_semana">Envios por Semana</span></h3></div>
               <div class="card-body"><div class="chart-wrap"><canvas id="chart-envios"></canvas></div></div>
             </div>
             <div class="card">
-              <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Estados</h3></div>
+              <div class="card-header"><h3><i class="fas fa-chart-pie"></i> <span data-i18n="cliente.chart_estados">Estados</span></h3></div>
               <div class="card-body"><div class="chart-wrap"><canvas id="chart-estados"></canvas></div></div>
             </div>
           </div>
@@ -212,60 +218,60 @@
         <!-- SECTION: Nuevo Envio -->
         <section id="sec-nuevo" class="section">
           <div class="page-header">
-            <h1><i class="fas fa-plus-circle"></i> Nuevo Envio</h1>
+            <h1><i class="fas fa-plus-circle"></i> <span data-i18n="cliente.nuevo_envio_title">Nuevo Envio</span></h1>
           </div>
           <div class="card" style="max-width:640px;">
             <div class="card-body">
               <div class="form-group">
-                <label class="form-label">Nombre del destinatario *</label>
-                <input type="text" id="nuevo-nombre" placeholder="Nombre completo">
+                <label class="form-label" data-i18n="cliente.form_nombre">Nombre del destinatario *</label>
+                <input type="text" id="nuevo-nombre" data-i18n-ph="cliente.form_nombre_ph" placeholder="Nombre completo">
               </div>
               <div class="form-group">
-                <label class="form-label">Telefono *</label>
-                <input type="tel" id="nuevo-telefono" placeholder="10 digitos">
+                <label class="form-label" data-i18n="cliente.form_telefono">Telefono *</label>
+                <input type="tel" id="nuevo-telefono" data-i18n-ph="cliente.form_telefono_ph" placeholder="10 digitos">
               </div>
               <div class="form-group">
-                <label class="form-label">Direccion completa *</label>
-                <input type="text" id="nuevo-direccion" placeholder="Calle, numero, colonia">
+                <label class="form-label" data-i18n="cliente.form_direccion">Direccion completa *</label>
+                <input type="text" id="nuevo-direccion" data-i18n-ph="cliente.form_direccion_ph" placeholder="Calle, numero, colonia">
               </div>
               <div class="grid grid-2">
                 <div class="form-group">
-                  <label class="form-label">Colonia *</label>
-                  <input type="text" id="nuevo-colonia" placeholder="Colonia">
+                  <label class="form-label" data-i18n="cliente.form_colonia">Colonia *</label>
+                  <input type="text" id="nuevo-colonia" data-i18n-ph="cliente.form_colonia_ph" placeholder="Colonia">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Codigo Postal</label>
-                  <input type="text" id="nuevo-cp" placeholder="CP">
+                  <label class="form-label" data-i18n="cliente.form_cp">Codigo Postal</label>
+                  <input type="text" id="nuevo-cp" data-i18n-ph="cliente.form_cp_ph" placeholder="CP">
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Referencias</label>
-                <textarea id="nuevo-referencias" rows="2" placeholder="Entre calles, color de casa, etc."></textarea>
+                <label class="form-label" data-i18n="cliente.form_referencias">Referencias</label>
+                <textarea id="nuevo-referencias" rows="2" data-i18n-ph="cliente.form_referencias_ph" placeholder="Entre calles, color de casa, etc."></textarea>
               </div>
               <div class="grid grid-2">
                 <div class="form-group">
-                  <label class="form-label">Bultos *</label>
+                  <label class="form-label" data-i18n="cliente.form_bultos">Bultos *</label>
                   <input type="number" id="nuevo-bultos" value="1" min="1">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Peso (kg)</label>
+                  <label class="form-label" data-i18n="cliente.form_peso">Peso (kg)</label>
                   <input type="number" id="nuevo-peso" step="0.1" value="1">
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Prioridad</label>
+                <label class="form-label" data-i18n="cliente.form_prioridad">Prioridad</label>
                 <select id="nuevo-prioridad">
-                  <option value="NORMAL">Normal</option>
-                  <option value="ALTA">Alta</option>
-                  <option value="URGENTE">Urgente</option>
+                  <option value="NORMAL" data-i18n="cliente.prioridad_normal">Normal</option>
+                  <option value="ALTA" data-i18n="cliente.prioridad_alta">Alta</option>
+                  <option value="URGENTE" data-i18n="cliente.prioridad_urgente">Urgente</option>
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Indicaciones especiales</label>
-                <textarea id="nuevo-indicaciones" rows="2" placeholder="Horario preferido, instrucciones especiales..."></textarea>
+                <label class="form-label" data-i18n="cliente.form_indicaciones">Indicaciones especiales</label>
+                <textarea id="nuevo-indicaciones" rows="2" data-i18n-ph="cliente.form_indicaciones_ph" placeholder="Horario preferido, instrucciones especiales..."></textarea>
               </div>
               <button class="btn btn-primary btn-lg w-full" onclick="crearPedido()">
-                <i class="fas fa-paper-plane"></i> Crear Envio
+                <i class="fas fa-paper-plane"></i> <span data-i18n="cliente.btn_crear_envio">Crear Envio</span>
               </button>
             </div>
           </div>
@@ -274,7 +280,7 @@
         <!-- SECTION: Mis Envios -->
         <section id="sec-envios" class="section">
           <div class="page-header">
-            <h1><i class="fas fa-box"></i> Mis Envios</h1>
+            <h1><i class="fas fa-box"></i> <span data-i18n="cliente.mis_envios_title">Mis Envios</span></h1>
             <div class="page-header-actions">
               <button class="btn btn-ghost" onclick="loadMisEnvios()"><i class="fas fa-sync-alt"></i></button>
             </div>
@@ -283,13 +289,13 @@
           <div class="filter-bar">
             <div class="search-wrapper">
               <i class="fas fa-search"></i>
-              <input type="text" id="search-envio" placeholder="Buscar por numero..." oninput="filterEnvios()">
+              <input type="text" id="search-envio" data-i18n-ph="cliente.buscar_envio" placeholder="Buscar por numero..." oninput="filterEnvios()">
             </div>
             <select id="filter-estado" onchange="filterEnvios()" style="width:auto;min-width:120px;">
-              <option value="">Todos</option>
-              <option value="PENDIENTE">Pendientes</option>
-              <option value="EN_RUTA">En Ruta</option>
-              <option value="ENTREGADO">Entregados</option>
+              <option value="" data-i18n="cliente.filtro_todos">Todos</option>
+              <option value="PENDIENTE" data-i18n="cliente.filtro_pendientes">Pendientes</option>
+              <option value="EN_RUTA" data-i18n="cliente.filtro_en_ruta">En Ruta</option>
+              <option value="ENTREGADO" data-i18n="cliente.filtro_entregados">Entregados</option>
             </select>
           </div>
 
@@ -299,18 +305,18 @@
               <table>
                 <thead>
                   <tr>
-                    <th>Numero</th>
-                    <th>Fecha</th>
-                    <th>Destino</th>
-                    <th>Bultos</th>
-                    <th>Costo</th>
-                    <th>Chofer</th>
-                    <th>Estado</th>
+                    <th data-i18n="cliente.col_numero">Numero</th>
+                    <th data-i18n="cliente.col_fecha">Fecha</th>
+                    <th data-i18n="cliente.col_destino">Destino</th>
+                    <th data-i18n="cliente.col_bultos">Bultos</th>
+                    <th data-i18n="cliente.col_costo">Costo</th>
+                    <th data-i18n="cliente.col_chofer">Chofer</th>
+                    <th data-i18n="cliente.col_estado">Estado</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody id="envios-table-body">
-                  <tr><td colspan="8" class="table-empty"><i class="fas fa-inbox" style="font-size:24px;opacity:0.3;display:block;margin-bottom:8px;"></i>Cargando envios...</td></tr>
+                  <tr><td colspan="8" class="table-empty"><i class="fas fa-inbox" style="font-size:24px;opacity:0.3;display:block;margin-bottom:8px;"></i><span data-i18n="cliente.cargando_envios">Cargando envios...</span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -318,26 +324,26 @@
 
           <!-- Mobile Cards -->
           <div class="mobile-cards" id="envios-mobile-cards">
-            <div class="empty-state"><i class="fas fa-inbox"></i><h3>Cargando envios...</h3></div>
+            <div class="empty-state"><i class="fas fa-inbox"></i><h3 data-i18n="cliente.cargando_envios">Cargando envios...</h3></div>
           </div>
         </section>
 
         <!-- SECTION: Tracking -->
         <section id="sec-tracking" class="section">
           <div class="page-header">
-            <h1><i class="fas fa-map-marked-alt"></i> Tracking</h1>
+            <h1><i class="fas fa-map-marked-alt"></i> <span data-i18n="cliente.tracking_title">Tracking</span></h1>
           </div>
           <div class="card" style="max-width:640px;margin-bottom:20px;">
             <div class="card-body">
               <div class="tracking-search">
-                <input type="text" id="tracking-input" placeholder="Numero de envio (ej: PED-001)">
-                <button class="btn btn-primary" onclick="buscarPedido()"><i class="fas fa-search"></i> Buscar</button>
+                <input type="text" id="tracking-input" data-i18n-ph="cliente.tracking_placeholder" placeholder="Numero de envio (ej: PED-001)">
+                <button class="btn btn-primary" onclick="buscarPedido()"><i class="fas fa-search"></i> <span data-i18n="cliente.btn_buscar">Buscar</span></button>
               </div>
               <div id="tracking-result"></div>
             </div>
           </div>
           <div class="card">
-            <div class="card-header"><h3><i class="fas fa-map"></i> Mapa de Seguimiento</h3></div>
+            <div class="card-header"><h3><i class="fas fa-map"></i> <span data-i18n="cliente.mapa_seguimiento">Mapa de Seguimiento</span></h3></div>
             <div class="card-body" style="padding:0;">
               <div id="tracking-map" style="height:400px;border-radius:0 0 var(--radius-lg) var(--radius-lg);"></div>
             </div>
@@ -347,12 +353,12 @@
         <!-- SECTION: Facturas -->
         <section id="sec-facturas" class="section">
           <div class="page-header">
-            <h1><i class="fas fa-file-invoice-dollar"></i> Facturas</h1>
+            <h1><i class="fas fa-file-invoice-dollar"></i> <span data-i18n="cliente.facturas_title">Facturas</span></h1>
           </div>
           <div class="card">
-            <div class="card-header"><h3>Facturas Recientes</h3></div>
+            <div class="card-header"><h3 data-i18n="cliente.facturas_recientes">Facturas Recientes</h3></div>
             <div id="facturas-list">
-              <div class="empty-state"><i class="fas fa-receipt"></i><h3>Cargando facturas...</h3></div>
+              <div class="empty-state"><i class="fas fa-receipt"></i><h3 data-i18n="cliente.cargando_facturas">Cargando facturas...</h3></div>
             </div>
           </div>
         </section>
@@ -360,43 +366,43 @@
         <!-- SECTION: Mi Cuenta -->
         <section id="sec-cuenta" class="section">
           <div class="page-header">
-            <h1><i class="fas fa-user-circle"></i> Mi Cuenta</h1>
+            <h1><i class="fas fa-user-circle"></i> <span data-i18n="cliente.cuenta_title">Mi Cuenta</span></h1>
           </div>
           <div class="grid grid-2" style="max-width:700px;">
             <div class="card">
-              <div class="card-header"><h3><i class="fas fa-building"></i> Datos de la Empresa</h3></div>
+              <div class="card-header"><h3><i class="fas fa-building"></i> <span data-i18n="cliente.datos_empresa">Datos de la Empresa</span></h3></div>
               <div class="card-body">
                 <div class="form-group">
-                  <label class="form-label">Empresa</label>
+                  <label class="form-label" data-i18n="cliente.label_empresa">Empresa</label>
                   <input type="text" value="Mi Empresa S.A. de C.V." readonly>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">RFC</label>
+                  <label class="form-label" data-i18n="cliente.label_rfc">RFC</label>
                   <input type="text" value="MEM123456789" readonly>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Direccion</label>
+                  <label class="form-label" data-i18n="cliente.label_direccion">Direccion</label>
                   <input type="text" value="Av. Revolucion 1234, Col. Centro, CDMX" readonly>
                 </div>
               </div>
             </div>
             <div class="card">
-              <div class="card-header"><h3><i class="fas fa-address-card"></i> Datos de Contacto</h3></div>
+              <div class="card-header"><h3><i class="fas fa-address-card"></i> <span data-i18n="cliente.datos_contacto">Datos de Contacto</span></h3></div>
               <div class="card-body">
                 <div class="form-group">
-                  <label class="form-label">Nombre</label>
+                  <label class="form-label" data-i18n="cliente.label_nombre">Nombre</label>
                   <input type="text" value="Juan Perez" readonly>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Email</label>
+                  <label class="form-label" data-i18n="cliente.label_email">Email</label>
                   <input type="email" value="contacto@miempresa.com" readonly>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Telefono</label>
+                  <label class="form-label" data-i18n="cliente.label_telefono">Telefono</label>
                   <input type="tel" value="5512345678" readonly>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Plan</label>
+                  <label class="form-label" data-i18n="cliente.label_plan">Plan</label>
                   <input type="text" value="PRO" readonly>
                 </div>
               </div>
@@ -454,14 +460,14 @@
       const gridColor = theme === 'dark' ? '#1e1e2a' : '#e2e5ed';
 
       // Envios por semana
-      const labels = ['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
+      const labels = [window.i18n.t('cliente.dia_lun'),window.i18n.t('cliente.dia_mar'),window.i18n.t('cliente.dia_mie'),window.i18n.t('cliente.dia_jue'),window.i18n.t('cliente.dia_vie'),window.i18n.t('cliente.dia_sab'),window.i18n.t('cliente.dia_dom')];
       const values = labels.map(() => Math.floor(Math.random() * 20) + 5);
       new Chart(document.getElementById('chart-envios'), {
         type: 'bar',
         data: {
           labels,
           datasets: [{
-            label: 'Envios',
+            label: window.i18n.t('cliente.chart_envios'),
             data: values,
             backgroundColor: theme === 'dark' ? 'rgba(99,102,241,0.6)' : 'rgba(99,102,241,0.7)',
             borderRadius: 6,
@@ -487,7 +493,7 @@
       new Chart(document.getElementById('chart-estados'), {
         type: 'doughnut',
         data: {
-          labels: ['Pendiente','En Ruta','Entregado'],
+          labels: [window.i18n.t('cliente.pendiente_label'),window.i18n.t('cliente.en_ruta_label'),window.i18n.t('cliente.entregado_label')],
           datasets: [{
             data: [pend, trans, ent],
             backgroundColor: [
@@ -531,7 +537,7 @@
       const tbody = document.getElementById('envios-table-body');
       tbody.innerHTML = '';
       if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="table-empty"><i class="fas fa-inbox" style="font-size:24px;opacity:0.3;display:block;margin-bottom:8px;"></i>No hay envios</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="table-empty"><i class="fas fa-inbox" style="font-size:24px;opacity:0.3;display:block;margin-bottom:8px;"></i>' + window.i18n.t('cliente.no_hay_envios') + '</td></tr>';
       }
       data.forEach(p => {
         const tr = document.createElement('tr');
@@ -541,7 +547,7 @@
           <td>${p.PED_DESTINO_COL || ''}</td>
           <td>${p.PED_BULTOS || 0}</td>
           <td>${Utils.$(p.PED_COSTO_TOTAL)}</td>
-          <td>${p.CHOFER_ASIGNADO || '<span style="color:var(--text-muted);">Sin asignar</span>'}</td>
+          <td>${p.CHOFER_ASIGNADO || '<span style="color:var(--text-muted);">' + window.i18n.t('cliente.sin_asignar') + '</span>'}</td>
           <td>${Utils.badge(p.PED_ESTADO)}</td>
           <td><button class="btn btn-ghost btn-sm" onclick="trackEnvio('${p.PED_NUMERO}')"><i class="fas fa-map-marker-alt"></i></button></td>
         `;
@@ -552,7 +558,7 @@
       const mobileContainer = document.getElementById('envios-mobile-cards');
       mobileContainer.innerHTML = '';
       if (data.length === 0) {
-        mobileContainer.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No hay envios</h3></div>';
+        mobileContainer.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>' + window.i18n.t('cliente.no_hay_envios') + '</h3></div>';
       }
       data.forEach(p => {
         const div = document.createElement('div');
@@ -569,7 +575,7 @@
             <span><i class="fas fa-calendar"></i> ${Utils.date(p.PED_FECHA_PEDIDO)}</span>
           </div>
           <div style="margin-top:10px;">
-            <button class="btn btn-primary btn-sm" onclick="trackEnvio('${p.PED_NUMERO}')"><i class="fas fa-map-marker-alt"></i> Rastrear</button>
+            <button class="btn btn-primary btn-sm" onclick="trackEnvio('${p.PED_NUMERO}')"><i class="fas fa-map-marker-alt"></i> ${window.i18n.t('cliente.rastrear')}</button>
           </div>
         `;
         mobileContainer.appendChild(div);
@@ -600,7 +606,7 @@
       };
 
       if (!data.cliente_nombre || !data.cliente_telefono || !data.destino_dir || !data.destino_col) {
-        Utils.toast('Completa los campos obligatorios', 'warning');
+        Utils.toast(window.i18n.t('cliente.completar_campos'), 'warning');
         return;
       }
 
@@ -610,7 +616,7 @@
       });
 
       if (result.success) {
-        Utils.toast('Envio creado: ' + result.pedido_numero, 'success');
+        Utils.toast(window.i18n.t('cliente.envio_creado') + result.pedido_numero, 'success');
         loadMisEnvios();
         // Clear form
         ['nuevo-nombre','nuevo-telefono','nuevo-direccion','nuevo-colonia','nuevo-cp','nuevo-referencias','nuevo-indicaciones'].forEach(id => {
@@ -620,14 +626,14 @@
         document.getElementById('nuevo-peso').value = '1';
         document.getElementById('nuevo-prioridad').value = 'NORMAL';
       } else {
-        Utils.toast('Error al crear envio', 'error');
+        Utils.toast(window.i18n.t('cliente.error_crear_envio'), 'error');
       }
     }
 
     /* ---- Tracking ---- */
     async function buscarPedido() {
       const num = document.getElementById('tracking-input').value;
-      if (!num) { Utils.toast('Ingresa un numero de envio', 'warning'); return; }
+      if (!num) { Utils.toast(window.i18n.t('cliente.ingresa_numero'), 'warning'); return; }
 
       const result = await Utils.api(`/api/pedidos?numero=${num}`);
       const container = document.getElementById('tracking-result');
@@ -636,10 +642,10 @@
       if (result.success && result.data.length > 0) {
         const p = result.data[0];
         const steps = [
-          { label: 'Envio Creado', time: p.PED_FECHA_PEDIDO, done: true, icon: 'fas fa-plus-circle' },
-          { label: 'Asignado a Chofer', time: p.PED_FECHA_ASIGNACION, done: !!p.PED_FECHA_ASIGNACION, icon: 'fas fa-user-check' },
-          { label: 'En Ruta', time: p.PED_FECHA_SALIDA, done: p.PED_ESTADO === 'EN_RUTA' || p.PED_ESTADO === 'ENTREGADO', icon: 'fas fa-truck' },
-          { label: 'Entregado', time: p.PED_FECHA_ENTREGA, done: p.PED_ESTADO === 'ENTREGADO', icon: 'fas fa-check-double' }
+          { label: window.i18n.t('cliente.timeline_creado'), time: p.PED_FECHA_PEDIDO, done: true, icon: 'fas fa-plus-circle' },
+          { label: window.i18n.t('cliente.timeline_asignado'), time: p.PED_FECHA_ASIGNACION, done: !!p.PED_FECHA_ASIGNACION, icon: 'fas fa-user-check' },
+          { label: window.i18n.t('cliente.timeline_en_ruta'), time: p.PED_FECHA_SALIDA, done: p.PED_ESTADO === 'EN_RUTA' || p.PED_ESTADO === 'ENTREGADO', icon: 'fas fa-truck' },
+          { label: window.i18n.t('cliente.timeline_entregado'), time: p.PED_FECHA_ENTREGA, done: p.PED_ESTADO === 'ENTREGADO', icon: 'fas fa-check-double' }
         ];
 
         let html = `
@@ -650,9 +656,9 @@
             </div>
             <div class="tracking-destino"><i class="fas fa-map-marker-alt" style="color:var(--accent);margin-right:4px;"></i>${p.PED_DESTINO_DIR}, ${p.PED_DESTINO_COL}</div>
             <div class="tracking-info">
-              <span><i class="fas fa-box"></i> ${p.PED_BULTOS || 0} bultos</span>
+              <span><i class="fas fa-box"></i> ${p.PED_BULTOS || 0} ${window.i18n.t('cliente.bultos_unit')}</span>
               <span><i class="fas fa-dollar-sign"></i> ${Utils.$(p.PED_COSTO_TOTAL)}</span>
-              <span><i class="fas fa-user"></i> ${p.CHOFER_ASIGNADO || 'Sin asignar'}</span>
+              <span><i class="fas fa-user"></i> ${p.CHOFER_ASIGNADO || window.i18n.t('cliente.sin_asignar')}</span>
             </div>
             <div class="timeline">
         `;
@@ -663,7 +669,7 @@
               <div class="timeline-dot ${dotClass}"><i class="${s.icon}" style="font-size:10px;"></i></div>
               <div class="timeline-content">
                 <div class="timeline-title">${s.label}</div>
-                <div class="timeline-time">${s.time ? Utils.datetime(s.time) : 'Pendiente'}</div>
+                <div class="timeline-time">${s.time ? Utils.datetime(s.time) : window.i18n.t('cliente.pendiente_label')}</div>
               </div>
             </div>
           `;
@@ -671,7 +677,7 @@
         html += '</div></div>';
         container.innerHTML = html;
       } else {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><h3>Envio no encontrado</h3></div>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><h3>' + window.i18n.t('cliente.envio_no_encontrado') + '</h3></div>';
       }
     }
 
@@ -697,14 +703,18 @@
           container.appendChild(div);
         });
       } else {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h3>Sin facturas</h3><p>Aun no hay facturas registradas.</p></div>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h3>' + window.i18n.t('cliente.sin_facturas_title') + '</h3><p>' + window.i18n.t('cliente.sin_facturas_desc') + '</p></div>';
       }
     }
 
-    /* ---- Init ---- */
-    loadDashboard();
-    loadMisEnvios();
-    loadFacturas();
+    /* ---- i18n ---- */
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+      loadDashboard();
+      loadMisEnvios();
+      loadFacturas();
+    });
 
     // Re-render charts on theme change
     window.addEventListener('themechange', () => {

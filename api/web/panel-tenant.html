@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
   <style>
@@ -139,29 +140,29 @@
     <div class="sidebar-header">
       <div class="sidebar-logo">SI</div>
       <div>
-        <div class="sidebar-title">Sistema Integral</div>
-        <div class="sidebar-subtitle">Panel del Cliente</div>
+        <div class="sidebar-title" data-i18n="tenant.sidebar_title">Sistema Integral</div>
+        <div class="sidebar-subtitle" data-i18n="tenant.sidebar_subtitle">Panel del Cliente</div>
       </div>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-section">Principal</div>
-      <div class="nav-item active" data-section="dashboard"><i class="fas fa-chart-pie"></i>Dashboard</div>
-      <div class="nav-item" data-section="envios"><i class="fas fa-truck"></i>Mis Envios</div>
-      <div class="nav-item" data-section="nuevo-envio"><i class="fas fa-plus-circle"></i>Nuevo Envio</div>
-      <div class="nav-section">Operacion</div>
-      <div class="nav-item" data-section="choferes"><i class="fas fa-users"></i>Choferes</div>
-      <div class="nav-item" data-section="vehiculos"><i class="fas fa-truck-monster"></i>Vehiculos</div>
-      <div class="nav-section">Finanzas</div>
-      <div class="nav-item" data-section="facturacion"><i class="fas fa-file-invoice-dollar"></i>Facturacion</div>
-      <div class="nav-item" data-section="reportes"><i class="fas fa-chart-bar"></i>Reportes</div>
-      <div class="nav-section">Sistema</div>
-      <div class="nav-item" data-section="equipo"><i class="fas fa-user-friends"></i>Mi Equipo</div>
-      <div class="nav-item" data-section="config"><i class="fas fa-cog"></i>Configuracion</div>
-      <div class="nav-item" data-section="cuenta"><i class="fas fa-user-circle"></i>Mi Cuenta</div>
+      <div class="nav-section" data-i18n="tenant.nav_principal">Principal</div>
+      <div class="nav-item active" data-section="dashboard"><i class="fas fa-chart-pie"></i><span data-i18n="tenant.nav_dashboard">Dashboard</span></div>
+      <div class="nav-item" data-section="envios"><i class="fas fa-truck"></i><span data-i18n="tenant.nav_envios">Mis Envios</span></div>
+      <div class="nav-item" data-section="nuevo-envio"><i class="fas fa-plus-circle"></i><span data-i18n="tenant.nav_nuevo_envio">Nuevo Envio</span></div>
+      <div class="nav-section" data-i18n="tenant.nav_operacion">Operacion</div>
+      <div class="nav-item" data-section="choferes"><i class="fas fa-users"></i><span data-i18n="tenant.nav_choferes">Choferes</span></div>
+      <div class="nav-item" data-section="vehiculos"><i class="fas fa-truck-monster"></i><span data-i18n="tenant.nav_vehiculos">Vehiculos</span></div>
+      <div class="nav-section" data-i18n="tenant.nav_finanzas">Finanzas</div>
+      <div class="nav-item" data-section="facturacion"><i class="fas fa-file-invoice-dollar"></i><span data-i18n="tenant.nav_facturacion">Facturacion</span></div>
+      <div class="nav-item" data-section="reportes"><i class="fas fa-chart-bar"></i><span data-i18n="tenant.nav_reportes">Reportes</span></div>
+      <div class="nav-section" data-i18n="tenant.nav_sistema">Sistema</div>
+      <div class="nav-item" data-section="equipo"><i class="fas fa-user-friends"></i><span data-i18n="tenant.nav_equipo">Mi Equipo</span></div>
+      <div class="nav-item" data-section="config"><i class="fas fa-cog"></i><span data-i18n="tenant.nav_config">Configuracion</span></div>
+      <div class="nav-item" data-section="cuenta"><i class="fas fa-user-circle"></i><span data-i18n="tenant.nav_cuenta">Mi Cuenta</span></div>
     </nav>
     <div class="sidebar-footer">
       <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:12px; color:var(--text-secondary);">Tema</span>
+        <span style="font-size:12px; color:var(--text-secondary);" data-i18n="tenant.tema">Tema</span>
         <label class="toggle-switch" id="themeToggle">
           <input type="checkbox" id="themeCheckbox">
           <span class="toggle-slider"></span>
@@ -177,6 +178,11 @@
         <span class="page-title" id="pageTitle">Dashboard</span>
       </div>
       <div class="topbar-right">
+        <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+        </select>
         <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
         <span style="font-size:12px; color:var(--text-secondary);">Tenant Demo S.A. de C.V.</span>
         <div style="width:32px; height:32px; border-radius:50%; background:var(--accent-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:600;">TD</div>
@@ -189,49 +195,49 @@
       <div class="section active" id="section-dashboard">
         <div class="kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-label">Envios Hoy</div>
+            <div class="kpi-label" data-i18n="tenant.kpi_envios_hoy">Envios Hoy</div>
             <div class="kpi-value" style="color:var(--accent-primary);">24</div>
-            <div class="kpi-change up"><i class="fas fa-arrow-up"></i> 12% vs ayer</div>
+            <div class="kpi-change up"><i class="fas fa-arrow-up"></i> <span data-i18n="tenant.kpi_vs_ayer">12% vs ayer</span></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">En Transito</div>
+            <div class="kpi-label" data-i18n="tenant.kpi_en_transito">En Transito</div>
             <div class="kpi-value" style="color:var(--color-warning);">8</div>
-            <div class="kpi-change down"><i class="fas fa-arrow-down"></i> 3 menos</div>
+            <div class="kpi-change down"><i class="fas fa-arrow-down"></i> <span data-i18n="tenant.kpi_3_menos">3 menos</span></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Entregados</div>
+            <div class="kpi-label" data-i18n="tenant.kpi_entregados">Entregados</div>
             <div class="kpi-value" style="color:var(--color-success);">14</div>
-            <div class="kpi-change up"><i class="fas fa-arrow-up"></i> 5 mas</div>
+            <div class="kpi-change up"><i class="fas fa-arrow-up"></i> <span data-i18n="tenant.kpi_5_mas">5 mas</span></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Pendientes</div>
+            <div class="kpi-label" data-i18n="tenant.kpi_pendientes">Pendientes</div>
             <div class="kpi-value" style="color:var(--color-danger);">2</div>
-            <div class="kpi-change up"><i class="fas fa-arrow-down"></i> 1 menos</div>
+            <div class="kpi-change up"><i class="fas fa-arrow-down"></i> <span data-i18n="tenant.kpi_1_menos">1 menos</span></div>
           </div>
         </div>
         <div class="chart-grid">
           <div class="chart-card">
-            <h3>Envios por Dia (Ultimos 7 dias)</h3>
+            <h3 data-i18n="tenant.chart_envios_por_dia">Envios por Dia (Ultimos 7 dias)</h3>
             <canvas id="chartEnvios" height="120"></canvas>
           </div>
           <div class="chart-card">
-            <h3>Pedidos por Estado</h3>
+            <h3 data-i18n="tenant.chart_pedidos_por_estado">Pedidos por Estado</h3>
             <canvas id="chartEstados" height="120"></canvas>
           </div>
         </div>
         <div class="card">
-          <h3>Pedidos Recientes</h3>
+          <h3 data-i18n="tenant.pedidos_recientes">Pedidos Recientes</h3>
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr><th>ID</th><th>Destinatario</th><th>Direccion</th><th>Estado</th><th>Fecha</th></tr>
+                <tr><th>ID</th><th data-i18n="tenant.th_destinatario">Destinatario</th><th data-i18n="tenant.th_direccion">Direccion</th><th data-i18n="tenant.th_estado">Estado</th><th data-i18n="tenant.th_fecha">Fecha</th></tr>
               </thead>
               <tbody id="recentOrdersBody"></tbody>
             </table>
           </div>
         </div>
         <div class="card">
-          <h3><i class="fas fa-map-marked-alt"></i> Mapa de Entregas Activas</h3>
+          <h3><i class="fas fa-map-marked-alt"></i> <span data-i18n="tenant.mapa_entregas">Mapa de Entregas Activas</span></h3>
           <div class="map-container" id="dashboardMap"></div>
         </div>
       </div>
@@ -241,25 +247,25 @@
         <div class="status-summary" id="statusSummary"></div>
         <div class="card">
           <div class="filter-bar">
-            <input class="input" type="text" placeholder="Buscar por ID, destinatario..." id="searchEnvio" style="flex:1; min-width:200px;">
+            <input class="input" type="text" placeholder="Buscar por ID, destinatario..." id="searchEnvio" style="flex:1; min-width:200px;" data-i18n-placeholder="tenant.buscar_envio">
             <select class="select" id="filterStatus">
-              <option value="">Todos los estados</option>
-              <option value="Pendiente">Pendiente</option>
-              <option value="Asignado">Asignado</option>
-              <option value="En Transito">En Transito</option>
-              <option value="Entregado">Entregado</option>
-              <option value="No Entregado">No Entregado</option>
-              <option value="Cancelado">Cancelado</option>
-              <option value="Devuelto">Devuelto</option>
+              <option value="" data-i18n="tenant.filtro_todos_estados">Todos los estados</option>
+              <option value="Pendiente" data-i18n="tenant.filtro_pendiente">Pendiente</option>
+              <option value="Asignado" data-i18n="tenant.filtro_asignado">Asignado</option>
+              <option value="En Transito" data-i18n="tenant.filtro_en_transito">En Transito</option>
+              <option value="Entregado" data-i18n="tenant.filtro_entregado">Entregado</option>
+              <option value="No Entregado" data-i18n="tenant.filtro_no_entregado">No Entregado</option>
+              <option value="Cancelado" data-i18n="tenant.filtro_cancelado">Cancelado</option>
+              <option value="Devuelto" data-i18n="tenant.filtro_devuelto">Devuelto</option>
             </select>
             <input class="input" type="date" id="filterDateFrom">
             <input class="input" type="date" id="filterDateTo">
-            <button class="btn btn-primary" onclick="showSection('nuevo-envio')"><i class="fas fa-plus"></i> Nuevo Envio</button>
+            <button class="btn btn-primary" onclick="showSection('nuevo-envio')"><i class="fas fa-plus"></i> <span data-i18n="tenant.btn_nuevo_envio">Nuevo Envio</span></button>
           </div>
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr><th>ID</th><th>Destinatario</th><th>Direccion</th><th>Chofer</th><th>Estado</th><th>Fecha</th><th>Costo</th><th>Acciones</th></tr>
+                <tr><th>ID</th><th data-i18n="tenant.th_destinatario">Destinatario</th><th data-i18n="tenant.th_direccion">Direccion</th><th data-i18n="tenant.th_chofer">Chofer</th><th data-i18n="tenant.th_estado">Estado</th><th data-i18n="tenant.th_fecha">Fecha</th><th data-i18n="tenant.th_costo">Costo</th><th data-i18n="tenant.th_acciones">Acciones</th></tr>
               </thead>
               <tbody id="enviosTableBody"></tbody>
             </table>
@@ -271,39 +277,39 @@
       <!-- SECTION: NUEVO ENVIO -->
       <div class="section" id="section-nuevo-envio">
         <div class="card">
-          <h3><i class="fas fa-plus-circle"></i> Crear Nuevo Envio</h3>
+          <h3><i class="fas fa-plus-circle"></i> <span data-i18n="tenant.crear_nuevo_envio">Crear Nuevo Envio</span></h3>
           <form id="nuevoEnvioForm" onsubmit="submitNewEnvio(event)">
             <div class="form-grid">
-              <div class="form-group"><label>Destinatario *</label><input class="input" type="text" required id="envDestinatario"></div>
-              <div class="form-group"><label>Telefono *</label><input class="input" type="tel" required id="envTelefono"></div>
-              <div class="form-group full"><label>Direccion *</label><input class="input" type="text" required id="envDireccion"></div>
-              <div class="form-group"><label>Colonia</label><input class="input" type="text" id="envColonia"></div>
-              <div class="form-group"><label>Ciudad *</label><input class="input" type="text" required id="envCiudad"></div>
-              <div class="form-group full"><label>Referencia</label><input class="input" type="text" id="envReferencia"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_destinatario">Destinatario *</label><input class="input" type="text" required id="envDestinatario"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_telefono">Telefono *</label><input class="input" type="tel" required id="envTelefono"></div>
+              <div class="form-group full"><label data-i18n="tenant.lbl_direccion">Direccion *</label><input class="input" type="text" required id="envDireccion"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_colonia">Colonia</label><input class="input" type="text" id="envColonia"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_ciudad">Ciudad *</label><input class="input" type="text" required id="envCiudad"></div>
+              <div class="form-group full"><label data-i18n="tenant.lbl_referencia">Referencia</label><input class="input" type="text" id="envReferencia"></div>
             </div>
-            <h3 style="margin-top:20px; margin-bottom:12px;">Informacion del Paquete</h3>
+            <h3 style="margin-top:20px; margin-bottom:12px;" data-i18n="tenant.informacion_paquete">Informacion del Paquete</h3>
             <div class="form-grid">
-              <div class="form-group full"><label>Descripcion *</label><input class="input" type="text" required id="envDescripcion"></div>
-              <div class="form-group"><label>Peso (kg) *</label><input class="input" type="number" step="0.1" required id="envPeso"></div>
-              <div class="form-group"><label>Dimensiones (cm)</label><input class="input" type="text" placeholder="L x A x H" id="envDimensiones"></div>
-              <div class="form-group"><label>Valor Declarado ($)</label><input class="input" type="number" step="0.01" id="envValor"></div>
+              <div class="form-group full"><label data-i18n="tenant.lbl_descripcion">Descripcion *</label><input class="input" type="text" required id="envDescripcion"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_peso">Peso (kg) *</label><input class="input" type="number" step="0.1" required id="envPeso"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_dimensiones">Dimensiones (cm)</label><input class="input" type="text" placeholder="L x A x H" id="envDimensiones"></div>
+              <div class="form-group"><label data-i18n="tenant.lbl_valor_declarado">Valor Declarado ($)</label><input class="input" type="number" step="0.01" id="envValor"></div>
               <div class="form-group">
-                <label>Prioridad</label>
+                <label data-i18n="tenant.lbl_prioridad">Prioridad</label>
                 <select class="select" id="envPrioridad">
-                  <option value="Normal">Normal</option>
-                  <option value="Urgente">Urgente (+$50)</option>
-                  <option value="Express">Express (+$120)</option>
+                  <option value="Normal" data-i18n="tenant.prioridad_normal">Normal</option>
+                  <option value="Urgente" data-i18n="tenant.prioridad_urgente">Urgente (+$50)</option>
+                  <option value="Express" data-i18n="tenant.prioridad_express">Express (+$120)</option>
                 </select>
               </div>
             </div>
-            <div class="form-group full"><label>Notas / Instrucciones</label><textarea class="textarea" id="envNotas"></textarea></div>
+            <div class="form-group full"><label data-i18n="tenant.lbl_notas">Notas / Instrucciones</label><textarea class="textarea" id="envNotas"></textarea></div>
             <div style="background:var(--bg-secondary); border-radius:10px; padding:16px; margin:16px 0; display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:14px; font-weight:600;">Costo Estimado:</span>
+              <span style="font-size:14px; font-weight:600;" data-i18n="tenant.costo_estimado">Costo Estimado:</span>
               <span style="font-size:24px; font-weight:700; color:var(--accent-primary);" id="envCostDisplay">$0.00</span>
             </div>
             <div style="display:flex; gap:8px; justify-content:flex-end;">
-              <button type="button" class="btn btn-secondary" onclick="showSection('envios')">Cancelar</button>
-              <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Crear Envio</button>
+              <button type="button" class="btn btn-secondary" onclick="showSection('envios')" data-i18n="tenant.btn_cancelar">Cancelar</button>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> <span data-i18n="tenant.btn_crear_envio">Crear Envio</span></button>
             </div>
           </form>
         </div>
@@ -312,8 +318,8 @@
       <!-- SECTION: CHOFERES -->
       <div class="section" id="section-choferes">
         <div class="filter-bar">
-          <input class="input" type="text" placeholder="Buscar chofer..." id="searchChofer" style="flex:1; min-width:200px;">
-          <button class="btn btn-primary" onclick="openModal('modalChofer')"><i class="fas fa-plus"></i> Nuevo Chofer</button>
+          <input class="input" type="text" placeholder="Buscar chofer..." id="searchChofer" style="flex:1; min-width:200px;" data-i18n-placeholder="tenant.buscar_chofer">
+          <button class="btn btn-primary" onclick="openModal('modalChofer')"><i class="fas fa-plus"></i> <span data-i18n="tenant.btn_nuevo_chofer">Nuevo Chofer</span></button>
         </div>
         <div id="choferesList"></div>
       </div>
@@ -321,14 +327,14 @@
       <!-- SECTION: VEHICULOS -->
       <div class="section" id="section-vehiculos">
         <div class="filter-bar">
-          <input class="input" type="text" placeholder="Buscar vehiculo..." style="flex:1; min-width:200px;">
-          <button class="btn btn-primary" onclick="openModal('modalVehiculo')"><i class="fas fa-plus"></i> Nuevo Vehiculo</button>
+          <input class="input" type="text" placeholder="Buscar vehiculo..." style="flex:1; min-width:200px;" data-i18n-placeholder="tenant.buscar_vehiculo">
+          <button class="btn btn-primary" onclick="openModal('modalVehiculo')"><i class="fas fa-plus"></i> <span data-i18n="tenant.btn_nuevo_vehiculo">Nuevo Vehiculo</span></button>
         </div>
         <div class="card">
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr><th>Unidad</th><th>Placas</th><th>Marca/Modelo</th><th>Chofer</th><th>KM</th><th>Prox. Mant.</th><th>Estado</th><th>Acciones</th></tr>
+                <tr><th data-i18n="tenant.th_unidad">Unidad</th><th data-i18n="tenant.th_placas">Placas</th><th data-i18n="tenant.th_marca_modelo">Marca/Modelo</th><th data-i18n="tenant.th_chofer">Chofer</th><th data-i18n="tenant.th_km">KM</th><th data-i18n="tenant.th_prox_mant">Prox. Mant.</th><th data-i18n="tenant.th_estado">Estado</th><th data-i18n="tenant.th_acciones">Acciones</th></tr>
               </thead>
               <tbody id="vehiculosTableBody"></tbody>
             </table>
@@ -339,20 +345,20 @@
       <!-- SECTION: FACTURACION -->
       <div class="section" id="section-facturacion">
         <div class="kpi-grid">
-          <div class="kpi-card"><div class="kpi-label">Facturadas</div><div class="kpi-value" style="color:var(--color-success);">47</div></div>
-          <div class="kpi-card"><div class="kpi-label">Pendientes</div><div class="kpi-value" style="color:var(--color-warning);">5</div></div>
-          <div class="kpi-card"><div class="kpi-label">Total Facturado</div><div class="kpi-value" style="color:var(--accent-primary);">$128,450</div></div>
-          <div class="kpi-card"><div class="kpi-label">Por Cobrar</div><div class="kpi-value" style="color:var(--color-danger);">$12,300</div></div>
+          <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.kpi_facturadas">Facturadas</div><div class="kpi-value" style="color:var(--color-success);">47</div></div>
+          <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.kpi_pendientes">Pendientes</div><div class="kpi-value" style="color:var(--color-warning);">5</div></div>
+          <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.kpi_total_facturado">Total Facturado</div><div class="kpi-value" style="color:var(--accent-primary);">$128,450</div></div>
+          <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.kpi_por_cobrar">Por Cobrar</div><div class="kpi-value" style="color:var(--color-danger);">$12,300</div></div>
         </div>
         <div class="filter-bar">
-          <input class="input" type="text" placeholder="Buscar por UUID, serie..." style="flex:1; min-width:200px;">
-          <button class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Factura</button>
+          <input class="input" type="text" placeholder="Buscar por UUID, serie..." style="flex:1; min-width:200px;" data-i18n-placeholder="tenant.buscar_uuid">
+          <button class="btn btn-primary"><i class="fas fa-plus"></i> <span data-i18n="tenant.btn_nueva_factura">Nueva Factura</span></button>
         </div>
         <div class="card">
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr><th>UUID</th><th>Serie/Folio</th><th>Fecha</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+                <tr><th>UUID</th><th data-i18n="tenant.th_serie_folio">Serie/Folio</th><th data-i18n="tenant.th_fecha">Fecha</th><th data-i18n="tenant.th_subtotal">Subtotal</th><th data-i18n="tenant.th_iva">IVA</th><th data-i18n="tenant.th_total">Total</th><th data-i18n="tenant.th_estado">Estado</th><th data-i18n="tenant.th_acciones">Acciones</th></tr>
               </thead>
               <tbody id="facturasTableBody"></tbody>
             </table>
@@ -364,36 +370,36 @@
       <div class="section" id="section-reportes">
         <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte de entregas...')">
-            <div style="text-align:center;"><i class="fas fa-truck" style="font-size:28px; color:var(--accent-primary); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Entregas</div><div style="font-size:11px; color:var(--text-secondary);">Historial completo</div></div>
+            <div style="text-align:center;"><i class="fas fa-truck" style="font-size:28px; color:var(--accent-primary); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;" data-i18n="tenant.reporte_entregas">Entregas</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.reporte_entregas_historial">Historial completo</div></div>
           </div>
           <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte financiero...')">
-            <div style="text-align:center;"><i class="fas fa-dollar-sign" style="font-size:28px; color:var(--color-success); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Financiero</div><div style="font-size:11px; color:var(--text-secondary);">Ingresos y gastos</div></div>
+            <div style="text-align:center;"><i class="fas fa-dollar-sign" style="font-size:28px; color:var(--color-success); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;" data-i18n="tenant.reporte_financiero">Financiero</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.reporte_financiero_detalle">Ingresos y gastos</div></div>
           </div>
           <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte de rendimiento...')">
-            <div style="text-align:center;"><i class="fas fa-chart-line" style="font-size:28px; color:var(--color-warning); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Rendimiento</div><div style="font-size:11px; color:var(--text-secondary);">Metricas de equipo</div></div>
+            <div style="text-align:center;"><i class="fas fa-chart-line" style="font-size:28px; color:var(--color-warning); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;" data-i18n="tenant.reporte_rendimiento">Rendimiento</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.reporte_rendimiento_detalle">Metricas de equipo</div></div>
           </div>
           <div class="kpi-card" style="cursor:pointer;" onclick="showToast('Generando reporte de costos...')">
-            <div style="text-align:center;"><i class="fas fa-calculator" style="font-size:28px; color:var(--color-danger); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;">Costos</div><div style="font-size:11px; color:var(--text-secondary);">Analisis de costos</div></div>
+            <div style="text-align:center;"><i class="fas fa-calculator" style="font-size:28px; color:var(--color-danger); margin-bottom:8px;"></i><div style="font-size:14px; font-weight:600;" data-i18n="tenant.reporte_costos">Costos</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.reporte_costos_detalle">Analisis de costos</div></div>
           </div>
         </div>
         <div class="card">
-          <h3>Generar Reporte Personalizado</h3>
+          <h3 data-i18n="tenant.generar_reporte">Generar Reporte Personalizado</h3>
           <div class="form-grid">
-            <div class="form-group"><label>Tipo de Reporte</label><select class="select"><option>Entregas</option><option>Financiero</option><option>Rendimiento</option><option>Costos</option></select></div>
-            <div class="form-group"><label>Periodo</label><select class="select"><option>Hoy</option><option>Ultimos 7 dias</option><option>Este mes</option><option>Ultimo trimestre</option><option>Personalizado</option></select></div>
-            <div class="form-group"><label>Desde</label><input class="input" type="date"></div>
-            <div class="form-group"><label>Hasta</label><input class="input" type="date"></div>
+            <div class="form-group"><label data-i18n="tenant.reporte_tipo">Tipo de Reporte</label><select class="select"><option data-i18n="tenant.tipo_entregas">Entregas</option><option data-i18n="tenant.tipo_financiero">Financiero</option><option data-i18n="tenant.tipo_rendimiento">Rendimiento</option><option data-i18n="tenant.tipo_costos">Costos</option></select></div>
+            <div class="form-group"><label data-i18n="tenant.reporte_periodo">Periodo</label><select class="select"><option data-i18n="tenant.periodo_hoy">Hoy</option><option data-i18n="tenant.periodo_ultimos_7">Ultimos 7 dias</option><option data-i18n="tenant.periodo_este_mes">Este mes</option><option data-i18n="tenant.periodo_ultimo_trimestre">Ultimo trimestre</option><option data-i18n="tenant.periodo_personalizado">Personalizado</option></select></div>
+            <div class="form-group"><label data-i18n="tenant.reporte_desde">Desde</label><input class="input" type="date"></div>
+            <div class="form-group"><label data-i18n="tenant.reporte_hasta">Hasta</label><input class="input" type="date"></div>
           </div>
           <div style="display:flex; gap:8px; margin-top:12px;">
-            <button class="btn btn-primary" onclick="showToast('Reporte generado')"><i class="fas fa-file-excel"></i> Exportar Excel</button>
-            <button class="btn btn-secondary" onclick="showToast('Reporte generado')"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+            <button class="btn btn-primary" onclick="showToast('Reporte generado')"><i class="fas fa-file-excel"></i> <span data-i18n="tenant.btn_exportar_excel">Exportar Excel</span></button>
+            <button class="btn btn-secondary" onclick="showToast('Reporte generado')"><i class="fas fa-file-pdf"></i> <span data-i18n="tenant.btn_exportar_pdf">Exportar PDF</span></button>
           </div>
         </div>
         <div class="card">
-          <h3>Reportes Recientes</h3>
+          <h3 data-i18n="tenant.reportes_recientes">Reportes Recientes</h3>
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha</th><th>Acciones</th></tr></thead>
+              <thead><tr><th data-i18n="tenant.th_nombre">Nombre</th><th data-i18n="tenant.th_tipo">Tipo</th><th data-i18n="tenant.th_fecha">Fecha</th><th data-i18n="tenant.th_acciones">Acciones</th></tr></thead>
               <tbody>
                 <tr><td>Entregas Junio 2026</td><td><span class="badge badge-info">Entregas</span></td><td>01/07/2026</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
                 <tr><td>Facturacion Q2 2026</td><td><span class="badge badge-success">Financiero</span></td><td>01/07/2026</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
@@ -407,22 +413,22 @@
       <!-- SECTION: MI EQUIPO -->
       <div class="section" id="section-equipo">
         <div class="filter-bar">
-          <input class="input" type="text" placeholder="Buscar miembro..." style="flex:1; min-width:200px;">
-          <button class="btn btn-primary" onclick="openModal('modalEquipo')"><i class="fas fa-user-plus"></i> Invitar Miembro</button>
+          <input class="input" type="text" placeholder="Buscar miembro..." style="flex:1; min-width:200px;" data-i18n-placeholder="tenant.buscar_miembro">
+          <button class="btn btn-primary" onclick="openModal('modalEquipo')"><i class="fas fa-user-plus"></i> <span data-i18n="tenant.btn_invitar_miembro">Invitar Miembro</span></button>
         </div>
         <div class="card">
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <thead><tr><th data-i18n="tenant.th_nombre">Nombre</th><th data-i18n="tenant.th_email">Email</th><th data-i18n="tenant.th_rol">Rol</th><th data-i18n="tenant.th_estado">Estado</th><th data-i18n="tenant.th_acciones">Acciones</th></tr></thead>
               <tbody id="equipoTableBody"></tbody>
             </table>
           </div>
         </div>
         <div class="card">
-          <h3>Permisos por Rol</h3>
+          <h3 data-i18n="tenant.permisos_rol">Permisos por Rol</h3>
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Rol</th><th>Envios</th><th>Choferes</th><th>Facturacion</th><th>Config</th><th>Reportes</th></tr></thead>
+              <thead><tr><th data-i18n="tenant.th_rol">Rol</th><th data-i18n="tenant.th_envios">Envios</th><th data-i18n="tenant.th_choferes">Choferes</th><th data-i18n="tenant.th_facturacion">Facturacion</th><th data-i18n="tenant.th_config">Config</th><th data-i18n="tenant.th_reportes">Reportes</th></tr></thead>
               <tbody>
                 <tr><td><span class="badge badge-danger">Administrador</span></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td></tr>
                 <tr><td><span class="badge badge-info">Operador</span></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-times" style="color:var(--color-danger);"></i></td><td><i class="fas fa-check" style="color:var(--color-success);"></i></td></tr>
@@ -437,94 +443,94 @@
       <!-- SECTION: CONFIGURACION -->
       <div class="section" id="section-config">
         <div class="card">
-          <h3><i class="fas fa-building"></i> Informacion de la Empresa</h3>
+          <h3><i class="fas fa-building"></i> <span data-i18n="tenant.informacion_empresa">Informacion de la Empresa</span></h3>
           <div class="form-grid">
-            <div class="form-group full"><label>Nombre de la Empresa</label><input class="input" type="text" value="Tenant Demo S.A. de C.V."></div>
+            <div class="form-group full"><label data-i18n="tenant.lbl_empresa">Nombre de la Empresa</label><input class="input" type="text" value="Tenant Demo S.A. de C.V."></div>
             <div class="form-group"><label>RFC</label><input class="input" type="text" value="TDM123456789"></div>
-            <div class="form-group"><label>Telefono</label><input class="input" type="tel" value="(55) 1234-5678"></div>
-            <div class="form-group full"><label>Direccion</label><input class="input" type="text" value="Av. Principal 123, Col. Centro, Ciudad de Mexico"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_telefono">Telefono</label><input class="input" type="tel" value="(55) 1234-5678"></div>
+            <div class="form-group full"><label data-i18n="tenant.lbl_direccion">Direccion</label><input class="input" type="text" value="Av. Principal 123, Col. Centro, Ciudad de Mexico"></div>
             <div class="form-group"><label>Email</label><input class="input" type="email" value="admin@tenantdemo.com"></div>
           </div>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Informacion guardada')"><i class="fas fa-save"></i> Guardar</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Informacion guardada')"><i class="fas fa-save"></i> <span data-i18n="tenant.btn_guardar">Guardar</span></button>
         </div>
         <div class="card">
-          <h3><i class="fas fa-palette"></i> Marca</h3>
+          <h3><i class="fas fa-palette"></i> <span data-i18n="tenant.marca">Marca</span></h3>
           <div class="form-grid">
-            <div class="form-group"><label>Logo de la Empresa</label>
-              <div class="upload-zone"><i class="fas fa-cloud-upload-alt"></i><div style="font-size:13px;">Arrastra tu logo o haz click</div><div style="font-size:11px; color:var(--text-tertiary);">PNG, JPG max 2MB</div></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_logo">Logo de la Empresa</label>
+              <div class="upload-zone"><i class="fas fa-cloud-upload-alt"></i><div style="font-size:13px;" data-i18n="tenant.upload_arrastre">Arrastra tu logo o haz click</div><div style="font-size:11px; color:var(--text-tertiary);">PNG, JPG max 2MB</div></div>
             </div>
-            <div class="form-group"><label>Color Primario</label><div style="display:flex; gap:8px; align-items:center;"><input type="color" value="#3B82F6" style="width:40px; height:36px; border:none; cursor:pointer;"><input class="input" type="text" value="#3B82F6" style="flex:1;"></div></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_color_primario">Color Primario</label><div style="display:flex; gap:8px; align-items:center;"><input type="color" value="#3B82F6" style="width:40px; height:36px; border:none; cursor:pointer;"><input class="input" type="text" value="#3B82F6" style="flex:1;"></div></div>
           </div>
         </div>
         <div class="card">
-          <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+          <h3><i class="fas fa-bell"></i> <span data-i18n="tenant.notificaciones">Notificaciones</span></h3>
           <div style="display:flex; flex-direction:column; gap:16px;">
-            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;">Notificaciones por Email</div><div style="font-size:11px; color:var(--text-secondary);">Resumen diario y alertas importantes</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;">Notificaciones por SMS</div><div style="font-size:11px; color:var(--text-secondary);">Alertas criticas y cambios de estado</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;">Notificaciones por WhatsApp</div><div style="font-size:11px; color:var(--text-secondary);">Confirmaciones y seguimiento</div></div><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;" data-i18n="tenant.notif_email">Notificaciones por Email</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.notif_email_desc">Resumen diario y alertas importantes</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;" data-i18n="tenant.notif_sms">Notificaciones por SMS</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.notif_sms_desc">Alertas criticas y cambios de estado</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div><div style="font-size:13px; font-weight:500;" data-i18n="tenant.notif_whatsapp">Notificaciones por WhatsApp</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.notif_whatsapp_desc">Confirmaciones y seguimiento</div></div><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></div>
           </div>
         </div>
         <div class="card">
-          <h3><i class="fas fa-tags"></i> Tarifas</h3>
+          <h3><i class="fas fa-tags"></i> <span data-i18n="tenant.tarifas">Tarifas</span></h3>
           <div class="form-grid">
-            <div class="form-group"><label>Precio Base ($)</label><input class="input" type="number" value="45.00" step="0.01"></div>
-            <div class="form-group"><label>Costo por KM ($)</label><input class="input" type="number" value="8.50" step="0.01"></div>
-            <div class="form-group"><label>Costo por KG ($)</label><input class="input" type="number" value="2.00" step="0.01"></div>
-            <div class="form-group"><label>Recargo Urgente ($)</label><input class="input" type="number" value="50.00" step="0.01"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_precio_base">Precio Base ($)</label><input class="input" type="number" value="45.00" step="0.01"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_costo_km">Costo por KM ($)</label><input class="input" type="number" value="8.50" step="0.01"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_costo_kg">Costo por KG ($)</label><input class="input" type="number" value="2.00" step="0.01"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_recargo_urgente">Recargo Urgente ($)</label><input class="input" type="number" value="50.00" step="0.01"></div>
           </div>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Tarifas actualizadas')"><i class="fas fa-save"></i> Guardar Tarifas</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Tarifas actualizadas')"><i class="fas fa-save"></i> <span data-i18n="tenant.btn_guardar_tarifas">Guardar Tarifas</span></button>
         </div>
         <div class="card">
-          <h3><i class="fas fa-map"></i> Zonas de Entrega</h3>
+          <h3><i class="fas fa-map"></i> <span data-i18n="tenant.zonas_entrega">Zonas de Entrega</span></h3>
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Zona</th><th>Tarifa</th><th>Tiempo Est.</th><th>Acciones</th></tr></thead>
+              <thead><tr><th data-i18n="tenant.th_zona">Zona</th><th data-i18n="tenant.th_tarifa">Tarifa</th><th data-i18n="tenant.th_tiempo_est">Tiempo Est.</th><th data-i18n="tenant.th_acciones">Acciones</th></tr></thead>
               <tbody id="zonasTableBody"></tbody>
             </table>
           </div>
-          <button class="btn btn-secondary" style="margin-top:12px;" onclick="showToast('Zona agregada')"><i class="fas fa-plus"></i> Agregar Zona</button>
+          <button class="btn btn-secondary" style="margin-top:12px;" onclick="showToast('Zona agregada')"><i class="fas fa-plus"></i> <span data-i18n="tenant.btn_agregar_zona">Agregar Zona</span></button>
         </div>
       </div>
 
       <!-- SECTION: MI CUENTA -->
       <div class="section" id="section-cuenta">
         <div class="card">
-          <h3><i class="fas fa-user"></i> Mi Perfil</h3>
+          <h3><i class="fas fa-user"></i> <span data-i18n="tenant.mi_perfil">Mi Perfil</span></h3>
           <div class="form-grid">
-            <div class="form-group"><label>Nombre</label><input class="input" type="text" value="Carlos Rodriguez"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_nombre">Nombre</label><input class="input" type="text" value="Carlos Rodriguez"></div>
             <div class="form-group"><label>Email</label><input class="input" type="email" value="carlos@tenantdemo.com"></div>
-            <div class="form-group"><label>Telefono</label><input class="input" type="tel" value="(55) 9876-5432"></div>
-            <div class="form-group"><label>Cargo</label><input class="input" type="text" value="Gerente de Operaciones"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_telefono">Telefono</label><input class="input" type="tel" value="(55) 9876-5432"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_cargo">Cargo</label><input class="input" type="text" value="Gerente de Operaciones"></div>
           </div>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Perfil actualizado')"><i class="fas fa-save"></i> Guardar Cambios</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Perfil actualizado')"><i class="fas fa-save"></i> <span data-i18n="tenant.btn_guardar_cambios">Guardar Cambios</span></button>
         </div>
         <div class="card">
-          <h3><i class="fas fa-gem"></i> Mi Plan</h3>
+          <h3><i class="fas fa-gem"></i> <span data-i18n="tenant.mi_plan">Mi Plan</span></h3>
           <div style="background:linear-gradient(135deg, var(--accent-primary), #8B5CF6); border-radius:12px; padding:24px; color:#fff; margin-bottom:16px;">
-            <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:0.8;">Plan Actual</div>
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:0.8;" data-i18n="tenant.plan_actual">Plan Actual</div>
             <div style="font-size:28px; font-weight:700; margin:4px 0;">Pro</div>
             <div style="font-size:13px; opacity:0.9;">$299/mes - Facturacion mensual</div>
           </div>
           <div class="form-grid">
-            <div class="kpi-card"><div class="kpi-label">Envios este mes</div><div class="kpi-value">847</div><div style="font-size:11px; color:var(--text-secondary);">de 1,000 incluidos</div>
+            <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.plan_envios_mes">Envios este mes</div><div class="kpi-value">847</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.de_1000_incluidos">de 1,000 incluidos</div>
               <div style="background:var(--bg-secondary); border-radius:4px; height:6px; margin-top:8px; overflow:hidden;"><div style="background:var(--accent-primary); height:100%; width:84.7%;"></div></div>
             </div>
-            <div class="kpi-card"><div class="kpi-label">Choferes activos</div><div class="kpi-value">8</div><div style="font-size:11px; color:var(--text-secondary);">de 15 incluidos</div>
+            <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.plan_choferes_activos">Choferes activos</div><div class="kpi-value">8</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.de_15_incluidos">de 15 incluidos</div>
               <div style="background:var(--bg-secondary); border-radius:4px; height:6px; margin-top:8px; overflow:hidden;"><div style="background:var(--color-success); height:100%; width:53.3%;"></div></div>
             </div>
-            <div class="kpi-card"><div class="kpi-label">Almacenamiento</div><div class="kpi-value">2.1 GB</div><div style="font-size:11px; color:var(--text-secondary);">de 5 GB incluidos</div>
+            <div class="kpi-card"><div class="kpi-label" data-i18n="tenant.plan_almacenamiento">Almacenamiento</div><div class="kpi-value">2.1 GB</div><div style="font-size:11px; color:var(--text-secondary);" data-i18n="tenant.de_5gb_incluidos">de 5 GB incluidos</div>
               <div style="background:var(--bg-secondary); border-radius:4px; height:6px; margin-top:8px; overflow:hidden;"><div style="background:var(--color-warning); height:100%; width:42%;"></div></div>
             </div>
           </div>
           <div style="display:flex; gap:8px; margin-top:12px;">
-            <button class="btn btn-primary" onclick="showToast('Redirigiendo a planes...')"><i class="fas fa-arrow-up"></i> Upgrade a Enterprise</button>
+            <button class="btn btn-primary" onclick="showToast('Redirigiendo a planes...')"><i class="fas fa-arrow-up"></i> <span data-i18n="tenant.btn_upgrade">Upgrade a Enterprise</span></button>
           </div>
         </div>
         <div class="card">
-          <h3><i class="fas fa-history"></i> Historial de Facturacion</h3>
+          <h3><i class="fas fa-history"></i> <span data-i18n="tenant.historial_facturacion">Historial de Facturacion</span></h3>
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Fecha</th><th>Descripcion</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <thead><tr><th data-i18n="tenant.th_fecha">Fecha</th><th data-i18n="tenant.th_descripcion">Descripcion</th><th data-i18n="tenant.th_monto">Monto</th><th data-i18n="tenant.th_estado">Estado</th><th data-i18n="tenant.th_acciones">Acciones</th></tr></thead>
               <tbody>
                 <tr><td>01/07/2026</td><td>Plan Pro - Julio 2026</td><td>$299.00</td><td><span class="badge badge-success">Pagado</span></td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
                 <tr><td>01/06/2026</td><td>Plan Pro - Junio 2026</td><td>$299.00</td><td><span class="badge badge-success">Pagado</span></td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></button></td></tr>
@@ -535,23 +541,23 @@
           </div>
         </div>
         <div class="card">
-          <h3><i class="fas fa-lock"></i> Cambiar Contraseña</h3>
+          <h3><i class="fas fa-lock"></i> <span data-i18n="tenant.cambiar_contrasena">Cambiar Contraseña</span></h3>
           <div class="form-grid">
-            <div class="form-group"><label>Contraseña Actual</label><input class="input" type="password"></div>
-            <div class="form-group"><label>Nueva Contraseña</label><input class="input" type="password"></div>
-            <div class="form-group"><label>Confirmar Nueva Contraseña</label><input class="input" type="password"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_contraseña_actual">Contraseña Actual</label><input class="input" type="password"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_nueva_contrasena">Nueva Contraseña</label><input class="input" type="password"></div>
+            <div class="form-group"><label data-i18n="tenant.lbl_confirmar_contrasena">Confirmar Nueva Contraseña</label><input class="input" type="password"></div>
           </div>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Contraseña actualizada')"><i class="fas fa-save"></i> Actualizar Contraseña</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showToast('Contraseña actualizada')"><i class="fas fa-save"></i> <span data-i18n="tenant.btn_actualizar_contrasena">Actualizar Contraseña</span></button>
         </div>
         <div class="card">
-          <h3><i class="fas fa-key"></i> API Keys</h3>
-          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Usa estas keys para integrar con sistemas externos.</p>
+          <h3><i class="fas fa-key"></i> <span data-i18n="tenant.api_keys">API Keys</span></h3>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;" data-i18n="tenant.usa_keys">Usa estas keys para integrar con sistemas externos.</p>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
             <input class="input" type="text" value="sk_tenant_demo_a1b2c3d4e5f6g7h8i9j0" style="flex:1;" readonly>
             <button class="btn btn-secondary" onclick="showToast('API Key copiada')"><i class="fas fa-copy"></i></button>
             <button class="btn btn-danger btn-sm" onclick="showToast('API Key revocada')"><i class="fas fa-trash"></i></button>
           </div>
-          <button class="btn btn-secondary" onclick="showToast('Nueva API Key generada')"><i class="fas fa-plus"></i> Generar Nueva Key</button>
+          <button class="btn btn-secondary" onclick="showToast('Nueva API Key generada')"><i class="fas fa-plus"></i> <span data-i18n="tenant.btn_generar_nueva_key">Generar Nueva Key</span></button>
         </div>
       </div>
 
@@ -561,68 +567,83 @@
   <!-- MODALS -->
   <div class="modal-overlay" id="modalChofer">
     <div class="modal">
-      <div class="modal-header"><h3 id="choferModalTitle">Nuevo Chofer</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalChofer')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-header"><h3 id="choferModalTitle" data-i18n="tenant.modal_nuevo_chofer">Nuevo Chofer</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalChofer')"><i class="fas fa-times"></i></button></div>
       <div class="modal-body">
         <div class="form-grid">
-          <div class="form-group full"><label>Nombre Completo *</label><input class="input" type="text" id="choferNombre"></div>
-          <div class="form-group"><label>Telefono *</label><input class="input" type="tel" id="choferTelefono"></div>
-          <div class="form-group"><label>Licencia</label><input class="input" type="text" id="choferLicencia"></div>
-          <div class="form-group full"><label>Vehiculo Asignado</label><select class="select" id="choferVehiculo"><option value="">Sin asignar</option><option>ABC-123 - Nissan NP300</option><option>DEF-456 - Toyota Hilux</option><option>GHI-789 - Volkswagen Saveiro</option></select></div>
+          <div class="form-group full"><label data-i18n="tenant.lbl_nombre_completo">Nombre Completo *</label><input class="input" type="text" id="choferNombre"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_telefono">Telefono *</label><input class="input" type="tel" id="choferTelefono"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_licencia">Licencia</label><input class="input" type="text" id="choferLicencia"></div>
+          <div class="form-group full"><label data-i18n="tenant.lbl_vehiculo_asignado">Vehiculo Asignado</label><select class="select" id="choferVehiculo"><option value="" data-i18n="tenant.sin_asignar">Sin asignar</option><option>ABC-123 - Nissan NP300</option><option>DEF-456 - Toyota Hilux</option><option>GHI-789 - Volkswagen Saveiro</option></select></div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('modalChofer')">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveChofer()"><i class="fas fa-save"></i> Guardar</button>
+        <button class="btn btn-secondary" onclick="closeModal('modalChofer')" data-i18n="tenant.btn_cancelar">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveChofer()"><i class="fas fa-save"></i> <span data-i18n="tenant.btn_guardar">Guardar</span></button>
       </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="modalVehiculo">
     <div class="modal">
-      <div class="modal-header"><h3>Nuevo Vehiculo</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalVehiculo')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-header"><h3 data-i18n="tenant.modal_nuevo_vehiculo">Nuevo Vehiculo</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalVehiculo')"><i class="fas fa-times"></i></button></div>
       <div class="modal-body">
         <div class="form-grid">
-          <div class="form-group"><label>Numero de Unidad *</label><input class="input" type="text"></div>
-          <div class="form-group"><label>Placas *</label><input class="input" type="text"></div>
-          <div class="form-group"><label>Marca *</label><input class="input" type="text"></div>
-          <div class="form-group"><label>Modelo *</label><input class="input" type="text"></div>
-          <div class="form-group"><label>Ano</label><input class="input" type="number"></div>
-          <div class="form-group"><label>Kilometraje Actual</label><input class="input" type="number"></div>
-          <div class="form-group full"><label>Chofer Asignado</label><select class="select"><option value="">Sin asignar</option><option>Miguel Hernandez</option><option>Juan Perez</option><option>Roberto Sanchez</option></select></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_numero_unidad">Numero de Unidad *</label><input class="input" type="text"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_placas">Placas *</label><input class="input" type="text"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_marca">Marca *</label><input class="input" type="text"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_modelo">Modelo *</label><input class="input" type="text"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_ano">Ano</label><input class="input" type="number"></div>
+          <div class="form-group"><label data-i18n="tenant.lbl_kilometraje">Kilometraje Actual</label><input class="input" type="number"></div>
+          <div class="form-group full"><label data-i18n="tenant.lbl_chofer_asignado">Chofer Asignado</label><select class="select"><option value="" data-i18n="tenant.sin_asignar">Sin asignar</option><option>Miguel Hernandez</option><option>Juan Perez</option><option>Roberto Sanchez</option></select></div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('modalVehiculo')">Cancelar</button>
-        <button class="btn btn-primary" onclick="closeModal('modalVehiculo'); showToast('Vehiculo guardado')"><i class="fas fa-save"></i> Guardar</button>
+        <button class="btn btn-secondary" onclick="closeModal('modalVehiculo')" data-i18n="tenant.btn_cancelar">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modalVehiculo'); showToast('Vehiculo guardado')"><i class="fas fa-save"></i> <span data-i18n="tenant.btn_guardar">Guardar</span></button>
       </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="modalEquipo">
     <div class="modal">
-      <div class="modal-header"><h3>Invitar Miembro del Equipo</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalEquipo')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-header"><h3 data-i18n="tenant.modal_invitar_miembro">Invitar Miembro del Equipo</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalEquipo')"><i class="fas fa-times"></i></button></div>
       <div class="modal-body">
         <div class="form-grid">
-          <div class="form-group full"><label>Nombre *</label><input class="input" type="text"></div>
+          <div class="form-group full"><label data-i18n="tenant.lbl_nombre">Nombre *</label><input class="input" type="text"></div>
           <div class="form-group full"><label>Email *</label><input class="input" type="email"></div>
-          <div class="form-group full"><label>Rol *</label><select class="select"><option>Operador</option><option>Chofer</option><option>Visualizador</option></select></div>
+          <div class="form-group full"><label data-i18n="tenant.lbl_rol">Rol *</label><select class="select"><option data-i18n="tenant.rol_operador">Operador</option><option data-i18n="tenant.rol_chofer">Chofer</option><option data-i18n="tenant.rol_visualizador">Visualizador</option></select></div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('modalEquipo')">Cancelar</button>
-        <button class="btn btn-primary" onclick="closeModal('modalEquipo'); showToast('Invitacion enviada')"><i class="fas fa-paper-plane"></i> Enviar Invitacion</button>
+        <button class="btn btn-secondary" onclick="closeModal('modalEquipo')" data-i18n="tenant.btn_cancelar">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modalEquipo'); showToast('Invitacion enviada')"><i class="fas fa-paper-plane"></i> <span data-i18n="tenant.btn_enviar_invitacion">Enviar Invitacion</span></button>
       </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="modalEnvioDetalle">
     <div class="modal" style="max-width:700px;">
-      <div class="modal-header"><h3>Detalle del Envio</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalEnvioDetalle')"><i class="fas fa-times"></i></button></div>
+      <div class="modal-header"><h3 data-i18n="tenant.modal_detalle_envio">Detalle del Envio</h3><button style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" onclick="closeModal('modalEnvioDetalle')"><i class="fas fa-times"></i></button></div>
       <div class="modal-body" id="envioDetalleBody"></div>
     </div>
   </div>
 
   <script>
+    /* ---- i18n ---- */
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+      renderRecentOrders();
+      renderEnvios();
+      renderChoferes();
+      renderVehiculos();
+      renderFacturas();
+      renderEquipo();
+      renderZonas();
+      initCharts();
+      setTimeout(initDashboardMap, 300);
+    });
+
     // ========== DEMO DATA ==========
     const enviosData = [
       { id: 'ENV-001', destinatario: 'Maria Lopez', direccion: 'Calle Reforma 45, Col. Centro', chofer: 'Miguel Hernandez', estado: 'Entregado', fecha: '09/07/2026', costo: 85.00 },
@@ -700,9 +721,9 @@
       const nav = document.querySelector(`.nav-item[data-section="${name}"]`);
       if (nav) nav.classList.add('active');
       const titles = {
-        dashboard: 'Dashboard', envios: 'Mis Envios', 'nuevo-envio': 'Nuevo Envio',
-        choferes: 'Choferes', vehiculos: 'Vehiculos', facturacion: 'Facturacion',
-        reportes: 'Reportes', equipo: 'Mi Equipo', config: 'Configuracion', cuenta: 'Mi Cuenta'
+        dashboard: window.i18n.t('tenant.nav_dashboard'), envios: window.i18n.t('tenant.nav_envios'), 'nuevo-envio': window.i18n.t('tenant.nav_nuevo_envio'),
+        choferes: window.i18n.t('tenant.nav_choferes'), vehiculos: window.i18n.t('tenant.nav_vehiculos'), facturacion: window.i18n.t('tenant.nav_facturacion'),
+        reportes: window.i18n.t('tenant.nav_reportes'), equipo: window.i18n.t('tenant.nav_equipo'), config: window.i18n.t('tenant.nav_config'), cuenta: window.i18n.t('tenant.nav_cuenta')
       };
       document.getElementById('pageTitle').textContent = titles[name] || name;
       if (name === 'dashboard') initDashboardMap();
@@ -757,6 +778,20 @@
       return map[estado] || 'badge-neutral';
     }
 
+    function tEstado(estado) {
+      const map = {
+        'Entregado': 'tenant.filtro_entregado', 'En Transito': 'tenant.filtro_en_transito',
+        'Pendiente': 'tenant.filtro_pendiente', 'Asignado': 'tenant.filtro_asignado',
+        'No Entregado': 'tenant.filtro_no_entregado', 'Cancelado': 'tenant.filtro_cancelado',
+        'Devuelto': 'tenant.filtro_devuelto', 'Activo': 'tenant.status_activo',
+        'Inactivo': 'tenant.status_inactivo', 'Operativo': 'tenant.status_operativo',
+        'Mantenimiento': 'tenant.status_mantenimiento', 'Pagada': 'tenant.status_pagada',
+        'Administrador': 'tenant.rol_administrador', 'Operador': 'tenant.rol_operador',
+        'Chofer': 'tenant.rol_chofer', 'Visualizador': 'tenant.rol_visualizador'
+      };
+      return window.i18n.t(map[estado] || 'tenant.status_' + estado);
+    }
+
     // ========== TOAST ==========
     function showToast(msg) {
       if (typeof Utils !== 'undefined' && Utils.toast) {
@@ -780,7 +815,7 @@
     // ========== RENDER FUNCTIONS ==========
     function renderRecentOrders() {
       const tbody = document.getElementById('recentOrdersBody');
-      tbody.innerHTML = recentOrders.map(o => `<tr><td style="font-weight:600;">${o.id}</td><td>${o.destinatario}</td><td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${o.direccion}</td><td><span class="badge ${getBadgeClass(o.estado)}">${o.estado}</span></td><td>${o.fecha}</td></tr>`).join('');
+      tbody.innerHTML = recentOrders.map(o => `<tr><td style="font-weight:600;">${o.id}</td><td>${o.destinatario}</td><td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${o.direccion}</td><td><span class="badge ${getBadgeClass(o.estado)}">${tEstado(o.estado)}</span></td><td>${o.fecha}</td></tr>`).join('');
     }
 
     function renderEnvios() {
@@ -788,8 +823,8 @@
       tbody.innerHTML = enviosData.map(e => `<tr>
         <td style="font-weight:600;">${e.id}</td><td>${e.destinatario}</td>
         <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.direccion}</td>
-        <td>${e.chofer || '<span style="color:var(--text-tertiary);">Sin asignar</span>'}</td>
-        <td><span class="badge ${getBadgeClass(e.estado)}">${e.estado}</span></td>
+        <td>${e.chofer || '<span style="color:var(--text-tertiary);">' + window.i18n.t('tenant.sin_asignar') + '</span>'}</td>
+        <td><span class="badge ${getBadgeClass(e.estado)}">${tEstado(e.estado)}</span></td>
         <td>${e.fecha}</td><td>$${e.costo.toFixed(2)}</td>
         <td><button class="btn btn-sm btn-secondary" onclick="showEnvioDetalle('${e.id}')"><i class="fas fa-eye"></i></button></td>
       </tr>`).join('');
@@ -798,7 +833,7 @@
       enviosData.forEach(e => { statusCounts[e.estado] = (statusCounts[e.estado] || 0) + 1; });
       const statuses = ['Pendiente', 'Asignado', 'En Transito', 'Entregado', 'No Entregado', 'Cancelado', 'Devuelto'];
       document.getElementById('statusSummary').innerHTML = statuses.map(s => `
-        <div class="status-card"><div class="count">${statusCounts[s] || 0}</div><div class="label">${s}</div></div>
+        <div class="status-card"><div class="count">${statusCounts[s] || 0}</div><div class="label">${tEstado(s)}</div></div>
       `).join('');
     }
 
@@ -808,21 +843,21 @@
       document.getElementById('envioDetalleBody').innerHTML = `
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
           <div><div style="font-size:11px; color:var(--text-secondary);">ID</div><div style="font-weight:600;">${envio.id}</div></div>
-          <div><div style="font-size:11px; color:var(--text-secondary);">Estado</div><div><span class="badge ${getBadgeClass(envio.estado)}">${envio.estado}</span></div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Estado</div><div><span class="badge ${getBadgeClass(envio.estado)}">${tEstado(envio.estado)}</span></div></div>
           <div><div style="font-size:11px; color:var(--text-secondary);">Destinatario</div><div style="font-weight:500;">${envio.destinatario}</div></div>
           <div><div style="font-size:11px; color:var(--text-secondary);">Telefono</div><div>(55) 9876-5432</div></div>
           <div style="grid-column:1/-1;"><div style="font-size:11px; color:var(--text-secondary);">Direccion</div><div>${envio.direccion}</div></div>
-          <div><div style="font-size:11px; color:var(--text-secondary);">Chofer</div><div>${envio.chofer || 'Sin asignar'}</div></div>
+          <div><div style="font-size:11px; color:var(--text-secondary);">Chofer</div><div>${envio.chofer || window.i18n.t('tenant.sin_asignar')}</div></div>
           <div><div style="font-size:11px; color:var(--text-secondary);">Costo</div><div style="font-weight:600;">$${envio.costo.toFixed(2)}</div></div>
         </div>
         <h4 style="font-size:13px; font-weight:600; margin-bottom:12px;">Historial</h4>
         <div class="timeline">
-          <div class="timeline-item"><div class="time">${envio.fecha} 09:15</div><div class="desc">Envio creado</div></div>
-          ${envio.estado !== 'Pendiente' ? `<div class="timeline-item"><div class="time">${envio.fecha} 09:30</div><div class="desc">Asignado a ${envio.chofer || 'chofer'}</div></div>` : ''}
-          ${envio.estado === 'En Transito' || envio.estado === 'Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 10:00</div><div class="desc">Recogido - En camino</div></div>` : ''}
-          ${envio.estado === 'Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 11:30</div><div class="desc">Entregado exitosamente</div></div>` : ''}
-          ${envio.estado === 'No Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 11:00</div><div class="desc">Intento fallido - No se encontro destinatario</div></div>` : ''}
-          ${envio.estado === 'Cancelado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 09:45</div><div class="desc">Envio cancelado por el cliente</div></div>` : ''}
+          <div class="timeline-item"><div class="time">${envio.fecha} 09:15</div><div class="desc" data-i18n="tenant.timeline_creado">Envio creado</div></div>
+          ${envio.estado !== 'Pendiente' ? `<div class="timeline-item"><div class="time">${envio.fecha} 09:30</div><div class="desc">${window.i18n.t('tenant.timeline_asignado_a')} ${envio.chofer || 'chofer'}</div></div>` : ''}
+          ${envio.estado === 'En Transito' || envio.estado === 'Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 10:00</div><div class="desc" data-i18n="tenant.timeline_recogido">Recogido - En camino</div></div>` : ''}
+          ${envio.estado === 'Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 11:30</div><div class="desc" data-i18n="tenant.timeline_entregado">Entregado exitosamente</div></div>` : ''}
+          ${envio.estado === 'No Entregado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 11:00</div><div class="desc" data-i18n="tenant.timeline_fallido">Intento fallido - No se encontro destinatario</div></div>` : ''}
+          ${envio.estado === 'Cancelado' ? `<div class="timeline-item"><div class="time">${envio.fecha} 09:45</div><div class="desc" data-i18n="tenant.timeline_cancelado">Envio cancelado por el cliente</div></div>` : ''}
         </div>
       `;
       openModal('modalEnvioDetalle');
@@ -838,11 +873,11 @@
             <div class="driver-detail"><i class="fas fa-truck" style="width:14px;"></i> ${c.vehiculo}</div>
           </div>
           <div class="driver-stats">
-            <div class="driver-stat"><div class="val">${c.entregasHoy}</div><div class="lbl">Entregas Hoy</div></div>
-            <div class="driver-stat"><div class="val" style="color:var(--color-warning);">${c.rating}</div><div class="lbl">Rating</div></div>
+            <div class="driver-stat"><div class="val">${c.entregasHoy}</div><div class="lbl" data-i18n="tenant.kpi_envios_hoy">Entregas Hoy</div></div>
+            <div class="driver-stat"><div class="val" style="color:var(--color-warning);">${c.rating}</div><div class="lbl" data-i18n="tenant.rating">Rating</div></div>
           </div>
           <div style="display:flex; gap:6px; flex-direction:column;">
-            <span class="badge ${getBadgeClass(c.estado)}">${c.estado}</span>
+            <span class="badge ${getBadgeClass(c.estado)}">${tEstado(c.estado)}</span>
             <button class="btn btn-sm btn-secondary" onclick="openModal('modalChofer')"><i class="fas fa-edit"></i></button>
           </div>
         </div>
@@ -853,7 +888,7 @@
       document.getElementById('vehiculosTableBody').innerHTML = vehiculosData.map(v => `<tr>
         <td style="font-weight:600;">${v.unidad}</td><td>${v.placas}</td><td>${v.marca}</td>
         <td>${v.chofer}</td><td>${v.km.toLocaleString()} km</td><td>${v.proxMant}</td>
-        <td><span class="badge ${getBadgeClass(v.estado)}">${v.estado}</span></td>
+        <td><span class="badge ${getBadgeClass(v.estado)}">${tEstado(v.estado)}</span></td>
         <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
       </tr>`).join('');
     }
@@ -865,16 +900,16 @@
         <td>$${f.subtotal.toLocaleString('en', {minimumFractionDigits:2})}</td>
         <td>$${f.iva.toLocaleString('en', {minimumFractionDigits:2})}</td>
         <td style="font-weight:600;">$${f.total.toLocaleString('en', {minimumFractionDigits:2})}</td>
-        <td><span class="badge ${getBadgeClass(f.estado)}">${f.estado}</span></td>
-        <td><button class="btn btn-sm btn-secondary" onclick="showToast('Descargando PDF...')"><i class="fas fa-file-pdf"></i></button></td>
+        <td><span class="badge ${getBadgeClass(f.estado)}">${tEstado(f.estado)}</span></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="showToast(window.i18n.t('tenant.toast_descargando_pdf'))"><i class="fas fa-file-pdf"></i></button></td>
       </tr>`).join('');
     }
 
     function renderEquipo() {
       document.getElementById('equipoTableBody').innerHTML = equipoData.map(u => `<tr>
         <td style="font-weight:500;">${u.nombre}</td><td>${u.email}</td>
-        <td><span class="badge ${getBadgeClass(u.rol)}">${u.rol}</span></td>
-        <td><span class="badge ${getBadgeClass(u.estado)}">${u.estado}</span></td>
+        <td><span class="badge ${getBadgeClass(u.rol)}">${tEstado(u.rol)}</span></td>
+        <td><span class="badge ${getBadgeClass(u.estado)}">${tEstado(u.estado)}</span></td>
         <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
       </tr>`).join('');
     }
@@ -908,7 +943,7 @@
         data: {
           labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
           datasets: [{
-            label: 'Envios',
+            label: window.i18n.t('tenant.nav_envios'),
             data: [18, 22, 15, 28, 24, 12, 20],
             borderColor: c.accent,
             backgroundColor: c.accent + '20',
@@ -928,7 +963,7 @@
       chartEstados = new Chart(ctxEstados, {
         type: 'doughnut',
         data: {
-          labels: ['Entregado', 'En Transito', 'Pendiente', 'No Entregado', 'Cancelado'],
+          labels: [window.i18n.t('tenant.filtro_entregado'), window.i18n.t('tenant.filtro_en_transito'), window.i18n.t('tenant.filtro_pendiente'), window.i18n.t('tenant.filtro_no_entregado'), window.i18n.t('tenant.filtro_cancelado')],
           datasets: [{ data: [14, 8, 2, 1, 1], backgroundColor: [c.success, c.info, c.warning, c.danger, c.text] }]
         },
         options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: c.text, padding: 12 } } } }
@@ -971,7 +1006,7 @@
       locations.forEach(loc => {
         const color = loc.status === 'Entregado' ? '#10B981' : loc.status === 'En Transito' ? '#3B82F6' : loc.status === 'Pendiente' ? '#F59E0B' : '#8B5CF6';
         const icon = L.divIcon({ html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`, className: '', iconSize: [14, 14] });
-        L.marker([loc.lat, loc.lng], { icon }).addTo(dashboardMap).bindPopup(`<b>${loc.name}</b><br><span style="color:${color};">${loc.status}</span>`);
+        L.marker([loc.lat, loc.lng], { icon }).addTo(dashboardMap).bindPopup(`<b>${loc.name}</b><br><span style="color:${color};">${tEstado(loc.status)}</span>`);
       });
     }
 
@@ -994,7 +1029,7 @@
     // ========== FORM SUBMIT ==========
     function submitNewEnvio(e) {
       e.preventDefault();
-      showToast('Envio creado exitosamente');
+      showToast(window.i18n.t('tenant.toast_envio_creado'));
       e.target.reset();
       document.getElementById('envCostDisplay').textContent = '$0.00';
       showSection('envios');
@@ -1002,7 +1037,7 @@
 
     function saveChofer() {
       closeModal('modalChofer');
-      showToast('Chofer guardado exitosamente');
+      showToast(window.i18n.t('tenant.toast_chofer_guardado'));
     }
 
     // ========== SEARCH FILTERS ==========
@@ -1020,17 +1055,6 @@
         row.style.display = row.textContent.includes(val) ? '' : 'none';
       });
     });
-
-    // ========== INIT ==========
-    renderRecentOrders();
-    renderEnvios();
-    renderChoferes();
-    renderVehiculos();
-    renderFacturas();
-    renderEquipo();
-    renderZonas();
-    initCharts();
-    setTimeout(initDashboardMap, 300);
   </script>
 </body>
 </html>
