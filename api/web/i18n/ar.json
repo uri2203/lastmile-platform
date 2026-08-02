@@ -869,5 +869,17 @@
     "estado_suspendida": "معلق",
     "btn_guardar": "حفظ",
     "modal_detalle_tenant": "تفاصيل المستأجر"
+  },
+  "ai": {
+    "title": "الذكاء الاصطناعي",
+    "back": "رجوع",
+    "tab_dashboard": "لوحة التحكم",
+    "tab_route": "المسارات",
+    "tab_assign": "التخصيص",
+    "tab_chat": "الروبوت",
+    "tab_demand": "الطلب",
+    "tab_pricing": "التسعير",
+    "tab_fraud": "الاحتيال",
+    "tab_sentiment": "المشاعر"
   }
 }

@@ -869,5 +869,17 @@
     "estado_suspendida": "Suspendu",
     "btn_guardar": "Enregistrer",
     "modal_detalle_tenant": "Details du Tenant"
+  },
+  "ai": {
+    "title": "Intelligence Artificielle",
+    "back": "Retour",
+    "tab_dashboard": "Tableau de bord",
+    "tab_route": "Itinéraires",
+    "tab_assign": "Attribution",
+    "tab_chat": "Chatbot",
+    "tab_demand": "Demande",
+    "tab_pricing": "Tarification",
+    "tab_fraud": "Fraude",
+    "tab_sentiment": "Sentiment"
   }
 }

@@ -869,5 +869,17 @@
     "estado_suspendida": "Suspensa",
     "btn_guardar": "Salvar",
     "modal_detalle_tenant": "Detalhes do Tenant"
+  },
+  "ai": {
+    "title": "Inteligência Artificial",
+    "back": "Voltar",
+    "tab_dashboard": "Painel",
+    "tab_route": "Rotas",
+    "tab_assign": "Atribuição",
+    "tab_chat": "Chatbot",
+    "tab_demand": "Demanda",
+    "tab_pricing": "Preços",
+    "tab_fraud": "Fraude",
+    "tab_sentiment": "Sentimento"
   }
 }

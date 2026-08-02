@@ -869,5 +869,17 @@
     "estado_suspendida": "निलंबित",
     "btn_guardar": "सहेजें",
     "modal_detalle_tenant": "टेनेंट विवरण"
+  },
+  "ai": {
+    "title": "कृत्रिम बुद्धिमत्ता",
+    "back": "वापस",
+    "tab_dashboard": "डैशबोर्ड",
+    "tab_route": "मार्ग",
+    "tab_assign": "सौंपना",
+    "tab_chat": "चैटबॉट",
+    "tab_demand": "मांग",
+    "tab_pricing": "मूल्य निर्धारण",
+    "tab_fraud": "धोखाधड़ी",
+    "tab_sentiment": "भावना"
   }
 }

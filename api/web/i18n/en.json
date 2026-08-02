@@ -869,5 +869,17 @@
     "estado_suspendida": "Suspended",
     "btn_guardar": "Save",
     "modal_detalle_tenant": "Tenant Details"
+  },
+  "ai": {
+    "title": "Artificial Intelligence",
+    "back": "Back",
+    "tab_dashboard": "Dashboard",
+    "tab_route": "Routes",
+    "tab_assign": "Assignment",
+    "tab_chat": "Chatbot",
+    "tab_demand": "Demand",
+    "tab_pricing": "Pricing",
+    "tab_fraud": "Fraud",
+    "tab_sentiment": "Sentiment"
   }
 }

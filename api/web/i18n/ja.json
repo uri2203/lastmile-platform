@@ -869,5 +869,17 @@
     "estado_suspendida": "一時停止",
     "btn_guardar": "保存",
     "modal_detalle_tenant": "テナント詳細"
+  },
+  "ai": {
+    "title": "人工知能",
+    "back": "戻る",
+    "tab_dashboard": "ダッシュボード",
+    "tab_route": "ルート",
+    "tab_assign": "割り当て",
+    "tab_chat": "チャットボット",
+    "tab_demand": "需要",
+    "tab_pricing": "価格設定",
+    "tab_fraud": "不正",
+    "tab_sentiment": "感情分析"
   }
 }

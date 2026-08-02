@@ -869,5 +869,17 @@
     "estado_suspendida": "정지",
     "btn_guardar": "저장",
     "modal_detalle_tenant": "테넌트 상세"
+  },
+  "ai": {
+    "title": "인공지능",
+    "back": "뒤로",
+    "tab_dashboard": "대시보드",
+    "tab_route": "경로",
+    "tab_assign": "할당",
+    "tab_chat": "챗봇",
+    "tab_demand": "수요",
+    "tab_pricing": "가격",
+    "tab_fraud": "사기",
+    "tab_sentiment": "감정분석"
   }
 }

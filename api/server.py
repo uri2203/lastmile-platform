@@ -18,6 +18,7 @@ from auth import generate_token, generate_refresh_token, refresh_access_token, c
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 from webhooks import webhook_bp
 from monitoring import init_monitoring
+from agents import RouteOptimizer, SmartAssignment, ETAPredictor, SupportChatbot, DemandForecaster, DynamicPricing, FraudDetector, SentimentAnalyzer
 import os
 import time
 import logging
@@ -3535,6 +3536,120 @@ def get_unidades_mantto():
 @app.route('/api/mantenimiento/ots', methods=['GET'])
 def get_ots_mantto():
     return jsonify({'success': True, 'data': []})
+
+
+# ========================================
+# AGENTES INTELIGENTES (AI)
+# ========================================
+route_optimizer = RouteOptimizer()
+smart_assignment = SmartAssignment()
+eta_predictor = ETAPredictor()
+support_chatbot = SupportChatbot()
+demand_forecaster = DemandForecaster()
+dynamic_pricing = DynamicPricing()
+fraud_detector = FraudDetector()
+sentiment_analyzer = SentimentAnalyzer()
+
+
+@app.route('/api/ai/route', methods=['POST'])
+def ai_optimize_route():
+    """Agente 1: Optimiza ruta para múltiples entregas"""
+    data = request.json
+    origin = data.get('origin', {})
+    deliveries = data.get('deliveries', [])
+    constraints = data.get('constraints', {})
+    if not origin or not deliveries:
+        return jsonify({'error': 'origin y deliveries requeridos'}), 400
+    result = route_optimizer.optimize_route(origin, deliveries, constraints)
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/assign', methods=['POST'])
+def ai_smart_assign():
+    """Agente 2: Asigna pedido al chofer óptimo"""
+    data = request.json
+    order = data.get('order', {})
+    drivers = data.get('drivers', [])
+    if not order or not drivers:
+        return jsonify({'error': 'order y drivers requeridos'}), 400
+    result = smart_assignment.assign_order(order, drivers)
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/eta', methods=['POST'])
+def ai_predict_eta():
+    """Agente 3: Predice tiempo real de llegada"""
+    data = request.json
+    origin = data.get('origin', {})
+    destination = data.get('destination', {})
+    context = data.get('context', {})
+    if not origin or not destination:
+        return jsonify({'error': 'origin y destination requeridos'}), 400
+    result = eta_predictor.predict_eta(origin, destination, context)
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/chat', methods=['POST'])
+def ai_chatbot():
+    """Agente 4: Chatbot de soporte 24/7"""
+    data = request.json
+    message = data.get('message', '')
+    context = data.get('context', {})
+    if not message:
+        return jsonify({'error': 'message requerido'}), 400
+    result = support_chatbot.get_response(message, context)
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/demand', methods=['POST'])
+def ai_demand_forecast():
+    """Agente 5: Predice volumen de pedidos"""
+    data = request.json
+    zone = data.get('zone', '')
+    hours_ahead = data.get('hours_ahead', 24)
+    if not zone:
+        return jsonify({'error': 'zone requerido'}), 400
+    # Use hourly prediction + recommendations
+    hourly = demand_forecaster.predict_hourly_volume(zone)
+    now = datetime.now()
+    recommendations = demand_forecaster.get_recommendations(zone, now.hour)
+    result = {'hourly_forecast': hourly, 'recommendations': recommendations}
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/pricing', methods=['POST'])
+def ai_dynamic_pricing():
+    """Agente 6: Calcula precio dinámico"""
+    data = request.json
+    order = data.get('order', {})
+    demand_level = data.get('demand_level', 'medium')
+    if not order:
+        return jsonify({'error': 'order requerido'}), 400
+    result = dynamic_pricing.calculate_price(order, demand_level)
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/fraud', methods=['POST'])
+def ai_fraud_detect():
+    """Agente 7: Detecta pedidos sospechosos"""
+    data = request.json
+    order = data.get('order', {})
+    customer_history = data.get('customer_history', {})
+    if not order:
+        return jsonify({'error': 'order requerido'}), 400
+    result = fraud_detector.analyze_order(order, customer_history)
+    return jsonify({'success': True, 'result': result})
+
+
+@app.route('/api/ai/sentiment', methods=['POST'])
+def ai_sentiment():
+    """Agente 8: Analiza sentimiento de feedback"""
+    data = request.json
+    text = data.get('text', '')
+    if not text:
+        return jsonify({'error': 'text requerido'}), 400
+    result = sentiment_analyzer.analyze(text)
+    return jsonify({'success': True, 'result': result})
 
 
 # ========================================

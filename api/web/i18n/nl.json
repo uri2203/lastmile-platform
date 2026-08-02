@@ -869,5 +869,17 @@
     "estado_suspendida": "Geschorst",
     "btn_guardar": "Opslaan",
     "modal_detalle_tenant": "Tenant Details"
+  },
+  "ai": {
+    "title": "Kunstmatige Intelligentie",
+    "back": "Terug",
+    "tab_dashboard": "Dashboard",
+    "tab_route": "Routes",
+    "tab_assign": "Toewijzing",
+    "tab_chat": "Chatbot",
+    "tab_demand": "Vraag",
+    "tab_pricing": "Prijzen",
+    "tab_fraud": "Fraude",
+    "tab_sentiment": "Sentiment"
   }
 }

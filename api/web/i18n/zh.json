@@ -869,5 +869,17 @@
     "estado_suspendida": "已暂停",
     "btn_guardar": "保存",
     "modal_detalle_tenant": "租户详情"
+  },
+  "ai": {
+    "title": "人工智能",
+    "back": "返回",
+    "tab_dashboard": "仪表板",
+    "tab_route": "路线",
+    "tab_assign": "分配",
+    "tab_chat": "聊天机器人",
+    "tab_demand": "需求",
+    "tab_pricing": "定价",
+    "tab_fraud": "欺诈",
+    "tab_sentiment": "情感"
   }
 }

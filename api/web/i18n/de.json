@@ -869,5 +869,17 @@
     "estado_suspendida": "Suspendiert",
     "btn_guardar": "Speichern",
     "modal_detalle_tenant": "Mandantendetails"
+  },
+  "ai": {
+    "title": "Künstliche Intelligenz",
+    "back": "Zurück",
+    "tab_dashboard": "Dashboard",
+    "tab_route": "Routen",
+    "tab_assign": "Zuweisung",
+    "tab_chat": "Chatbot",
+    "tab_demand": "Nachfrage",
+    "tab_pricing": "Preisgestaltung",
+    "tab_fraud": "Betrug",
+    "tab_sentiment": "Stimmung"
   }
 }
