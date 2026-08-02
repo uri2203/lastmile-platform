@@ -233,3 +233,157 @@ class TestStaticFiles:
         r = client.get('/panel-admin.html')
         assert r.status_code == 200
         assert b'Last Mile' in r.data
+
+
+# ===== ANALYTICS =====
+
+class TestMultiCountryAnalytics:
+    def test_analytics_requires_auth(self, client):
+        r = client.get('/api/analytics/multi-country')
+        assert r.status_code == 401
+
+    def test_analytics_ok(self, client, auth_token):
+        r = client.get('/api/analytics/multi-country', headers=auth_header(auth_token))
+        assert r.status_code == 200
+        d = r.get_json()
+        assert d['success'] is True
+        assert 'countries_supported' in d['data']
+        assert 'MX' in d['data']['countries_supported']
+        assert len(d['data']['countries_supported']) == 8
+
+    def test_analytics_has_currencies(self, client, auth_token):
+        r = client.get('/api/analytics/multi-country', headers=auth_header(auth_token))
+        d = r.get_json()
+        assert 'currencies' in d['data']
+        assert d['data']['currencies']['MX'] == 'mxn'
+        assert d['data']['currencies']['BR'] == 'brl'
+
+    def test_analytics_has_fiscal_configured(self, client, auth_token):
+        r = client.get('/api/analytics/multi-country', headers=auth_header(auth_token))
+        d = r.get_json()
+        assert 'fiscal_configured' in d['data']
+        assert isinstance(d['data']['fiscal_configured'], list)
+
+    def test_analytics_has_payment_methods(self, client, auth_token):
+        r = client.get('/api/analytics/multi-country', headers=auth_header(auth_token))
+        d = r.get_json()
+        assert 'payment_methods' in d['data']
+        assert isinstance(d['data']['payment_methods'], list)
+
+
+# ===== I18N PANELS =====
+
+class TestI18nPanels:
+    def test_panel_chofer_has_i18n(self, client):
+        r = client.get('/panel-chofer.html')
+        assert r.status_code == 200
+        assert b'i18n.js' in r.data
+
+    def test_panel_cliente_has_i18n(self, client):
+        r = client.get('/panel-cliente.html')
+        assert r.status_code == 200
+        assert b'i18n.js' in r.data
+
+    def test_panel_operacion_has_i18n(self, client):
+        r = client.get('/panel-operacion.html')
+        assert r.status_code == 200
+        assert b'i18n.js' in r.data
+
+    def test_panel_tenant_has_i18n(self, client):
+        r = client.get('/panel-tenant.html')
+        assert r.status_code == 200
+        assert b'i18n.js' in r.data
+
+    def test_panel_saas_has_i18n(self, client):
+        r = client.get('/panel-saas.html')
+        assert r.status_code == 200
+        assert b'i18n.js' in r.data
+
+    def test_i18n_has_panel_keys(self, client):
+        r = client.get('/i18n/es.json')
+        d = r.get_json()
+        assert 'operacion' in d
+        assert 'chofer' in d
+        assert 'cliente' in d
+        assert 'tenant' in d
+        assert 'saas' in d
+
+    def test_i18n_en_has_panel_keys(self, client):
+        r = client.get('/i18n/en.json')
+        d = r.get_json()
+        assert 'operacion' in d
+        assert 'chofer' in d
+        assert 'cliente' in d
+
+    def test_i18n_pt_has_panel_keys(self, client):
+        r = client.get('/i18n/pt.json')
+        d = r.get_json()
+        assert 'operacion' in d
+        assert 'chofer' in d
+        assert 'cliente' in d
+
+    def test_lang_select_in_chofer(self, client):
+        r = client.get('/panel-chofer.html')
+        assert b'lang-select' in r.data
+
+    def test_lang_select_in_cliente(self, client):
+        r = client.get('/panel-cliente.html')
+        assert b'lang-select' in r.data
+
+    def test_lang_select_in_operacion(self, client):
+        r = client.get('/panel-operacion.html')
+        assert b'lang-select' in r.data
+
+
+# ===== PWA =====
+
+class TestPWA:
+    def test_manifest(self, client):
+        r = client.get('/manifest.json')
+        assert r.status_code == 200
+        d = r.get_json()
+        assert d['name'] == 'Last Mile - Chofer'
+        assert d['display'] == 'standalone'
+
+    def test_service_worker(self, client):
+        r = client.get('/sw.js')
+        assert r.status_code == 200
+        assert b'sync' in r.data
+        assert b'push' in r.data
+        assert b'indexedDB' in r.data.lower() or b'IndexedDB' in r.data
+
+
+# ===== NOTIFICATION MULTI-LANG =====
+
+class TestNotificationMultiLang:
+    def test_templates_exist(self):
+        from notification_service import TEMPLATES_I18N
+        assert 'pedido_creado' in TEMPLATES_I18N
+        assert 'pedido_entregado' in TEMPLATES_I18N
+        assert 'pago_recibido' in TEMPLATES_I18N
+
+    def test_templates_have_3_languages(self):
+        from notification_service import TEMPLATES_I18N
+        for key, langs in TEMPLATES_I18N.items():
+            assert 'es' in langs, f'{key} missing es'
+            assert 'en' in langs, f'{key} missing en'
+            assert 'pt' in langs, f'{key} missing pt'
+
+    def test_templates_have_required_fields(self):
+        from notification_service import TEMPLATES_I18N
+        for key, langs in TEMPLATES_I18N.items():
+            for lang, tmpl in langs.items():
+                assert 'email_subject' in tmpl, f'{key}/{lang} missing email_subject'
+                assert 'email_html' in tmpl, f'{key}/{lang} missing email_html'
+                assert 'sms' in tmpl, f'{key}/{lang} missing sms'
+
+    def test_country_lang_mapping(self):
+        from notification_service import COUNTRY_LANG
+        assert COUNTRY_LANG['MX'] == 'es'
+        assert COUNTRY_LANG['BR'] == 'pt'
+        assert COUNTRY_LANG['CO'] == 'es'
+
+    def test_notification_service_has_get_tenant_lang(self):
+        from notification_service import NotificationService
+        ns = NotificationService()
+        assert hasattr(ns, '_get_tenant_lang')
