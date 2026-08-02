@@ -11,13 +11,47 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY --link api/ .
 
-# DEBUG: Show exact content Docker sees at the problem area
-RUN echo "=== FILE SIZE ===" && wc -l server.py && echo "=== MD5 ===" && md5sum server.py && echo "=== LINES 1185-1200 ===" && cat -n server.py | sed -n '1185,1200p' && echo "=== SEARCH except without try ===" && grep -n "except" server.py | head -5 && echo "=== AREA AROUND 1192 ===" && python3 -c "
-with open('server.py','r') as f:
-    lines = f.readlines()
+# DEBUG: Show exact bytes Docker sees
+RUN python3 -c "
+with open('server.py', 'rb') as f:
+    data = f.read()
+lines = data.split(b'\n')
 print(f'Total lines: {len(lines)}')
-for i in range(1185, min(1200, len(lines))):
-    print(f'{i+1}: {repr(lines[i])}')" && echo "=== END DEBUG ==="
+print(f'Total bytes: {len(data)}')
+print(f'CR count: {data.count(b\"\\r\")}')
+print(f'LF count: {data.count(b\"\\n\")}')
+print()
+print(f'Line 1190 bytes: {lines[1189][:80].hex()}')
+print(f'Line 1190 text: {lines[1189][:80]}')
+print(f'Line 1191 bytes: {lines[1190][:80].hex()}')
+print(f'Line 1191 text: {lines[1190][:80]}')
+print(f'Line 1192 bytes: {lines[1191][:80].hex()}')
+print(f'Line 1192 text: {lines[1191][:80]}')
+print(f'Line 1193 bytes: {lines[1192][:80].hex()}')
+print(f'Line 1193 text: {lines[1192][:80]}')
+print(f'Line 1194 bytes: {lines[1193][:80].hex()}')
+print(f'Line 1194 text: {lines[1193][:80]}')
+# Find which line has 'except Exception:' that is not inside a try block
+print()
+print('=== Structural check: try/except balance per function ===')
+in_function = None
+try_count = 0
+except_count = 0
+for i, line in enumerate(lines):
+    stripped = line.strip()
+    if stripped.startswith('def '):
+        if in_function and try_count != except_count:
+            print(f'  MISMATCH in {in_function}: try={try_count} except={except_count}')
+        in_function = stripped.split('(')[0].replace('def ', '')
+        try_count = 0
+        except_count = 0
+    if stripped == 'try:':
+        try_count += 1
+    if stripped.startswith('except'):
+        except_count += 1
+if in_function and try_count != except_count:
+    print(f'  MISMATCH in {in_function}: try={try_count} except={except_count}')
+"
 
 # Validate syntax at build time
 RUN python3 -c "import py_compile; py_compile.compile('server.py', doraise=True); print('SYNTAX OK: server.py')"
