@@ -2,9 +2,10 @@ openapi: 3.0.3
 info:
   title: Last Mile Delivery Platform API
   description: |
-    API REST para la plataforma SaaS de last mile delivery en Mexico/LATAM.
-    Multi-tenant con autenticacion JWT, facturacion CFDI 4.0, pagos Stripe/MercadoPago.
-  version: 3.0.0
+    API REST para la plataforma SaaS de last mile delivery multi-pais.
+    Multi-tenant con autenticacion JWT, facturacion fiscal multi-pais (MX/BR/CO/AR/CL/PE/UY/EC),
+    pagos Stripe/MercadoPago, i18n (ES/EN/PT), notificaciones multi-idioma, PWA chofer.
+  version: 4.0.0
   contact:
     name: Last Mile Support
     email: soporte@lastmile.mx
@@ -809,6 +810,270 @@ paths:
       responses:
         '200':
           description: Evento procesado
+
+  # ===== ANALYTICS =====
+  /api/analytics/multi-country:
+    get:
+      tags: [Fiscal]
+      summary: Analytics multi-pais (fiscal, pagos, ordenes)
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Datos analiticos multi-pais
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      countries_supported:
+                        type: array
+                        items:
+                          type: string
+                      fiscal_configured:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            country:
+                              type: string
+                            tenants:
+                              type: integer
+                      payment_methods:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            country:
+                              type: string
+                            methods:
+                              type: integer
+                      total_tenants:
+                        type: integer
+                      orders_by_status:
+                        type: array
+
+  # ===== REPORTES =====
+  /api/reportes:
+    get:
+      tags: [Pedidos]
+      summary: Reportes disponibles
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de reportes
+
+  /api/reportes/generar:
+    post:
+      tags: [Pedidos]
+      summary: Generar reporte personalizado
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                  enum: [entregas, financiero, rendimiento, costos]
+                fecha_inicio:
+                  type: string
+                  format: date
+                fecha_fin:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Reporte generado
+
+  /api/reportes/entregas:
+    get:
+      tags: [Pedidos]
+      summary: Reporte de entregas
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Datos de entregas
+
+  /api/reportes/rendimiento-choferes:
+    get:
+      tags: [Choferes]
+      summary: Reporte de rendimiento de choferes
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Rendimiento por chofer
+
+  /api/reportes/costos-rutas:
+    get:
+      tags: [Pedidos]
+      summary: Reporte de costos por ruta
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Analisis de costos
+
+  # ===== NOTIFICACIONES =====
+  /api/notifications/send:
+    post:
+      tags: [Usuarios]
+      summary: Enviar notificacion (email/SMS)
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                template:
+                  type: string
+                to:
+                  type: string
+      responses:
+        '200':
+          description: Notificacion enviada
+
+  /api/notifications/custom:
+    post:
+      tags: [Usuarios]
+      summary: Enviar notificacion personalizada
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Notificacion enviada
+
+  /api/notifications/test:
+    post:
+      tags: [Usuarios]
+      summary: Enviar notificacion de prueba
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Prueba enviada
+
+  /api/notifications/config:
+    get:
+      tags: [Usuarios]
+      summary: Configuracion de notificaciones
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Configuracion actual
+
+  # ===== MANTENIMIENTO =====
+  /api/mantenimiento/unidades:
+    get:
+      tags: [Vehiculos]
+      summary: Unidades de mantenimiento
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de unidades
+
+  /api/mantenimiento/ots:
+    get:
+      tags: [Vehiculos]
+      summary: Ordenes de trabajo de mantenimiento
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de OTs
+
+  # ===== SAAS ADMIN =====
+  /api/saas/global-stats:
+    get:
+      tags: [SuperAdmin]
+      summary: Estadisticas globales SaaS
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Stats globales
+
+  /api/saas/cobros:
+    get:
+      tags: [SuperAdmin]
+      summary: Cobros y pagos globales
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de cobros
+
+  /api/saas/cobros/resumen:
+    get:
+      tags: [SuperAdmin]
+      summary: Resumen de cobros
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Resumen
+
+  /api/saas/suscripciones:
+    get:
+      tags: [SuperAdmin]
+      summary: Suscripciones globales
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de suscripciones
+
+  /api/saas/audit:
+    get:
+      tags: [SuperAdmin]
+      summary: Auditoria global
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Log de auditoria
+
+  /api/saas/config:
+    get:
+      tags: [SuperAdmin]
+      summary: Configuracion SaaS
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Configuracion
+
+  /api/saas/planes:
+    get:
+      tags: [SuperAdmin]
+      summary: Planes SaaS
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de planes
+
+  /api/saas/revenue-chart:
+    get:
+      tags: [SuperAdmin]
+      summary: Grafica de revenue
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Datos de revenue
+
+  /api/saas/all-pedidos:
+    get:
+      tags: [SuperAdmin]
+      summary: Todos los pedidos globales
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de pedidos
+
+  /api/saas/all-users:
+    get:
+      tags: [SuperAdmin]
+      summary: Todos los usuarios globales
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de usuarios
 
 components:
   securitySchemes:
