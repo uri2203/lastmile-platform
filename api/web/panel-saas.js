@@ -1,5 +1,5 @@
 const API_BASE=window.location.origin;
-const HEADERS={'X-Emp-Id':'1','Content-Type':'application/json'};
+const HEADERS={'X-Emp-Id': localStorage.getItem('lm-emp-id') || localStorage.getItem('empId') || '1','Content-Type':'application/json'};
 
 let DB_TENANTS=[],DB_USUARIOS=[],DB_PEDIDOS=[],DB_SUSCRIPCIONES=[],DB_COBROS=[];
 let chartRevenue=null,chartPlanes=null;
@@ -461,7 +461,7 @@ function loadPlanes(){
       });
       return;
     }
-    renderPlanes(res2.data||res.data);
+    renderPlanes(res.data);
   }).catch(()=>{
     apiGet('/api/billing/planes').then(res=>{
       if(res.data)renderPlanes(res.data);

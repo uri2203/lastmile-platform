@@ -702,10 +702,8 @@ def onboarding_register():
              'S' if legal_data.get('sla') else 'N',
              'S' if legal_data.get('cookies') else 'N']
         )
-    except Exception:
-        pass
-
-    # Create subscription - look up PLAN_ID from SAAS_PLANES
+    except Exception as e:
+        print(f'[ERROR] Legal acceptance: {e}')
     try:
         plan_row = query("SELECT PLAN_ID FROM SAAS_PLANES WHERE PLAN_NOMBRE=? AND PLAN_ACTIVO='S'", [plan])
         if plan_row:
@@ -717,14 +715,14 @@ def onboarding_register():
             "VALUES (?, ?, 'ACTIVA', CURRENT_TIMESTAMP)",
             [emp_id, pid]
         )
-    except Exception:
-        pass
+    except Exception as e:
+        print(f'[ERROR] Suscripcion: {e}')
 
     # Seed some sample data for the new tenant
     try:
         _seed_demo_data(emp_id)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f'[ERROR] Seed data: {e}')
 
     return jsonify({
         'success': True,
@@ -2562,7 +2560,7 @@ def get_suscripciones():
 
 
 @app.route('/api/saas/suscripciones', methods=['POST'])
-def create_suscripcion():
+def create_suscripcion_manual():
     emp_id = get_emp_id()
     s = request.json
     from datetime import date, timedelta

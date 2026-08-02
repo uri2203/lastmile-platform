@@ -426,6 +426,7 @@
     // ========================================
     // STATE
     // ========================================
+    const currentEmpId = localStorage.getItem('lm-emp-id') || localStorage.getItem('empId') || '1';
     let currentSection = 'dashboard';
     let allPedidos = [];
     let filteredPedidos = [];

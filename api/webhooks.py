@@ -9,7 +9,7 @@ wh_logger = logging.getLogger('lastmile.webhooks')
 
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN', '')
+MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
 
 
 # ========================================
@@ -49,7 +49,7 @@ def _handle_stripe_event(ev):
         currency = (obj.get('currency') or 'mxn').upper()
         if oid:
             try:
-                execute("UPDATE ORDENES SET ORD_ESTATUS='PAGADA', ORD_MONEDA=?, ORD_TOTAL=? WHERE ORD_ID=?", [currency, total, int(oid)])
+                execute("UPDATE PEDIDOS SET PED_ESTADO='PAGADA', PED_MONEDA=?, PED_COSTO_TOTAL=? WHERE PED_ID=?", [currency, total, int(oid)])
             except Exception:
                 pass
         wh_logger.info(f'Stripe checkout OK: order={oid} {total} {currency}')
@@ -67,13 +67,13 @@ def mercadopago_webhook():
     action = data.get('action', '')
     resource = data.get('resource', '')
     wh_logger.info(f'MP webhook: action={action} resource={resource}')
-    if action in ('payment.created', 'payment.updated') and resource and MERCADOPAGO_ACCESS_TOKEN:
+    if action in ('payment.created', 'payment.updated') and resource and MP_ACCESS_TOKEN:
         try:
             import requests
             pid = resource.split('/')[-1] if '/' in resource else resource
             r = requests.get(
                 f'https://api.mercadopago.com/v1/payments/{pid}',
-                headers={'Authorization': f'Bearer {MERCADOPAGO_ACCESS_TOKEN}'},
+                headers={'Authorization': f'Bearer {MP_ACCESS_TOKEN}'},
                 timeout=15,
             )
             if r.status_code == 200:
@@ -86,7 +86,7 @@ def mercadopago_webhook():
                 if status == 'approved' and oid:
                     from db import execute
                     try:
-                        execute("UPDATE ORDENES SET ORD_ESTATUS='PAGADA', ORD_MONEDA=?, ORD_TOTAL=? WHERE ORD_ID=?", [curr, amount, int(oid)])
+                        execute("UPDATE PEDIDOS SET PED_ESTADO='PAGADA', PED_MONEDA=?, PED_COSTO_TOTAL=? WHERE PED_ID=?", [curr, amount, int(oid)])
                     except Exception:
                         pass
         except Exception as e:
@@ -130,7 +130,7 @@ def create_payment():
 
         if method in ('TARJETA', 'OXXO', 'WEBPAY', 'PSE', 'BOLETO') and STRIPE_SECRET_KEY:
             return _create_stripe_session(amount, currency, description, metadata, country, method)
-        elif MERCADOPAGO_ACCESS_TOKEN:
+        elif MP_ACCESS_TOKEN:
             if method == 'PIX':
                 return _create_mp_pix(amount, currency, description, order_id)
             return _create_mp_preference(amount, currency, description, order_id, metadata)
@@ -176,7 +176,7 @@ def _create_mp_preference(amount, currency, description, order_id, metadata):
     }
     r = _req.post(
         'https://api.mercadopago.com/checkout/preferences',
-        headers={'Authorization': f'Bearer {MERCADOPAGO_ACCESS_TOKEN}', 'Content-Type': 'application/json'},
+        headers={'Authorization': f'Bearer {MP_ACCESS_TOKEN}', 'Content-Type': 'application/json'},
         json=body, timeout=30,
     )
     if r.status_code in (200, 201):
@@ -196,7 +196,7 @@ def _create_mp_pix(amount, currency, description, order_id):
     }
     r = _req.post(
         'https://api.mercadopago.com/v1/payments',
-        headers={'Authorization': f'Bearer {MERCADOPAGO_ACCESS_TOKEN}', 'Content-Type': 'application/json'},
+        headers={'Authorization': f'Bearer {MP_ACCESS_TOKEN}', 'Content-Type': 'application/json'},
         json=body, timeout=30,
     )
     if r.status_code in (200, 201):
@@ -216,9 +216,9 @@ def get_payment_status(payment_id, provider):
             stripe.api_key = STRIPE_SECRET_KEY
             pi = stripe.PaymentIntent.retrieve(payment_id)
             return jsonify({'success': True, 'provider': 'stripe', 'status': pi.status, 'amount': pi.amount / 100, 'currency': pi.currency})
-        elif provider == 'mercadopago' and MERCADOPAGO_ACCESS_TOKEN:
+        elif provider == 'mercadopago' and MP_ACCESS_TOKEN:
             import requests as _req
-            r = _req.get(f'https://api.mercadopago.com/v1/payments/{payment_id}', headers={'Authorization': f'Bearer {MERCADOPAGO_ACCESS_TOKEN}'}, timeout=15)
+            r = _req.get(f'https://api.mercadopago.com/v1/payments/{payment_id}', headers={'Authorization': f'Bearer {MP_ACCESS_TOKEN}'}, timeout=15)
             if r.status_code == 200:
                 pay = r.json()
                 return jsonify({'success': True, 'provider': 'mercadopago', 'status': pay.get('status'), 'status_detail': pay.get('status_detail'), 'amount': pay.get('transaction_amount'), 'currency': pay.get('currency_id')})
@@ -244,12 +244,12 @@ def refund_payment():
             ref = stripe.Refund.create(**params)
             wh_logger.info(f'Stripe refund: {ref.id} for {payment_id}')
             return jsonify({'success': True, 'refund_id': ref.id, 'status': ref.status})
-        elif provider == 'mercadopago' and MERCADOPAGO_ACCESS_TOKEN:
+        elif provider == 'mercadopago' and MP_ACCESS_TOKEN:
             import requests as _req
             body = {}
             if amount:
                 body['amount'] = float(amount)
-            r = _req.post(f'https://api.mercadopago.com/v1/payments/{payment_id}/refunds', headers={'Authorization': f'Bearer {MERCADOPAGO_ACCESS_TOKEN}', 'Content-Type': 'application/json'}, json=body, timeout=30)
+            r = _req.post(f'https://api.mercadopago.com/v1/payments/{payment_id}/refunds', headers={'Authorization': f'Bearer {MP_ACCESS_TOKEN}', 'Content-Type': 'application/json'}, json=body, timeout=30)
             if r.status_code in (200, 201):
                 ref = r.json()
                 wh_logger.info(f'MP refund: {ref.get("id")} for {payment_id}')
@@ -278,7 +278,7 @@ def payment_countries():
 def payment_status_summary():
     summary = {
         'stripe': {'configured': bool(STRIPE_SECRET_KEY), 'countries': list(COUNTRY_PAYMENT_METHODS.keys())},
-        'mercadopago': {'configured': bool(MERCADOPAGO_ACCESS_TOKEN), 'countries': list(COUNTRY_PAYMENT_METHODS.keys())},
+        'mercadopago': {'configured': bool(MP_ACCESS_TOKEN), 'countries': list(COUNTRY_PAYMENT_METHODS.keys())},
     }
     return jsonify({'success': True, 'data': summary})
 

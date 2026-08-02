@@ -48,10 +48,10 @@ class AIChat {
               <i class="fas fa-robot"></i>
             </div>
             <div>
-              <div class="ai-chat-title">Asistente Last Mile</div>
+              <div class="ai-chat-title">${typeof window.i18n !== 'undefined' ? window.i18n.t('chat.titulo') : 'Asistente Last Mile'}</div>
               <div class="ai-chat-status">
                 <span class="ai-status-dot online"></span>
-                En linea
+                ${typeof window.i18n !== 'undefined' ? window.i18n.t('chat.en_linea') : 'En linea'}
               </div>
             </div>
           </div>
@@ -71,8 +71,8 @@ class AIChat {
             <div class="ai-chat-welcome-icon">
               <i class="fas fa-robot"></i>
             </div>
-            <h4>Hola! Soy tu asistente de Last Mile</h4>
-            <p>Puedo ayudarte con tracking, consultas de negocio, soporte y mas.</p>
+            <h4>${typeof window.i18n !== 'undefined' ? window.i18n.t('chat.bienvenida') : 'Hola! Soy tu asistente de Last Mile'}</h4>
+            <p>${typeof window.i18n !== 'undefined' ? window.i18n.t('chat.descripcion') : 'Puedo ayudarte con tracking, consultas de negocio, soporte y mas.'}</p>
             <div class="ai-chat-suggestions" id="aiChatSuggestions"></div>
           </div>
         </div>
@@ -80,13 +80,13 @@ class AIChat {
         <!-- Input -->
         <div class="ai-chat-input-area">
           <div class="ai-chat-input-wrapper">
-            <input type="text" id="aiChatInput" placeholder="Escribe tu pregunta..." autocomplete="off">
+            <input type="text" id="aiChatInput" placeholder="${typeof window.i18n !== 'undefined' ? window.i18n.t('chat.placeholder') : 'Escribe tu pregunta...'}" autocomplete="off">
             <button class="ai-chat-send" id="aiChatSend">
               <i class="fas fa-paper-plane"></i>
             </button>
           </div>
           <div class="ai-chat-input-hint">
-            Enter para enviar | Powered by Last Mile AI
+            ${typeof window.i18n !== 'undefined' ? window.i18n.t('chat.input_hint') : 'Enter para enviar | Powered by Last Mile AI'}
           </div>
         </div>
       </div>
@@ -161,14 +161,14 @@ class AIChat {
       // Fallback suggestions
       const defaults = this.panel === 'support' 
         ? [
-            { icon: '📍', text: 'Rastrear mi pedido', query: 'donde esta mi pedido' },
-            { icon: '❌', text: 'Cómo cancelo?', query: 'como cancelar pedido' },
-            { icon: '💳', text: 'Métodos de pago', query: 'como pagar' },
+            { icon: '📍', text: typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sug_rastrear') : 'Rastrear mi pedido', query: 'donde esta mi pedido' },
+            { icon: '❌', text: typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sug_cancelar') : 'Cómo cancelo?', query: 'como cancelar pedido' },
+            { icon: '💳', text: typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sug_pago') : 'Métodos de pago', query: 'como pagar' },
           ]
         : [
-            { icon: '📦', text: 'Envíos de hoy', query: 'cuantos envios hoy' },
-            { icon: '💰', text: 'Revenue del mes', query: 'revenue este mes' },
-            { icon: '🚚', text: 'Mejor chofer', query: 'mejor chofer' },
+            { icon: '📦', text: typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sug_envios') : 'Envíos de hoy', query: 'cuantos envios hoy' },
+            { icon: '💰', text: typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sug_revenue') : 'Revenue del mes', query: 'revenue este mes' },
+            { icon: '🚚', text: typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sug_mejor_chofer') : 'Mejor chofer', query: 'mejor chofer' },
           ];
       this.renderSuggestions(defaults);
     }
@@ -222,11 +222,11 @@ class AIChat {
           quickReplies: data.data.quick_replies
         });
       } else {
-        this.addMessage('Lo siento, hubo un error. Intenta de nuevo.', 'assistant');
+        this.addMessage(typeof window.i18n !== 'undefined' ? window.i18n.t('chat.error_servidor') : 'Lo siento, hubo un error. Intenta de nuevo.', 'assistant');
       }
     } catch (err) {
       this.hideTyping();
-      this.addMessage('No pude conectar con el servidor. Intenta de nuevo.', 'assistant');
+      this.addMessage(typeof window.i18n !== 'undefined' ? window.i18n.t('chat.sin_conexion') : 'No pude conectar con el servidor. Intenta de nuevo.', 'assistant');
     }
     
     this.isLoading = false;

@@ -1,8 +1,8 @@
 {
-  "name": "Last Mile - Chofer",
+  "name": "Last Mile Delivery",
   "short_name": "LastMile",
-  "description": "App de entregas para choferes / Driver delivery app",
-  "start_url": "panel-chofer.html",
+  "description": "Plataforma de gestión de entregas last-mile",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#6366f1",

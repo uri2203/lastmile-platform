@@ -1,5 +1,5 @@
 const API_BASE=window.location.origin;
-const HEADERS={'X-Emp-Id':'1','Content-Type':'application/json'};
+const HEADERS={'X-Emp-Id': localStorage.getItem('lm-emp-id') || localStorage.getItem('empId') || '1','Content-Type':'application/json'};
 
 /* ==========================================
    GLOBAL STATE
@@ -1185,7 +1185,7 @@ function refreshData(){
    ========================================== */
 async function renderReferidos(){
   try{
-    const res=await fetch(API+'/api/referrals/stats',{headers:getHeaders()});
+    const res=await fetch(API_BASE+'/api/referrals/stats',{headers:HEADERS});
     const data=await res.json();
     if(!data.success) return;
     document.getElementById('refMyCode').value=data.referral_code||'';
