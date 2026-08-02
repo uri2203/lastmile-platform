@@ -1,12 +1,13 @@
 /**
  * i18n.js - Internationalization client library for Last Mile Delivery
- * Supports: es (Spanish), en (English), pt (Portuguese)
+ * Supports: es, en, pt, fr, de, zh, ja, ko, ar, hi, it, nl (12 languages)
  */
 class I18n {
     constructor(defaultLang = 'es') {
         this.lang = localStorage.getItem('lastmile_lang') || defaultLang;
         this.translations = {};
         this.listeners = [];
+        this.rtlLanguages = ['ar'];
     }
 
     async load(lang) {
@@ -22,9 +23,14 @@ class I18n {
     }
 
     async init() {
-        await Promise.all([this.load('es'), this.load('en'), this.load('pt')]);
+        const langs = ['es', 'en', 'pt', 'fr', 'de', 'zh', 'ja', 'ko', 'ar', 'hi', 'it', 'nl'];
+        await Promise.all(langs.map(l => this.load(l)));
         this.applyTranslations();
         return this;
+    }
+
+    isRTL() {
+        return this.rtlLanguages.includes(this.lang);
     }
 
     setLanguage(lang) {
@@ -64,17 +70,18 @@ class I18n {
             el.title = this.t(el.getAttribute('data-i18n-title'));
         });
         document.documentElement.lang = this.lang;
+        document.documentElement.dir = this.isRTL() ? 'rtl' : 'ltr';
     }
 
     formatDate(date, options = {}) {
         const defaults = { year: 'numeric', month: 'short', day: 'numeric' };
-        const locale = { es: 'es-MX', en: 'en-US', pt: 'pt-BR' }[this.lang] || 'es-MX';
+        const locale = this._getLocale();
         return new Date(date).toLocaleDateString(locale, { ...defaults, ...options });
     }
 
     formatTime(date, options = {}) {
         const defaults = { hour: '2-digit', minute: '2-digit' };
-        const locale = { es: 'es-MX', en: 'en-US', pt: 'pt-BR' }[this.lang] || 'es-MX';
+        const locale = this._getLocale();
         return new Date(date).toLocaleTimeString(locale, { ...defaults, ...options });
     }
 
@@ -83,26 +90,57 @@ class I18n {
     }
 
     formatCurrency(amount, currency) {
-        const locale = { es: 'es-MX', en: 'en-US', pt: 'pt-BR' }[this.lang] || 'es-MX';
-        const curr = currency || { es: 'MXN', en: 'USD', pt: 'BRL' }[this.lang] || 'MXN';
+        const locale = this._getLocale();
+        const curr = currency || this._getCurrency();
         return new Intl.NumberFormat(locale, { style: 'currency', currency: curr }).format(amount);
     }
 
     formatNumber(num) {
-        const locale = { es: 'es-MX', en: 'en-US', pt: 'pt-BR' }[this.lang] || 'es-MX';
+        const locale = this._getLocale();
         return new Intl.NumberFormat(locale).format(num);
     }
 
+    _getLocale() {
+        const map = {
+            es: 'es-MX', en: 'en-US', pt: 'pt-BR', fr: 'fr-FR',
+            de: 'de-DE', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR',
+            ar: 'ar-SA', hi: 'hi-IN', it: 'it-IT', nl: 'nl-NL'
+        };
+        return map[this.lang] || 'es-MX';
+    }
+
+    _getCurrency() {
+        const map = {
+            es: 'MXN', en: 'USD', pt: 'BRL', fr: 'EUR',
+            de: 'EUR', zh: 'CNY', ja: 'JPY', ko: 'KRW',
+            ar: 'SAR', hi: 'INR', it: 'EUR', nl: 'EUR'
+        };
+        return map[this.lang] || 'MXN';
+    }
+
     getLanguageName(lang) {
-        const names = { es: 'Espanol', en: 'English', pt: 'Portugues' };
+        const names = {
+            es: 'Español', en: 'English', pt: 'Português', fr: 'Français',
+            de: 'Deutsch', zh: '中文', ja: '日本語', ko: '한국어',
+            ar: 'العربية', hi: 'हिन्दी', it: 'Italiano', nl: 'Nederlands'
+        };
         return names[lang] || lang;
     }
 
     getAvailableLanguages() {
         return [
-            { code: 'es', name: 'Espanol', flag: '🇲🇽' },
+            { code: 'es', name: 'Español', flag: '🇲🇽' },
             { code: 'en', name: 'English', flag: '🇺🇸' },
-            { code: 'pt', name: 'Portugues', flag: '🇧🇷' },
+            { code: 'pt', name: 'Português', flag: '🇧🇷' },
+            { code: 'fr', name: 'Français', flag: '🇫🇷' },
+            { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+            { code: 'zh', name: '中文', flag: '🇨🇳' },
+            { code: 'ja', name: '日本語', flag: '🇯🇵' },
+            { code: 'ko', name: '한국어', flag: '🇰🇷' },
+            { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+            { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+            { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+            { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
         ];
     }
 

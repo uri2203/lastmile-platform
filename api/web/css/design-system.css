@@ -688,3 +688,25 @@ textarea { resize: vertical; min-height: 80px; }
 
 /* ---------- MAP ---------- */
 .map-container { border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-primary); }
+
+/* ---------- RTL SUPPORT (Arabic, Hebrew) ---------- */
+[dir="rtl"] { direction: rtl; text-align: right; }
+[dir="rtl"] .sidebar { right: 0; left: auto; }
+[dir="rtl"] .sidebar-toggle { right: auto; left: 20px; }
+[dir="rtl"] .main-content { margin-right: 260px; margin-left: 0; }
+[dir="rtl"] .nav-item i, [dir="rtl"] .sidebar-nav i { margin-right: 0; margin-left: 10px; }
+[dir="rtl"] .faq-item { padding-left: 20px; padding-right: 62px; }
+[dir="rtl"] .chat-msg.user { align-self: flex-start; }
+[dir="rtl"] .chat-msg.bot { align-self: flex-end; }
+[dir="rtl"] .detail-label { letter-spacing: 0; }
+[dir="rtl"] .step-header { text-align: center; }
+[dir="rtl"] input[type="text"], [dir="rtl"] input[type="email"], [dir="rtl"] input[type="password"],
+[dir="rtl"] input[type="tel"], [dir="rtl"] input[type="number"], [dir="rtl"] textarea, [dir="rtl"] select {
+  text-align: right;
+}
+[dir="rtl"] .login-input { text-align: center; letter-spacing: 1.5px; }
+[dir="rtl"] .pub-logo { direction: ltr; }
+[dir="rtl"] .help-logo { direction: ltr; }
+@media (max-width: 1024px) {
+  [dir="rtl"] .main-content { margin-right: 0; margin-left: 0; }
+}
