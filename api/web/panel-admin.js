@@ -826,8 +826,22 @@ function initCharts(){
   const gridC=t==='dark'?'rgba(26,26,34,0.8)':'rgba(200,200,210,0.3)';
   const tickC=t==='dark'?'#4a4a5a':'#6b7280';
 
-  pedidosChart=new Chart(document.getElementById('chartPedidos'),{type:'line',data:{labels:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'],datasets:[{label:'Pedidos',data:[45,52,38,65,58,72,48],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}}}}});
-  revenueChart=new Chart(document.getElementById('chartRevenue'),{type:'bar',data:{labels:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'],datasets:[{label:'Revenue',data:[12400,15600,9800,18200,14300,21500,11200],backgroundColor:'rgba(245,158,11,0.15)',borderColor:'rgba(245,158,11,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});
+  const labels=['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
+  const demoPedidos=[45,52,38,65,58,72,48];
+  const demoRevenue=[12400,15600,9800,18200,14300,21500,11200];
+
+  const renderCharts=(pedData,revData)=>{
+    pedidosChart=new Chart(document.getElementById('chartPedidos'),{type:'line',data:{labels:labels,datasets:[{label:'Pedidos',data:pedData,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.05)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#6366f1',borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10}}}}}});
+    revenueChart=new Chart(document.getElementById('chartRevenue'),{type:'bar',data:{labels:labels,datasets:[{label:'Revenue',data:revData,backgroundColor:'rgba(245,158,11,0.15)',borderColor:'rgba(245,158,11,0.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickC,font:{size:10}}},y:{grid:{color:gridC},ticks:{color:tickC,font:{size:10},callback:v=>'$'+(v/1000)+'k'}}}}});
+  };
+
+  apiGet('/api/dashboard/charts').then(res=>{
+    if(res&&res.success&&res.data){
+      renderCharts(res.data.pedidos||demoPedidos,res.data.revenue||demoRevenue);
+    }else{
+      renderCharts(demoPedidos,demoRevenue);
+    }
+  }).catch(()=>renderCharts(demoPedidos,demoRevenue));
 }
 
 function initCancelChart(){

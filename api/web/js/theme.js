@@ -51,9 +51,13 @@ const ThemeManager = {
    ============================================ */
 
 const Utils = {
+  _locale() {
+    try { return (window.i18n && window.i18n._getLocale && window.i18n._getLocale()) || 'es-MX'; } catch(e) { return 'es-MX'; }
+  },
+
   // Format currency
   $(amount) {
-    return '$' + Number(amount || 0).toLocaleString('es-MX', {
+    return '$' + Number(amount || 0).toLocaleString(this._locale(), {
       minimumFractionDigits: 2, maximumFractionDigits: 2
     });
   },
@@ -61,7 +65,7 @@ const Utils = {
   // Format date
   date(d) {
     if (!d) return '-';
-    return new Date(d).toLocaleDateString('es-MX', {
+    return new Date(d).toLocaleDateString(this._locale(), {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   },
@@ -69,7 +73,7 @@ const Utils = {
   // Format datetime
   datetime(d) {
     if (!d) return '-';
-    return new Date(d).toLocaleString('es-MX', {
+    return new Date(d).toLocaleString(this._locale(), {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
@@ -77,7 +81,7 @@ const Utils = {
   
   // Format number
   num(n) {
-    return Number(n || 0).toLocaleString('es-MX');
+    return Number(n || 0).toLocaleString(this._locale());
   },
   
   // Relative time

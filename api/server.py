@@ -79,8 +79,8 @@ socketio = SocketIO(app, cors_allowed_origins=ALLOWED_ORIGINS, async_mode='event
 # ========================================
 # VAPID: Push notifications keys (fallback)
 # ========================================
-VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', 'BJ_I-JQJFKAeuA4L3qgcJG2G76z_le8vbZdaOTl-890_eaBQS3Q57TrQXR2GPBPSlRD7rh-i4Hm6w4224IBW5Ek')
-VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', 'YFDaER4aGEM2NKsHYMhA-koXvSKDE_SFX36SrRlaUB8')
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@lastmile.app')
 
 @app.route('/api/vapid-public-key', methods=['GET'])
@@ -1769,16 +1769,24 @@ def get_choferes():
 @app.route('/api/choferes/rendimiento', methods=['GET'])
 def get_rendimiento_choferes():
     emp_id = get_emp_id()
-    return jsonify({'success': True, 'data': query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC', [emp_id])})
+    limit = min(int(request.args.get('limit', 50)), 200)
+    offset = max(int(request.args.get('offset', 0)), 0)
+    total = query('SELECT COUNT(*) as cnt FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ?', [emp_id])
+    total_count = total[0].get('cnt', 0) if total else 0
+    data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC LIMIT ? OFFSET ?', [emp_id, limit, offset])
+    resp = jsonify({'success': True, 'data': data, 'total': total_count})
+    resp.headers['X-Total-Count'] = str(total_count)
+    resp.headers['Link'] = f'</api/choferes/rendimiento?limit={limit}&offset={offset}>; rel="self"'
+    return resp
 
 
 @app.route('/api/choferes/<int:cho_id>', methods=['DELETE'])
 def delete_chofer(cho_id):
     emp_id = get_emp_id()
     try:
-        execute("DELETE FROM CHOFERES WHERE CHO_ID = ? AND EMP_ID = ?", [cho_id, emp_id])
-        log_audit('chofer_deleted', f'cho_id={cho_id}')
-        return jsonify({'success': True, 'message': 'Chofer eliminado'})
+        execute("UPDATE CHOFERES SET CHO_ESTATUS='INACTIVO' WHERE CHO_ID = ? AND EMP_ID = ?", [cho_id, emp_id])
+        log_audit('chofer_soft_deleted', f'cho_id={cho_id}')
+        return jsonify({'success': True, 'message': 'Chofer desactivado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -1912,9 +1920,9 @@ def get_top_clientes():
 def delete_cliente(cli_id):
     emp_id = get_emp_id()
     try:
-        execute("DELETE FROM CLIENTES_LM WHERE CLI_ID = ? AND EMP_ID = ?", [cli_id, emp_id])
-        log_audit('cliente_deleted', f'cli_id={cli_id}')
-        return jsonify({'success': True, 'message': 'Cliente eliminado'})
+        execute("UPDATE CLIENTES_LM SET CLI_ESTATUS='INACTIVO' WHERE CLI_ID = ? AND EMP_ID = ?", [cli_id, emp_id])
+        log_audit('cliente_soft_deleted', f'cli_id={cli_id}')
+        return jsonify({'success': True, 'message': 'Cliente desactivado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -1976,7 +1984,19 @@ def get_rutas():
 @app.route('/api/entregas', methods=['GET'])
 def get_entregas():
     emp_id = get_emp_id()
-    return jsonify({'success': True, 'data': query('SELECT * FROM ENTREGAS WHERE EMP_ID = ? ORDER BY ENT_FECHA_LLEGADA DESC LIMIT 50', [emp_id])})
+    limit = min(int(request.args.get('limit', 50)), 200)
+    offset = max(int(request.args.get('offset', 0)), 0)
+    total = query('SELECT COUNT(*) as cnt FROM ENTREGAS WHERE EMP_ID = ?', [emp_id])
+    total_count = total[0].get('cnt', 0) if total else 0
+    data = query('SELECT * FROM ENTREGAS WHERE EMP_ID = ? ORDER BY ENT_FECHA_LLEGADA DESC LIMIT ? OFFSET ?', [emp_id, limit, offset])
+    resp = jsonify({'success': True, 'data': data, 'total': total_count})
+    resp.headers['X-Total-Count'] = str(total_count)
+    resp.headers['Link'] = f'</api/entregas?limit={limit}&offset={offset}>; rel="self"'
+    if offset + limit < total_count:
+        resp.headers['Link'] += f', </api/entregas?limit={limit}&offset={offset + limit}>; rel="next"'
+    if offset > 0:
+        resp.headers['Link'] += f', </api/entregas?limit={limit}&offset={max(offset - limit, 0)}>; rel="prev"'
+    return resp
 
 
 @app.route('/api/entregas/chofer/<int:cho_id>', methods=['GET'])
@@ -2405,7 +2425,52 @@ def get_whitelabel(emp_id):
 
 @app.route('/api/whitelabel/config', methods=['POST'])
 def update_whitelabel():
-    return jsonify({'success': True, 'message': 'Whitelabel actualizado'})
+    try:
+        emp_id = get_emp_id()
+        if not emp_id:
+            return jsonify({'success': False, 'error': 'No autenticado'}), 401
+        data = request.json or {}
+        execute('''CREATE TABLE IF NOT EXISTS TENANT_CONFIG (
+            TC_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            EMP_ID INTEGER NOT NULL UNIQUE,
+            TC_NOMBRE TEXT DEFAULT '',
+            TC_LOGO_URL TEXT DEFAULT '',
+            TC_COLOR_PRIMARY TEXT DEFAULT '#4F46E5',
+            TC_COLOR_SECONDARY TEXT DEFAULT '#7C3AED',
+            TC_COLOR_BG TEXT DEFAULT '#F9FAFB',
+            TC_DOMINIO TEXT DEFAULT '',
+            TC_FOOTER_TEXT TEXT DEFAULT '',
+            TC_CUSTOM_CSS TEXT DEFAULT '',
+            TC_CUSTOM_JS TEXT DEFAULT '',
+            TC_FEATURES TEXT DEFAULT '{}',
+            TC_FECHA_REGISTRO TEXT DEFAULT (datetime('now')),
+            TC_FECHA_ACTUALIZACION TEXT DEFAULT (datetime('now'))
+        )''')
+        existing = query('SELECT TC_ID FROM TENANT_CONFIG WHERE EMP_ID = ?', [emp_id])
+        if existing:
+            execute('''UPDATE TENANT_CONFIG SET
+                TC_NOMBRE=?, TC_LOGO_URL=?, TC_COLOR_PRIMARY=?, TC_COLOR_SECONDARY=?,
+                TC_COLOR_BG=?, TC_DOMINIO=?, TC_FOOTER_TEXT=?, TC_CUSTOM_CSS=?,
+                TC_CUSTOM_JS=?, TC_FEATURES=?, TC_FECHA_ACTUALIZACION=datetime('now')
+                WHERE EMP_ID=?''',
+                [data.get('nombre', ''), data.get('logo_url', ''),
+                 data.get('color_primary', '#4F46E5'), data.get('color_secondary', '#7C3AED'),
+                 data.get('color_bg', '#F9FAFB'), data.get('dominio', ''),
+                 data.get('footer_text', ''), data.get('custom_css', ''),
+                 data.get('custom_js', ''), data.get('features', '{}'), emp_id])
+        else:
+            execute('''INSERT INTO TENANT_CONFIG
+                (EMP_ID, TC_NOMBRE, TC_LOGO_URL, TC_COLOR_PRIMARY, TC_COLOR_SECONDARY,
+                 TC_COLOR_BG, TC_DOMINIO, TC_FOOTER_TEXT, TC_CUSTOM_CSS, TC_CUSTOM_JS, TC_FEATURES)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                [emp_id, data.get('nombre', ''), data.get('logo_url', ''),
+                 data.get('color_primary', '#4F46E5'), data.get('color_secondary', '#7C3AED'),
+                 data.get('color_bg', '#F9FAFB'), data.get('dominio', ''),
+                 data.get('footer_text', ''), data.get('custom_css', ''),
+                 data.get('custom_js', ''), data.get('features', '{}')])
+        return jsonify({'success': True, 'message': 'Whitelabel actualizado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 # ========================================
@@ -3009,8 +3074,9 @@ def create_cliente_final():
 def delete_pedido(ped_id):
     try:
         emp_id = get_emp_id()
-        execute("DELETE FROM PEDIDOS WHERE PED_ID = ? AND EMP_ID = ?", [ped_id, emp_id])
-        log_audit('pedido_deleted', f'ped_id={ped_id}')
+        execute("UPDATE PEDIDOS SET PED_ESTADO='ELIMINADO' WHERE PED_ID = ? AND EMP_ID = ?", [ped_id, emp_id])
+        execute("INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO) VALUES (?, 'ELIMINADO', 'SYSTEM')", [ped_id])
+        log_audit('pedido_soft_deleted', f'ped_id={ped_id}')
         return jsonify({'success': True, 'message': 'Pedido eliminado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

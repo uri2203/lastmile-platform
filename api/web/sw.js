@@ -52,7 +52,9 @@ self.addEventListener('fetch', event => {
       });
     }).catch(() => {
       if (event.request.destination === 'document') {
-        return caches.match('panel-chofer.html');
+        const url = new URL(event.request.url);
+        const fallbackPath = url.pathname.split('/').pop() || 'panel-chofer.html';
+        return caches.match(fallbackPath).catch(() => caches.match('panel-chofer.html'));
       }
     })
   );
