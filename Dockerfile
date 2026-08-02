@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM python:3.11.8-slim
 
 WORKDIR /app
@@ -6,8 +8,8 @@ WORKDIR /app
 COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
-COPY api/ .
+# Copy application --link creates independent layer (ignores parent cache)
+COPY --link api/ .
 
 # Validate syntax at build time
 RUN python3 -c "import py_compile; py_compile.compile('server.py', doraise=True); print('SYNTAX OK: server.py')"
