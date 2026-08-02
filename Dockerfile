@@ -1,5 +1,7 @@
 FROM python:3.11.8-slim
 
+ARG CACHEBUST=1
+
 WORKDIR /app
 
 COPY api/requirements.txt .
