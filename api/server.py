@@ -397,7 +397,7 @@ PUBLIC_API_PATHS = {
 # Prefijos publicos: tracking del cliente final por token opaco en la URL.
 PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes', '/api/webhooks/')
 # Endpoint(s) servicio-a-servicio: autenticados por CRON_API_KEY, no por JWT.
-CRON_API_PATHS = {'/api/billing/auto-charge', '/api/cron/backup'}
+CRON_API_PATHS = {'/api/billing/auto-charge', '/api/cron/backup', '/api/cron/backup/download'}
 # Prefijos de gestion GLOBAL de la plataforma: solo 'superadmin'.
 # El admin de un tenant cliente NO puede gestionar otros tenants ni la plataforma.
 SUPERADMIN_API_PREFIXES = ('/api/admin/', '/api/saas/')
