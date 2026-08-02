@@ -58,7 +58,7 @@
     .btn-sm { padding: 5px 10px; font-size: 12px; }
     .input, .select, .textarea { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; font-family: inherit; }
     .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--accent-primary); }
-    select option{background:var(--bg-input);color:var(--text-primary)}
+    select option{background:#1a1a24;color:#e8e8ed}
     .textarea { resize: vertical; min-height: 80px; }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -178,7 +178,7 @@
         <span class="page-title" id="pageTitle">Dashboard</span>
       </div>
       <div class="topbar-right">
-        <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+        <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:#1a1a24;color:#e8e8ed;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;">
           <option value="es">🇲🇽 ES</option>
           <option value="en">🇺🇸 EN</option>
           <option value="pt">🇧🇷 PT</option>

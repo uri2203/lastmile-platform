@@ -388,12 +388,20 @@ select {
   padding-right: 30px;
 }
 select option {
-  background-color: var(--bg-input);
-  color: var(--text-primary);
+  background-color: #1a1a24;
+  color: #e8e8ed;
   background-image: none;
   padding: 6px 12px;
 }
-select option[value=""] { color: var(--text-muted); }
+select option:hover, select option:focus, select option:active {
+  background-color: #2a2a3a;
+  color: #ffffff;
+}
+@media (prefers-color-scheme: light) {
+  select option { background-color: #ffffff; color: #111827; }
+  select option:hover, select option:focus, select option:active { background-color: #f3f4f6; color: #111827; }
+}
+select option[value=""] { color: #9ca3af; }
 textarea { resize: vertical; min-height: 80px; }
 
 /* ---------- BADGES ---------- */
