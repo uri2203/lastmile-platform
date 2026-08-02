@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
+  <script src="/js/i18n.js"></script>
   <script src="js/theme.js"></script>
   <style>
     body {
@@ -311,7 +312,14 @@
 </head>
 <body>
   <div class="onboard-wrapper">
-    <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+    <div style="display:flex;align-items:center;gap:8px;position:absolute;top:-48px;right:0">
+      <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+      </select>
+      <button class="theme-toggle" data-i18n-title="cliente.cambiar_tema" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+    </div>
 
     <div class="onboard-card">
       <!-- Progress Indicator -->
@@ -329,28 +337,28 @@
       <div class="step active" id="step1">
         <div class="step-header">
           <div class="step-icon kpi-icon accent"><i class="fas fa-building"></i></div>
-          <h2>Datos de tu Empresa</h2>
-          <p>Cuéntanos sobre tu negocio</p>
+          <h2 data-i18n="onboarding.step1_title">Datos de tu Empresa</h2>
+          <p data-i18n="onboarding.step1_desc">Cuéntanos sobre tu negocio</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Nombre comercial *</label>
-          <input type="text" id="emp-nombre" placeholder="Ej: Mi Delivery MX">
+          <label class="form-label" data-i18n="onboarding.company_name">Nombre comercial *</label>
+          <input type="text" id="emp-nombre" data-i18n-placeholder="onboarding.company_name_ph" placeholder="Ej: Mi Delivery MX">
         </div>
 
         <div class="form-group">
-          <label class="form-label">RFC *</label>
-          <input type="text" id="emp-rfc" placeholder="Ej: DEL123456789" maxlength="13">
+          <label class="form-label" data-i18n="onboarding.rfc">RFC *</label>
+          <input type="text" id="emp-rfc" data-i18n-placeholder="onboarding.rfc_ph" placeholder="Ej: DEL123456789" maxlength="13">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Razón Social *</label>
-          <input type="text" id="emp-razon" placeholder="Ej: MI DELIVERY SA DE CV">
+          <label class="form-label" data-i18n="onboarding.razon_social">Razón Social *</label>
+          <input type="text" id="emp-razon" data-i18n-placeholder="onboarding.razon_social_ph" placeholder="Ej: MI DELIVERY SA DE CV">
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Régimen Fiscal</label>
+            <label class="form-label" data-i18n="onboarding.regimen_fiscal">Régimen Fiscal</label>
             <select id="emp-regimen">
               <option value="601">601 - General de Ley</option>
               <option value="612">612 - Personas Morales</option>
@@ -358,19 +366,19 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Código Postal *</label>
+            <label class="form-label" data-i18n="onboarding.codigo_postal">Código Postal *</label>
             <input type="text" id="emp-cp" placeholder="00000" maxlength="5">
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email de facturación</label>
-          <input type="email" id="emp-email" placeholder="facturacion@midelivery.com">
+          <label class="form-label" data-i18n="onboarding.email_facturacion">Email de facturación</label>
+          <input type="email" id="emp-email" data-i18n-placeholder="onboarding.email_ph" placeholder="facturacion@midelivery.com">
         </div>
 
         <div class="step-nav">
           <div></div>
-          <button class="btn btn-primary" onclick="goStep(2)">Siguiente <i class="fas fa-arrow-right"></i></button>
+          <button class="btn btn-primary" onclick="goStep(2)"><span data-i18n="onboarding.btn_siguiente">Siguiente</span> <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
 
@@ -378,12 +386,12 @@
       <div class="step" id="step2">
         <div class="step-header">
           <div class="step-icon kpi-icon info"><i class="fas fa-gear"></i></div>
-          <h2>Configuración</h2>
-          <p>Personaliza tu plataforma</p>
+          <h2 data-i18n="onboarding.step2_title">Configuración</h2>
+          <p data-i18n="onboarding.step2_desc">Personaliza tu plataforma</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label">¿Cuántos choferes tienes?</label>
+          <label class="form-label" data-i18n="onboarding.num_choferes">¿Cuántos choferes tienes?</label>
           <select id="cfg-choferes">
             <option value="5">1-5 choferes</option>
             <option value="15">6-15 choferes</option>
@@ -394,7 +402,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">¿Cuántos envíos esperas al mes?</label>
+          <label class="form-label" data-i18n="onboarding.num_envios">¿Cuántos envíos esperas al mes?</label>
           <select id="cfg-envios">
             <option value="500">Hasta 500</option>
             <option value="2000">500 - 2,000</option>
@@ -404,7 +412,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Tipo de negocio</label>
+          <label class="form-label" data-i18n="onboarding.tipo_negocio">Tipo de negocio</label>
           <select id="cfg-tipo">
             <option value="paqueteria">Paquetería / Última Milla</option>
             <option value="restaurantes">Restaurantes / Food Delivery</option>
@@ -416,7 +424,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Zona principal</label>
+          <label class="form-label" data-i18n="onboarding.zona_principal">Zona principal</label>
           <select id="cfg-zona">
             <option value="CDMX">Ciudad de México</option>
             <option value="GDL">Guadalajara</option>
@@ -428,8 +436,8 @@
         </div>
 
         <div class="step-nav">
-          <button class="btn btn-ghost" onclick="goStep(1)"><i class="fas fa-arrow-left"></i> Atrás</button>
-          <button class="btn btn-primary" onclick="goStep(3)">Siguiente <i class="fas fa-arrow-right"></i></button>
+          <button class="btn btn-ghost" onclick="goStep(1)"><i class="fas fa-arrow-left"></i> <span data-i18n="onboarding.btn_atras">Atrás</span></button>
+          <button class="btn btn-primary" onclick="goStep(3)"><span data-i18n="onboarding.btn_siguiente">Siguiente</span> <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
 
@@ -437,8 +445,8 @@
       <div class="step" id="step3">
         <div class="step-header">
           <div class="step-icon kpi-icon warning"><i class="fas fa-cube"></i></div>
-          <h2>Elige tu Plan</h2>
-          <p>Sin comisiones por envío. Cancela cuando quieras.</p>
+          <h2 data-i18n="onboarding.step3_title">Elige tu Plan</h2>
+          <p data-i18n="onboarding.step3_desc">Sin comisiones por envío. Cancela cuando quieras.</p>
         </div>
 
         <div class="plan-grid">
@@ -460,12 +468,12 @@
         </div>
 
         <div class="trial-banner">
-          <i class="fas fa-gift"></i>&nbsp; 14 días de prueba gratis en cualquier plan
+          <i class="fas fa-gift"></i>&nbsp; <span data-i18n="onboarding.trial_banner">14 días de prueba gratis en cualquier plan</span>
         </div>
 
         <div class="step-nav">
-          <button class="btn btn-ghost" onclick="goStep(2)"><i class="fas fa-arrow-left"></i> Atrás</button>
-          <button class="btn btn-primary" onclick="goStep(4)">Crear Mi Cuenta <i class="fas fa-arrow-right"></i></button>
+          <button class="btn btn-ghost" onclick="goStep(2)"><i class="fas fa-arrow-left"></i> <span data-i18n="onboarding.btn_atras">Atrás</span></button>
+          <button class="btn btn-primary" onclick="goStep(4)"><span data-i18n="onboarding.btn_crear">Crear Mi Cuenta</span> <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
 
@@ -473,38 +481,38 @@
       <div class="step" id="step4">
         <div class="step-header">
           <div class="step-icon kpi-icon success"><i class="fas fa-user-plus"></i></div>
-          <h2>Datos de Acceso</h2>
-          <p>Crea tu cuenta de administrador</p>
+          <h2 data-i18n="onboarding.step4_title">Datos de Acceso</h2>
+          <p data-i18n="onboarding.step4_desc">Crea tu cuenta de administrador</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Tu nombre *</label>
-          <input type="text" id="usr-nombre" placeholder="Nombre completo">
+          <label class="form-label" data-i18n="onboarding.tu_nombre">Tu nombre *</label>
+          <input type="text" id="usr-nombre" data-i18n-placeholder="onboarding.nombre_ph" placeholder="Nombre completo">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email *</label>
+          <label class="form-label" data-i18n="onboarding.email">Email *</label>
           <input type="email" id="usr-email" placeholder="tu@email.com">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Teléfono *</label>
+          <label class="form-label" data-i18n="onboarding.telefono">Teléfono *</label>
           <input type="tel" id="usr-telefono" placeholder="5512345678">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Contraseña *</label>
-          <input type="password" id="usr-pass" placeholder="Mínimo 8 caracteres">
+          <label class="form-label" data-i18n="onboarding.contrasena">Contraseña *</label>
+          <input type="password" id="usr-pass" data-i18n-placeholder="onboarding.contrasena_ph" placeholder="Mínimo 8 caracteres">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Confirmar contraseña *</label>
-          <input type="password" id="usr-pass2" placeholder="Repite tu contraseña">
+          <label class="form-label" data-i18n="onboarding.confirmar_contrasena">Confirmar contraseña *</label>
+          <input type="password" id="usr-pass2" data-i18n-placeholder="onboarding.confirmar_ph" placeholder="Repite tu contraseña">
         </div>
 
         <div class="step-nav">
-          <button class="btn btn-ghost" onclick="goStep(3)"><i class="fas fa-arrow-left"></i> Atrás</button>
-          <button class="btn btn-success" onclick="crearCuenta()"><i class="fas fa-rocket"></i> Crear Mi Empresa</button>
+          <button class="btn btn-ghost" onclick="goStep(3)"><i class="fas fa-arrow-left"></i> <span data-i18n="onboarding.btn_atras">Atrás</span></button>
+          <button class="btn btn-success" onclick="crearCuenta()"><i class="fas fa-rocket"></i> <span data-i18n="onboarding.crear_mi_empresa">Crear Mi Empresa</span></button>
         </div>
       </div>
 
@@ -512,31 +520,36 @@
       <div class="step" id="step5">
         <div class="success-block">
           <div class="success-icon"><i class="fas fa-check"></i></div>
-          <h2>¡Tu plataforma está lista!</h2>
-          <p>Te enviamos un email con tus datos de acceso</p>
+          <h2 data-i18n="onboarding.step5_title">¡Tu plataforma está lista!</h2>
+          <p data-i18n="onboarding.step5_desc">Te enviamos un email con tus datos de acceso</p>
 
           <div class="summary-card">
-            <p><span>Tu empresa</span> <strong id="res-empresa">-</strong></p>
-            <p><span>Plan</span> <strong id="res-plan">-</strong></p>
+            <p><span data-i18n="onboarding.tu_empresa">Tu empresa</span> <strong id="res-empresa">-</strong></p>
+            <p><span data-i18n="onboarding.plan">Plan</span> <strong id="res-plan">-</strong></p>
             <p><span>Email</span> <strong id="res-email">-</strong></p>
-            <p><span>Dashboard</span> <strong><a href="panel-admin.html" id="res-url">Abrir panel →</a></strong></p>
+            <p><span>Dashboard</span> <strong><a href="panel-admin.html" id="res-url"><span data-i18n="onboarding.abrir_panel">Abrir panel →</span></a></strong></p>
           </div>
 
           <a href="panel-admin.html" class="btn btn-primary" style="min-width:160px;justify-content:center;">
-            <i class="fas fa-arrow-right-to-bracket"></i> Ir al Dashboard
+            <i class="fas fa-arrow-right-to-bracket"></i> <span data-i18n="onboarding.ir_dashboard">Ir al Dashboard</span>
           </a>
         </div>
       </div>
     </div>
 
     <div class="onboard-footer">
-      ¿Ya tienes cuenta? <a href="index.html">Iniciar sesión</a>
+      <span data-i18n="onboarding.ya_tienes">¿Ya tienes cuenta?</span> <a href="index.html" data-i18n="onboarding.iniciar_sesion">Iniciar sesión</a>
     </div>
   </div>
 
   <script>
     let currentStep = 1;
     let selectedPlan = 'pro';
+
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+    });
 
     function goStep(step) {
       document.getElementById('step' + currentStep).classList.remove('active');
@@ -582,23 +595,23 @@
       const telefono = document.getElementById('emp-telefono')?.value || '';
 
       if (!nombre || !rfc || !email) {
-        Utils.toast('Por favor completa los campos obligatorios', 'warning');
+        Utils.toast(window.i18n.t('onboarding.error_campos'), 'warning');
         return;
       }
 
       if (pass !== pass2) {
-        Utils.toast('Las contraseñas no coinciden', 'error');
+        Utils.toast(window.i18n.t('onboarding.error_contrasenas'), 'error');
         return;
       }
 
       if (pass.length < 8) {
-        Utils.toast('La contraseña debe tener al menos 8 caracteres', 'error');
+        Utils.toast(window.i18n.t('onboarding.error_longitud'), 'error');
         return;
       }
 
       const btn = event.target;
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + window.i18n.t('onboarding.creando');
 
       try {
         const API = window.location.origin;
@@ -629,18 +642,20 @@
           document.getElementById('res-plan').textContent = selectedPlan.toUpperCase();
           document.getElementById('res-email').textContent = email;
           goStep(5);
-          Utils.toast('¡Empresa creada exitosamente!', 'success');
+          Utils.toast(window.i18n.t('onboarding.empresa_creada'), 'success');
         } else {
-          Utils.toast(data.error || 'Error al crear empresa', 'error');
+          Utils.toast(data.error || window.i18n.t('onboarding.error_crear'), 'error');
           btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-rocket"></i> Crear Mi Empresa';
+          btn.innerHTML = '<i class="fas fa-rocket"></i> ' + window.i18n.t('onboarding.crear_mi_empresa');
         }
       } catch(e) {
-        Utils.toast('Error de conexion. Intenta de nuevo.', 'error');
+        Utils.toast(window.i18n.t('onboarding.errorConexion'), 'error');
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-rocket"></i> Crear Mi Empresa';
+        btn.innerHTML = '<i class="fas fa-rocket"></i> ' + window.i18n.t('onboarding.crear_mi_empresa');
       }
     }
+
+    document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
   </script>
 </body>
 </html>

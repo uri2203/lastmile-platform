@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
+  <script src="/js/i18n.js"></script>
   <script src="js/theme.js"></script>
   <style>
     /* --- Help Page Overrides --- */
@@ -298,18 +299,23 @@
     <div class="header-center">
       <div class="header-search">
         <i class="fas fa-search"></i>
-        <input type="text" id="faqSearch" placeholder="Buscar en preguntas frecuentes..." oninput="filterFAQ(this.value)">
+        <input type="text" id="faqSearch" data-i18n-placeholder="ayuda.buscar_faq" placeholder="Buscar en preguntas frecuentes..." oninput="filterFAQ(this.value)">
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
-      <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+      <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+      </select>
+      <button class="theme-toggle" data-i18n-title="cliente.cambiar_tema" title="Cambiar tema"><i class="fas fa-sun"></i></button>
     </div>
   </header>
 
   <!-- HERO -->
   <div class="help-hero">
-    <h1>Centro de Ayuda</h1>
-    <p>Encuentra respuestas a tus preguntas o contacta a nuestro equipo de soporte.</p>
+    <h1 data-i18n="ayuda.page_title">Centro de Ayuda</h1>
+    <p data-i18n="ayuda.page_desc">Encuentra respuestas a tus preguntas o contacta a nuestro equipo de soporte.</p>
   </div>
 
   <!-- MAIN LAYOUT -->
@@ -322,7 +328,7 @@
       <div class="faq-category open" data-category="pedidos">
         <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
           <div class="faq-cat-icon pedidos"><i class="fas fa-box"></i></div>
-          <div class="faq-cat-title">Pedidos</div>
+          <div class="faq-cat-title" data-i18n="ayuda.cat_pedidos">Pedidos</div>
           <span class="faq-cat-count">5</span>
           <i class="fas fa-chevron-down faq-cat-arrow"></i>
         </div>
@@ -369,7 +375,7 @@
       <div class="faq-category" data-category="pagos">
         <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
           <div class="faq-cat-icon pagos"><i class="fas fa-credit-card"></i></div>
-          <div class="faq-cat-title">Pagos</div>
+          <div class="faq-cat-title" data-i18n="ayuda.cat_pagos">Pagos</div>
           <span class="faq-cat-count">3</span>
           <i class="fas fa-chevron-down faq-cat-arrow"></i>
         </div>
@@ -402,7 +408,7 @@
       <div class="faq-category" data-category="cuenta">
         <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
           <div class="faq-cat-icon cuenta"><i class="fas fa-user-gear"></i></div>
-          <div class="faq-cat-title">Cuenta</div>
+          <div class="faq-cat-title" data-i18n="ayuda.cat_cuenta">Cuenta</div>
           <span class="faq-cat-count">3</span>
           <i class="fas fa-chevron-down faq-cat-arrow"></i>
         </div>
@@ -435,7 +441,7 @@
       <div class="faq-category" data-category="tecnico">
         <div class="faq-category-header" onclick="toggleCategory(this.parentElement)">
           <div class="faq-cat-icon tecnico"><i class="fas fa-wrench"></i></div>
-          <div class="faq-cat-title">Tecnico</div>
+          <div class="faq-cat-title" data-i18n="ayuda.cat_tecnico">Tecnico</div>
           <span class="faq-cat-count">3</span>
           <i class="fas fa-chevron-down faq-cat-arrow"></i>
         </div>
@@ -470,11 +476,11 @@
 
       <!-- Contact Info -->
       <div class="contact-card">
-        <h3><i class="fas fa-headset" style="color:var(--accent)"></i>Contacto</h3>
+        <h3><i class="fas fa-headset" style="color:var(--accent)"></i><span data-i18n="ayuda.contacto">Contacto</span></h3>
         <div class="contact-item">
           <div class="contact-icon phone"><i class="fas fa-phone"></i></div>
           <div>
-            <div class="contact-label">Telefono</div>
+            <div class="contact-label" data-i18n="ayuda.telefono">Telefono</div>
             <div class="contact-value"><a href="tel:5512345678" style="color:var(--text-primary);text-decoration:none">55 1234 5678</a></div>
           </div>
         </div>
@@ -488,8 +494,8 @@
         <div class="contact-item">
           <div class="contact-icon hours"><i class="fas fa-clock"></i></div>
           <div>
-            <div class="contact-label">Horario</div>
-            <div class="contact-value">Lun-Vie 8:00 - 18:00</div>
+            <div class="contact-label" data-i18n="ayuda.horario">Horario</div>
+            <div class="contact-value" data-i18n="ayuda.horario_valor">Lun-Vie 8:00 - 18:00</div>
           </div>
         </div>
         <div class="contact-item">
@@ -503,57 +509,57 @@
 
       <!-- Contact Form -->
       <div class="form-card">
-        <h3><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Enviar mensaje</h3>
+        <h3><i class="fas fa-paper-plane" style="color:var(--accent)"></i><span data-i18n="ayuda.enviar_mensaje">Enviar mensaje</span></h3>
         <form onsubmit="enviarFormulario(event)">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-input" placeholder="Tu nombre" required>
+              <label class="form-label" data-i18n="ayuda.nombre">Nombre</label>
+              <input type="text" class="form-input" data-i18n-placeholder="ayuda.nombre_ph" placeholder="Tu nombre" required>
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
-              <input type="email" class="form-input" placeholder="correo@ejemplo.com" required>
+              <input type="email" class="form-input" data-i18n-placeholder="ayuda.email_ph" placeholder="correo@ejemplo.com" required>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Asunto</label>
+            <label class="form-label" data-i18n="ayuda.asunto">Asunto</label>
             <select class="form-select" required>
-              <option value="">Seleccionar asunto</option>
-              <option>Problema con envio</option>
-              <option>Facturacion</option>
-              <option>Estado de pedido</option>
-              <option>Sugerencia</option>
-              <option>Otro</option>
+              <option value="" data-i18n="ayuda.asunto_ph">Seleccionar asunto</option>
+              <option data-i18n="ayuda.asunto_op1">Problema con envio</option>
+              <option data-i18n="ayuda.asunto_op2">Facturacion</option>
+              <option data-i18n="ayuda.asunto_op3">Estado de pedido</option>
+              <option data-i18n="ayuda.asunto_op4">Sugerencia</option>
+              <option data-i18n="ayuda.asunto_op5">Otro</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Prioridad</label>
+            <label class="form-label" data-i18n="ayuda.prioridad">Prioridad</label>
             <select class="form-select" required>
-              <option value="MEDIA">Media</option>
-              <option value="BAJA">Baja</option>
-              <option value="ALTA">Alta</option>
-              <option value="CRITICA">Critica</option>
+              <option value="MEDIA" data-i18n="ayuda.prioridad_media">Media</option>
+              <option value="BAJA" data-i18n="ayuda.prioridad_baja">Baja</option>
+              <option value="ALTA" data-i18n="ayuda.prioridad_alta">Alta</option>
+              <option value="CRITICA" data-i18n="ayuda.prioridad_critica">Critica</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Mensaje</label>
-            <textarea class="form-textarea" placeholder="Describe tu problema o pregunta..." required></textarea>
+            <label class="form-label" data-i18n="ayuda.mensaje">Mensaje</label>
+            <textarea class="form-textarea" data-i18n-placeholder="ayuda.mensaje_ph" placeholder="Describe tu problema o pregunta..." required></textarea>
           </div>
           <button type="submit" class="submit-btn">
-            <i class="fas fa-paper-plane"></i>Enviar mensaje
+            <i class="fas fa-paper-plane"></i><span data-i18n="ayuda.btn_enviar">Enviar mensaje</span>
           </button>
         </form>
       </div>
 
       <!-- Back link -->
       <div class="back-link">
-        <a href="tracking-cliente.html"><i class="fas fa-arrow-left" style="margin-right:6px"></i>Volver a rastrear mi envio</a>
+        <a href="tracking-cliente.html"><i class="fas fa-arrow-left" style="margin-right:6px"></i><span data-i18n="ayuda.volver_rastreo">Volver a rastrear mi envio</span></a>
       </div>
     </div>
   </div>
 
   <!-- LIVE CHAT FAB -->
-  <button class="chat-fab" onclick="toggleChat()" title="Chat en vivo">
+  <button class="chat-fab" onclick="toggleChat()" data-i18n-title="ayuda.chat_titulo" title="Chat en vivo">
     <i class="fas fa-comment-dots"></i>
     <div class="notif-dot"></div>
   </button>
@@ -562,21 +568,26 @@
   <div class="chat-popup" id="chatPopup">
     <div class="chat-popup-header">
       <div>
-        <h4>Chat en vivo</h4>
-        <div style="font-size:10px;opacity:0.8"><span class="status-dot online"></span>En linea</div>
+        <h4 data-i18n="ayuda.chat_titulo">Chat en vivo</h4>
+        <div style="font-size:10px;opacity:0.8"><span class="status-dot online"></span><span data-i18n="ayuda.chat_online">En linea</span></div>
       </div>
       <button class="chat-popup-close" onclick="toggleChat()"><i class="fas fa-times"></i></button>
     </div>
     <div class="chat-popup-body" id="chatBody">
-      <div class="chat-msg bot">Hola! Como puedo ayudarte hoy?</div>
+      <div class="chat-msg bot" data-i18n="ayuda.chat_saludo">Hola! Como puedo ayudarte hoy?</div>
     </div>
     <div class="chat-popup-footer">
-      <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter')sendChat()">
+      <input type="text" id="chatInput" data-i18n-placeholder="ayuda.chat_placeholder" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter')sendChat()">
       <button class="chat-send-btn" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
 
   <script>
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+    });
+
     function toggleCategory(el) {
       el.classList.toggle('open');
     }
@@ -605,7 +616,7 @@
 
     function enviarFormulario(e) {
       e.preventDefault();
-      Utils.toast('Mensaje enviado. Te responderemos pronto.', 'success');
+      Utils.toast(window.i18n.t('ayuda.enviado'), 'success');
       e.target.reset();
     }
 
@@ -623,7 +634,7 @@
       body.scrollTop = body.scrollHeight;
 
       setTimeout(() => {
-        body.innerHTML += `<div class="chat-msg bot">Gracias por tu mensaje. Un agente te atendera en breve.</div>`;
+        body.innerHTML += `<div class="chat-msg bot">${window.i18n.t('ayuda.chat_respuesta')}</div>`;
         body.scrollTop = body.scrollHeight;
       }, 1200);
     }
