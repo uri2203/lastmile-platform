@@ -11,21 +11,34 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY api/ .
 
-# Fix line endings using Python (always available)
+# Debug: dump exact content at line 1192
 RUN python3 -c "
-import os, glob
-for f in glob.glob('**/*.py', recursive=True):
-    with open(f, 'rb') as fh:
-        data = fh.read()
-    cr = data.count(b'\r')
-    lf = data.count(b'\n')
-    print(f'{f}: {len(data)} bytes, CR={cr}, LF={lf}')
-    if b'\r' in data:
-        print(f'  -> Fixing CRLF in {f}')
-        data = data.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
-        with open(f, 'wb') as fh:
-            fh.write(data)
-        print(f'  -> Fixed: {len(data)} bytes after fix')
+with open('server.py','rb') as f:
+    raw = f.read()
+lines = raw.split(b'\n')
+print('Total bytes:', len(raw))
+print('CR count:', raw.count(b'\r'))
+print('LF count:', raw.count(b'\n'))
+print('Total lines:', len(lines))
+if len(lines) > 1190:
+    print('Line 1190:', repr(lines[1189]))
+    print('Line 1191:', repr(lines[1190]))
+    print('Line 1192:', repr(lines[1191]))
+    print('Line 1193:', repr(lines[1192]))
+    print('Line 1194:', repr(lines[1193]))
+    # Find all 'except' with no matching 'try'
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s == 'except Exception:':
+            # Check if previous non-empty line has content under a try
+            prev_code = ''
+            for j in range(i-1, max(i-5, -1), -1):
+                ps = lines[j].strip()
+                if ps:
+                    prev_code = ps
+                    break
+            if prev_code == 'try:' or prev_code == '':
+                print(f'  SUSPECT at line {i+1}: prev={repr(prev_code)}, curr={repr(s)}')
 "
 
 # Validate syntax at build time
