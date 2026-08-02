@@ -14,7 +14,8 @@ fi
 echo "[ENTRYPOINT] Starting gunicorn..."
 exec gunicorn server:app \
     --bind "0.0.0.0:${PORT:-8080}" \
-    --workers "${GUNICORN_WORKERS:-4}" \
+    --worker-class eventlet \
+    --workers 1 \
     --timeout "${GUNICORN_TIMEOUT:-120}" \
     --graceful-timeout 30 \
     --keep-alive 5 \
