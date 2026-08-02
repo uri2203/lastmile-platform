@@ -3,7 +3,6 @@ services:
     name: lastmile-delivery
     runtime: docker
     plan: free
-    dockerfilePath: Dockerfile
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true

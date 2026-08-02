@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY api/ .
 
-# Verify server.py is correct (should have 3685+ lines)
-RUN echo "=== server.py lines: $(wc -l < server.py) ===" && head -1200 server.py | tail -10
+# Validate syntax at build time
+RUN python -c "import py_compile; py_compile.compile('server.py', doraise=True)"
 
 # Create data directory
 RUN mkdir -p /data && chmod +x entrypoint.sh
