@@ -938,7 +938,16 @@
   <!-- FOOTER -->
   <footer class="footer">
     <p>&copy; 2026 Last Mile Delivery. <span data-i18n="footer.desc">Plataforma SaaS de delivery para Mexico.</span></p>
-    <p style="margin-top:4px;">v1.0.0 &middot; CFDI 4.0 &middot; Multi-tenant &middot; Whitelabel</p>
+    <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:12px;">
+      <a href="/terminos" style="color:var(--text-muted);text-decoration:none">Terminos</a>
+      <a href="/privacidad" style="color:var(--text-muted);text-decoration:none">Privacidad</a>
+      <a href="/cookies" style="color:var(--text-muted);text-decoration:none">Cookies</a>
+      <a href="/deslinde" style="color:var(--text-muted);text-decoration:none">Deslinde</a>
+      <a href="/sla" style="color:var(--text-muted);text-decoration:none">SLA</a>
+      <a href="/pagos" style="color:var(--text-muted);text-decoration:none">Pagos</a>
+      <a href="/regulaciones-ia" style="color:var(--text-muted);text-decoration:none">Regulaciones IA</a>
+    </div>
+    <p style="margin-top:8px;">v1.0.0 &middot; CFDI 4.0 &middot; Multi-tenant &middot; Whitelabel</p>
   </footer>
 
   <script>
@@ -1727,5 +1736,6 @@
     window.landingI18n = new LandingI18n();
     window.landingI18n.applyAll();
   </script>
+  <script src="js/cookie-consent.js"></script>
 </body>
 </html>

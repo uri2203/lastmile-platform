@@ -548,6 +548,12 @@
 
     <div class="onboard-footer">
       <span data-i18n="onboarding.ya_tienes">¿Ya tienes cuenta?</span> <a href="index.html" data-i18n="onboarding.iniciar_sesion">Iniciar sesión</a>
+      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:11px;">
+        <a href="/terminos" style="color:var(--text-muted);text-decoration:none">Terminos</a>
+        <a href="/privacidad" style="color:var(--text-muted);text-decoration:none">Privacidad</a>
+        <a href="/cookies" style="color:var(--text-muted);text-decoration:none">Cookies</a>
+        <a href="/regulaciones-ia" style="color:var(--text-muted);text-decoration:none">Regulaciones IA</a>
+      </div>
     </div>
   </div>
 
@@ -666,5 +672,6 @@
 
     document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
   </script>
+  <script src="js/cookie-consent.js"></script>
 </body>
 </html>

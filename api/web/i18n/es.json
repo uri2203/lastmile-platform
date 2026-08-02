@@ -881,5 +881,19 @@
     "tab_pricing": "Pricing",
     "tab_fraud": "Fraude",
     "tab_sentiment": "Sentimiento"
+  },
+  "legal": {
+    "terminos": "Terminos y Condiciones",
+    "privacidad": "Aviso de Privacidad",
+    "cookies": "Politica de Cookies",
+    "deslinde": "Deslinde de Responsabilidades",
+    "sla": "Acuerdo de Nivel de Servicio",
+    "pagos": "Politica de Pagos",
+    "regulaciones_ia": "Regulaciones de IA",
+    "cookie_banner_title": "Usamos Cookies",
+    "cookie_accept_all": "Aceptar Todas",
+    "cookie_reject_all": "Solo Esenciales",
+    "cookie_manage": "Preferencias",
+    "cookie_save": "Guardar"
   }
 }
