@@ -128,6 +128,19 @@
     .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 400; transition: color 0.2s; }
     .nav-links a:hover { color: var(--text); }
     .nav-cta { display: flex; gap: 10px; align-items: center; }
+    .lang-dropdown{position:relative}
+    .lang-dropdown-toggle{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#1a1a24;color:#e8e8ed;font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .15s}
+    .lang-dropdown-toggle:hover{border-color:rgba(255,255,255,0.25)}
+    .lang-dropdown-toggle .arrow{margin-left:2px;transition:transform .2s}
+    .lang-dropdown.open .arrow{transform:rotate(180deg)}
+    .lang-dropdown-menu{position:absolute;top:calc(100% + 4px);right:0;background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px;min-width:140px;max-height:320px;overflow-y:auto;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .lang-dropdown.open .lang-dropdown-menu{display:block}
+    .lang-dropdown-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#e8e8ed;transition:background .1s}
+    .lang-dropdown-item:hover{background:rgba(255,255,255,0.08)}
+    .lang-dropdown-item.active{background:rgba(99,102,241,0.15);color:#a5b4fc}
+    .lang-dropdown-menu::-webkit-scrollbar{width:6px}
+    .lang-dropdown-menu::-webkit-scrollbar-track{background:transparent}
+    .lang-dropdown-menu::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
     .btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
       border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none;
@@ -495,20 +508,26 @@
         <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
       </ul>
       <div class="nav-cta">
-        <select id="lang-select" onchange="landingI18n.setLanguage(this.value)" style="background-color:#1a1a24;color:#e8e8ed;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;">
-          <option value="es">🇲🇽 ES</option>
-          <option value="en">🇺🇸 EN</option>
-          <option value="pt">🇧🇷 PT</option>
-          <option value="fr">🇫🇷 FR</option>
-          <option value="de">🇩🇪 DE</option>
-          <option value="zh">🇨🇳 ZH</option>
-          <option value="ja">🇯🇵 JA</option>
-          <option value="ko">🇰🇷 KO</option>
-          <option value="ar">🇸🇦 AR</option>
-          <option value="hi">🇮🇳 HI</option>
-          <option value="it">🇮🇹 IT</option>
-          <option value="nl">🇳🇱 NL</option>
-        </select>
+        <div class="lang-dropdown" id="lang-dropdown">
+          <button class="lang-dropdown-toggle" id="lang-toggle" type="button">
+            <span id="lang-current">🇲🇽 ES</span>
+            <span class="arrow">&#9662;</span>
+          </button>
+          <div class="lang-dropdown-menu" id="lang-menu">
+            <div class="lang-dropdown-item active" data-lang="es" data-flag="🇲🇽">🇲🇽 Español</div>
+            <div class="lang-dropdown-item" data-lang="en" data-flag="🇺🇸">🇺🇸 English</div>
+            <div class="lang-dropdown-item" data-lang="pt" data-flag="🇧🇷">🇧🇷 Português</div>
+            <div class="lang-dropdown-item" data-lang="fr" data-flag="🇫🇷">🇫🇷 Français</div>
+            <div class="lang-dropdown-item" data-lang="de" data-flag="🇩🇪">🇩🇪 Deutsch</div>
+            <div class="lang-dropdown-item" data-lang="zh" data-flag="🇨🇳">🇨🇳 中文</div>
+            <div class="lang-dropdown-item" data-lang="ja" data-flag="🇯🇵">🇯🇵 日本語</div>
+            <div class="lang-dropdown-item" data-lang="ko" data-flag="🇰🇷">🇰🇷 한국어</div>
+            <div class="lang-dropdown-item" data-lang="ar" data-flag="🇸🇦">🇸🇦 العربية</div>
+            <div class="lang-dropdown-item" data-lang="hi" data-flag="🇮🇳">🇮🇳 हिन्दी</div>
+            <div class="lang-dropdown-item" data-lang="it" data-flag="🇮🇹">🇮🇹 Italiano</div>
+            <div class="lang-dropdown-item" data-lang="nl" data-flag="🇳🇱">🇳🇱 Nederlands</div>
+          </div>
+        </div>
         <a href="index.html" class="btn btn-ghost" data-i18n="nav.login">Iniciar sesion</a>
         <a href="onboarding.html" class="btn btn-orange" data-i18n="nav.register">Crear empresa</a>
       </div>
@@ -1731,12 +1750,46 @@
           }
         });
         document.documentElement.lang = this.lang;
-        var sel = document.getElementById('lang-select');
-        if (sel) sel.value = this.lang;
+        var current = document.getElementById('lang-current');
+        var activeItem = document.querySelector('.lang-dropdown-item[data-lang="' + this.lang + '"]');
+        if (current && activeItem) {
+          current.textContent = activeItem.getAttribute('data-flag') + ' ' + this.lang.toUpperCase();
+        }
+        document.querySelectorAll('.lang-dropdown-item').forEach(function(item) {
+          item.classList.toggle('active', item.getAttribute('data-lang') === self.lang);
+        });
       };
     }
     window.landingI18n = new LandingI18n();
     window.landingI18n.applyAll();
+
+    (function() {
+      var dd = document.getElementById('lang-dropdown');
+      var toggle = document.getElementById('lang-toggle');
+      var menu = document.getElementById('lang-menu');
+      if (!dd || !toggle || !menu) return;
+
+      toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dd.classList.toggle('open');
+      });
+
+      menu.querySelectorAll('.lang-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          var lang = item.getAttribute('data-lang');
+          window.landingI18n.setLanguage(lang);
+          dd.classList.remove('open');
+        });
+      });
+
+      document.addEventListener('click', function() {
+        dd.classList.remove('open');
+      });
+
+      menu.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+    })();
   </script>
   <script src="js/cookie-consent.js"></script>
 </body>
