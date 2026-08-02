@@ -12,6 +12,8 @@
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="/js/i18n.js"></script>
   <script src="js/theme.js"></script>
   <style>
     /* --- Public Tracking Page Overrides --- */
@@ -260,16 +262,16 @@
       <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 20px;border:1px solid var(--accent-border)">
         <i class="fas fa-location-dot"></i>
       </div>
-      <h2>Rastrea tu envio</h2>
-      <p>Ingresa el token que recibiste por SMS o email para ver el estado de tu paquete en tiempo real.</p>
+      <h2 data-i18n="tracking.login_title">Rastrea tu envio</h2>
+      <p data-i18n="tracking.login_desc">Ingresa el token que recibiste por SMS o email para ver el estado de tu paquete en tiempo real.</p>
       <div class="login-input-group">
         <i class="fas fa-key"></i>
         <input type="text" class="login-input" id="tokenInput" placeholder="tk_xxxxxxxxxxxx" value="tk_abc123def456">
       </div>
       <button class="login-btn" onclick="buscarPedido()">
-        <i class="fas fa-search" style="margin-right:6px"></i>Rastrear envio
+        <i class="fas fa-search" style="margin-right:6px"></i><span data-i18n="tracking.track_button">Rastrear envio</span>
       </button>
-      <p class="login-alt">Tambien puedes usar tu numero de pedido</p>
+      <p class="login-alt" data-i18n="tracking.alt_order_number">Tambien puedes usar tu numero de pedido</p>
       <div class="login-alt-row">
         <input type="text" class="login-input" id="pedidoInput" placeholder="PED-XXXXXXX">
         <button class="login-alt-btn" onclick="buscarPorPedido()">
@@ -278,7 +280,7 @@
       </div>
       <div style="margin-top:24px">
         <a href="ayuda-cliente.html" style="font-size:var(--font-xs);color:var(--text-muted)">
-          <i class="fas fa-circle-question" style="margin-right:4px"></i>Necesitas ayuda?
+          <i class="fas fa-circle-question" style="margin-right:4px"></i><span data-i18n="tracking.help_needed">Necesitas ayuda?</span>
         </a>
       </div>
     </div>
@@ -291,7 +293,12 @@
       <span class="pub-logo-text">Mi Envio</span>
     </a>
     <div class="header-actions">
-      <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-sun"></i></button>
+      <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:4px 8px;font-size:var(--font-xs);cursor:pointer;">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+      </select>
+      <button class="theme-toggle" data-i18n-title="cliente.cambiar_tema" title="Cambiar tema"><i class="fas fa-sun"></i></button>
     </div>
   </header>
 
@@ -312,7 +319,7 @@
           <div id="pedEstado" class="status-badge-lg transit" style="margin-top:6px"></div>
         </div>
         <div class="eta-text" style="text-align:right">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Llegada estimada</div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px" data-i18n="tracking.estimated_arrival">Llegada estimada</div>
           <div id="etaValue" style="font-size:var(--font-md);font-weight:600;color:var(--accent)"></div>
         </div>
       </div>
@@ -322,19 +329,19 @@
         <div class="timeline-progress" id="timelineProgress" style="width:0%"></div>
         <div class="tl-step" id="step1">
           <div class="tl-step-dot"><i class="fas fa-box"></i></div>
-          <div class="tl-step-label">Creado</div>
+          <div class="tl-step-label" data-i18n="tracking.step_created">Creado</div>
         </div>
         <div class="tl-step" id="step2">
           <div class="tl-step-dot"><i class="fas fa-handshake"></i></div>
-          <div class="tl-step-label">Recogido</div>
+          <div class="tl-step-label" data-i18n="tracking.step_picked">Recogido</div>
         </div>
         <div class="tl-step" id="step3">
           <div class="tl-step-dot"><i class="fas fa-truck"></i></div>
-          <div class="tl-step-label">En camino</div>
+          <div class="tl-step-label" data-i18n="tracking.step_in_transit">En camino</div>
         </div>
         <div class="tl-step" id="step4">
           <div class="tl-step-dot"><i class="fas fa-check"></i></div>
-          <div class="tl-step-label">Entregado</div>
+          <div class="tl-step-label" data-i18n="tracking.step_delivered">Entregado</div>
         </div>
       </div>
 
@@ -343,30 +350,30 @@
         <div class="driver-avatar" id="driverAvatar">?</div>
         <div class="driver-info">
           <div class="driver-name" id="driverName">-</div>
-          <div class="driver-label">Chofer asignado</div>
+          <div class="driver-label" data-i18n="tracking.driver_assigned">Chofer asignado</div>
         </div>
         <div class="driver-actions">
-          <button class="driver-btn call" onclick="llamar()" title="Llamar"><i class="fas fa-phone"></i></button>
-          <button class="driver-btn whatsapp" onclick="whatsapp()" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+          <button class="driver-btn call" onclick="llamar()" data-i18n-title="tracking.call_driver" title="Llamar"><i class="fas fa-phone"></i></button>
+          <button class="driver-btn whatsapp" onclick="whatsapp()" data-i18n-title="tracking.whatsapp_driver" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
         </div>
       </div>
 
       <!-- Details Grid -->
       <div class="detail-grid">
         <div class="detail-item">
-          <div class="detail-label">Bultos</div>
+          <div class="detail-label" data-i18n="tracking.packages">Bultos</div>
           <div class="detail-value" id="detBultos">-</div>
         </div>
         <div class="detail-item">
-          <div class="detail-label">Fecha pedido</div>
+          <div class="detail-label" data-i18n="tracking.order_date">Fecha pedido</div>
           <div class="detail-value" id="detFecha">-</div>
         </div>
         <div class="detail-item">
-          <div class="detail-label">Peso</div>
+          <div class="detail-label" data-i18n="tracking.weight">Peso</div>
           <div class="detail-value" id="detPeso">-</div>
         </div>
         <div class="detail-item">
-          <div class="detail-label">Referencia</div>
+          <div class="detail-label" data-i18n="tracking.reference">Referencia</div>
           <div class="detail-value" id="detRef">-</div>
         </div>
       </div>
@@ -375,20 +382,20 @@
       <div class="address-block">
         <div class="address-icon"><i class="fas fa-location-dot"></i></div>
         <div class="address-text">
-          <span>Direccion de entrega</span>
+          <span data-i18n="tracking.delivery_address">Direccion de entrega</span>
           <div id="detDireccion">-</div>
         </div>
       </div>
 
       <!-- Share -->
       <button class="share-btn" onclick="compartir()">
-        <i class="fas fa-share-nodes"></i>Compartir estado del envio
+        <i class="fas fa-share-nodes"></i><span data-i18n="tracking.share_status">Compartir estado del envio</span>
       </button>
 
       <!-- Footer link -->
       <div style="text-align:center;margin-top:16px">
         <a href="ayuda-cliente.html" style="font-size:var(--font-xs);color:var(--text-muted)">
-          <i class="fas fa-circle-question" style="margin-right:4px"></i>Necesitas ayuda?
+          <i class="fas fa-circle-question" style="margin-right:4px"></i><span data-i18n="tracking.help_needed">Necesitas ayuda?</span>
         </a>
       </div>
     </div>
@@ -398,10 +405,53 @@
     const API = window.location.origin;
     let trackingData = null;
     let map = null;
+    let driverMarker = null;
+    let wsTracking = null;
+
+    function connectTrackingWS(pedidoId) {
+      try {
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
+        wsTracking = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true });
+        wsTracking.on('connect', () => {
+          wsTracking.emit('client_subscribe_order', { pedido_id: pedidoId });
+        });
+        wsTracking.on('driver_location', (data) => {
+          if (driverMarker && map) {
+            driverMarker.setLatLng([data.lat, data.lng]);
+            map.setView([data.lat, data.lng], map.getZoom());
+          }
+        });
+        wsTracking.on('disconnect', () => {});
+      } catch (e) {}
+    }
+
+    function startAutoRefresh(pedidoId) {
+      setInterval(async () => {
+        if (!trackingData) return;
+        try {
+          const res = await fetch(`/api/cliente-final?pedido=${trackingData.PED_NUMERO || pedidoId}`);
+          const d = await res.json();
+          if (d.success && d.data && d.data.UBICACION_ACTUAL && driverMarker && map) {
+            const coords = d.data.UBICACION_ACTUAL.split(',');
+            const lat = parseFloat(coords[0]);
+            const lng = parseFloat(coords[1]);
+            if (lat && lng) {
+              driverMarker.setLatLng([lat, lng]);
+              map.setView([lat, lng], map.getZoom());
+            }
+          }
+        } catch (e) {}
+      }, 10000);
+    }
+
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = window.i18n.lang;
+    });
 
     async function buscarPedido() {
       const token = document.getElementById('tokenInput').value.trim();
-      if (!token) { Utils.toast('Ingresa un token', 'warning'); return; }
+      if (!token) { Utils.toast(window.i18n.t('tracking.enter_token'), 'warning'); return; }
       try {
         const r = await fetch(`${API}/api/cliente-final/${token}`);
         const d = await r.json();
@@ -409,15 +459,15 @@
           trackingData = d.data;
           mostrarTracking(d.data);
         } else {
-          Utils.toast('Token no encontrado. Verifica el token.', 'error');
+          Utils.toast(window.i18n.t('tracking.token_not_found'), 'error');
         }
-      } catch(e) { Utils.toast('Error de conexion', 'error'); }
+      } catch(e) { Utils.toast(window.i18n.t('tracking.connection_error'), 'error'); }
     }
 
     async function buscarPorPedido() {
       const ped = document.getElementById('pedidoInput').value.trim();
-      if (!ped) { Utils.toast('Ingresa un numero de pedido', 'warning'); return; }
-      Utils.toast('Buscando pedido: ' + ped, 'info');
+      if (!ped) { Utils.toast(window.i18n.t('tracking.enter_order_number'), 'warning'); return; }
+      Utils.toast(window.i18n.t('tracking.searching_order') + ped, 'info');
       try {
         const API = window.location.origin;
         const r = await fetch(`${API}/api/cliente-final?pedido=${encodeURIComponent(ped)}`);
@@ -426,9 +476,9 @@
           trackingData = d.data;
           mostrarTracking(d.data);
         } else {
-          Utils.toast('Pedido no encontrado. Verifica el numero.', 'error');
+          Utils.toast(window.i18n.t('tracking.order_not_found'), 'error');
         }
-      } catch(e) { Utils.toast('Error de conexion', 'error'); }
+      } catch(e) { Utils.toast(window.i18n.t('tracking.connection_error'), 'error'); }
     }
 
     function mostrarTracking(d) {
@@ -436,36 +486,33 @@
       document.getElementById('appHeader').style.display = 'flex';
       document.getElementById('mapHero').style.display = 'block';
       document.getElementById('bottomSheet').style.display = 'block';
+      if (d.PED_ID) {
+        connectTrackingWS(d.PED_ID);
+        startAutoRefresh(d.PED_ID);
+      }
 
-      // Header badge
-      document.getElementById('pedNum').textContent = d.PED_NUMERO || 'Sin numero';
+      document.getElementById('pedNum').textContent = d.PED_NUMERO || window.i18n.t('tracking.no_number');
       const estado = (d.PED_ESTADO || 'PENDIENTE').replace('_', ' ');
       document.getElementById('pedEstado').textContent = estado;
       setEstadoBadge(d.PED_ESTADO);
 
-      // ETA
-      const eta = d.ETA_ENTREGA ? Utils.datetime(d.ETA_ENTREGA) : 'Calculando...';
+      const eta = d.ETA_ENTREGA ? Utils.datetime(d.ETA_ENTREGA) : window.i18n.t('tracking.calculating');
       document.getElementById('etaValue').textContent = eta;
 
-      // Details
-      document.getElementById('detBultos').textContent = (d.PED_BULTOS || 0) + ' bultos';
+      document.getElementById('detBultos').textContent = (d.PED_BULTOS || 0) + ' ' + window.i18n.t('cliente.bultos_unit');
       document.getElementById('detFecha').textContent = Utils.date(d.PED_FECHA_PEDIDO);
       document.getElementById('detPeso').textContent = d.PED_PESO ? d.PED_PESO + ' kg' : '-';
       document.getElementById('detRef').textContent = d.PED_REF_CLIENTE || '-';
       document.getElementById('detDireccion').textContent =
         `${d.PED_DESTINO_DIR || ''}, ${d.PED_DESTINO_COL || ''}, ${d.PED_DESTINO_CIUDAD || ''}`;
 
-      // Driver
       if (d.CHO_NOMBRE) {
         document.getElementById('driverCard').style.display = 'flex';
         document.getElementById('driverAvatar').textContent = (d.CHO_NOMBRE || '?')[0];
         document.getElementById('driverName').textContent = `${d.CHO_NOMBRE} ${d.CHO_APELLIDO || ''}`;
       }
 
-      // Timeline progress
       setTimelineStep(d.PED_ESTADO);
-
-      // Map
       initMap(d);
     }
 
@@ -516,9 +563,9 @@
       L.control.zoom({ position: 'topright' }).addTo(map);
 
       const marker = L.marker([lat, lng]).addTo(map)
-        .bindPopup(`<b>${d.CHO_NOMBRE || 'Chofer'}</b><br>Ubicacion actual`).openPopup();
+        .bindPopup(`<b>${d.CHO_NOMBRE || window.i18n.t('cliente.sin_asignar')}</b><br>${window.i18n.t('tracking.driver_location')}`).openPopup();
+      driverMarker = marker;
 
-      // Add delivery destination
       if (d.PED_DESTINO_LAT && d.PED_DESTINO_LNG) {
         const destMarker = L.marker([d.PED_DESTINO_LAT, d.PED_DESTINO_LNG], {
           icon: L.divIcon({
@@ -527,7 +574,7 @@
             iconSize: [24, 24],
             iconAnchor: [12, 12]
           })
-        }).addTo(map).bindPopup('Destino de entrega');
+        }).addTo(map).bindPopup(window.i18n.t('tracking.driver_location'));
       }
 
       setTimeout(() => map.invalidateSize(), 100);
@@ -538,7 +585,7 @@
       if (phone) {
         window.location.href = `tel:${phone}`;
       } else {
-        Utils.toast('Numero no disponible', 'warning');
+        Utils.toast(window.i18n.t('tracking.phone_not_available'), 'warning');
       }
     }
 
@@ -547,16 +594,16 @@
       if (phone) {
         window.open(`https://wa.me/52${phone.replace(/\D/g, '')}?text=Hola, estoy rastreando mi envio`, '_blank');
       } else {
-        Utils.toast('Numero del chofer no disponible', 'warning');
+        Utils.toast(window.i18n.t('tracking.driver_phone_not_available'), 'warning');
       }
     }
 
     function compartir() {
       if (navigator.share) {
-        navigator.share({title:'Mi Envio', text:'Rastrea mi paquete', url:window.location.href});
+        navigator.share({title:'Mi Envio', text: window.i18n.t('tracking.share_status'), url:window.location.href});
       } else {
         navigator.clipboard.writeText(window.location.href);
-        Utils.toast('Link copiado al portapapeles', 'success');
+        Utils.toast(window.i18n.t('tracking.link_copied'), 'success');
       }
     }
 

@@ -11,6 +11,7 @@ from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
 from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
@@ -68,6 +69,79 @@ ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '').split(',') if os.environ
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True,
      allow_headers=['Content-Type', 'X-Emp-Id', 'Authorization'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+
+# ========================================
+# WEBSOCKET: Flask-SocketIO para GPS tiempo real
+# ========================================
+socketio = SocketIO(app, cors_allowed_origins=ALLOWED_ORIGINS, async_mode='eventlet',
+                    ping_timeout=30, ping_interval=25)
+
+@socketio.on('connect')
+def handle_connect():
+    print(f'[WS] Client connected: {request.sid}')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f'[WS] Client disconnected: {request.sid}')
+
+@socketio.on('subscribe')
+def handle_subscribe(data):
+    emp_id = data.get('emp_id')
+    if emp_id:
+        room = f'emp_{emp_id}'
+        join_room(room)
+        print(f'[WS] Client {request.sid} subscribed to room {room}')
+
+@socketio.on('unsubscribe')
+def handle_unsubscribe(data):
+    emp_id = data.get('emp_id')
+    if emp_id:
+        room = f'emp_{emp_id}'
+        leave_room(room)
+
+@socketio.on('gps_update')
+def handle_gps_update(data):
+    emp_id = data.get('emp_id')
+    cho_id = data.get('choId')
+    if not emp_id or not cho_id:
+        return
+    try:
+        execute(
+            '''INSERT INTO TRACKING (EMP_ID, CHO_ID, VEH_ID, TRK_LATITUD, TRK_LONGITUD, TRK_VELOCIDAD, TRK_RUMBO, TRK_BATERIA)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            [emp_id, cho_id, data.get('vehId'),
+             data.get('latitud'), data.get('longitud'),
+             data.get('velocidad', 0), data.get('rumbo', 0), data.get('bateria', 100)]
+        )
+        room = f'emp_{emp_id}'
+        emit('driver_location', {
+            'choId': cho_id,
+            'nombre': data.get('nombre', ''),
+            'apellido': data.get('apellido', ''),
+            'lat': data.get('latitud'),
+            'lng': data.get('longitud'),
+            'speed': data.get('velocidad', 0),
+            'heading': data.get('rumbo', 0),
+            'battery': data.get('bateria', 100),
+            'timestamp': datetime.now().isoformat()
+        }, room=room)
+    except Exception as e:
+        print(f'[WS] GPS update error: {e}')
+
+@socketio.on('client_subscribe_order')
+def handle_client_subscribe(data):
+    pedido_id = data.get('pedido_id')
+    if pedido_id:
+        room = f'order_{pedido_id}'
+        join_room(room)
+        print(f'[WS] Client subscribed to order {room}')
+
+@socketio.on('client_unsubscribe_order')
+def handle_client_unsubscribe(data):
+    pedido_id = data.get('pedido_id')
+    if pedido_id:
+        room = f'order_{pedido_id}'
+        leave_room(room)
 
 # ========================================
 # RATE LIMITING: 200 req/min por IP general, 10/min para auth
@@ -1856,6 +1930,18 @@ def post_tracking():
         [emp_id, t.get('choId'), t.get('vehId'), t.get('latitud'), t.get('longitud'),
          t.get('velocidad', 0), t.get('rumbo', 0), t.get('bateria', 100)]
     )
+    room = f'emp_{emp_id}'
+    socketio.emit('driver_location', {
+        'choId': t.get('choId'),
+        'nombre': t.get('nombre', ''),
+        'apellido': t.get('apellido', ''),
+        'lat': t.get('latitud'),
+        'lng': t.get('longitud'),
+        'speed': t.get('velocidad', 0),
+        'heading': t.get('rumbo', 0),
+        'battery': t.get('bateria', 100),
+        'timestamp': datetime.now().isoformat()
+    }, room=room)
     return jsonify({'success': True, 'message': 'Tracking registrado'})
 
 
@@ -3310,6 +3396,6 @@ if __name__ == '__main__':
     if ssl_enabled:
         cert_path = os.path.join(DATA_DIR, 'cert.pem')
         key_path = os.path.join(DATA_DIR, 'key.pem')
-        app.run(host='0.0.0.0', port=port, debug=False, ssl_context=(cert_path, key_path))
+        socketio.run(app, host='0.0.0.0', port=port, debug=False, ssl_context=(cert_path, key_path))
     else:
-        app.run(host='0.0.0.0', port=port, debug=False)
+        socketio.run(app, host='0.0.0.0', port=port, debug=False)

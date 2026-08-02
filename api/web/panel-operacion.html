@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
@@ -426,6 +427,54 @@
     let driverMarkers = [];
     let driverBounds = null;
     let pendingPedidoId = null;
+
+    // WebSocket GPS en tiempo real
+    let ws = null;
+    let wsConnected = false;
+    let liveDriverPositions = {};
+
+    function connectOperacionWS() {
+      try {
+        ws = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true, reconnectionDelay: 3000 });
+        ws.on('connect', () => {
+          wsConnected = true;
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const empId = user.emp_id || localStorage.getItem('empId') || '1';
+          ws.emit('subscribe', { emp_id: parseInt(empId) });
+          console.log('[WS-OPERACION] Conectado');
+        });
+        ws.on('disconnect', () => { wsConnected = false; });
+        ws.on('driver_location', (data) => {
+          liveDriverPositions[data.choId] = data;
+          updateDriverMarker(data);
+        });
+      } catch (e) { console.warn('[WS-OPERACION] Error:', e); }
+    }
+
+    function updateDriverMarker(data) {
+      const mapRef = fullMap || map;
+      if (!mapRef) return;
+      const id = 'driver_' + data.choId;
+      if (window._wsMarkers && window._wsMarkers[id]) {
+        window._wsMarkers[id].setLatLng([data.lat, data.lng]);
+        window._wsMarkers[id].setPopupContent(
+          `<div style="font-family:Inter,sans-serif;min-width:160px">
+            <strong style="font-size:14px">${data.nombre} ${data.apellido || ''}</strong><br>
+            <span class="badge badge-success" style="margin:6px 0">ACTIVO</span><br>
+            <small style="color:#6b7280">${window.i18n.t('operacion.velocidad')}: ${data.speed} km/h</small><br>
+            <small style="color:#6b7280">${window.i18n.t('operacion.bateria')}: ${data.battery}%</small><br>
+            <small style="color:#6b7280">${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}</small>
+          </div>`
+        );
+      } else {
+        if (!window._wsMarkers) window._wsMarkers = {};
+        const marker = L.circleMarker([data.lat, data.lng], {
+          radius: 8, fillColor: '#10b981', color: '#065f46', weight: 2, fillOpacity: 0.9
+        }).addTo(mapRef);
+        marker.bindPopup(`${data.nombre}`);
+        window._wsMarkers[id] = marker;
+      }
+    }
 
     // Demo data
     const DEMO_DRIVERS = [
@@ -1000,6 +1049,7 @@
       document.getElementById('sidebar-user').textContent = userName;
       document.getElementById('sidebar-avatar').textContent = userName.substring(0, 2).toUpperCase();
       document.getElementById('topbar-avatar').textContent = userName.substring(0, 2).toUpperCase();
+      connectOperacionWS();
     });
 
     // Close sidebar on mobile when clicking outside

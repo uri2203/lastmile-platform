@@ -14,6 +14,7 @@
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
@@ -610,8 +611,26 @@
     /* ---- GPS ---- */
     let gpsWatchId = null;
     let lastGpsSend = 0;
-    const GPS_SEND_INTERVAL = 30000; // Send to server every 30 seconds
+    const GPS_SEND_INTERVAL = 30000;
     const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
+
+    // WebSocket connection
+    let ws = null;
+    let wsConnected = false;
+
+    function connectWS() {
+      try {
+        ws = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true, reconnectionDelay: 3000 });
+        ws.on('connect', () => {
+          wsConnected = true;
+          const empId = localStorage.getItem('empId') || '1';
+          ws.emit('subscribe', { emp_id: parseInt(empId) });
+          console.log('[WS] Conectado');
+        });
+        ws.on('disconnect', () => { wsConnected = false; console.log('[WS] Desconectado'); });
+        ws.on('reconnect', () => { wsConnected = true; });
+      } catch (e) { console.warn('[WS] Error:', e); }
+    }
 
     function iniciarGPS() {
       if (!navigator.geolocation) {
@@ -619,19 +638,17 @@
         document.getElementById('gps-status').innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${window.i18n.t('chofer.sin_gps')}`;
         return;
       }
+      connectWS();
       gpsWatchId = navigator.geolocation.watchPosition(
         pos => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           const speed = pos.coords.speed || 0;
           const heading = pos.coords.heading || 0;
-          const battery = 'N/A';
 
-          // Update UI
           document.getElementById('gps-status').className = 'gps-badge online';
           document.getElementById('gps-status').innerHTML = `<i class="fas fa-satellite-dish"></i> ${window.i18n.t('chofer.gps_activo')}`;
 
-          // Update map marker
           if (map) {
             if (!window._gpsMarker) {
               window._gpsMarker = L.marker([lat, lng]).addTo(map).bindPopup(window.i18n.t('chofer.mi_ubicacion'));
@@ -641,7 +658,6 @@
             map.setView([lat, lng], 15);
           }
 
-          // Send to server (throttled to every 30 seconds)
           const now = Date.now();
           if (now - lastGpsSend > GPS_SEND_INTERVAL) {
             lastGpsSend = now;
@@ -659,30 +675,30 @@
     }
 
     function sendGpsToServer(lat, lng, speed, heading) {
-      // Get user info from localStorage
       const user = localStorage.getItem('user') || 'chofer1';
       const empId = localStorage.getItem('empId') || '1';
+      const nombre = localStorage.getItem('nombre') || '';
+      const apellido = localStorage.getItem('apellido') || '';
+      const payload = {
+        choId: user, vehId: user, emp_id: parseInt(empId),
+        nombre, apellido,
+        latitud: lat, longitud: lng,
+        velocidad: Math.round(speed * 3.6),
+        rumbo: Math.round(heading), bateria: 100
+      };
 
-      fetch(API_BASE + '/api/tracking', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Emp-Id': empId
-        },
-        body: JSON.stringify({
-          choId: user,
-          vehId: user,
-          latitud: lat,
-          longitud: lng,
-          velocidad: Math.round(speed * 3.6), // m/s to km/h
-          rumbo: Math.round(heading),
-          bateria: 100
-        })
-      }).then(r => r.json())
-        .then(d => {
-          if (d.success) console.log('[GPS] Enviado:', lat.toFixed(5), lng.toFixed(5));
-        })
-        .catch(() => console.warn('[GPS] Error al enviar'));
+      if (wsConnected && ws) {
+        ws.emit('gps_update', payload);
+        console.log('[GPS-WS] Enviado:', lat.toFixed(5), lng.toFixed(5));
+      } else {
+        fetch(API_BASE + '/api/tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Emp-Id': empId },
+          body: JSON.stringify(payload)
+        }).then(r => r.json())
+          .then(d => { if (d.success) console.log('[GPS-HTTP] Enviado:', lat.toFixed(5), lng.toFixed(5)); })
+          .catch(() => console.warn('[GPS] Error al enviar'));
+      }
     }
 
     function detenerGPS() {
@@ -690,6 +706,7 @@
         navigator.geolocation.clearWatch(gpsWatchId);
         gpsWatchId = null;
       }
+      if (ws) { ws.disconnect(); ws = null; wsConnected = false; }
       document.getElementById('gps-status').className = 'gps-badge offline';
       document.getElementById('gps-status').innerHTML = `<i class="fas fa-pause"></i> ${window.i18n.t('chofer.gps_pausado')}`;
     }
