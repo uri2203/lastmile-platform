@@ -7,6 +7,7 @@
   <meta name="description" content="Plataforma whitelabel de delivery para micro-paqueterias, restaurantes y e-commerce. IA, CFDI 4.0, GPS en tiempo real. Desde $999/mes.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="/js/i18n.js"></script>
   <style>
     :root {
       --bg: #01051E;
@@ -487,15 +488,20 @@
         <span>Last Mile</span>
       </a>
       <ul class="nav-links">
-        <li><a href="#features">Plataforma</a></li>
-        <li><a href="#compare">Comparativa</a></li>
-        <li><a href="#how">Como funciona</a></li>
-        <li><a href="#pricing">Precios</a></li>
-        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#features" data-i18n="nav.product">Plataforma</a></li>
+        <li><a href="#compare" data-i18n="nav.compare">Comparativa</a></li>
+        <li><a href="#how" data-i18n="nav.how">Como funciona</a></li>
+        <li><a href="#pricing" data-i18n="nav.pricing">Precios</a></li>
+        <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
       </ul>
       <div class="nav-cta">
-        <a href="index.html" class="btn btn-ghost">Iniciar sesion</a>
-        <a href="onboarding.html" class="btn btn-orange">Crear empresa</a>
+        <select id="lang-select" onchange="landingI18n.setLanguage(this.value)" style="background:rgba(255,255,255,0.05);color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+        </select>
+        <a href="index.html" class="btn btn-ghost" data-i18n="nav.login">Iniciar sesion</a>
+        <a href="onboarding.html" class="btn btn-orange" data-i18n="nav.register">Crear empresa</a>
       </div>
     </div>
   </nav>
@@ -504,73 +510,73 @@
   <section class="hero">
     <div class="hero-badge">
       <div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 8px var(--orange);"></div>
-      Plataforma de delivery para Mexico
+      <span data-i18n="hero.badge">Plataforma de delivery para Mexico</span>
     </div>
-    <h1>Inteligencia que mueve tu negocio</h1>
-    <p>Unifica decisiones y ejecucion en tus flotas, transportistas y redes de fulfillment. GPS en tiempo real, IA y facturacion CFDI 4.0. Sin comisiones por envio.</p>
+    <h1 data-i18n="hero.title">Inteligencia que mueve tu negocio</h1>
+    <p data-i18n="hero.desc">Unifica decisiones y ejecucion en tus flotas, transportistas y redes de fulfillment. GPS en tiempo real, IA y facturacion CFDI 4.0. Sin comisiones por envio.</p>
     <div class="hero-actions">
       <a href="onboarding.html" class="btn btn-orange btn-lg">
-        <i class="fas fa-rocket"></i> Comenzar gratis
+        <i class="fas fa-rocket"></i> <span data-i18n="hero.cta">Comenzar gratis</span>
       </a>
       <a href="#preview" class="btn btn-ghost btn-lg">
-        Ver plataforma <i class="fas fa-arrow-right" style="font-size:12px;"></i>
+        <span data-i18n="hero.demo">Ver plataforma</span> <i class="fas fa-arrow-right" style="font-size:12px;"></i>
       </a>
     </div>
     <div class="hero-trust">
-      <i class="fas fa-shield-halved"></i> Sin tarjeta de credito &middot; Configuracion en 5 minutos &middot; Soporte en espanol
+      <i class="fas fa-shield-halved"></i> <span data-i18n="hero.trust">Sin tarjeta de credito &middot; Configuracion en 5 minutos &middot; Soporte en espanol</span>
     </div>
   </section>
 
   <!-- TICKER BAR -->
   <div class="ticker">
     <div class="ticker-content">
-      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val" data-counter="2847">0</span> envios activos ahora</div>
-      <div class="ticker-item"><span class="val" data-counter="142">0</span> choferes en ruta</div>
-      <div class="ticker-item"><span class="val">99.2%</span> entregas a tiempo</div>
-      <div class="ticker-item"><span class="val" data-counter="38500">0</span> km recorridos hoy</div>
-      <div class="ticker-item"><span class="val">45%</span> ahorro en combustible</div>
-      <div class="ticker-item"><span class="val">2.3s</span> tiempo respuesta IA</div>
-      <div class="ticker-item"><span class="val">100%</span> CFDI 4.0</div>
-      <div class="ticker-item"><span class="val">24/7</span> monitoreo activo</div>
+      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val" data-counter="2847">0</span> <span data-i18n="ticker.active">envios activos ahora</span></div>
+      <div class="ticker-item"><span class="val" data-counter="142">0</span> <span data-i18n="ticker.drivers">choferes en ruta</span></div>
+      <div class="ticker-item"><span class="val">99.2%</span> <span data-i18n="ticker.ontime">entregas a tiempo</span></div>
+      <div class="ticker-item"><span class="val" data-counter="38500">0</span> <span data-i18n="ticker.km">km recorridos hoy</span></div>
+      <div class="ticker-item"><span class="val">45%</span> <span data-i18n="ticker.savings">ahorro en combustible</span></div>
+      <div class="ticker-item"><span class="val">2.3s</span> <span data-i18n="ticker.ai">tiempo respuesta IA</span></div>
+      <div class="ticker-item"><span class="val">100%</span> <span data-i18n="ticker.cfdi">CFDI 4.0</span></div>
+      <div class="ticker-item"><span class="val">24/7</span> <span data-i18n="ticker.monitor">monitoreo activo</span></div>
       <!-- DUPLICATE FOR SEAMLESS LOOP -->
-      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val" data-counter="2847">0</span> envios activos ahora</div>
-      <div class="ticker-item"><span class="val" data-counter="142">0</span> choferes en ruta</div>
-      <div class="ticker-item"><span class="val">99.2%</span> entregas a tiempo</div>
-      <div class="ticker-item"><span class="val" data-counter="38500">0</span> km recorridos hoy</div>
-      <div class="ticker-item"><span class="val">45%</span> ahorro en combustible</div>
-      <div class="ticker-item"><span class="val">2.3s</span> tiempo respuesta IA</div>
-      <div class="ticker-item"><span class="val">100%</span> CFDI 4.0</div>
-      <div class="ticker-item"><span class="val">24/7</span> monitoreo activo</div>
+      <div class="ticker-item"><div class="ticker-dot"></div> <span class="val" data-counter="2847">0</span> <span data-i18n="ticker.active">envios activos ahora</span></div>
+      <div class="ticker-item"><span class="val" data-counter="142">0</span> <span data-i18n="ticker.drivers">choferes en ruta</span></div>
+      <div class="ticker-item"><span class="val">99.2%</span> <span data-i18n="ticker.ontime">entregas a tiempo</span></div>
+      <div class="ticker-item"><span class="val" data-counter="38500">0</span> <span data-i18n="ticker.km">km recorridos hoy</span></div>
+      <div class="ticker-item"><span class="val">45%</span> <span data-i18n="ticker.savings">ahorro en combustible</span></div>
+      <div class="ticker-item"><span class="val">2.3s</span> <span data-i18n="ticker.ai">tiempo respuesta IA</span></div>
+      <div class="ticker-item"><span class="val">100%</span> <span data-i18n="ticker.cfdi">CFDI 4.0</span></div>
+      <div class="ticker-item"><span class="val">24/7</span> <span data-i18n="ticker.monitor">monitoreo activo</span></div>
     </div>
   </div>
 
   <!-- METRICS (animated counters) -->
   <section class="section">
     <div class="section-header">
-      <div class="section-tag">Resultados comprobados</div>
-      <h2>Numeros que hablan por si solos</h2>
-      <p>Operaciones reales que corren en nuestra plataforma diariamente.</p>
+      <div class="section-tag" data-i18n="metrics.tag">Resultados comprobados</div>
+      <h2 data-i18n="metrics.title">Numeros que hablan por si solos</h2>
+      <p data-i18n="metrics.desc">Operaciones reales que corren en nuestra plataforma diariamente.</p>
     </div>
     <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-boxes-stacked"></i></div>
         <div class="metric-val"><span class="counter" data-target="47500">0</span></div>
-        <div class="metric-label">Envios procesados al mes</div>
+        <div class="metric-label" data-i18n="metrics.shipments">Envios procesados al mes</div>
       </div>
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-gas-pump"></i></div>
         <div class="metric-val"><span class="counter" data-target="45">0</span><span class="unit">%</span></div>
-        <div class="metric-label">Ahorro promedio en combustible</div>
+        <div class="metric-label" data-i18n="metrics.savings">Ahorro promedio en combustible</div>
       </div>
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-clock"></i></div>
         <div class="metric-val"><span class="counter" data-target="99" data-decimal="1">0</span><span class="unit">%</span></div>
-        <div class="metric-label">Entregas a tiempo</div>
+        <div class="metric-label" data-i18n="metrics.ontime">Entregas a tiempo</div>
       </div>
       <div class="metric-card">
         <div class="metric-icon"><i class="fas fa-file-invoice"></i></div>
         <div class="metric-val"><span class="counter" data-target="100">0</span><span class="unit">%</span></div>
-        <div class="metric-label">Cumplimiento CFDI 4.0</div>
+        <div class="metric-label" data-i18n="metrics.cfdi">Cumplimiento CFDI 4.0</div>
       </div>
     </div>
   </section>
@@ -578,51 +584,51 @@
   <!-- FEATURES -->
   <section class="section" id="features">
     <div class="section-header">
-      <div class="section-tag">Plataforma completa</div>
-      <h2>Todo en un solo sistema</h2>
-      <p>De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.</p>
+      <div class="section-tag" data-i18n="features.tag">Plataforma completa</div>
+      <h2 data-i18n="features.title">Todo en un solo sistema</h2>
+      <p data-i18n="features.desc">De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.</p>
     </div>
     <div class="features-list">
       <div class="feature-item">
         <div class="feature-icon"><i class="fas fa-satellite-dish"></i></div>
         <div class="feature-text">
-          <h3>GPS en tiempo real</h3>
-          <p>Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.</p>
+          <h3 data-i18n="features.gps">GPS en tiempo real</h3>
+          <p data-i18n="features.gps_desc">Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.</p>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon"><i class="fas fa-brain"></i></div>
         <div class="feature-text">
-          <h3>IA optimiza rutas</h3>
-          <p>Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.</p>
+          <h3 data-i18n="features.ai">IA optimiza rutas</h3>
+          <p data-i18n="features.ai_desc">Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.</p>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon"><i class="fas fa-file-invoice-dollar"></i></div>
         <div class="feature-text">
-          <h3>Facturacion CFDI 4.0</h3>
-          <p>Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.</p>
+          <h3 data-i18n="features.cfdi">Facturacion CFDI 4.0</h3>
+          <p data-i18n="features.cfdi_desc">Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.</p>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon"><i class="fas fa-credit-card"></i></div>
         <div class="feature-text">
-          <h3>Pagos OXXO + MercadoPago</h3>
-          <p>Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.</p>
+          <h3 data-i18n="features.payments">Pagos OXXO + MercadoPago</h3>
+          <p data-i18n="features.payments_desc">Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.</p>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon"><i class="fas fa-mobile-screen-button"></i></div>
         <div class="feature-text">
-          <h3>App chofer movil</h3>
-          <p>PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.</p>
+          <h3 data-i18n="features.app">App chofer movil</h3>
+          <p data-i18n="features.app_desc">PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.</p>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon"><i class="fas fa-palette"></i></div>
         <div class="feature-text">
-          <h3>100% tu marca</h3>
-          <p>Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.</p>
+          <h3 data-i18n="features.brand">100% tu marca</h3>
+          <p data-i18n="features.brand_desc">Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.</p>
         </div>
       </div>
     </div>
@@ -631,19 +637,19 @@
   <!-- COMPARISON TABLE -->
   <section class="section" id="compare">
     <div class="section-header">
-      <div class="section-tag">Comparativa</div>
-      <h2>Por que Last Mile vs la competencia</h2>
-      <p>Compara lo que realmente ofrecemos contra las opciones del mercado.</p>
+      <div class="section-tag" data-i18n="compare.tag">Comparativa</div>
+      <h2 data-i18n="compare.title">Por que Last Mile vs la competencia</h2>
+      <p data-i18n="compare.desc">Compara lo que realmente ofrecemos contra las opciones del mercado.</p>
     </div>
     <div class="compare-wrap">
       <table class="compare-table">
         <thead>
           <tr>
-            <th>Caracteristica</th>
+            <th data-i18n="compare.feature">Caracteristica</th>
             <th class="hl">Last Mile</th>
             <th>Rappi Business</th>
             <th>Uber Direct</th>
-            <th>Solucion propia</th>
+            <th data-i18n="compare.custom">Solucion propia</th>
           </tr>
         </thead>
         <tbody>
@@ -732,9 +738,9 @@
   <!-- DASHBOARD PREVIEW -->
   <section class="preview-section" id="preview">
     <div class="section-header">
-      <div class="section-tag">Producto en accion</div>
-      <h2>Asi se ve tu plataforma</h2>
-      <p>Dashboard en tiempo real con mapa, metricas y control total de operaciones.</p>
+      <div class="section-tag" data-i18n="preview.tag">Producto en accion</div>
+      <h2 data-i18n="preview.title">Asi se ve tu plataforma</h2>
+      <p data-i18n="preview.desc">Dashboard en tiempo real con mapa, metricas y control total de operaciones.</p>
     </div>
     <div class="preview-window beam-border">
       <div class="preview-topbar">
@@ -789,9 +795,9 @@
   <!-- HOW IT WORKS -->
   <section class="section" id="how">
     <div class="section-header">
-      <div class="section-tag">En 3 pasos</div>
-      <h2>De cero a operando</h2>
-      <p>Configura tu plataforma de delivery en minutos, no en semanas.</p>
+      <div class="section-tag" data-i18n="steps.tag">En 3 pasos</div>
+      <h2 data-i18n="steps.title">De cero a operando</h2>
+      <p data-i18n="steps.desc">Configura tu plataforma de delivery en minutos, no en semanas.</p>
     </div>
     <!-- Fleet photo + intro -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;margin-bottom:48px;">
@@ -800,24 +806,24 @@
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(1,5,30,0.6) 100%);"></div>
       </div>
       <div style="font-size:15px;color:var(--text-2);line-height:1.8;">
-        <p>Imagina tener el control completo de tus envios desde un solo lugar. Sin WhatsApp, sin Excel, sin llamadas para rastrear paquetes. <strong style="color:var(--text);">Last Mile te da un dashboard en tiempo real</strong> con GPS, facturacion automatica y optimizacion con inteligencia artificial.</p>
+        <p data-i18n="steps.intro">Imagina tener el control completo de tus envios desde un solo lugar. Sin WhatsApp, sin Excel, sin llamadas para rastrear paquetes. <strong style="color:var(--text);">Last Mile te da un dashboard en tiempo real</strong> con GPS, facturacion automatica y optimizacion con inteligencia artificial.</p>
       </div>
     </div>
     <div class="steps-row">
       <div class="step-cell">
         <div class="step-num">1</div>
-        <h3>Registra tu empresa</h3>
-        <p>Nombre, logo, datos fiscales. Tu plataforma whitelabel queda lista en 5 minutos.</p>
+        <h3 data-i18n="steps.step1">Registra tu empresa</h3>
+        <p data-i18n="steps.step1_desc">Nombre, logo, datos fiscales. Tu plataforma whitelabel queda lista en 5 minutos.</p>
       </div>
       <div class="step-cell">
         <div class="step-num">2</div>
-        <h3>Agrega tu equipo</h3>
-        <p>Choferes, vehiculos y zonas de entrega. Todo desde el panel administrativo.</p>
+        <h3 data-i18n="steps.step2">Agrega tu equipo</h3>
+        <p data-i18n="steps.step2_desc">Choferes, vehiculos y zonas de entrega. Todo desde el panel administrativo.</p>
       </div>
       <div class="step-cell">
         <div class="step-num">3</div>
-        <h3>Empieza a enviar</h3>
-        <p>Crea envios, asigna choferes, factura automaticamente. Tus clientes rastrean en vivo.</p>
+        <h3 data-i18n="steps.step3">Empieza a enviar</h3>
+        <p data-i18n="steps.step3_desc">Crea envios, asigna choferes, factura automaticamente. Tus clientes rastrean en vivo.</p>
       </div>
     </div>
   </section>
@@ -825,54 +831,54 @@
   <!-- PRICING -->
   <section class="section" id="pricing">
     <div class="section-header">
-      <div class="section-tag">Precios transparentes</div>
-      <h2>Cuota fija. Sin sorpresas.</h2>
-      <p>Sin comisiones por envio. Cancela cuando quieras.</p>
+      <div class="section-tag" data-i18n="pricing.tag">Precios transparentes</div>
+      <h2 data-i18n="pricing.title">Cuota fija. Sin sorpresas.</h2>
+      <p data-i18n="pricing.desc">Sin comisiones por envio. Cancela cuando quieras.</p>
     </div>
     <div class="pricing-grid">
       <div class="price-card">
-        <h3>Starter</h3>
-        <div class="desc">Micro-paqueterias y emprendedores</div>
+        <h3 data-i18n="pricing.starter">Starter</h3>
+        <div class="desc" data-i18n="pricing.starter_desc">Micro-paqueterias y emprendedores</div>
         <div class="price-val"><span class="currency">$</span>999<span class="period">/mes</span></div>
         <ul class="price-features">
-          <li><i class="fas fa-check"></i> 200 envios/mes</li>
-          <li><i class="fas fa-check"></i> 3 choferes</li>
-          <li><i class="fas fa-check"></i> GPS en tiempo real</li>
-          <li><i class="fas fa-check"></i> Facturacion CFDI 4.0</li>
-          <li><i class="fas fa-check"></i> Portal cliente</li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.starter_f1">200 envios/mes</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.starter_f2">3 choferes</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.starter_f3">GPS en tiempo real</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.starter_f4">Facturacion CFDI 4.0</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.starter_f5">Portal cliente</span></li>
         </ul>
-        <a href="onboarding.html" class="btn btn-ghost" style="width:100%;justify-content:center;">Empezar</a>
+        <a href="onboarding.html" class="btn btn-ghost" style="width:100%;justify-content:center;" data-i18n="pricing.cta_start">Empezar</a>
       </div>
       <div class="price-card popular">
-        <div class="price-popular-tag">Mas popular</div>
-        <h3>Pro</h3>
-        <div class="desc">Empresas en crecimiento</div>
+        <div class="price-popular-tag" data-i18n="pricing.popular">Mas popular</div>
+        <h3 data-i18n="pricing.pro">Pro</h3>
+        <div class="desc" data-i18n="pricing.pro_desc">Empresas en crecimiento</div>
         <div class="price-val"><span class="currency">$</span>2,499<span class="period">/mes</span></div>
         <ul class="price-features">
-          <li><i class="fas fa-check"></i> 1,000 envios/mes</li>
-          <li><i class="fas fa-check"></i> 15 choferes</li>
-          <li><i class="fas fa-check"></i> Todo del Starter</li>
-          <li><i class="fas fa-check"></i> Optimizacion IA rutas</li>
-          <li><i class="fas fa-check"></i> Pagos OXXO + MP</li>
-          <li><i class="fas fa-check"></i> App chofer movil</li>
-          <li><i class="fas fa-check"></i> Dashboard + reportes</li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f1">1,000 envios/mes</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f2">15 choferes</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f3">Todo del Starter</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f4">Optimizacion IA rutas</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f5">Pagos OXXO + MP</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f6">App chofer movil</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.pro_f7">Dashboard + reportes</span></li>
         </ul>
-        <a href="onboarding.html" class="btn btn-orange" style="width:100%;justify-content:center;">Empezar</a>
+        <a href="onboarding.html" class="btn btn-orange" style="width:100%;justify-content:center;" data-i18n="pricing.cta_start">Empezar</a>
       </div>
       <div class="price-card">
-        <h3>Enterprise</h3>
-        <div class="desc">Flotas grandes y empresas establecidas</div>
+        <h3 data-i18n="pricing.enterprise">Enterprise</h3>
+        <div class="desc" data-i18n="pricing.enterprise_desc">Flotas grandes y empresas establecidas</div>
         <div class="price-val"><span class="currency">$</span>5,999<span class="period">/mes</span></div>
         <ul class="price-features">
-          <li><i class="fas fa-check"></i> Envios ilimitados</li>
-          <li><i class="fas fa-check"></i> Choferes ilimitados</li>
-          <li><i class="fas fa-check"></i> Todo del Pro</li>
-          <li><i class="fas fa-check"></i> Agente IA personalizado</li>
-          <li><i class="fas fa-check"></i> API REST completa</li>
-          <li><i class="fas fa-check"></i> Multi-sucursal</li>
-          <li><i class="fas fa-check"></i> Soporte 24/7</li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f1">Envios ilimitados</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f2">Choferes ilimitados</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f3">Todo del Pro</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f4">Agente IA personalizado</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f5">API REST completa</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f6">Multi-sucursal</span></li>
+          <li><i class="fas fa-check"></i> <span data-i18n="pricing.ent_f7">Soporte 24/7</span></li>
         </ul>
-        <a href="onboarding.html" class="btn btn-ghost" style="width:100%;justify-content:center;">Contactar ventas</a>
+        <a href="onboarding.html" class="btn btn-ghost" style="width:100%;justify-content:center;" data-i18n="pricing.cta_contact">Contactar ventas</a>
       </div>
     </div>
   </section>
@@ -880,49 +886,49 @@
   <!-- FAQ -->
   <section class="section">
     <div class="section-header">
-      <div class="section-tag">Preguntas frecuentes</div>
-      <h2>Resolvemos tus dudas</h2>
+      <div class="section-tag" data-i18n="faq.tag">Preguntas frecuentes</div>
+      <h2 data-i18n="faq.title">Resolvemos tus dudas</h2>
     </div>
     <div class="faq">
       <div class="faq-item">
-        <div class="faq-q">Necesito saber programar para usarla? <i class="fas fa-chevron-down"></i></div>
-        <div class="faq-a">No. La plataforma es 100% visual. Creas envios, asignas choferes y facturas desde el navegador. Sin codigo.</div>
+        <div class="faq-q"><span data-i18n="faq.q1">Necesito saber programar para usarla?</span> <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a" data-i18n="faq.a1">No. La plataforma es 100% visual. Creas envios, asignas choferes y facturas desde el navegador. Sin codigo.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Puedo probarla gratis antes de pagar? <i class="fas fa-chevron-down"></i></div>
-        <div class="faq-a">Si. Puedes configurar tu empresa y probar todas las funcionalidades sin tarjeta de credito. Solo pagas cuando estes listo.</div>
+        <div class="faq-q"><span data-i18n="faq.q2">Puedo probarla gratis antes de pagar?</span> <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a" data-i18n="faq.a2">Si. Puedes configurar tu empresa y probar todas las funcionalidades sin tarjeta de credito. Solo pagas cuando estes listo.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Funciona con mi dominio propio? <i class="fas fa-chevron-down"></i></div>
-        <div class="faq-a">Si. Puedes conectar tu dominio (ej: envios.tuempresa.com) en el plan Pro y Enterprise. Los clientes ven tu marca, no la nuestra.</div>
+        <div class="faq-q"><span data-i18n="faq.q3">Funciona con mi dominio propio?</span> <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a" data-i18n="faq.a3">Si. Puedes conectar tu dominio (ej: envios.tuempresa.com) en el plan Pro y Enterprise. Los clientes ven tu marca, no la nuestra.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">La facturacion cumple con el SAT? <i class="fas fa-chevron-down"></i></div>
-        <div class="faq-a">Si. Generamos CFDI 4.0 automaticamente con todas las validaciones del SAT. Sin configuracion adicional.</div>
+        <div class="faq-q"><span data-i18n="faq.q4">La facturacion cumple con el SAT?</span> <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a" data-i18n="faq.a4">Si. Generamos CFDI 4.0 automaticamente con todas las validaciones del SAT. Sin configuracion adicional.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Que pasa si me paso de los envios de mi plan? <i class="fas fa-chevron-down"></i></div>
-        <div class="faq-a">No bloqueamos envios. Si te pasas, simplemente cobramos un costo adicional por envio extra, o puedes subir de plan.</div>
+        <div class="faq-q"><span data-i18n="faq.q5">Que pasa si me paso de los envios de mi plan?</span> <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a" data-i18n="faq.a5">No bloqueamos envios. Si te pasas, simplemente cobramos un costo adicional por envio extra, o puedes subir de plan.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Puedo cancelar en cualquier momento? <i class="fas fa-chevron-down"></i></div>
-        <div class="faq-a">Si. Sin contratos, sin penalizaciones. Cancelas desde tu panel cuando quieras.</div>
+        <div class="faq-q"><span data-i18n="faq.q6">Puedo cancelar en cualquier momento?</span> <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a" data-i18n="faq.a6">Si. Sin contratos, sin penalizaciones. Cancelas desde tu panel cuando quieras.</div>
       </div>
     </div>
   </section>
 
   <!-- FINAL CTA -->
   <section class="final-cta">
-    <h2>Empieza a entregar hoy</h2>
-    <p>Configura tu plataforma de delivery en 5 minutos. Sin tarjeta. Sin compromiso.</p>
+    <h2 data-i18n="cta.title">Empieza a entregar hoy</h2>
+    <p data-i18n="cta.desc">Configura tu plataforma de delivery en 5 minutos. Sin tarjeta. Sin compromiso.</p>
     <a href="onboarding.html" class="btn btn-orange btn-lg">
-      <i class="fas fa-rocket"></i> Crear mi empresa gratis
+      <i class="fas fa-rocket"></i> <span data-i18n="cta.button">Crear mi empresa gratis</span>
     </a>
   </section>
 
   <!-- FOOTER -->
   <footer class="footer">
-    <p>&copy; 2026 Last Mile Delivery. Plataforma SaaS de delivery para Mexico.</p>
+    <p>&copy; 2026 Last Mile Delivery. <span data-i18n="footer.desc">Plataforma SaaS de delivery para Mexico.</span></p>
     <p style="margin-top:4px;">v1.0.0 &middot; CFDI 4.0 &middot; Multi-tenant &middot; Whitelabel</p>
   </footer>
 
@@ -981,6 +987,214 @@
       }
       requestAnimationFrame(update);
     });
+
+    /* Landing i18n */
+    const LANDING_I18N = {
+      es: {
+        'nav.product': 'Plataforma', 'nav.compare': 'Comparativa', 'nav.how': 'Como funciona', 'nav.pricing': 'Precios', 'nav.faq': 'FAQ',
+        'nav.login': 'Iniciar sesion', 'nav.register': 'Crear empresa',
+        'hero.badge': 'Plataforma de delivery para Mexico',
+        'hero.title': 'Inteligencia que mueve tu negocio',
+        'hero.desc': 'Unifica decisiones y ejecucion en tus flotas, transportistas y redes de fulfillment. GPS en tiempo real, IA y facturacion CFDI 4.0. Sin comisiones por envio.',
+        'hero.cta': 'Comenzar gratis', 'hero.demo': 'Ver plataforma',
+        'hero.trust': 'Sin tarjeta de credito \u00b7 Configuracion en 5 minutos \u00b7 Soporte en espanol',
+        'ticker.active': 'envios activos ahora', 'ticker.drivers': 'choferes en ruta', 'ticker.ontime': 'entregas a tiempo',
+        'ticker.km': 'km recorridos hoy', 'ticker.savings': 'ahorro en combustible', 'ticker.ai': 'tiempo respuesta IA',
+        'ticker.cfdi': 'CFDI 4.0', 'ticker.monitor': 'monitoreo activo',
+        'metrics.tag': 'Resultados comprobados', 'metrics.title': 'Numeros que hablan por si solos',
+        'metrics.desc': 'Operaciones reales que corren en nuestra plataforma diariamente.',
+        'metrics.shipments': 'Envios procesados al mes', 'metrics.savings': 'Ahorro promedio en combustible',
+        'metrics.ontime': 'Entregas a tiempo', 'metrics.cfdi': 'Cumplimiento CFDI 4.0',
+        'features.tag': 'Plataforma completa', 'features.title': 'Todo en un solo sistema',
+        'features.desc': 'De la creacion del envio a la facturacion automatica. Sin integrar herramientas separadas.',
+        'features.gps': 'GPS en tiempo real', 'features.gps_desc': 'Mapa en vivo con ubicacion de cada chofer. Tus clientes rastrean su envio con numero de guia.',
+        'features.ai': 'IA optimiza rutas', 'features.ai_desc': 'Agentes inteligentes calculan la ruta optima. Ahorra 20-30% en combustible y tiempo de entrega.',
+        'features.cfdi': 'Facturacion CFDI 4.0', 'features.cfdi_desc': 'Genera facturas electronicas automaticamente. Cumplimiento SAT al 100% sin configuracion extra.',
+        'features.payments': 'Pagos OXXO + MercadoPago', 'features.payments_desc': 'Tus clientes pagan en OXXO, tarjeta de credito o MercadoPago. Sin sorpresas.',
+        'features.app': 'App chofer movil', 'features.app_desc': 'PWA instalable desde el navegador. Sin App Store. Rutas, firma digital, evidencia fotografica.',
+        'features.brand': '100% tu marca', 'features.brand_desc': 'Tu logo, tu dominio, tu identidad. Los clientes nunca saben que usas otra plataforma.',
+        'compare.tag': 'Comparativa', 'compare.title': 'Por que Last Mile vs la competencia',
+        'compare.desc': 'Compara lo que realmente ofrecemos contra las opciones del mercado.',
+        'compare.feature': 'Caracteristica', 'compare.custom': 'Solucion propia',
+        'preview.tag': 'Producto en accion', 'preview.title': 'Asi se ve tu plataforma',
+        'preview.desc': 'Dashboard en tiempo real con mapa, metricas y control total de operaciones.',
+        'steps.tag': 'En 3 pasos', 'steps.title': 'De cero a operando',
+        'steps.desc': 'Configura tu plataforma de delivery en minutos, no en semanas.',
+        'steps.intro': 'Imagina tener el control completo de tus envios desde un solo lugar. Sin WhatsApp, sin Excel, sin llamadas para rastrear paquetes. <strong style="color:var(--text);">Last Mile te da un dashboard en tiempo real</strong> con GPS, facturacion automatica y optimizacion con inteligencia artificial.',
+        'steps.step1': 'Registra tu empresa', 'steps.step1_desc': 'Nombre, logo, datos fiscales. Tu plataforma whitelabel queda lista en 5 minutos.',
+        'steps.step2': 'Agrega tu equipo', 'steps.step2_desc': 'Choferes, vehiculos y zonas de entrega. Todo desde el panel administrativo.',
+        'steps.step3': 'Empieza a enviar', 'steps.step3_desc': 'Crea envios, asigna choferes, factura automaticamente. Tus clientes rastrean en vivo.',
+        'pricing.tag': 'Precios transparentes', 'pricing.title': 'Cuota fija. Sin sorpresas.',
+        'pricing.desc': 'Sin comisiones por envio. Cancela cuando quieras.',
+        'pricing.starter': 'Starter', 'pricing.starter_desc': 'Micro-paqueterias y emprendedores',
+        'pricing.starter_f1': '200 envios/mes', 'pricing.starter_f2': '3 choferes',
+        'pricing.starter_f3': 'GPS en tiempo real', 'pricing.starter_f4': 'Facturacion CFDI 4.0', 'pricing.starter_f5': 'Portal cliente',
+        'pricing.popular': 'Mas popular', 'pricing.pro': 'Pro', 'pricing.pro_desc': 'Empresas en crecimiento',
+        'pricing.pro_f1': '1,000 envios/mes', 'pricing.pro_f2': '15 choferes', 'pricing.pro_f3': 'Todo del Starter',
+        'pricing.pro_f4': 'Optimizacion IA rutas', 'pricing.pro_f5': 'Pagos OXXO + MP',
+        'pricing.pro_f6': 'App chofer movil', 'pricing.pro_f7': 'Dashboard + reportes',
+        'pricing.enterprise': 'Enterprise', 'pricing.enterprise_desc': 'Flotas grandes y empresas establecidas',
+        'pricing.ent_f1': 'Envios ilimitados', 'pricing.ent_f2': 'Choferes ilimitados', 'pricing.ent_f3': 'Todo del Pro',
+        'pricing.ent_f4': 'Agente IA personalizado', 'pricing.ent_f5': 'API REST completa',
+        'pricing.ent_f6': 'Multi-sucursal', 'pricing.ent_f7': 'Soporte 24/7',
+        'pricing.cta_start': 'Empezar', 'pricing.cta_contact': 'Contactar ventas',
+        'faq.tag': 'Preguntas frecuentes', 'faq.title': 'Resolvemos tus dudas',
+        'faq.q1': 'Necesito saber programar para usarla?', 'faq.a1': 'No. La plataforma es 100% visual. Creas envios, asignas choferes y facturas desde el navegador. Sin codigo.',
+        'faq.q2': 'Puedo probarla gratis antes de pagar?', 'faq.a2': 'Si. Puedes configurar tu empresa y probar todas las funcionalidades sin tarjeta de credito. Solo pagas cuando estes listo.',
+        'faq.q3': 'Funciona con mi dominio propio?', 'faq.a3': 'Si. Puedes conectar tu dominio (ej: envios.tuempresa.com) en el plan Pro y Enterprise. Los clientes ven tu marca, no la nuestra.',
+        'faq.q4': 'La facturacion cumple con el SAT?', 'faq.a4': 'Si. Generamos CFDI 4.0 automaticamente con todas las validaciones del SAT. Sin configuracion adicional.',
+        'faq.q5': 'Que pasa si me paso de los envios de mi plan?', 'faq.a5': 'No bloqueamos envios. Si te pasas, simplemente cobramos un costo adicional por envio extra, o puedes subir de plan.',
+        'faq.q6': 'Puedo cancelar en cualquier momento?', 'faq.a6': 'Si. Sin contratos, sin penalizaciones. Cancelas desde tu panel cuando quieras.',
+        'cta.title': 'Empieza a entregar hoy', 'cta.desc': 'Configura tu plataforma de delivery en 5 minutos. Sin tarjeta. Sin compromiso.',
+        'cta.button': 'Crear mi empresa gratis', 'footer.desc': 'Plataforma SaaS de delivery para Mexico.'
+      },
+      en: {
+        'nav.product': 'Platform', 'nav.compare': 'Comparison', 'nav.how': 'How it works', 'nav.pricing': 'Pricing', 'nav.faq': 'FAQ',
+        'nav.login': 'Sign In', 'nav.register': 'Sign Up Free',
+        'hero.badge': 'Delivery platform for Mexico',
+        'hero.title': 'Intelligence that moves your business',
+        'hero.desc': 'Unify decisions and execution across your fleets, carriers and fulfillment networks. Real-time GPS, AI and CFDI 4.0 invoicing. No shipping commissions.',
+        'hero.cta': 'Start free', 'hero.demo': 'View platform',
+        'hero.trust': 'No credit card \u00b7 Setup in 5 minutes \u00b7 Spanish support',
+        'ticker.active': 'active shipments now', 'ticker.drivers': 'drivers on route', 'ticker.ontime': 'on-time deliveries',
+        'ticker.km': 'km driven today', 'ticker.savings': 'fuel savings', 'ticker.ai': 'AI response time',
+        'ticker.cfdi': 'CFDI 4.0', 'ticker.monitor': 'active monitoring',
+        'metrics.tag': 'Proven results', 'metrics.title': 'Numbers that speak for themselves',
+        'metrics.desc': 'Real operations running on our platform daily.',
+        'metrics.shipments': 'Monthly shipments processed', 'metrics.savings': 'Average fuel savings',
+        'metrics.ontime': 'On-time deliveries', 'metrics.cfdi': 'CFDI 4.0 compliance',
+        'features.tag': 'Complete platform', 'features.title': 'All in one system',
+        'features.desc': 'From shipment creation to automatic invoicing. No separate tools to integrate.',
+        'features.gps': 'Real-time GPS', 'features.gps_desc': 'Live map with each driver location. Your clients track their shipment with tracking number.',
+        'features.ai': 'AI optimizes routes', 'features.ai_desc': 'Intelligent agents calculate the optimal route. Save 20-30% on fuel and delivery time.',
+        'features.cfdi': 'CFDI 4.0 invoicing', 'features.cfdi_desc': 'Generate electronic invoices automatically. 100% SAT compliance with no extra configuration.',
+        'features.payments': 'OXXO + MercadoPago payments', 'features.payments_desc': 'Your clients pay via OXXO, credit card or MercadoPago. No surprises.',
+        'features.app': 'Mobile driver app', 'features.app_desc': 'Installable PWA from the browser. No App Store. Routes, digital signature, photo evidence.',
+        'features.brand': '100% your brand', 'features.brand_desc': 'Your logo, your domain, your identity. Clients never know you use another platform.',
+        'compare.tag': 'Comparison', 'compare.title': 'Why Last Mile vs the competition',
+        'compare.desc': 'Compare what we really offer against market options.',
+        'compare.feature': 'Feature', 'compare.custom': 'Custom solution',
+        'preview.tag': 'Product in action', 'preview.title': 'This is your platform',
+        'preview.desc': 'Real-time dashboard with map, metrics and full operations control.',
+        'steps.tag': 'In 3 steps', 'steps.title': 'From zero to operating',
+        'steps.desc': 'Set up your delivery platform in minutes, not weeks.',
+        'steps.intro': 'Imagine having complete control of your shipments from one place. No WhatsApp, no Excel, no calls to track packages. <strong style="color:var(--text);">Last Mile gives you a real-time dashboard</strong> with GPS, automatic invoicing and AI optimization.',
+        'steps.step1': 'Register your company', 'steps.step1_desc': 'Name, logo, tax data. Your whitelabel platform is ready in 5 minutes.',
+        'steps.step2': 'Add your team', 'steps.step2_desc': 'Drivers, vehicles and delivery zones. All from the admin panel.',
+        'steps.step3': 'Start shipping', 'steps.step3_desc': 'Create shipments, assign drivers, invoice automatically. Your clients track in real time.',
+        'pricing.tag': 'Transparent pricing', 'pricing.title': 'Fixed rate. No surprises.',
+        'pricing.desc': 'No shipping commissions. Cancel anytime.',
+        'pricing.starter': 'Starter', 'pricing.starter_desc': 'Micro-carriers and entrepreneurs',
+        'pricing.starter_f1': '200 shipments/mo', 'pricing.starter_f2': '3 drivers',
+        'pricing.starter_f3': 'Real-time GPS', 'pricing.starter_f4': 'CFDI 4.0 invoicing', 'pricing.starter_f5': 'Client portal',
+        'pricing.popular': 'Most popular', 'pricing.pro': 'Pro', 'pricing.pro_desc': 'Growing companies',
+        'pricing.pro_f1': '1,000 shipments/mo', 'pricing.pro_f2': '15 drivers', 'pricing.pro_f3': 'Everything in Starter',
+        'pricing.pro_f4': 'AI route optimization', 'pricing.pro_f5': 'OXXO + MP payments',
+        'pricing.pro_f6': 'Mobile driver app', 'pricing.pro_f7': 'Dashboard + reports',
+        'pricing.enterprise': 'Enterprise', 'pricing.enterprise_desc': 'Large fleets and established companies',
+        'pricing.ent_f1': 'Unlimited shipments', 'pricing.ent_f2': 'Unlimited drivers', 'pricing.ent_f3': 'Everything in Pro',
+        'pricing.ent_f4': 'Custom AI agent', 'pricing.ent_f5': 'Full REST API',
+        'pricing.ent_f6': 'Multi-location', 'pricing.ent_f7': '24/7 support',
+        'pricing.cta_start': 'Start free', 'pricing.cta_contact': 'Contact sales',
+        'faq.tag': 'Frequently asked questions', 'faq.title': 'We answer your questions',
+        'faq.q1': 'Do I need to know programming to use it?', 'faq.a1': 'No. The platform is 100% visual. You create shipments, assign drivers and invoice from the browser. No code.',
+        'faq.q2': 'Can I try it free before paying?', 'faq.a2': 'Yes. You can set up your company and try all features without a credit card. You only pay when you are ready.',
+        'faq.q3': 'Does it work with my own domain?', 'faq.a3': 'Yes. You can connect your domain (e.g., shipping.yourcompany.com) on the Pro and Enterprise plans. Clients see your brand, not ours.',
+        'faq.q4': 'Does the invoicing comply with SAT?', 'faq.a4': 'Yes. We generate CFDI 4.0 automatically with all SAT validations. No additional configuration.',
+        'faq.q5': 'What happens if I exceed my plan shipments?', 'faq.a5': 'We don\'t block shipments. If you exceed, we simply charge an additional cost per extra shipment, or you can upgrade.',
+        'faq.q6': 'Can I cancel anytime?', 'faq.a6': 'Yes. No contracts, no penalties. Cancel from your panel anytime.',
+        'cta.title': 'Start delivering today', 'cta.desc': 'Set up your delivery platform in 5 minutes. No card. No commitment.',
+        'cta.button': 'Create my company free', 'footer.desc': 'SaaS delivery platform for Mexico.'
+      },
+      pt: {
+        'nav.product': 'Plataforma', 'nav.compare': 'Comparativo', 'nav.how': 'Como funciona', 'nav.pricing': 'Precos', 'nav.faq': 'FAQ',
+        'nav.login': 'Entrar', 'nav.register': 'Cadastre-se Gratis',
+        'hero.badge': 'Plataforma de delivery para o Mexico',
+        'hero.title': 'Inteligencia que move seu negocio',
+        'hero.desc': 'Unifique decisoes e execucao em suas frotas, transportadoras e redes de fulfillment. GPS em tempo real, IA e faturamento CFDI 4.0. Sem comissoes por envio.',
+        'hero.cta': 'Comecar gratis', 'hero.demo': 'Ver plataforma',
+        'hero.trust': 'Sem cartao de credito \u00b7 Configuracao em 5 minutos \u00b7 Suporte em espanhol',
+        'ticker.active': 'envios ativos agora', 'ticker.drivers': 'motoristas em rota', 'ticker.ontime': 'entregas no prazo',
+        'ticker.km': 'km percorridos hoje', 'ticker.savings': 'economia em combustivel', 'ticker.ai': 'tempo resposta IA',
+        'ticker.cfdi': 'CFDI 4.0', 'ticker.monitor': 'monitoramento ativo',
+        'metrics.tag': 'Resultados comprovados', 'metrics.title': 'Numeros que falam por si sozinhos',
+        'metrics.desc': 'Operacoes reais rodando em nossa plataforma diariamente.',
+        'metrics.shipments': 'Envios processados por mes', 'metrics.savings': 'Economia media em combustivel',
+        'metrics.ontime': 'Entregas no prazo', 'metrics.cfdi': 'Conformidade CFDI 4.0',
+        'features.tag': 'Plataforma completa', 'features.title': 'Tudo em um so sistema',
+        'features.desc': 'Da criacao do envio ao faturamento automatico. Sem integrar ferramentas separadas.',
+        'features.gps': 'GPS em tempo real', 'features.gps_desc': 'Mapa ao vivo com localizacao de cada motorista. Seus clientes rastreiam seu envio com numero de rastreio.',
+        'features.ai': 'IA otimiza rotas', 'features.ai_desc': 'Agentes inteligentes calculam a rota otima. Economize 20-30% em combustivel e tempo de entrega.',
+        'features.cfdi': 'Faturamento CFDI 4.0', 'features.cfdi_desc': 'Gere notas fiscais eletronicas automaticamente. Conformidade SAT 100% sem configuracao extra.',
+        'features.payments': 'Pagamentos OXXO + MercadoPago', 'features.payments_desc': 'Seus clientes pagam via OXXO, cartao de credito ou MercadoPago. Sem surpresas.',
+        'features.app': 'App motorista movel', 'features.app_desc': 'PWA instalavel pelo navegador. Sem App Store. Rotas, assinatura digital, evidencia fotografica.',
+        'features.brand': '100% sua marca', 'features.brand_desc': 'Seu logo, seu dominio, sua identidade. Clientes nunca sabem que voce usa outra plataforma.',
+        'compare.tag': 'Comparativo', 'compare.title': 'Por que Last Mile vs a concorrencia',
+        'compare.desc': 'Compare o que realmente oferecemos contra as opcoes do mercado.',
+        'compare.feature': 'Caracteristica', 'compare.custom': 'Solucao propria',
+        'preview.tag': 'Produto em acao', 'preview.title': 'Assim fica sua plataforma',
+        'preview.desc': 'Dashboard em tempo real com mapa, metricas e controle total de operacoes.',
+        'steps.tag': 'Em 3 passos', 'steps.title': 'Do zero ao operando',
+        'steps.desc': 'Configure sua plataforma de delivery em minutos, nao em semanas.',
+        'steps.intro': 'Imagine ter controle completo de seus envios em um so lugar. Sem WhatsApp, sem Excel, sem ligacoes para rastrear pacotes. <strong style="color:var(--text);">Last Mile da a voce um dashboard em tempo real</strong> com GPS, faturamento automatico e otimizacao com inteligencia artificial.',
+        'steps.step1': 'Cadastre sua empresa', 'steps.step1_desc': 'Nome, logo, dados fiscais. Sua plataforma whitelabel fica pronta em 5 minutos.',
+        'steps.step2': 'Adicione sua equipe', 'steps.step2_desc': 'Motoristas, veiculos e zonas de entrega. Tudo pelo painel administrativo.',
+        'steps.step3': 'Comece a enviar', 'steps.step3_desc': 'Crie envios, atribua motoristas, fature automaticamente. Seus clientes rastreiam ao vivo.',
+        'pricing.tag': 'Precos transparentes', 'pricing.title': 'Tarifa fixa. Sem surpresas.',
+        'pricing.desc': 'Sem comissoes por envio. Cancele quando quiser.',
+        'pricing.starter': 'Starter', 'pricing.starter_desc': 'Micro-transportadoras e empreendedores',
+        'pricing.starter_f1': '200 envios/mes', 'pricing.starter_f2': '3 motoristas',
+        'pricing.starter_f3': 'GPS em tempo real', 'pricing.starter_f4': 'Faturamento CFDI 4.0', 'pricing.starter_f5': 'Portal cliente',
+        'pricing.popular': 'Mais popular', 'pricing.pro': 'Pro', 'pricing.pro_desc': 'Empresas em crescimento',
+        'pricing.pro_f1': '1.000 envios/mes', 'pricing.pro_f2': '15 motoristas', 'pricing.pro_f3': 'Tudo do Starter',
+        'pricing.pro_f4': 'Otimizacao IA rotas', 'pricing.pro_f5': 'Pagamentos OXXO + MP',
+        'pricing.pro_f6': 'App motorista movel', 'pricing.pro_f7': 'Dashboard + relatorios',
+        'pricing.enterprise': 'Enterprise', 'pricing.enterprise_desc': 'Frotas grandes e empresas estabelecidas',
+        'pricing.ent_f1': 'Envios ilimitados', 'pricing.ent_f2': 'Motoristas ilimitados', 'pricing.ent_f3': 'Tudo do Pro',
+        'pricing.ent_f4': 'Agente IA personalizado', 'pricing.ent_f5': 'API REST completa',
+        'pricing.ent_f6': 'Multi-unidade', 'pricing.ent_f7': 'Suporte 24/7',
+        'pricing.cta_start': 'Comecar gratis', 'pricing.cta_contact': 'Falar com vendas',
+        'faq.tag': 'Perguntas frequentes', 'faq.title': 'Respondemos suas duvidas',
+        'faq.q1': 'Preciso saber programar para usar?', 'faq.a1': 'Nao. A plataforma e 100% visual. Voce cria envios, atribui motoristas e fatura pelo navegador. Sem codigo.',
+        'faq.q2': 'Posso testar gratis antes de pagar?', 'faq.a2': 'Sim. Voce pode configurar sua empresa e testar todas as funcionalidades sem cartao de credito. Voce so paga quando estiver pronto.',
+        'faq.q3': 'Funciona com meu dominio proprio?', 'faq.a3': 'Sim. Voce pode conectar seu dominio (ex: envios.suaempresa.com) nos planos Pro e Enterprise. Clientes veem sua marca, nao a nossa.',
+        'faq.q4': 'O faturamento atende o SAT?', 'faq.a4': 'Sim. Geramos CFDI 4.0 automaticamente com todas as validacoes do SAT. Sem configuracao adicional.',
+        'faq.q5': 'O que acontece se eu ultrapassar os envios do meu plano?', 'faq.a5': 'Nao bloqueamos envios. Se voce ultrapassar, simplesmente cobramos um custo adicional por envio extra, ou voce pode fazer upgrade.',
+        'faq.q6': 'Posso cancelar a qualquer momento?', 'faq.a6': 'Sim. Sem contratos, sem penalizacoes. Cancele pelo painel quando quiser.',
+        'cta.title': 'Comece a entregar hoje', 'cta.desc': 'Configure sua plataforma de delivery em 5 minutos. Sem cartao. Sem compromisso.',
+        'cta.button': 'Criar minha empresa gratis', 'footer.desc': 'Plataforma SaaS de delivery para o Mexico.'
+      }
+    };
+
+    function LandingI18n() {
+      this.lang = localStorage.getItem('lastmile_lang') || 'es';
+      this.t = function(key) {
+        var dict = LANDING_I18N[this.lang] || LANDING_I18N['es'];
+        return dict[key] || key;
+      };
+      this.setLanguage = function(lang) {
+        this.lang = lang;
+        localStorage.setItem('lastmile_lang', lang);
+        this.applyAll();
+      };
+      this.applyAll = function() {
+        var self = this;
+        document.querySelectorAll('[data-i18n]').forEach(function(el) {
+          var key = el.getAttribute('data-i18n');
+          var translated = self.t(key);
+          if (translated && translated.indexOf('<') !== -1) {
+            el.innerHTML = translated;
+          } else {
+            el.textContent = translated;
+          }
+        });
+        document.documentElement.lang = this.lang;
+        var sel = document.getElementById('lang-select');
+        if (sel) sel.value = this.lang;
+      };
+    }
+    window.landingI18n = new LandingI18n();
+    window.landingI18n.applyAll();
   </script>
 </body>
 </html>
