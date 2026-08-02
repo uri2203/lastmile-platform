@@ -94,148 +94,446 @@ class SMSService:
 
 
 # ========================================
-# NOTIFICATION TEMPLATES
+# NOTIFICATION TEMPLATES (MULTI-LANGUAGE)
 # ========================================
 
-TEMPLATES = {
+TEMPLATES_I18N = {
     'pedido_creado': {
-        'email_subject': 'Pedido #{pedido_id} recibido',
-        'email_html': '''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#6366f1;color:white;padding:20px;text-align:center;">
-                <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+        'es': {
+            'email_subject': 'Pedido #{pedido_id} recibido',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#6366f1;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Pedido confirmado</h2>
+                    <p>Tu pedido <strong>#{pedido_id}</strong> ha sido recibido exitosamente.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Costo:</td><td style="padding:8px;font-weight:600;">{costo}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Forma de pago:</td><td style="padding:8px;">{pago}</td></tr>
+                    </table>
+                    <p style="color:#6b7280;font-size:13px;">Podras dar seguimiento desde tu portal de cliente.</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:24px;background:#fff;">
-                <h2 style="color:#111827;">Pedido confirmado</h2>
-                <p>Tu pedido <strong>#{pedido_id}</strong> ha sido recibido exitosamente.</p>
-                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                    <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Costo:</td><td style="padding:8px;font-weight:600;">{costo}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Forma de pago:</td><td style="padding:8px;">{pago}</td></tr>
-                </table>
-                <p style="color:#6b7280;font-size:13px;">Podras dar seguimiento desde tu portal de cliente.</p>
+            ''',
+            'sms': 'Last Mile: Tu pedido #{pedido_id} fue recibido. Destino: {destino}. Costo: {costo}.'
+        },
+        'en': {
+            'email_subject': 'Order #{pedido_id} received',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#6366f1;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Order confirmed</h2>
+                    <p>Your order <strong>#{pedido_id}</strong> has been received successfully.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Destination:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Cost:</td><td style="padding:8px;font-weight:600;">{costo}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Payment method:</td><td style="padding:8px;">{pago}</td></tr>
+                    </table>
+                    <p style="color:#6b7280;font-size:13px;">You can track your order from your client portal.</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
-                Last Mile Delivery Platform &copy; 2026
+            ''',
+            'sms': 'Last Mile: Your order #{pedido_id} was received. Destination: {destino}. Cost: {costo}.'
+        },
+        'pt': {
+            'email_subject': 'Pedido #{pedido_id} recebido',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#6366f1;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Pedido confirmado</h2>
+                    <p>Seu pedido <strong>#{pedido_id}</strong> foi recebido com sucesso.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Custo:</td><td style="padding:8px;font-weight:600;">{costo}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Forma de pagamento:</td><td style="padding:8px;">{pago}</td></tr>
+                    </table>
+                    <p style="color:#6b7280;font-size:13px;">Voce pode acompanhar pelo portal do cliente.</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-        </div>
-        ''',
-        'sms': 'Last Mile: Tu pedido #{pedido_id} fue recibido. Destino: {destino}. Costo: {costo}.'
+            ''',
+            'sms': 'Last Mile: Seu pedido #{pedido_id} foi recebido. Destino: {destino}. Custo: {costo}.'
+        }
     },
     'pedido_asignado_chofer': {
-        'email_subject': 'Te asignaron el pedido #{pedido_id}',
-        'email_html': '''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#059669;color:white;padding:20px;text-align:center;">
-                <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+        'es': {
+            'email_subject': 'Te asignaron el pedido #{pedido_id}',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Nuevo pedido asignado</h2>
+                    <p>Se te ha asignado el pedido <strong>#{pedido_id}</strong>.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Cliente:</td><td style="padding:8px;font-weight:600;">{cliente}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Origen:</td><td style="padding:8px;">{origen}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Bultos:</td><td style="padding:8px;">{bultos}</td></tr>
+                    </table>
+                    <a href="{tracking_url}" style="display:inline-block;background:#6366f1;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Ver detalles</a>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:24px;background:#fff;">
-                <h2 style="color:#111827;">Nuevo pedido asignado</h2>
-                <p>Se te ha asignado el pedido <strong>#{pedido_id}</strong>.</p>
-                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                    <tr><td style="padding:8px;color:#6b7280;">Cliente:</td><td style="padding:8px;font-weight:600;">{cliente}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Origen:</td><td style="padding:8px;">{origen}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Bultos:</td><td style="padding:8px;">{bultos}</td></tr>
-                </table>
-                <a href="{tracking_url}" style="display:inline-block;background:#6366f1;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Ver detalles</a>
+            ''',
+            'sms': 'Last Mile: Te asignaron pedido #{pedido_id}. Cliente: {cliente}. Destino: {destino}. Abre la app para ver detalles.'
+        },
+        'en': {
+            'email_subject': 'Order #{pedido_id} assigned to you',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">New order assigned</h2>
+                    <p>Order <strong>#{pedido_id}</strong> has been assigned to you.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Client:</td><td style="padding:8px;font-weight:600;">{cliente}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Origin:</td><td style="padding:8px;">{origen}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destination:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Packages:</td><td style="padding:8px;">{bultos}</td></tr>
+                    </table>
+                    <a href="{tracking_url}" style="display:inline-block;background:#6366f1;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">View details</a>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
-                Last Mile Delivery Platform &copy; 2026
+            ''',
+            'sms': 'Last Mile: Order #{pedido_id} assigned to you. Client: {cliente}. Destination: {destino}. Open the app for details.'
+        },
+        'pt': {
+            'email_subject': 'Pedido #{pedido_id} atribuido a voce',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Novo pedido atribuido</h2>
+                    <p>O pedido <strong>#{pedido_id}</strong> foi atribuido a voce.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Cliente:</td><td style="padding:8px;font-weight:600;">{cliente}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Origem:</td><td style="padding:8px;">{origen}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;font-weight:600;">{destino}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Pacotes:</td><td style="padding:8px;">{bultos}</td></tr>
+                    </table>
+                    <a href="{tracking_url}" style="display:inline-block;background:#6366f1;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Ver detalhes</a>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-        </div>
-        ''',
-        'sms': 'Last Mile: Te asignaron pedido #{pedido_id}. Cliente: {cliente}. Destino: {destino}. Abre la app para ver detalles.'
+            ''',
+            'sms': 'Last Mile: Pedido #{pedido_id} atribuido a voce. Cliente: {cliente}. Destino: {destino}. Abra o app para detalhes.'
+        }
     },
     'pedido_en_ruta': {
-        'email_subject': 'Pedido #{pedido_id} en camino',
-        'email_html': '''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#2563eb;color:white;padding:20px;text-align:center;">
-                <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+        'es': {
+            'email_subject': 'Pedido #{pedido_id} en camino',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#2563eb;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Tu pedido va en camino</h2>
+                    <p>El pedido <strong>#{pedido_id}</strong> esta en ruta de entrega.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Chofer:</td><td style="padding:8px;font-weight:600;">{chofer}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;">{destino}</td></tr>
+                    </table>
+                    <a href="{tracking_url}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Rastrear pedido</a>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:24px;background:#fff;">
-                <h2 style="color:#111827;">Tu pedido va en camino</h2>
-                <p>El pedido <strong>#{pedido_id}</strong> esta en ruta de entrega.</p>
-                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                    <tr><td style="padding:8px;color:#6b7280;">Chofer:</td><td style="padding:8px;font-weight:600;">{chofer}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;">{destino}</td></tr>
-                </table>
-                <a href="{tracking_url}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Rastrear pedido</a>
+            ''',
+            'sms': 'Last Mile: Tu pedido #{pedido_id} va en camino. Chofer: {chofer}. Rastrea en: {tracking_url}'
+        },
+        'en': {
+            'email_subject': 'Order #{pedido_id} on the way',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#2563eb;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Your order is on the way</h2>
+                    <p>Order <strong>#{pedido_id}</strong> is on its delivery route.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Driver:</td><td style="padding:8px;font-weight:600;">{chofer}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destination:</td><td style="padding:8px;">{destino}</td></tr>
+                    </table>
+                    <a href="{tracking_url}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Track order</a>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
-                Last Mile Delivery Platform &copy; 2026
+            ''',
+            'sms': 'Last Mile: Your order #{pedido_id} is on the way. Driver: {chofer}. Track at: {tracking_url}'
+        },
+        'pt': {
+            'email_subject': 'Pedido #{pedido_id} a caminho',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#2563eb;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#111827;">Seu pedido esta a caminho</h2>
+                    <p>O pedido <strong>#{pedido_id}</strong> esta em rota de entrega.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Motorista:</td><td style="padding:8px;font-weight:600;">{chofer}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;">{destino}</td></tr>
+                    </table>
+                    <a href="{tracking_url}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Rastrear pedido</a>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-        </div>
-        ''',
-        'sms': 'Last Mile: Tu pedido #{pedido_id} va en camino. Chofer: {chofer}. Rastrea en: {tracking_url}'
+            ''',
+            'sms': 'Last Mile: Seu pedido #{pedido_id} esta a caminho. Motorista: {chofer}. Rastreie em: {tracking_url}'
+        }
     },
     'pedido_entregado': {
-        'email_subject': 'Pedido #{pedido_id} entregado',
-        'email_html': '''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#059669;color:white;padding:20px;text-align:center;">
-                <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+        'es': {
+            'email_subject': 'Pedido #{pedido_id} entregado',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#059669;">Entrega completada</h2>
+                    <p>El pedido <strong>#{pedido_id}</strong> fue entregado exitosamente.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Fecha entrega:</td><td style="padding:8px;font-weight:600;">{fecha_entrega}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;">{destino}</td></tr>
+                    </table>
+                    <p style="color:#6b7280;font-size:13px;">Gracias por confiar en Last Mile Delivery.</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:24px;background:#fff;">
-                <h2 style="color:#059669;">Entrega completada</h2>
-                <p>El pedido <strong>#{pedido_id}</strong> fue entregado exitosamente.</p>
-                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                    <tr><td style="padding:8px;color:#6b7280;">Fecha entrega:</td><td style="padding:8px;font-weight:600;">{fecha_entrega}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;">{destino}</td></tr>
-                </table>
-                <p style="color:#6b7280;font-size:13px;">Gracias por confiar en Last Mile Delivery.</p>
+            ''',
+            'sms': 'Last Mile: Tu pedido #{pedido_id} fue entregado. Gracias por tu compra.'
+        },
+        'en': {
+            'email_subject': 'Order #{pedido_id} delivered',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#059669;">Delivery completed</h2>
+                    <p>Order <strong>#{pedido_id}</strong> has been delivered successfully.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Delivery date:</td><td style="padding:8px;font-weight:600;">{fecha_entrega}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destination:</td><td style="padding:8px;">{destino}</td></tr>
+                    </table>
+                    <p style="color:#6b7280;font-size:13px;">Thank you for choosing Last Mile Delivery.</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
-                Last Mile Delivery Platform &copy; 2026
+            ''',
+            'sms': 'Last Mile: Your order #{pedido_id} has been delivered. Thank you for your purchase.'
+        },
+        'pt': {
+            'email_subject': 'Pedido #{pedido_id} entregue',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#059669;">Entrega concluida</h2>
+                    <p>O pedido <strong>#{pedido_id}</strong> foi entregue com sucesso.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Data de entrega:</td><td style="padding:8px;font-weight:600;">{fecha_entrega}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Destino:</td><td style="padding:8px;">{destino}</td></tr>
+                    </table>
+                    <p style="color:#6b7280;font-size:13px;">Obrigado por escolher o Last Mile Delivery.</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-        </div>
-        ''',
-        'sms': 'Last Mile: Tu pedido #{pedido_id} fue entregado. Gracias por tu compra.'
+            ''',
+            'sms': 'Last Mile: Seu pedido #{pedido_id} foi entregue. Obrigado pela sua compra.'
+        }
     },
     'pedido_cancelado': {
-        'email_subject': 'Pedido #{pedido_id} cancelado',
-        'email_html': '''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#dc2626;color:white;padding:20px;text-align:center;">
-                <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+        'es': {
+            'email_subject': 'Pedido #{pedido_id} cancelado',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#dc2626;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#dc2626;">Pedido cancelado</h2>
+                    <p>El pedido <strong>#{pedido_id}</strong> ha sido cancelado.</p>
+                    <p style="color:#6b7280;">Razon: {razon}</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:24px;background:#fff;">
-                <h2 style="color:#dc2626;">Pedido cancelado</h2>
-                <p>El pedido <strong>#{pedido_id}</strong> ha sido cancelado.</p>
-                <p style="color:#6b7280;">Razon: {razon}</p>
+            ''',
+            'sms': 'Last Mile: Tu pedido #{pedido_id} fue cancelado. Razon: {razon}'
+        },
+        'en': {
+            'email_subject': 'Order #{pedido_id} cancelled',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#dc2626;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#dc2626;">Order cancelled</h2>
+                    <p>Order <strong>#{pedido_id}</strong> has been cancelled.</p>
+                    <p style="color:#6b7280;">Reason: {razon}</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
-                Last Mile Delivery Platform &copy; 2026
+            ''',
+            'sms': 'Last Mile: Your order #{pedido_id} has been cancelled. Reason: {razon}'
+        },
+        'pt': {
+            'email_subject': 'Pedido #{pedido_id} cancelado',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#dc2626;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#dc2626;">Pedido cancelado</h2>
+                    <p>O pedido <strong>#{pedido_id}</strong> foi cancelado.</p>
+                    <p style="color:#6b7280;">Motivo: {razon}</p>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-        </div>
-        ''',
-        'sms': 'Last Mile: Tu pedido #{pedido_id} fue cancelado. Razon: {razon}'
+            ''',
+            'sms': 'Last Mile: Seu pedido #{pedido_id} foi cancelado. Motivo: {razon}'
+        }
     },
     'pago_recibido': {
-        'email_subject': 'Pago de ${monto} recibido',
-        'email_html': '''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#059669;color:white;padding:20px;text-align:center;">
-                <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+        'es': {
+            'email_subject': 'Pago de ${monto} recibido',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#059669;">Pago confirmado</h2>
+                    <p>Recibimos tu pago de <strong>{monto}</strong>.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Metodo:</td><td style="padding:8px;">{metodo}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Referencia:</td><td style="padding:8px;">{referencia}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Fecha:</td><td style="padding:8px;">{fecha}</td></tr>
+                    </table>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:24px;background:#fff;">
-                <h2 style="color:#059669;">Pago confirmado</h2>
-                <p>Recibimos tu pago de <strong>{monto}</strong>.</p>
-                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                    <tr><td style="padding:8px;color:#6b7280;">Metodo:</td><td style="padding:8px;">{metodo}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Referencia:</td><td style="padding:8px;">{referencia}</td></tr>
-                    <tr><td style="padding:8px;color:#6b7280;">Fecha:</td><td style="padding:8px;">{fecha}</td></tr>
-                </table>
+            ''',
+            'sms': 'Last Mile: Pago de {monto} recibido via {metodo}. Ref: {referencia}.'
+        },
+        'en': {
+            'email_subject': 'Payment of ${monto} received',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#059669;">Payment confirmed</h2>
+                    <p>We received your payment of <strong>{monto}</strong>.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Method:</td><td style="padding:8px;">{metodo}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Reference:</td><td style="padding:8px;">{referencia}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Date:</td><td style="padding:8px;">{fecha}</td></tr>
+                    </table>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-            <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
-                Last Mile Delivery Platform &copy; 2026
+            ''',
+            'sms': 'Last Mile: Payment of {monto} received via {metodo}. Ref: {referencia}.'
+        },
+        'pt': {
+            'email_subject': 'Pagamento de ${monto} recebido',
+            'email_html': '''
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:#059669;color:white;padding:20px;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;">Last Mile Delivery</h1>
+                </div>
+                <div style="padding:24px;background:#fff;">
+                    <h2 style="color:#059669;">Pagamento confirmado</h2>
+                    <p>Recebemos seu pagamento de <strong>{monto}</strong>.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                        <tr><td style="padding:8px;color:#6b7280;">Metodo:</td><td style="padding:8px;">{metodo}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Referencia:</td><td style="padding:8px;">{referencia}</td></tr>
+                        <tr><td style="padding:8px;color:#6b7280;">Data:</td><td style="padding:8px;">{fecha}</td></tr>
+                    </table>
+                </div>
+                <div style="padding:16px;background:#f8f9fc;text-align:center;color:#9ca3af;font-size:11px;">
+                    Last Mile Delivery Platform &copy; 2026
+                </div>
             </div>
-        </div>
-        ''',
-        'sms': 'Last Mile: Pago de {monto} recibido via {metodo}. Ref: {referencia}.'
+            ''',
+            'sms': 'Last Mile: Pagamento de {monto} recebido via {metodo}. Ref: {referencia}.'
+        }
     }
 }
+
+# Language detection from country code
+COUNTRY_LANG = {
+    'MX': 'es', 'CO': 'es', 'AR': 'es', 'CL': 'es', 'PE': 'es', 'UY': 'es',
+    'BR': 'pt',
+    'EC': 'es',
+}
+
+# Legacy templates fallback (Spanish only, for backward compatibility)
+TEMPLATES = {}
+for tk, langs in TEMPLATES_I18N.items():
+    TEMPLATES[tk] = langs['es']
 
 
 # ========================================
@@ -246,6 +544,20 @@ class NotificationService:
     def __init__(self):
         self.email = EmailService()
         self.sms = SMSService()
+
+    def _get_tenant_lang(self, emp_id):
+        """Detect language from tenant's fiscal country config."""
+        if not emp_id:
+            return 'es'
+        from db import query
+        try:
+            rows = query("SELECT TFC_COUNTRY_CODE FROM TENANT_FISCAL_CONFIG WHERE EMP_ID=?", [emp_id])
+            if rows:
+                country = rows[0].get('TFC_COUNTRY_CODE', 'MX')
+                return COUNTRY_LANG.get(country, 'es')
+        except Exception:
+            pass
+        return 'es'
 
     def get_empresa_contacts(self, emp_id):
         """Get email and phone for empresa admin and relevant contacts."""
@@ -292,11 +604,16 @@ class NotificationService:
             pass
         return {'email': None, 'phone': None, 'name': None}
 
-    def send(self, template_key, pedido_id, emp_id=None, chofer_id=None, cli_id=None, extra=None):
+    def send(self, template_key, pedido_id, emp_id=None, chofer_id=None, cli_id=None, extra=None, lang=None):
         """Send notification using template. Returns dict with email and sms results."""
-        template = TEMPLATES.get(template_key)
-        if not template:
+        if not lang and emp_id:
+            lang = self._get_tenant_lang(emp_id)
+        if not lang:
+            lang = 'es'
+        lang_templates = TEMPLATES_I18N.get(template_key)
+        if not lang_templates:
             return {'success': False, 'error': f'Template {template_key} not found'}
+        template = lang_templates.get(lang) or lang_templates.get('es')
 
         extra = extra or {}
         base_url = os.environ.get('BASE_URL', 'https://lastmile-platform.onrender.com')
