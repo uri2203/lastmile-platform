@@ -12,7 +12,7 @@ MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN', '')
 
 class StripeProvider:
     COUNTRY_METHODS = {
-        'MX': ['TARJETA', 'OXXO'],
+        'MX': ['TARJETA', 'OXXO', 'SPEI'],
         'BR': ['TARJETA', 'PIX'],
         'CO': ['TARJETA', 'PSE'],
         'AR': ['TARJETA'],
@@ -20,6 +20,35 @@ class StripeProvider:
         'PE': ['TARJETA'],
         'UY': ['TARJETA'],
         'EC': ['TARJETA'],
+        'US': ['TARJETA', 'APPLE_PAY', 'GOOGLE_PAY', 'KLARNA', 'AFFIRM', 'CASHAPP'],
+        'CA': ['TARJETA'],
+        'GB': ['TARJETA', 'BACS'],
+        'DE': ['TARJETA', 'SEPA', 'GIROPAY', 'KLARNA'],
+        'FR': ['TARJETA', 'SEPA', 'KLARNA'],
+        'IT': ['TARJETA', 'SEPA', 'KLARNA'],
+        'NL': ['TARJETA', 'IDEAL', 'SEPA', 'KLARNA'],
+        'ES': ['TARJETA', 'SEPA'],
+        'PT': ['TARJETA', 'SEPA'],
+        'BE': ['TARJETA', 'BANCONTACT', 'SEPA'],
+        'AT': ['TARJETA', 'SEPA', 'KLARNA'],
+        'JP': ['TARJETA', 'KONBINI'],
+        'CN': ['TARJETA', 'ALIPAY', 'WECHAT_PAY'],
+        'KR': ['TARJETA'],
+        'IN': ['TARJETA', 'UPI'],
+        'AU': ['TARJETA'],
+        'SG': ['TARJETA'],
+        'SA': ['TARJETA', 'MADA'],
+        'AE': ['TARJETA'],
+    }
+
+    COUNTRY_CURRENCIES = {
+        'MX': 'mxn', 'BR': 'brl', 'CO': 'cop', 'AR': 'ars',
+        'CL': 'clp', 'PE': 'pen', 'UY': 'uyu', 'EC': 'usd',
+        'US': 'usd', 'CA': 'cad', 'GB': 'gbp', 'EU': 'eur',
+        'DE': 'eur', 'FR': 'eur', 'IT': 'eur', 'NL': 'eur',
+        'ES': 'eur', 'PT': 'eur', 'BE': 'eur', 'AT': 'eur',
+        'JP': 'jpy', 'CN': 'cny', 'KR': 'krw', 'IN': 'inr',
+        'AU': 'aud', 'SG': 'sgd', 'SA': 'sar', 'AE': 'aed',
     }
 
     def __init__(self):

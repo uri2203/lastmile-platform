@@ -56,6 +56,47 @@ def get_plan_config(plan_name):
 # STRIPE SERVICE
 # ========================================
 class StripeService:
+    # Global payment methods per country
+    COUNTRY_PAYMENT_METHODS = {
+        'MX': ['card', 'oxxo'],
+        'BR': ['card'],
+        'CO': ['card'],
+        'AR': ['card'],
+        'CL': ['card'],
+        'PE': ['card'],
+        'UY': ['card'],
+        'EC': ['card'],
+        'US': ['card', 'us_bank_account', 'klarna', 'affirm', 'cashapp'],
+        'CA': ['card', 'acss_debit'],
+        'GB': ['card', 'bacs_debit'],
+        'DE': ['card', 'sepa_debit', 'giropay', 'klarna'],
+        'FR': ['card', 'sepa_debit', 'klarna'],
+        'IT': ['card', 'sepa_debit', 'klarna'],
+        'NL': ['card', 'ideal', 'sepa_debit', 'klarna'],
+        'ES': ['card', 'sepa_debit'],
+        'PT': ['card', 'sepa_debit'],
+        'BE': ['card', 'bancontact', 'sepa_debit'],
+        'AT': ['card', 'sepa_debit', 'klarna'],
+        'JP': ['card', 'konbini'],
+        'CN': ['card', 'alipay', 'wechat_pay'],
+        'KR': ['card'],
+        'IN': ['card', 'upi'],
+        'AU': ['card'],
+        'SG': ['card'],
+        'SA': ['card', 'mada'],
+        'AE': ['card'],
+    }
+
+    COUNTRY_CURRENCIES = {
+        'MX': 'mxn', 'BR': 'brl', 'CO': 'cop', 'AR': 'ars',
+        'CL': 'clp', 'PE': 'pen', 'UY': 'uyu', 'EC': 'usd',
+        'US': 'usd', 'CA': 'cad', 'GB': 'gbp', 'EU': 'eur',
+        'DE': 'eur', 'FR': 'eur', 'IT': 'eur', 'NL': 'eur',
+        'ES': 'eur', 'PT': 'eur', 'BE': 'eur', 'AT': 'eur',
+        'JP': 'jpy', 'CN': 'cny', 'KR': 'krw', 'IN': 'inr',
+        'AU': 'aud', 'SG': 'sgd', 'SA': 'sar', 'AE': 'aed',
+    }
+
     def __init__(self):
         self.secret_key = os.environ.get('STRIPE_SECRET_KEY', '')
         self.webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
@@ -66,6 +107,14 @@ class StripeService:
             'Authorization': f'Bearer {self.secret_key}',
             'Content-Type': 'application/json'
         }
+
+    def get_payment_methods_for_country(self, country_code):
+        """Get supported payment methods for a country"""
+        return self.COUNTRY_PAYMENT_METHODS.get(country_code.upper(), ['card'])
+
+    def get_currency_for_country(self, country_code):
+        """Get currency for a country"""
+        return self.COUNTRY_CURRENCIES.get(country_code.upper(), 'usd')
 
     def create_customer(self, empresa):
         if not self.enabled:
@@ -90,21 +139,31 @@ class StripeService:
         })
         return resp.json()
 
-    def create_checkout_session(self, emp_id, plan_name, success_url, cancel_url):
+    def create_checkout_session(self, emp_id, plan_name, success_url, cancel_url, country_code='MX'):
         if not self.enabled:
             return {'error': 'Stripe no configurado'}
         import requests
+        
         plan = get_plan_config(plan_name)
-        resp = requests.post('https://api.stripe.com/v1/checkout/sessions', headers=self._headers(), data={
+        payment_methods = self.get_payment_methods_for_country(country_code)
+        currency = self.get_currency_for_country(country_code)
+        
+        data = {
             'mode': 'subscription',
-            'payment_method_types[]': 'card',
             'line_items[0][price]': plan['stripe_price_id'],
             'line_items[0][quantity]': 1,
             'success_url': success_url,
             'cancel_url': cancel_url,
             'metadata[emp_id]': emp_id,
             'metadata[plan]': plan_name,
-        })
+            'metadata[country]': country_code,
+        }
+        
+        # Add payment method types
+        for i, method in enumerate(payment_methods):
+            data[f'payment_method_types[{i}]'] = method
+        
+        resp = requests.post('https://api.stripe.com/v1/checkout/sessions', headers=self._headers(), data=data)
         return resp.json()
 
     def cancel_subscription(self, subscription_id):

@@ -101,10 +101,16 @@ def mercadopago_webhook():
 COUNTRY_CURRENCIES = {
     'MX': 'mxn', 'BR': 'brl', 'CO': 'cop', 'AR': 'ars',
     'CL': 'clp', 'PE': 'pen', 'UY': 'uyu', 'EC': 'usd',
+    'US': 'usd', 'CA': 'cad', 'GB': 'gbp', 'EU': 'eur',
+    'DE': 'eur', 'FR': 'eur', 'IT': 'eur', 'NL': 'eur',
+    'ES': 'eur', 'PT': 'eur', 'BE': 'eur', 'AT': 'eur',
+    'IE': 'eur', 'JP': 'jpy', 'CN': 'cny', 'KR': 'krw',
+    'IN': 'inr', 'AU': 'aud', 'SG': 'sgd', 'HK': 'hkd',
+    'SA': 'sar', 'AE': 'aed',
 }
 
 COUNTRY_PAYMENT_METHODS = {
-    'MX': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'oxxo']},
+    'MX': {'stripe': ['card', 'oxxo'], 'mercadopago': ['visa', 'mastercard', 'oxxo']},
     'BR': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'pix', 'boleto']},
     'CO': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'pse', 'nequi']},
     'AR': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'mercadopago_account', 'rapipago']},
@@ -112,6 +118,27 @@ COUNTRY_PAYMENT_METHODS = {
     'PE': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'yape', 'plin']},
     'UY': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'mercadopago_account']},
     'EC': {'stripe': ['card'], 'mercadopago': ['visa', 'mastercard', 'pichincha']},
+    'US': {'stripe': ['card', 'us_bank_account', 'klarna', 'affirm', 'cashapp'], 'mercadopago': []},
+    'CA': {'stripe': ['card', 'acss_debit'], 'mercadopago': []},
+    'GB': {'stripe': ['card', 'bacs_debit'], 'mercadopago': []},
+    'DE': {'stripe': ['card', 'sepa_debit', 'giropay', 'klarna'], 'mercadopago': []},
+    'FR': {'stripe': ['card', 'sepa_debit', 'klarna'], 'mercadopago': []},
+    'IT': {'stripe': ['card', 'sepa_debit', 'klarna'], 'mercadopago': []},
+    'NL': {'stripe': ['card', 'ideal', 'sepa_debit', 'klarna'], 'mercadopago': []},
+    'ES': {'stripe': ['card', 'sepa_debit'], 'mercadopago': []},
+    'PT': {'stripe': ['card', 'sepa_debit'], 'mercadopago': []},
+    'BE': {'stripe': ['card', 'bancontact', 'sepa_debit'], 'mercadopago': []},
+    'AT': {'stripe': ['card', 'sepa_debit', 'klarna'], 'mercadopago': []},
+    'IE': {'stripe': ['card', 'sepa_debit'], 'mercadopago': []},
+    'JP': {'stripe': ['card', 'konbini', 'customer_balance'], 'mercadopago': []},
+    'CN': {'stripe': ['card', 'alipay', 'wechat_pay'], 'mercadopago': []},
+    'KR': {'stripe': ['card'], 'mercadopago': []},
+    'IN': {'stripe': ['card', 'upi', 'netbanking'], 'mercadopago': []},
+    'AU': {'stripe': ['card', 'au_becs_debit'], 'mercadopago': []},
+    'SG': {'stripe': ['card', 'paynow'], 'mercadopago': []},
+    'HK': {'stripe': ['card', 'fps'], 'mercadopago': []},
+    'SA': {'stripe': ['card', 'mada'], 'mercadopago': []},
+    'AE': {'stripe': ['card'], 'mercadopago': []},
 }
 
 

@@ -3271,6 +3271,7 @@ def create_checkout():
     data = request.get_json() or {}
     plan_name = data.get('plan', 'STARTER')
     provider = data.get('provider', 'stripe')
+    country_code = data.get('country_code', 'MX').upper()
 
     empresa = query("SELECT * FROM EMPRESAS WHERE EMP_ID=?", [emp_id])
     if not empresa:
@@ -3282,7 +3283,7 @@ def create_checkout():
     cancel_url = f'{base_url}/panel-admin.html?billing=cancel'
 
     if provider == 'stripe':
-        result = stripe_service.create_checkout_session(emp_id, plan_name, success_url, cancel_url)
+        result = stripe_service.create_checkout_session(emp_id, plan_name, success_url, cancel_url, country_code)
         if 'error' in result:
             return jsonify({'success': False, 'error': result['error']}), 400
         return jsonify({'success': True, 'checkout_url': result.get('url'), 'session_id': result.get('id')})
