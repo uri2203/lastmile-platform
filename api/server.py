@@ -1150,10 +1150,12 @@ def swagger_ui():
 # ========================================
 LOGIN_MAX_ATTEMPTS = 3
 LOGIN_LOCKOUT_MINUTES = 15
+_lockout_cols_migrated = False
 
 @app.route('/api/auth/login', methods=['POST'])
 @limiter.limit("10 per minute")
 def auth_login():
+    global _lockout_cols_migrated
     data = request.get_json() or {}
     user = (data.get('user') or '').strip()
     passwd = data.get('pass') or ''
@@ -1161,6 +1163,14 @@ def auth_login():
 
     if not user or not passwd:
         return jsonify({'success': False, 'error': 'Usuario y contrasena requeridos'})
+
+    # Ensure lockout columns exist (run once)
+    if not _lockout_cols_migrated:
+        try:
+            ensure_lockout_columns()
+            _lockout_cols_migrated = True
+        except Exception:
+            pass
 
     plain = passwd.strip()
 
