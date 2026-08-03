@@ -354,6 +354,30 @@ else:
     except Exception as e:
         print(f'[DB] Billing columns check skipped: {e}')
 
+    # Auto-add lockout columns if missing
+    try:
+        ensure_lockout_columns()
+    except Exception as e:
+        print(f'[DB] Lockout columns check skipped: {e}')
+
+
+def ensure_lockout_columns():
+    """Add account lockout columns to USUARIOS if they don't exist."""
+    if not USE_POSTGRES:
+        return
+    try:
+        execute("ALTER TABLE USUARIOS ADD COLUMN IF NOT EXISTS USU_FAILED_ATTEMPTS INTEGER DEFAULT 0")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE USUARIOS ADD COLUMN IF NOT EXISTS USU_LOCKED_UNTIL TIMESTAMP")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE USUARIOS ADD COLUMN IF NOT EXISTS USU_LAST_FAILED_AT TIMESTAMP")
+    except Exception:
+        pass
+
 
 def get_emp_id():
     """Tenant de la request, derivado del TOKEN verificado (nunca del header)."""
@@ -1124,6 +1148,9 @@ def swagger_ui():
 # ========================================
 # AUTH: Login
 # ========================================
+LOGIN_MAX_ATTEMPTS = 3
+LOGIN_LOCKOUT_MINUTES = 15
+
 @app.route('/api/auth/login', methods=['POST'])
 @limiter.limit("10 per minute")
 def auth_login():
@@ -1140,7 +1167,8 @@ def auth_login():
     try:
         sql = (
             "SELECT U.USU_ID, U.USU_USUARIO, U.USU_NOMBRE, U.USU_ROL, "
-            "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE "
+            "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE, "
+            "U.USU_FAILED_ATTEMPTS, U.USU_LOCKED_UNTIL "
             "FROM USUARIOS U "
             "LEFT JOIN EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID "
             "WHERE UPPER(U.USU_USUARIO) = UPPER(?) AND U.USU_ACTIVO = 'S'"
@@ -1151,10 +1179,41 @@ def auth_login():
             params.append(emp_id_param)
         rows = query(sql, params)
     except Exception:
-        return jsonify({'success': False, 'error': 'Tabla USUARIOS no existe. Ejecuta el script de setup.'})
+        try:
+            sql = (
+                "SELECT U.USU_ID, U.USU_USUARIO, U.USU_NOMBRE, U.USU_ROL, "
+                "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE "
+                "FROM USUARIOS U "
+                "LEFT JOIN EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID "
+                "WHERE UPPER(U.USU_USUARIO) = UPPER(?) AND U.USU_ACTIVO = 'S'"
+            )
+            params = [user]
+            if emp_id_param:
+                sql += " AND U.USU_EMP_ID = ?"
+                params.append(emp_id_param)
+            rows = query(sql, params)
+        except Exception:
+            return jsonify({'success': False, 'error': 'Tabla USUARIOS no existe. Ejecuta el script de setup.'})
 
     if not rows:
         return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
+
+    # Check account lockout
+    now = datetime.utcnow()
+    for row in rows:
+        locked_until = row.get('USU_LOCKED_UNTIL')
+        if locked_until:
+            if isinstance(locked_until, str):
+                try:
+                    locked_until = datetime.fromisoformat(locked_until.replace('Z', '+00:00'))
+                except:
+                    locked_until = None
+            if locked_until and locked_until > now:
+                remaining = int((locked_until - now).total_seconds() / 60) + 1
+                return jsonify({
+                    'success': False,
+                    'error': f'Cuenta bloqueada. Intenta de nuevo en {remaining} minutos'
+                }), 429
 
     # Verifica la contrasena de cada usuario que coincide (usuarios duplicados entre tenants)
     matched = None
@@ -1165,7 +1224,42 @@ def auth_login():
             break
 
     if not matched:
-        return jsonify({'success': False, 'error': 'Usuario o contrasena incorrectos'})
+        # Increment failed attempts for all matching users
+        for row in rows:
+            try:
+                attempts = (row.get('USU_FAILED_ATTEMPTS') or 0) + 1
+                if attempts >= LOGIN_MAX_ATTEMPTS:
+                    lock_until = now + timedelta(minutes=LOGIN_LOCKOUT_MINUTES)
+                    execute(
+                        "UPDATE USUARIOS SET USU_FAILED_ATTEMPTS=?, USU_LOCKED_UNTIL=?, USU_LAST_FAILED_AT=NOW() WHERE USU_ID=?",
+                        [attempts, lock_until, row['USU_ID']]
+                    )
+                else:
+                    execute(
+                        "UPDATE USUARIOS SET USU_FAILED_ATTEMPTS=?, USU_LAST_FAILED_AT=NOW() WHERE USU_ID=?",
+                        [attempts, row['USU_ID']]
+                    )
+            except Exception:
+                pass
+        remaining_attempts = LOGIN_MAX_ATTEMPTS - ((rows[0].get('USU_FAILED_ATTEMPTS') or 0) + 1)
+        if remaining_attempts <= 0:
+            return jsonify({
+                'success': False,
+                'error': f'Cuenta bloqueada por {LOGIN_LOCKOUT_MINUTES} minutos por múltiples intentos fallidos'
+            }), 429
+        return jsonify({
+            'success': False,
+            'error': f'Usuario o contrasena incorrectos. Te quedan {remaining_attempts} intentos'
+        })
+
+    # Login exitoso: reset failed attempts
+    try:
+        execute(
+            "UPDATE USUARIOS SET USU_FAILED_ATTEMPTS=0, USU_LOCKED_UNTIL=NULL, USU_LAST_FAILED_AT=NULL WHERE USU_ID=?",
+            [matched['USU_ID']]
+        )
+    except Exception:
+        pass
 
     # Migracion transparente: si el hash almacenado era SHA-256 heredado, re-hashea a bcrypt.
     if is_legacy_hash(str(matched.get('USU_PASS', '')).strip()):
@@ -2691,6 +2785,38 @@ def update_usuario(usu_id):
                  usu_id, emp_id]
             )
         return jsonify({'success': True, 'message': 'Usuario actualizado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/usuarios/<int:usu_id>/unlock', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
+def unlock_usuario(usu_id):
+    """Desbloquea una cuenta bloqueada por intentos fallidos."""
+    emp_id = get_emp_id()
+    try:
+        execute(
+            "UPDATE USUARIOS SET USU_FAILED_ATTEMPTS=0, USU_LOCKED_UNTIL=NULL, USU_LAST_FAILED_AT=NULL WHERE USU_ID=? AND USU_EMP_ID=?",
+            [usu_id, emp_id]
+        )
+        return jsonify({'success': True, 'message': 'Cuenta desbloqueada'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/usuarios/lock-status', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
+def lock_status():
+    """Lista usuarios bloqueados en el tenant."""
+    emp_id = get_emp_id()
+    try:
+        rows = query(
+            "SELECT USU_ID, USU_USUARIO, USU_NOMBRE, USU_FAILED_ATTEMPTS, USU_LOCKED_UNTIL, USU_LAST_FAILED_AT "
+            "FROM USUARIOS WHERE USU_EMP_ID=? AND (USU_FAILED_ATTEMPTS > 0 OR USU_LOCKED_UNTIL IS NOT NULL) "
+            "ORDER BY USU_LAST_FAILED_AT DESC",
+            [emp_id]
+        )
+        return jsonify({'success': True, 'data': rows})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
