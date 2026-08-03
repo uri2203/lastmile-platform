@@ -1518,6 +1518,12 @@ def change_password():
 @app.route('/api/auth/verify-email', methods=['GET'])
 def verify_email():
     """Verifica el email de una cuenta nueva con el token enviado."""
+    # Ensure verification columns exist
+    try:
+        ensure_lockout_columns()
+    except Exception:
+        pass
+
     token = request.args.get('token', '').strip()
     if not token:
         return send_from_directory('web', 'landing.html')
@@ -1558,6 +1564,12 @@ def verify_email():
 @limiter.limit("3 per minute")
 def resend_verification():
     """Reenvía el email de verificación."""
+    # Ensure verification columns exist
+    try:
+        ensure_lockout_columns()
+    except Exception:
+        pass
+
     data = request.get_json() or {}
     email = (data.get('email') or '').strip().lower()
 
