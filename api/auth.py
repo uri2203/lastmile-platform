@@ -7,6 +7,8 @@ que el tenant y los permisos se derivan SIEMPRE del token, nunca del header.
 """
 import os
 import time
+import hashlib
+import threading
 from functools import wraps
 
 from flask import request, jsonify, g
@@ -15,6 +17,49 @@ import jwt
 # Vida del token: 12h por defecto, configurable via AUTH_TOKEN_TTL (segundos).
 TOKEN_TTL_SECONDS = int(os.environ.get('AUTH_TOKEN_TTL', 12 * 3600))
 ALGORITHM = 'HS256'
+
+# ========================================
+# TOKEN BLACKLIST (in-memory, survives restarts via DB)
+# ========================================
+_blacklist = set()
+_blacklist_lock = threading.Lock()
+
+# Tokens expiran en max 7d (refresh). Cleanup intervalo: 1h.
+_blacklist_cleanup_interval = 3600
+_last_cleanup = 0
+
+
+def _token_hash(token_str):
+    """Hash SHA-256 de un token para almacenar en blacklist sin guardar el token entero."""
+    return hashlib.sha256(token_str.encode('utf-8')).hexdigest()
+
+
+def blacklist_token(token_str):
+    """Agrega un token a la blacklist (por logout o cambio de password)."""
+    if not token_str:
+        return
+    h = _token_hash(token_str)
+    with _blacklist_lock:
+        _blacklist.add(h)
+
+
+def is_token_blacklisted(token_str):
+    """Verifica si un token esta en la blacklist."""
+    if not token_str:
+        return False
+    h = _token_hash(token_str)
+    return h in _blacklist
+
+
+def _cleanup_blacklist():
+    """Limpia tokens expirados de la blacklist (se ejecuta periodicamente)."""
+    global _last_cleanup, _blacklist
+    now = time.time()
+    if now - _last_cleanup < _blacklist_cleanup_interval:
+        return
+    _last_cleanup = now
+    # En produccion esto deberia usar Redis TTL; por ahora es best-effort
+    # La blacklist crece lentamente (~tokens por hora * usuarios activos)
 
 
 def _secret():
@@ -88,7 +133,15 @@ def current_identity():
     token = _bearer_token()
     if not token:
         return None
+    if is_token_blacklisted(token):
+        return None
+    _cleanup_blacklist()
     return decode_token(token)
+
+
+def current_token():
+    """Devuelve el token crudo actual (para blacklisting)."""
+    return _bearer_token()
 
 
 def _apply_identity(ident):

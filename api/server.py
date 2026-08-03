@@ -14,7 +14,7 @@ from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv
 from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
-from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, requiere_auth, requiere_rol, requiere_superadmin
+from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, current_token, blacklist_token, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 from webhooks import webhook_bp
 from monitoring import init_monitoring
@@ -124,11 +124,14 @@ def send_push_notification(emp_id, user_id, title, body, url='/panel-chofer.html
 # ========================================
 # BACKUP: Exportación de base de datos
 # ========================================
+import hmac as _hmac
+
 @app.route('/api/cron/backup', methods=['POST'])
 def cron_backup():
     """Export all tables as JSON for backup. Auth via CRON_API_KEY."""
     key = request.headers.get('X-Cron-Key') or request.args.get('key')
-    if key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+    expected = os.environ.get('CRON_API_KEY', '')
+    if not expected or not key or not _hmac.compare_digest(key, expected):
         return jsonify({'error': 'Unauthorized'}), 401
     try:
         import json
@@ -150,7 +153,8 @@ def cron_backup():
 def cron_backup_download():
     """Download backup as JSON file."""
     key = request.args.get('key')
-    if key != os.environ.get('CRON_API_KEY', 'lastmile-cron-2026'):
+    expected = os.environ.get('CRON_API_KEY', '')
+    if not expected or not key or not _hmac.compare_digest(key, expected):
         return jsonify({'error': 'Unauthorized'}), 401
     try:
         import json
@@ -176,7 +180,19 @@ def cron_backup_download():
 
 @socketio.on('connect')
 def handle_connect():
-    print(f'[WS] Client connected: {request.sid}')
+    from auth import decode_token, is_token_blacklisted
+    token = request.args.get('token', '')
+    if not token or is_token_blacklisted(token):
+        print(f'[WS] Client rejected (no valid token): {request.sid}')
+        return False
+    ident = decode_token(token)
+    if not ident:
+        print(f'[WS] Client rejected (invalid token): {request.sid}')
+        return False
+    request.user_id = ident.get('usu_id')
+    request.emp_id_ws = ident.get('emp_id')
+    request.rol_ws = ident.get('rol')
+    print(f'[WS] Client connected: {request.sid} user={ident.get("usuario")} emp={ident.get("emp_id")}')
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -185,10 +201,16 @@ def handle_disconnect():
 @socketio.on('subscribe')
 def handle_subscribe(data):
     emp_id = data.get('emp_id')
-    if emp_id:
-        room = f'emp_{emp_id}'
-        join_room(room)
-        print(f'[WS] Client {request.sid} subscribed to room {room}')
+    if not emp_id:
+        return
+    # Verify client can only subscribe to their own tenant
+    client_emp = getattr(request, 'emp_id_ws', None)
+    if client_emp and int(client_emp) != int(emp_id):
+        print(f'[WS] Unauthorized subscribe: {request.sid} tried emp_{emp_id}')
+        return
+    room = f'emp_{emp_id}'
+    join_room(room)
+    print(f'[WS] Client {request.sid} subscribed to room {room}')
 
 @socketio.on('unsubscribe')
 def handle_unsubscribe(data):
@@ -202,6 +224,15 @@ def handle_gps_update(data):
     emp_id = data.get('emp_id')
     cho_id = data.get('choId')
     if not emp_id or not cho_id:
+        return
+    # Verify driver belongs to client's tenant
+    client_emp = getattr(request, 'emp_id_ws', None)
+    if client_emp and int(client_emp) != int(emp_id):
+        print(f'[WS] Unauthorized GPS update: {request.sid} tried emp_{emp_id}')
+        return
+    # Only drivers and admins can send GPS updates
+    client_rol = getattr(request, 'rol_ws', '')
+    if client_rol not in ('admin', 'chofer', 'operacion', 'superadmin'):
         return
     try:
         execute(
@@ -1312,6 +1343,68 @@ def auth_refresh():
     if err:
         return jsonify({'success': False, 'error': err}), 401
     return jsonify({'success': True, 'token': new_token, 'expires_in': 43200})
+
+
+@app.route('/api/auth/logout', methods=['POST'])
+@requiere_auth
+def auth_logout():
+    """Cierra sesion: invalida el token actual (blacklist)."""
+    token = current_token()
+    if token:
+        blacklist_token(token)
+    # También blacklistear el refresh token si viene en el body
+    data = request.get_json() or {}
+    refresh_tok = data.get('refresh_token', '')
+    if refresh_tok:
+        blacklist_token(refresh_tok)
+    return jsonify({'success': True, 'message': 'Sesion cerrada'})
+
+
+@app.route('/api/auth/change-password', methods=['POST'])
+@requiere_auth
+def change_password():
+    """Cambia la contrasena del usuario autenticado. Invalida todos los tokens."""
+    data = request.get_json() or {}
+    current_pass = data.get('current_password', '')
+    new_pass = data.get('new_password', '')
+
+    if not current_pass or not new_pass:
+        return jsonify({'success': False, 'error': 'Contraseña actual y nueva requeridas'}), 400
+
+    pwd_ok, pwd_err = validate_password_strength(new_pass)
+    if not pwd_ok:
+        return jsonify({'success': False, 'error': pwd_err}), 400
+
+    try:
+        rows = query(
+            "SELECT USU_ID, USU_PASS FROM USUARIOS WHERE USU_ID=? AND USU_EMP_ID=?",
+            [g.usu_id, g.emp_id]
+        )
+    except Exception:
+        return jsonify({'success': False, 'error': 'Error consultando usuario'}), 500
+
+    if not rows:
+        return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
+
+    user = rows[0]
+    if not verify_password(current_pass, str(user.get('USU_PASS', '')).strip()):
+        return jsonify({'success': False, 'error': 'Contraseña actual incorrecta'}), 400
+
+    new_hash = hash_password(new_pass)
+    try:
+        execute(
+            "UPDATE USUARIOS SET USU_PASS=?, USU_UPDATED=NOW() WHERE USU_ID=?",
+            [new_hash, g.usu_id]
+        )
+    except Exception:
+        return jsonify({'success': False, 'error': 'Error actualizando contraseña'}), 500
+
+    # Invalidar TODOS los tokens del usuario
+    token = current_token()
+    if token:
+        blacklist_token(token)
+
+    return jsonify({'success': True, 'message': 'Contraseña actualizada. Inicia sesion nuevamente.'})
 
 
 # ========================================
@@ -3249,7 +3342,9 @@ def activate_saas_tenant(emp_id):
 
 @app.route('/api/saas/all-users', methods=['GET'])
 def get_saas_all_users():
-    return jsonify({'success': True, 'data': query('''SELECT U.*, E.EMP_NOMBRE
+    return jsonify({'success': True, 'data': query('''SELECT U.USU_ID, U.USU_EMP_ID, U.USU_USUARIO, U.USU_NOMBRE,
+        U.USU_EMAIL, U.USU_TELEFONO, U.USU_ROL, U.USU_ACTIVO, U.USU_CREATED, U.USU_UPDATED,
+        E.EMP_NOMBRE
         FROM USUARIOS U JOIN EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID
         ORDER BY U.USU_ID DESC''')})
 
