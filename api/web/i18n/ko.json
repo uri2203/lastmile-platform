@@ -881,5 +881,19 @@
     "tab_pricing": "가격",
     "tab_fraud": "사기",
     "tab_sentiment": "감정분석"
+  },
+  "legal": {
+    "cookie_accept_all": "모두 수락",
+    "cookie_banner_title": "쿠키를 사용합니다",
+    "cookie_manage": "설정",
+    "cookie_reject_all": "필수 항목만",
+    "cookie_save": "저장",
+    "cookies": "쿠키 정책",
+    "deslinde": "면책조항",
+    "pagos": "결제 정책",
+    "privacidad": "개인정보 처리방침",
+    "regulaciones_ia": "AI 규제",
+    "sla": "서비스 수준 협의",
+    "terminos": "약관 및 조건"
   }
 }

@@ -881,5 +881,19 @@
     "tab_pricing": "التسعير",
     "tab_fraud": "الاحتيال",
     "tab_sentiment": "المشاعر"
+  },
+  "legal": {
+    "cookie_accept_all": "قبول الكل",
+    "cookie_banner_title": "نستخدم ملفات تعريف الارتباط",
+    "cookie_manage": "تفضيلات",
+    "cookie_reject_all": "الضروري فقط",
+    "cookie_save": "حفظ",
+    "cookies": "سياسة ملفات تعريف الارتباط",
+    "deslinde": "إخلاء مسؤولية",
+    "pagos": "سياسة المدفوعات",
+    "privacidad": "إشعار الخصوصية",
+    "regulaciones_ia": "لوائح الذكاء الاصطناعي",
+    "sla": "اتفاقية خدمة الخدمة",
+    "terminos": "الشروط والبنود"
   }
 }

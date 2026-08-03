@@ -6,6 +6,7 @@
     <title>Onboarding Fiscal | Last Mile Delivery</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="js/i18n.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:var(--bg-primary,#0f0f1a);color:var(--text-primary,#e4e4e7);min-height:100vh;display:flex;align-items:center;justify-content:center}
@@ -56,9 +57,23 @@
 </head>
 <body>
 <div class="wizard">
+    <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-secondary);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;position:fixed;top:16px;right:16px;z-index:100;">
+      <option value="es">🇲🇽 ES</option>
+      <option value="en">🇺🇸 EN</option>
+      <option value="pt">🇧🇷 PT</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="zh">🇨🇳 ZH</option>
+      <option value="ja">🇯🇵 JA</option>
+      <option value="ko">🇰🇷 KO</option>
+      <option value="ar">🇸🇦 AR</option>
+      <option value="hi">🇮🇳 HI</option>
+      <option value="it">🇮🇹 IT</option>
+      <option value="nl">🇳🇱 NL</option>
+    </select>
     <div class="wizard-header">
-        <h1><i class="fas fa-globe" style="color:var(--accent,#ff6b35);margin-right:8px;"></i> Configuracion Fiscal</h1>
-        <p>Configura la facturacion electronica para tu pais en 4 pasos</p>
+        <h1 data-i18n="fiscal.title"><i class="fas fa-globe" style="color:var(--accent,#ff6b35);margin-right:8px;"></i> Configuracion Fiscal</h1>
+        <p data-i18n="fiscal.subtitle">Configura la facturacion electronica para tu pais en 4 pasos</p>
     </div>
     <div class="steps">
         <div class="step-dot active" id="dot-1">1</div>
@@ -73,7 +88,7 @@
     <!-- STEP 1: PAIS -->
     <div class="step" id="step-1">
         <div class="card">
-            <h2>Selecciona tu Pais</h2>
+            <h2 data-i18n="fiscal.selectCountry">Selecciona tu Pais</h2>
             <div class="subtitle">El proveedor fiscal se configurara automaticamente</div>
             <div class="country-grid" id="countryGrid"></div>
             <div id="selectedInfo" style="padding:12px;border-radius:8px;background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.15);display:none">
@@ -82,13 +97,13 @@
                 <div style="margin-top:8px" id="selPaymentMethods"></div>
             </div>
         </div>
-        <div class="btn-group"><div></div><button class="btn btn-primary" onclick="goStep(2)" id="btn-step1" disabled>Siguiente <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
+        <div class="btn-group"><div></div><button class="btn btn-primary" onclick="goStep(2)" id="btn-step1" disabled><span data-i18n="fiscal.next">Siguiente</span> <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
     </div>
 
     <!-- STEP 2: CREDENCIALES -->
     <div class="step hidden" id="step-2">
         <div class="card">
-            <h2>Credenciales del Proveedor</h2>
+            <h2 data-i18n="fiscal.credentials">Credenciales del Proveedor</h2>
             <div class="subtitle" id="step2Subtitle">Ingresa las credenciales de tu proveedor fiscal</div>
             <div class="form-group"><label>API Key / Token *</label><input type="password" class="input" id="fiscal-api-key" placeholder="Tu API key del proveedor fiscal"></div>
             <div class="form-group"><label>API Secret (opcional)</label><input type="password" class="input" id="fiscal-api-secret" placeholder="Clave secreta si aplica"></div>
@@ -98,29 +113,29 @@
                 <p style="font-size:11px;color:var(--text-muted,#71717a)" id="credentialHelp">Consulta la documentacion de tu proveedor fiscal para obtener las credenciales de acceso a la API.</p>
             </div>
         </div>
-        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(1)"><i class="fas fa-arrow-left" style="font-size:11px"></i> Atras</button><button class="btn btn-primary" onclick="goStep(3)">Siguiente <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
+        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(1)"><i class="fas fa-arrow-left" style="font-size:11px"></i> <span data-i18n="fiscal.back">Atras</span></button><button class="btn btn-primary" onclick="goStep(3)"><span data-i18n="fiscal.next">Siguiente</span> <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
     </div>
 
     <!-- STEP 3: PROBAR -->
     <div class="step hidden" id="step-3">
         <div class="card">
-            <h2>Probar Conexion</h2>
+            <h2 data-i18n="fiscal.testConnection">Probar Conexion</h2>
             <div class="subtitle">Verifica que las credenciales sean correctas</div>
-            <button class="btn btn-primary" onclick="testConnection()" id="btn-test"><i class="fas fa-plug" style="font-size:11px"></i> Probar Conexion</button>
+            <button class="btn btn-primary" onclick="testConnection()" id="btn-test"><i class="fas fa-plug" style="font-size:11px"></i> <span data-i18n="fiscal.testConnectionBtn">Probar Conexion</span></button>
             <div class="status-box" id="testStatus"></div>
         </div>
-        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(2)"><i class="fas fa-arrow-left" style="font-size:11px"></i> Atras</button><button class="btn btn-primary" onclick="goStep(4)">Siguiente <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
+        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(2)"><i class="fas fa-arrow-left" style="font-size:11px"></i> <span data-i18n="fiscal.back">Atras</span></button><button class="btn btn-primary" onclick="goStep(4)"><span data-i18n="fiscal.next">Siguiente</span> <i class="fas fa-arrow-right" style="font-size:11px"></i></button></div>
     </div>
 
     <!-- STEP 4: GUARDAR -->
     <div class="step hidden" id="step-4">
         <div class="card">
-            <h2>Guardar Configuracion</h2>
+            <h2 data-i18n="fiscal.saveConfig">Guardar Configuracion</h2>
             <div class="subtitle">Revisa y guarda la configuracion fiscal</div>
             <div id="summary" style="padding:16px;border-radius:8px;background:var(--bg-primary,#0f0f1a);border:1px solid var(--border-primary,#27272a)"></div>
             <div class="status-box" id="saveStatus"></div>
         </div>
-        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(3)"><i class="fas fa-arrow-left" style="font-size:11px"></i> Atras</button><button class="btn btn-success" onclick="saveConfig()"><i class="fas fa-save" style="font-size:11px"></i> Guardar y Activar</button></div>
+        <div class="btn-group"><button class="btn btn-secondary" onclick="goStep(3)"><i class="fas fa-arrow-left" style="font-size:11px"></i> <span data-i18n="fiscal.back">Atras</span></button><button class="btn btn-success" onclick="saveConfig()"><i class="fas fa-save" style="font-size:11px"></i> <span data-i18n="fiscal.saveAndActivate">Guardar y Activar</span></button></div>
     </div>
 
     <!-- SUCCESS -->
@@ -128,10 +143,10 @@
         <div class="card">
             <div class="success-screen">
                 <div class="icon">🎉</div>
-                <h2>Configuracion Fiscal Activada</h2>
+                <h2 data-i18n="fiscal.activated">Configuracion Fiscal Activada</h2>
                 <p>Tu plataforma ya puede emitir documentos fiscales en <strong id="doneCountry"></strong></p>
                 <div id="doneSummary" style="text-align:left;padding:16px;border-radius:8px;background:var(--bg-primary,#0f0f1a);border:1px solid var(--border-primary,#27272a);margin-bottom:20px"></div>
-                <button class="btn btn-primary" onclick="window.location.href='panel-admin.html'"><i class="fas fa-arrow-right" style="font-size:11px"></i> Ir al Panel</button>
+                <button class="btn btn-primary" onclick="window.location.href='panel-admin.html'"><i class="fas fa-arrow-right" style="font-size:11px"></i> <span data-i18n="fiscal.goToPanel">Ir al Panel</span></button>
             </div>
         </div>
     </div>
@@ -264,6 +279,12 @@ async function saveConfig() {
 }
 
 init();
+</script>
+<script>
+  if(window.i18n) window.i18n.init().then(() => {
+    const sel = document.getElementById('lang-select');
+    if(sel) sel.value = window.i18n.lang;
+  });
 </script>
 </body>
 </html>

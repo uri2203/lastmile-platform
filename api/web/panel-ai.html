@@ -81,6 +81,20 @@ tr:hover td{background:var(--bg-card-hover)}
   <div class="header">
     <h1><i class="fas fa-brain"></i> <span data-i18n="ai.title">Inteligencia Artificial</span></h1>
     <div class="header-actions">
+      <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-secondary);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">
+        <option value="es">🇲🇽 ES</option>
+        <option value="en">🇺🇸 EN</option>
+        <option value="pt">🇧🇷 PT</option>
+        <option value="fr">🇫🇷 FR</option>
+        <option value="de">🇩🇪 DE</option>
+        <option value="zh">🇨🇳 ZH</option>
+        <option value="ja">🇯🇵 JA</option>
+        <option value="ko">🇰🇷 KO</option>
+        <option value="ar">🇸🇦 AR</option>
+        <option value="hi">🇮🇳 HI</option>
+        <option value="it">🇮🇹 IT</option>
+        <option value="nl">🇳🇱 NL</option>
+      </select>
       <span class="badge badge-success"><i class="fas fa-circle" style="font-size:6px"></i> 8 Agentes Activos</span>
       <a href="panel-admin.html" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-left"></i> <span data-i18n="ai.back">Volver</span></a>
     </div>
@@ -337,7 +351,10 @@ tr:hover td{background:var(--bg-card-hover)}
 
   <script>
 // Init i18n
-if(window.i18n) window.i18n.init();
+if(window.i18n) window.i18n.init().then(() => {
+  const sel = document.getElementById('lang-select');
+  if(sel) sel.value = window.i18n.lang;
+});
 
 const API = window.API_BASE || '';
 const HEADERS = {'Content-Type':'application/json'};

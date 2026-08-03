@@ -881,5 +881,19 @@
     "tab_pricing": "定价",
     "tab_fraud": "欺诈",
     "tab_sentiment": "情感"
+  },
+  "legal": {
+    "cookie_accept_all": "全部接受",
+    "cookie_banner_title": "我们使用 Cookie",
+    "cookie_manage": "偏好设置",
+    "cookie_reject_all": "仅必要",
+    "cookie_save": "保存",
+    "cookies": "Cookie 政策",
+    "deslinde": "免责声明",
+    "pagos": "支付政策",
+    "privacidad": "隐私声明",
+    "regulaciones_ia": "AI 法规",
+    "sla": "服务级别协议",
+    "terminos": "条款与条件"
   }
 }

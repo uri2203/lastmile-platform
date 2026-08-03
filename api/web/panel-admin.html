@@ -131,6 +131,20 @@ html[data-theme="dark"]{color-scheme:dark}
     </div>
     <div style="display:flex;align-items:center;gap:14px;">
       <button class="btn btn-ghost btn-sm" onclick="refreshData()" title="Actualizar"><i class="fas fa-sync-alt" style="font-size:11px;"></i></button>
+      <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-secondary);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">
+        <option value="es">🇲🇽 ES</option>
+        <option value="en">🇺🇸 EN</option>
+        <option value="pt">🇧🇷 PT</option>
+        <option value="fr">🇫🇷 FR</option>
+        <option value="de">🇩🇪 DE</option>
+        <option value="zh">🇨🇳 ZH</option>
+        <option value="ja">🇯🇵 JA</option>
+        <option value="ko">🇰🇷 KO</option>
+        <option value="ar">🇸🇦 AR</option>
+        <option value="hi">🇮🇳 HI</option>
+        <option value="it">🇮🇹 IT</option>
+        <option value="nl">🇳🇱 NL</option>
+      </select>
       <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
       <div id="notif-bell" style="position:relative;cursor:pointer;" onclick="toggleNotifDropdown()">
         <i class="fas fa-bell" style="color:var(--text-secondary);font-size:16px;"></i>
@@ -603,6 +617,14 @@ Direccion no encontrada</textarea></div>
   </div>
 </div>
 <script>if(window.LMAuth)LMAuth.requireAuth();</script>
+<script>
+  if(window.i18n) {
+    window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if(sel) sel.value = window.i18n.lang;
+    });
+  }
+</script>
 <script src="panel-admin.js"></script>
 </body>
 </html>

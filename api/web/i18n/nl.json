@@ -881,5 +881,19 @@
     "tab_pricing": "Prijzen",
     "tab_fraud": "Fraude",
     "tab_sentiment": "Sentiment"
+  },
+  "legal": {
+    "cookie_accept_all": "Alles Accepteren",
+    "cookie_banner_title": "Wij Gebruiken Cookies",
+    "cookie_manage": "Voorkeuren",
+    "cookie_reject_all": "Alleen Essentieel",
+    "cookie_save": "Opslaan",
+    "cookies": "Cookiebeleid",
+    "deslinde": "Disclaimer",
+    "pagos": "Betalingsbeleid",
+    "privacidad": "Privacyverklaring",
+    "regulaciones_ia": "AI-Regelgeving",
+    "sla": "Service Level Overeenkomst",
+    "terminos": "Algemene Voorwaarden"
   }
 }

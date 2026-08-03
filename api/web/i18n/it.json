@@ -881,5 +881,19 @@
     "tab_pricing": "Prezzi",
     "tab_fraud": "Frode",
     "tab_sentiment": "Sentimento"
+  },
+  "legal": {
+    "cookie_accept_all": "Accetta Tutto",
+    "cookie_banner_title": "Utilizziamo i Cookie",
+    "cookie_manage": "Preferenze",
+    "cookie_reject_all": "Solo Essenziali",
+    "cookie_save": "Salva",
+    "cookies": "Politica dei Cookie",
+    "deslinde": "Disclaimer",
+    "pagos": "Politica dei Pagamenti",
+    "privacidad": "Informativa sulla Privacy",
+    "regulaciones_ia": "Normativa IA",
+    "sla": "Accordo di Livello di Servizio",
+    "terminos": "Termini e Condizioni"
   }
 }

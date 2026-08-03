@@ -881,5 +881,19 @@
     "tab_pricing": "価格設定",
     "tab_fraud": "不正",
     "tab_sentiment": "感情分析"
+  },
+  "legal": {
+    "cookie_accept_all": "全て承認",
+    "cookie_banner_title": "クッキーを使用しています",
+    "cookie_manage": "設定",
+    "cookie_reject_all": "必要なもののみ",
+    "cookie_save": "保存",
+    "cookies": "クッキーポリシー",
+    "deslinde": "免責事項",
+    "pagos": "支払いポリシー",
+    "privacidad": "プライバシー声明",
+    "regulaciones_ia": "AI規制",
+    "sla": "サービスレベル協議",
+    "terminos": "利用規約と条件"
   }
 }

@@ -23,12 +23,27 @@
         th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem; }
         th { color: var(--text-primary); font-weight: 600; }
     </style>
+    <script src="js/i18n.js"></script>
 </head>
 <body>
     <div class="legal-container">
         <a href="/" class="back-link">← Volver al inicio</a>
+        <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-secondary);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;position:fixed;top:16px;right:16px;z-index:100;">
+          <option value="es">🇲🇽 ES</option>
+          <option value="en">🇺🇸 EN</option>
+          <option value="pt">🇧🇷 PT</option>
+          <option value="fr">🇫🇷 FR</option>
+          <option value="de">🇩🇪 DE</option>
+          <option value="zh">🇨🇳 ZH</option>
+          <option value="ja">🇯🇵 JA</option>
+          <option value="ko">🇰🇷 KO</option>
+          <option value="ar">🇸🇦 AR</option>
+          <option value="hi">🇮🇳 HI</option>
+          <option value="it">🇮🇹 IT</option>
+          <option value="nl">🇳🇱 NL</option>
+        </select>
         <div class="legal-header">
-            <h1>Acuerdo de Nivel de Servicio (SLA)</h1>
+            <h1 data-i18n="legal.sla">Acuerdo de Nivel de Servicio (SLA)</h1>
             <p class="subtitle">LastMile Platform — Última actualización: Julio 2026</p>
         </div>
 
@@ -178,5 +193,11 @@
     </div>
 
     <script src="js/cookie-consent.js"></script>
+    <script>
+      if(window.i18n) window.i18n.init().then(() => {
+        const sel = document.getElementById('lang-select');
+        if(sel) sel.value = window.i18n.lang;
+      });
+    </script>
 </body>
 </html>

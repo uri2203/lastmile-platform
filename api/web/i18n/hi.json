@@ -881,5 +881,19 @@
     "tab_pricing": "मूल्य निर्धारण",
     "tab_fraud": "धोखाधड़ी",
     "tab_sentiment": "भावना"
+  },
+  "legal": {
+    "cookie_accept_all": "सभी स्वीकार करें",
+    "cookie_banner_title": "हम कुकीज़ का उपयोग करते हैं",
+    "cookie_manage": "विकल्प",
+    "cookie_reject_all": "केवल आवश्यक",
+    "cookie_save": "सहेजें",
+    "cookies": "कुकीज़ नीति",
+    "deslinde": "अस्वीकरण",
+    "pagos": "भुगतान नीति",
+    "privacidad": "गोपनीयता सूचना",
+    "regulaciones_ia": "AI नियमन",
+    "sla": "सेवा स्तर समझौता",
+    "terminos": "शर्तें और शर्तें"
   }
 }

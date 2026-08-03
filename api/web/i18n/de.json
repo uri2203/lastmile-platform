@@ -881,5 +881,19 @@
     "tab_pricing": "Preisgestaltung",
     "tab_fraud": "Betrug",
     "tab_sentiment": "Stimmung"
+  },
+  "legal": {
+    "cookie_accept_all": "Alle Akzeptieren",
+    "cookie_banner_title": "Wir Verwenden Cookies",
+    "cookie_manage": "Einstellungen",
+    "cookie_reject_all": "Nur Notwendige",
+    "cookie_save": "Speichern",
+    "cookies": "Cookie-Richtlinie",
+    "deslinde": "Haftungsausschluss",
+    "pagos": "Zahlungsrichtlinie",
+    "privacidad": "Datenschutzhinweis",
+    "regulaciones_ia": "KI-Verordnung",
+    "sla": "Service-Level-Vereinbarung",
+    "terminos": "Allgemeine Geschaftsbedingungen"
   }
 }

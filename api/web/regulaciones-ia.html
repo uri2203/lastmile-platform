@@ -35,13 +35,28 @@ hr{border:none;border-top:1px solid var(--border-primary);margin:32px 0}
 .footer-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:32px;padding-top:24px;border-top:1px solid var(--border-primary);font-size:12px}
 .footer-links a{color:var(--text-muted);text-decoration:none}.footer-links a:hover{color:var(--accent)}
   </style>
+  <script src="js/i18n.js"></script>
 </head>
 <body>
   <div class="legal-container">
     <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+    <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-secondary);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;position:fixed;top:16px;right:16px;z-index:100;">
+      <option value="es">🇲🇽 ES</option>
+      <option value="en">🇺🇸 EN</option>
+      <option value="pt">🇧🇷 PT</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="zh">🇨🇳 ZH</option>
+      <option value="ja">🇯🇵 JA</option>
+      <option value="ko">🇰🇷 KO</option>
+      <option value="ar">🇸🇦 AR</option>
+      <option value="hi">🇮🇳 HI</option>
+      <option value="it">🇮🇹 IT</option>
+      <option value="nl">🇳🇱 NL</option>
+    </select>
 
     <div class="legal-header">
-      <h1>Regulaciones de Inteligencia Artificial</h1>
+      <h1 data-i18n="legal.regulaciones_ia">Regulaciones de Inteligencia Artificial</h1>
       <div class="subtitle">Politica de Cumplimiento Normativo de IA - Last Mile Delivery</div>
       <div class="badge">Ultima actualizacion: Julio 2026</div>
     </div>
@@ -301,5 +316,11 @@ hr{border:none;border-top:1px solid var(--border-primary);margin:32px 0}
       <a href="/proteccion-datos">Proteccion de Datos</a>
     </div>
   </div>
+  <script>
+    if(window.i18n) window.i18n.init().then(() => {
+      const sel = document.getElementById('lang-select');
+      if(sel) sel.value = window.i18n.lang;
+    });
+  </script>
 </body>
 </html>
