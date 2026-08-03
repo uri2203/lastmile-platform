@@ -414,9 +414,10 @@ else:
 
 
 def ensure_lockout_columns():
-    """Add account lockout columns to USUARIOS if they don't exist."""
+    """Add account lockout and email verification columns if they don't exist."""
     if not USE_POSTGRES:
         return
+    # Lockout columns
     try:
         execute("ALTER TABLE USUARIOS ADD COLUMN IF NOT EXISTS USU_FAILED_ATTEMPTS INTEGER DEFAULT 0")
     except Exception:
@@ -427,6 +428,19 @@ def ensure_lockout_columns():
         pass
     try:
         execute("ALTER TABLE USUARIOS ADD COLUMN IF NOT EXISTS USU_LAST_FAILED_AT TIMESTAMP")
+    except Exception:
+        pass
+    # Email verification columns
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_EMAIL_VERIFIED TEXT DEFAULT 'N'")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_VERIFICATION_TOKEN TEXT")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_VERIFICATION_EXPIRES TIMESTAMP")
     except Exception:
         pass
 
@@ -452,6 +466,8 @@ PUBLIC_API_PATHS = {
     '/api/auth/forgot-password',
     '/api/auth/verify-reset-code',
     '/api/auth/reset-password',
+    '/api/auth/verify-email',
+    '/api/auth/resend-verification',
     '/api/docs',
     '/api/onboarding/register',
     '/api/saas/planes',
@@ -774,15 +790,23 @@ def onboarding_register():
             pass
 
     referred_by = referrer_emp_id if referrer_emp_id else None
+
+    # Generate email verification token
+    import secrets as _secrets
+    verification_token = _secrets.token_urlsafe(32)
+    from datetime import timedelta
+    verification_expires = datetime.utcnow() + timedelta(hours=24)
+
     try:
         execute(
             "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_EMAIL, EMP_ESTATUS, EMP_PLAN, "
-            "EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_REFERRAL_CODE, EMP_REFERRED_BY) "
-            "VALUES (?, ?, ?, 'ACTIVA', ?, ?, ?, ?, ?, ?)",
+            "EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_REFERRAL_CODE, EMP_REFERRED_BY, "
+            "EMP_EMAIL_VERIFIED, EMP_VERIFICATION_TOKEN, EMP_VERIFICATION_EXPIRES) "
+            "VALUES (?, ?, ?, 'PENDIENTE_VERIFICACION', ?, ?, ?, ?, ?, ?, 'N', ?, ?)",
             [emp_data['rfc'].upper(), emp_data['nombre'],
              usr_data.get('email', ''),
              plan, 5, plan_config.get(plan, 10), 500,
-             referral_code, referred_by]
+             referral_code, referred_by, verification_token, verification_expires]
         )
         r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
         emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
@@ -860,12 +884,42 @@ def onboarding_register():
     except Exception as e:
         print(f'[ERROR] Seed data: {e}')
 
+    # Send verification email
+    verify_url = f'{request.host_url.rstrip("/")}/api/auth/verify-email?token={verification_token}'
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #1a1a2e;">Verifica tu correo electrónico</h2>
+        <p>Hola <strong>{usr_data.get('nombre', 'Usuario')}</strong>,</p>
+        <p>Gracias por registrar <strong>{emp_data.get('nombre', 'Empresa')}</strong> en Last Mile Delivery.</p>
+        <p>Para activar tu cuenta, haz clic en el siguiente enlace:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{verify_url}" style="background: #4F46E5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Verificar mi correo</a>
+        </div>
+        <p style="color: #666; font-size: 14px;">O copia y pega este enlace en tu navegador:</p>
+        <p style="color: #4F46E5; font-size: 12px; word-break: break-all;">{verify_url}</p>
+        <p style="color: #999; font-size: 12px;">Este enlace expira en 24 horas.</p>
+        <p style="color: #666; font-size: 14px;">Si no creaste esta cuenta, ignora este mensaje.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 12px;">Last Mile Delivery Platform</p>
+    </div>
+    """
+    try:
+        from notification_service import email_service
+        email_service.send(
+            to=usr_data['email'],
+            subject='Verifica tu correo - Last Mile Delivery',
+            html_body=html_body
+        )
+    except Exception as e:
+        print(f'[ERROR] Sending verification email: {e}')
+
     return jsonify({
         'success': True,
-        'message': 'Cuenta creada exitosamente',
+        'message': 'Cuenta creada. Revisa tu correo para verificar tu cuenta.',
         'emp_id': emp_id,
         'login': usr_data.get('usuario', 'admin'),
-        'referral_code': referral_code
+        'referral_code': referral_code,
+        'email_verification_required': True
     })
 
 
@@ -1249,7 +1303,7 @@ def auth_login():
     try:
         sql = (
             "SELECT U.USU_ID, U.USU_USUARIO, U.USU_NOMBRE, U.USU_ROL, "
-            "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE, "
+            "U.USU_EMP_ID, U.USU_PASS, E.EMP_NOMBRE, E.EMP_EMAIL_VERIFIED, "
             "U.USU_FAILED_ATTEMPTS, U.USU_LOCKED_UNTIL "
             "FROM USUARIOS U "
             "LEFT JOIN EMPRESAS E ON U.USU_EMP_ID = E.EMP_ID "
@@ -1342,6 +1396,16 @@ def auth_login():
         )
     except Exception:
         pass
+
+    # Check email verification (skip for superadmin and existing users without the column)
+    email_verified = matched.get('EMP_EMAIL_VERIFIED')
+    if email_verified is not None and email_verified != 'S':
+        return jsonify({
+            'success': False,
+            'error': 'Email no verificado. Revisa tu correo o solicita un nuevo enlace.',
+            'email_verification_required': True,
+            'email': matched.get('USU_EMAIL', '')
+        }), 403
 
     # Migracion transparente: si el hash almacenado era SHA-256 heredado, re-hashea a bcrypt.
     if is_legacy_hash(str(matched.get('USU_PASS', '')).strip()):
@@ -1446,6 +1510,118 @@ def change_password():
         blacklist_token(token)
 
     return jsonify({'success': True, 'message': 'Contraseña actualizada. Inicia sesion nuevamente.'})
+
+
+# ========================================
+# AUTH: Email Verification
+# ========================================
+@app.route('/api/auth/verify-email', methods=['GET'])
+def verify_email():
+    """Verifica el email de una cuenta nueva con el token enviado."""
+    token = request.args.get('token', '').strip()
+    if not token:
+        return send_from_directory('web', 'landing.html')
+
+    try:
+        rows = query(
+            "SELECT EMP_ID, EMP_NOMBRE, EMP_EMAIL FROM EMPRESAS "
+            "WHERE EMP_VERIFICATION_TOKEN=? AND EMP_EMAIL_VERIFIED='N' "
+            "AND EMP_VERIFICATION_EXPIRES > NOW()",
+            [token]
+        )
+    except Exception:
+        return send_from_directory('web', 'landing.html')
+
+    if not rows:
+        return jsonify({'success': False, 'error': 'Token inválido, expirado o ya utilizado'}), 400
+
+    empresa = rows[0]
+
+    try:
+        execute(
+            "UPDATE EMPRESAS SET EMP_EMAIL_VERIFIED='S', EMP_ESTATUS='ACTIVA', "
+            "EMP_VERIFICATION_TOKEN=NULL, EMP_VERIFICATION_EXPIRES=NULL WHERE EMP_ID=?",
+            [empresa['EMP_ID']]
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error activando cuenta'}), 500
+
+    return jsonify({
+        'success': True,
+        'message': 'Email verificado. Ya puedes iniciar sesión.',
+        'empresa': empresa.get('EMP_NOMBRE', ''),
+        'email': empresa.get('EMP_EMAIL', '')
+    })
+
+
+@app.route('/api/auth/resend-verification', methods=['POST'])
+@limiter.limit("3 per minute")
+def resend_verification():
+    """Reenvía el email de verificación."""
+    data = request.get_json() or {}
+    email = (data.get('email') or '').strip().lower()
+
+    if not email:
+        return jsonify({'success': False, 'error': 'Email requerido'}), 400
+
+    try:
+        rows = query(
+            "SELECT EMP_ID, EMP_NOMBRE, EMP_EMAIL, EMP_VERIFICATION_TOKEN "
+            "FROM EMPRESAS WHERE UPPER(EMP_EMAIL)=UPPER(?) AND EMP_EMAIL_VERIFIED='N'",
+            [email]
+        )
+    except Exception:
+        return jsonify({'success': False, 'error': 'Error consultando cuenta'}), 500
+
+    if not rows:
+        return jsonify({
+            'success': True,
+            'message': 'Si el email existe y no está verificado, recibirás un correo.'
+        })
+
+    empresa = rows[0]
+    token = empresa.get('EMP_VERIFICATION_TOKEN')
+    if not token:
+        import secrets as _secrets
+        token = _secrets.token_urlsafe(32)
+        from datetime import timedelta
+        expires = datetime.utcnow() + timedelta(hours=24)
+        try:
+            execute(
+                "UPDATE EMPRESAS SET EMP_VERIFICATION_TOKEN=?, EMP_VERIFICATION_EXPIRES=? WHERE EMP_ID=?",
+                [token, expires, empresa['EMP_ID']]
+            )
+        except Exception:
+            pass
+
+    verify_url = f'{request.host_url.rstrip("/")}/api/auth/verify-email?token={token}'
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #1a1a2e;">Verifica tu correo electrónico</h2>
+        <p>Hola <strong>{empresa.get('EMP_NOMBRE', 'Usuario')}</strong>,</p>
+        <p>Haz clic en el siguiente enlace para activar tu cuenta:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{verify_url}" style="background: #4F46E5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Verificar mi correo</a>
+        </div>
+        <p style="color: #999; font-size: 12px;">Este enlace expira en 24 horas.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 12px;">Last Mile Delivery Platform</p>
+    </div>
+    """
+    try:
+        from notification_service import email_service
+        email_service.send(
+            to=email,
+            subject='Verifica tu correo - Last Mile Delivery',
+            html_body=html_body
+        )
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'message': 'Si el email existe y no está verificado, recibirás un correo.'
+    })
 
 
 # ========================================
