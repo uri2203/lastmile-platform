@@ -373,6 +373,9 @@ PUBLIC_API_PATHS = {
     '/api/health',
     '/api/auth/login',
     '/api/auth/refresh',
+    '/api/auth/forgot-password',
+    '/api/auth/verify-reset-code',
+    '/api/auth/reset-password',
     '/api/docs',
     '/api/onboarding/register',
     '/api/saas/planes',
@@ -1205,6 +1208,244 @@ def auth_refresh():
     if err:
         return jsonify({'success': False, 'error': err}), 401
     return jsonify({'success': True, 'token': new_token, 'expires_in': 43200})
+
+
+# ========================================
+# AUTH: Password Reset (Forgot Password)
+# ========================================
+import secrets
+import string
+from datetime import datetime, timedelta
+
+def _generate_reset_code(length=6):
+    """Genera un codigo numerico de 6 digitos para reset de contrasena."""
+    return ''.join(secrets.choice(string.digits) for _ in range(length))
+
+def _generate_reset_token():
+    """Genera un token unico para el link de reset."""
+    return secrets.token_urlsafe(32)
+
+def _get_reset_table_sql():
+    """SQL para crear la tabla de tokens si no existe."""
+    if USE_POSTGRES:
+        return """
+            CREATE TABLE IF NOT EXISTS PASSWORD_RESET_TOKENS (
+                PRT_ID SERIAL PRIMARY KEY,
+                EMP_ID INTEGER NOT NULL,
+                USU_ID INTEGER NOT NULL,
+                PRT_TOKEN TEXT NOT NULL,
+                PRT_CODE TEXT NOT NULL,
+                PRT_EXPIRES_AT TIMESTAMP NOT NULL,
+                PRT_USED TEXT DEFAULT 'N',
+                PRT_CREATED_AT TIMESTAMP DEFAULT NOW(),
+                PRT_IP_ADDRESS TEXT,
+                UNIQUE(PRT_TOKEN)
+            )
+        """
+    else:
+        return """
+            CREATE TABLE IF NOT EXISTS PASSWORD_RESET_TOKENS (
+                PRT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                EMP_ID INTEGER NOT NULL,
+                USU_ID INTEGER NOT NULL,
+                PRT_TOKEN TEXT NOT NULL UNIQUE,
+                PRT_CODE TEXT NOT NULL,
+                PRT_EXPIRES_AT TIMESTAMP NOT NULL,
+                PRT_USED TEXT DEFAULT 'N',
+                PRT_CREATED_AT TIMESTAMP DEFAULT (datetime('now')),
+                PRT_IP_ADDRESS TEXT
+            )
+        """
+
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+@limiter.limit("5 per minute")
+def forgot_password():
+    """
+    Solicita reset de contrasena.
+    Envía un codigo de 6 digitos al email del usuario.
+    """
+    data = request.get_json() or {}
+    email = (data.get('email') or '').strip().lower()
+    emp_id_param = data.get('emp_id')
+
+    if not email:
+        return jsonify({'success': False, 'error': 'Email requerido'}), 400
+
+    try:
+        execute(_get_reset_table_sql())
+    except Exception:
+        pass
+
+    try:
+        sql = (
+            "SELECT U.USU_ID, U.USU_EMP_ID, U.USU_USUARIO, U.USU_NOMBRE, U.USU_EMAIL "
+            "FROM USUARIOS U "
+            "WHERE UPPER(U.USU_EMAIL) = UPPER(?) AND U.USU_ACTIVO = 'S'"
+        )
+        params = [email]
+        if emp_id_param:
+            sql += " AND U.USU_EMP_ID = ?"
+            params.append(emp_id_param)
+        rows = query(sql, params)
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error consultando usuario'}), 500
+
+    if not rows:
+        return jsonify({
+            'success': True,
+            'message': 'Si el email existe, recibirás un código de verificación'
+        })
+
+    user = rows[0]
+    reset_code = _generate_reset_code()
+    reset_token = _generate_reset_token()
+    expires_at = datetime.utcnow() + timedelta(minutes=15)
+    ip_address = request.remote_addr or ''
+
+    try:
+        execute(
+            "INSERT INTO PASSWORD_RESET_TOKENS (EMP_ID, USU_ID, PRT_TOKEN, PRT_CODE, PRT_EXPIRES_AT, PRT_IP_ADDRESS) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            [user['USU_EMP_ID'], user['USU_ID'], reset_token, reset_code, expires_at, ip_address]
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error generando código'}), 500
+
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #1a1a2e;">Recuperación de Contraseña</h2>
+        <p>Hola <strong>{user.get('USU_NOMBRE', 'Usuario')}</strong>,</p>
+        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <p style="margin: 0; color: #666;">Tu código de verificación es:</p>
+            <h1 style="margin: 10px 0; color: #1a1a2e; letter-spacing: 5px;">{reset_code}</h1>
+            <p style="margin: 0; color: #999; font-size: 12px;">Expira en 15 minutos</p>
+        </div>
+        <p style="color: #666; font-size: 14px;">Si no solicitaste este cambio, ignora este mensaje.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 12px;">Last Mile Delivery Platform</p>
+    </div>
+    """
+
+    try:
+        from notification_service import email_service
+        email_service.send(
+            to=email,
+            subject='Código de Verificación - Recuperación de Contraseña',
+            html_body=html_body
+        )
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'message': 'Si el email existe, recibirás un código de verificación',
+        'debug_code': reset_code if os.environ.get('FLASK_ENV') == 'development' else None
+    })
+
+
+@app.route('/api/auth/verify-reset-code', methods=['POST'])
+@limiter.limit("10 per minute")
+def verify_reset_code():
+    """
+    Verifica el código de reset de contraseña.
+    Devuelve un token temporal para usar en reset-password.
+    """
+    data = request.get_json() or {}
+    email = (data.get('email') or '').strip().lower()
+    code = (data.get('code') or '').strip()
+
+    if not email or not code:
+        return jsonify({'success': False, 'error': 'Email y código requeridos'}), 400
+
+    try:
+        rows = query(
+            "SELECT PRT.*, U.USU_USUARIO, U.USU_NOMBRE "
+            "FROM PASSWORD_RESET_TOKENS PRT "
+            "JOIN USUARIOS U ON PRT.USU_ID = U.USU_ID "
+            "WHERE UPPER(U.USU_EMAIL) = UPPER(?) AND PRT.PRT_CODE = ? AND PRT.PRT_USED = 'N' "
+            "AND PRT.PRT_EXPIRES_AT > NOW() "
+            "ORDER BY PRT.PRT_ID DESC LIMIT 1",
+            [email, code]
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error verificando código'}), 500
+
+    if not rows:
+        return jsonify({'success': False, 'error': 'Código inválido o expirado'}), 400
+
+    token_record = rows[0]
+
+    try:
+        execute(
+            "UPDATE PASSWORD_RESET_TOKENS SET PRT_USED = 'V' WHERE PRT_ID = ?",
+            [token_record['PRT_ID']]
+        )
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'message': 'Código verificado correctamente',
+        'reset_token': token_record['PRT_TOKEN'],
+        'usuario': token_record.get('USU_USUARIO', ''),
+        'expires_in': 900
+    })
+
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+@limiter.limit("5 per minute")
+def reset_password():
+    """
+    Restablece la contraseña usando el token de reset.
+    """
+    data = request.get_json() or {}
+    reset_token = (data.get('reset_token') or '').strip()
+    new_password = data.get('new_password') or ''
+
+    if not reset_token or not new_password:
+        return jsonify({'success': False, 'error': 'Token y nueva contraseña requeridos'}), 400
+
+    pwd_ok, pwd_err = validate_password_strength(new_password)
+    if not pwd_ok:
+        return jsonify({'success': False, 'error': pwd_err}), 400
+
+    try:
+        rows = query(
+            "SELECT PRT.* FROM PASSWORD_RESET_TOKENS PRT "
+            "WHERE PRT.PRT_TOKEN = ? AND PRT.PRT_USED = 'V' AND PRT.PRT_EXPIRES_AT > NOW()",
+            [reset_token]
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error verificando token'}), 500
+
+    if not rows:
+        return jsonify({'success': False, 'error': 'Token inválido, expirado o ya utilizado'}), 400
+
+    token_record = rows[0]
+    hashed_password = hash_password(new_password)
+
+    try:
+        execute(
+            "UPDATE USUARIOS SET USU_PASS = ?, USU_UPDATED = NOW() WHERE USU_ID = ?",
+            [hashed_password, token_record['USU_ID']]
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error actualizando contraseña'}), 500
+
+    try:
+        execute(
+            "UPDATE PASSWORD_RESET_TOKENS SET PRT_USED = 'Y' WHERE PRT_ID = ?",
+            [token_record['PRT_ID']]
+        )
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'message': 'Contraseña actualizada correctamente'
+    })
 
 
 # ========================================
