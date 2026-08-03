@@ -21,9 +21,28 @@ from monitoring import init_monitoring
 from agents import RouteOptimizer, SmartAssignment, ETAPredictor, SupportChatbot, DemandForecaster, DynamicPricing, FraudDetector, SentimentAnalyzer
 import os
 import time
+import re
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
+
+
+def _strip_html_tags(value):
+    """Remove HTML tags from a string to prevent XSS."""
+    if not isinstance(value, str):
+        return value
+    return re.sub(r'<[^>]+>', '', value)
+
+
+def _sanitize_input(data):
+    """Recursively sanitize all string values in a dict/list to strip HTML tags."""
+    if isinstance(data, dict):
+        return {k: _sanitize_input(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [_sanitize_input(item) for item in data]
+    elif isinstance(data, str):
+        return _strip_html_tags(data)
+    return data
 
 # ========================================
 # CARGAR VARIABLES DE ENTORNO
@@ -54,7 +73,9 @@ app.secret_key = _secret_key or 'lastmile-dev-key-change-in-prod'
 # ========================================
 # CORS: Restringido por origen en produccion
 # ========================================
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '').split(',') if os.environ.get('ALLOWED_ORIGINS') else ['*']
+_render_url = os.environ.get('RENDER_EXTERNAL_URL', '')
+_default_origins = [_render_url] if _render_url else []
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '').split(',') if os.environ.get('ALLOWED_ORIGINS') else (_default_origins if _default_origins else ['*'])
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True,
      allow_headers=['Content-Type', 'X-Emp-Id', 'Authorization'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
@@ -472,6 +493,13 @@ def before_request():
     if not path.startswith('/api/'):
         return
 
+    # Sanitize JSON input (strip HTML tags from all string values)
+    if request.is_json:
+        try:
+            request.json = _sanitize_input(request.get_json(silent=True) or {})
+        except Exception:
+            pass
+
     # Endpoints publicos legitimos.
     if _is_public_api(path, method):
         return
@@ -529,6 +557,19 @@ def after_request(response):
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     if request.path.startswith('/api/'):
         response.headers['Content-Security-Policy'] = "default-src 'none'"
+    elif request.path.endswith('.html') or request.path == '/' or not request.path.startswith('/api/'):
+        # CSP for HTML pages: restrict scripts to self + inline (needed for existing code)
+        # Upgrade to nonce-based in future
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' wss: ws: https:; "
+            "frame-ancestors 'none'"
+        )
+        response.headers['Content-Security-Policy'] = csp
     if hasattr(request, 'start_time'):
         elapsed = round((time.time() - request.start_time) * 1000, 1)
         status = response.status_code
@@ -1537,8 +1578,7 @@ def forgot_password():
 
     return jsonify({
         'success': True,
-        'message': 'Si el email existe, recibirás un código de verificación',
-        'debug_code': reset_code if os.environ.get('FLASK_ENV') == 'development' else None
+        'message': 'Si el email existe, recibirás un código de verificación'
     })
 
 
@@ -2936,13 +2976,64 @@ def get_whitelabel(emp_id):
     return jsonify({'success': True, 'data': data[0] if data else {}})
 
 
+def _sanitize_css(css):
+    """Sanitize CSS input - remove dangerous properties."""
+    if not css:
+        return ''
+    # Max 10KB
+    css = css[:10240]
+    # Remove script-related patterns
+    import re
+    dangerous = [
+        r'expression\s*\(', r'javascript\s*:', r'@import',
+        r'url\s*\(\s*["\']?\s*javascript', r'behavior\s*:',
+        r'-moz-binding\s*:', r'url\s*\(\s*["\']?\s*data\s*:\s*text/html'
+    ]
+    for pattern in dangerous:
+        css = re.sub(pattern, '', css, flags=re.IGNORECASE)
+    return css
+
+def _sanitize_js(js):
+    """Sanitize JS input - block if contains dangerous patterns. Returns empty string if malicious."""
+    if not js:
+        return ''
+    # Max 20KB
+    js = js[:20480]
+    import re
+    # Block common XSS payloads
+    dangerous = [
+        r'document\s*\.\s*cookie', r'localStorage\s*\.', r'sessionStorage\s*\.',
+        r'eval\s*\(', r'Function\s*\(', r'fetch\s*\(\s*["\']https?://',
+        r'XMLHttpRequest', r'\.src\s*=.*javascript:', r'window\s*\.\s*location',
+    ]
+    for pattern in dangerous:
+        if re.search(pattern, js, re.IGNORECASE):
+            return ''  # Block entirely
+    return js
+
+def _sanitize_whitelabel(data):
+    """Sanitize all whitelabel fields."""
+    return {
+        'nombre': str(data.get('nombre', ''))[:200],
+        'logo_url': str(data.get('logo_url', ''))[:500],
+        'color_primary': str(data.get('color_primary', '#4F46E5'))[:20],
+        'color_secondary': str(data.get('color_secondary', '#7C3AED'))[:20],
+        'color_bg': str(data.get('color_bg', '#F9FAFB'))[:20],
+        'dominio': str(data.get('dominio', ''))[:255],
+        'footer_text': str(data.get('footer_text', ''))[:500],
+        'custom_css': _sanitize_css(data.get('custom_css', '')),
+        'custom_js': _sanitize_js(data.get('custom_js', '')),
+        'features': str(data.get('features', '{}'))[:1000],
+    }
+
+
 @app.route('/api/whitelabel/config', methods=['POST'])
 def update_whitelabel():
     try:
         emp_id = get_emp_id()
         if not emp_id:
             return jsonify({'success': False, 'error': 'No autenticado'}), 401
-        data = request.json or {}
+        data = _sanitize_whitelabel(request.json or {})
         execute('''CREATE TABLE IF NOT EXISTS TENANT_CONFIG (
             TC_ID INTEGER PRIMARY KEY AUTOINCREMENT,
             EMP_ID INTEGER NOT NULL UNIQUE,
@@ -2966,21 +3057,21 @@ def update_whitelabel():
                 TC_COLOR_BG=?, TC_DOMINIO=?, TC_FOOTER_TEXT=?, TC_CUSTOM_CSS=?,
                 TC_CUSTOM_JS=?, TC_FEATURES=?, TC_FECHA_ACTUALIZACION=datetime('now')
                 WHERE EMP_ID=?''',
-                [data.get('nombre', ''), data.get('logo_url', ''),
-                 data.get('color_primary', '#4F46E5'), data.get('color_secondary', '#7C3AED'),
-                 data.get('color_bg', '#F9FAFB'), data.get('dominio', ''),
-                 data.get('footer_text', ''), data.get('custom_css', ''),
-                 data.get('custom_js', ''), data.get('features', '{}'), emp_id])
+                [data['nombre'], data['logo_url'],
+                 data['color_primary'], data['color_secondary'],
+                 data['color_bg'], data['dominio'],
+                 data['footer_text'], data['custom_css'],
+                 data['custom_js'], data['features'], emp_id])
         else:
             execute('''INSERT INTO TENANT_CONFIG
                 (EMP_ID, TC_NOMBRE, TC_LOGO_URL, TC_COLOR_PRIMARY, TC_COLOR_SECONDARY,
                  TC_COLOR_BG, TC_DOMINIO, TC_FOOTER_TEXT, TC_CUSTOM_CSS, TC_CUSTOM_JS, TC_FEATURES)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                [emp_id, data.get('nombre', ''), data.get('logo_url', ''),
-                 data.get('color_primary', '#4F46E5'), data.get('color_secondary', '#7C3AED'),
-                 data.get('color_bg', '#F9FAFB'), data.get('dominio', ''),
-                 data.get('footer_text', ''), data.get('custom_css', ''),
-                 data.get('custom_js', ''), data.get('features', '{}')])
+                [emp_id, data['nombre'], data['logo_url'],
+                 data['color_primary'], data['color_secondary'],
+                 data['color_bg'], data['dominio'],
+                 data['footer_text'], data['custom_css'],
+                 data['custom_js'], data['features']])
         return jsonify({'success': True, 'message': 'Whitelabel actualizado'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
