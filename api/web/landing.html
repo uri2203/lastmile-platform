@@ -286,9 +286,11 @@
       border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
       color: var(--text-muted); letter-spacing: 0.03em;
     }
+    .compare-table thead th:first-child { position: sticky; left: 0; z-index: 4; background: var(--bg); }
     .compare-table thead th.hl {
       color: var(--orange); background: var(--orange-dim);
       border-bottom: 2px solid rgba(249,115,22,0.3);
+      position: sticky; left: 0; z-index: 3;
     }
     .compare-table tbody td {
       padding: 14px 20px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -296,10 +298,11 @@
     }
     .compare-table tbody tr:last-child td { border-bottom: none; }
     .compare-table tbody tr:hover { background: rgba(255,255,255,0.01); }
-    .compare-table tbody td:first-child { font-weight: 500; color: var(--text); }
+    .compare-table tbody td:first-child { font-weight: 500; color: var(--text); position: sticky; left: 0; z-index: 1; background: var(--bg); }
     .compare-table tbody td.hl {
       background: rgba(249,115,22,0.04); font-weight: 600; color: var(--text);
       border-left: 1px solid rgba(249,115,22,0.1);
+      position: sticky; left: 0; z-index: 2;
     }
     .compare-table .check { color: var(--green); }
     .compare-table .cross { color: rgba(255,255,255,0.15); }
