@@ -480,6 +480,7 @@ PUBLIC_API_PATHS = {
     '/api/billing/webhook/stripe',
     '/api/billing/webhook/mercadopago',
     '/api/pagos/mercado-pago/webhook',
+    '/api/whatsapp/webhook',
     '/api/vapid-public-key',
     '/api/push/subscribe',
 }
