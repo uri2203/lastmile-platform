@@ -517,8 +517,11 @@ def ensure_cod_columns():
     ]:
         try:
             execute(ddl)
+            tbl = ddl.split('IF NOT EXISTS')[1].split('(')[0].strip()
+            print(f'[DB] COD table ensured: {tbl}')
         except Exception as e:
-            print(f'[DB] COD table skip: {e}')
+            tbl = ddl.split('IF NOT EXISTS')[1].split('(')[0].strip() if 'IF NOT EXISTS' in ddl else '?'
+            print(f'[DB] COD table FAIL [{tbl}]: {e}')
 
 
 def get_emp_id():
@@ -4826,6 +4829,51 @@ def ai_sentiment():
         return jsonify({'error': 'text requerido'}), 400
     result = sentiment_analyzer.analyze(text)
     return jsonify({'success': True, 'result': result})
+
+
+# ========================================
+# DEBUG: DB Table Status
+# ========================================
+@app.route('/api/debug/db-tables', methods=['GET'])
+def debug_db_tables():
+    """Check which COD tables exist in the DB."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'No auth'}), 401
+    results = {}
+    for tbl in ['PEDIDOS', 'CHOFERES', 'USUARIOS', 'EMPRESAS',
+                'DRIVER_CASH_HOLDINGS', 'DRIVER_SETTLEMENTS', 'SETTLEMENT_LINE_ITEMS', 'NOTIFICACIONES']:
+        try:
+            rows = query(f"SELECT COUNT(*) as cnt FROM {tbl} WHERE EMP_ID=0", [])
+            results[tbl] = {'exists': True, 'count': rows[0]['cnt'] if rows else 0}
+        except Exception as e:
+            results[tbl] = {'exists': False, 'error': str(e)[:200]}
+    # Check PEDIDOS columns
+    try:
+        cols = query("SELECT column_name FROM information_schema.columns WHERE table_name='pedidos'", [])
+        ped_cols = [c['column_name'] for c in cols]
+        results['PEDIDOS_COLUMNS'] = ped_cols
+    except Exception as e:
+        results['PEDIDOS_COLUMNS'] = str(e)[:200]
+    return jsonify({'success': True, 'tables': results})
+
+@app.route('/api/debug/ensure-cod', methods=['POST'])
+def debug_ensure_cod():
+    """Force re-run ensure_cod_columns and report results."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'No auth'}), 401
+    logs = []
+    import io, sys
+    old_stdout = sys.stdout
+    sys.stdout = captured = io.StringIO()
+    try:
+        ensure_cod_columns()
+    except Exception as e:
+        print(f'EXCEPTION: {e}')
+    sys.stdout = old_stdout
+    logs = captured.getvalue().split('\n')
+    return jsonify({'success': True, 'logs': [l for l in logs if l.strip()]})
 
 
 # ========================================
