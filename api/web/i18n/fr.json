@@ -692,7 +692,10 @@
     "error_longitud": "Le mot de passe doit contenir au moins 8 caractères",
     "empresa_creada": "Entreprise créée avec succès!",
     "error_crear": "Erreur lors de la création de l'entreprise",
-    "errorConexion": "Erreur de connexion. Réessayez."
+    "errorConexion": "Erreur de connexion. Réessayez.",
+    "legal_accept_title": "J'ai lu et j'accepte",
+    "legal_accept_text": "les termes, la confidentialité et les politiques de la plateforme. Je confirme que j'ai plus de 18 ans.",
+    "legal_required": "Vous devez accepter les termes et confirmer que vous avez plus de 18 ans"
   },
   "ayuda": {
     "page_title": "Centre d'Aide",

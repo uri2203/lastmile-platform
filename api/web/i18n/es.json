@@ -692,7 +692,10 @@
     "error_longitud": "La contrasena debe tener al menos 8 caracteres",
     "empresa_creada": "Empresa creada exitosamente!",
     "error_crear": "Error al crear empresa",
-    "errorConexión": "Error de conexion. Intenta de nuevo."
+    "errorConexión": "Error de conexion. Intenta de nuevo.",
+    "legal_accept_title": "He leído y acepto",
+    "legal_accept_text": "los términos, privacidad y políticas de la plataforma. Confirmo que soy mayor de 18 años.",
+    "legal_required": "Debes aceptar los términos y confirmar que eres mayor de 18 años"
   },
   "ayuda": {
     "page_title": "Centro de Ayuda",

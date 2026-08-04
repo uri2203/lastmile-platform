@@ -692,7 +692,10 @@
     "error_longitud": "A senha deve ter pelo menos 8 caracteres",
     "empresa_creada": "Empresa criada com sucesso!",
     "error_crear": "Erro ao criar empresa",
-    "errorConexion": "Erro de conexao. Tente novamente."
+    "errorConexion": "Erro de conexao. Tente novamente.",
+    "legal_accept_title": "Li e aceito",
+    "legal_accept_text": "os termos, privacidade e políticas da plataforma. Confirmo que sou maior de 18 anos.",
+    "legal_required": "Você deve aceitar os termos e confirmar que é maior de 18 anos"
   },
   "ayuda": {
     "page_title": "Central de Ajuda",

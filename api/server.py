@@ -851,16 +851,17 @@ def onboarding_register():
     try:
         execute(
             "INSERT INTO LEGAL_ACCEPTANCE (EMP_ID, USR_ID, LA_IP, LA_USER_AGENT, "
-            "LA_TERMINOS, LA_PRIVACIDAD, LA_PAGOS, LA_DESLINDE, LA_SLA, LA_COOKIES, "
+            "LA_TERMINOS, LA_PRIVACIDAD, LA_PAGOS, LA_DESLINDE, LA_SLA, LA_COOKIES, LA_MAYOR_EDAD, "
             "LA_FECHA, LA_ACCEPTED_ALL) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'S')",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'S')",
             [emp_id, usr_id, client_ip, user_agent,
              'S' if legal_data.get('terminos') else 'N',
              'S' if legal_data.get('privacidad') else 'N',
              'S' if legal_data.get('pagos') else 'N',
              'S' if legal_data.get('deslinde') else 'N',
              'S' if legal_data.get('sla') else 'N',
-             'S' if legal_data.get('cookies') else 'N']
+             'S' if legal_data.get('cookies') else 'N',
+             'S' if legal_data.get('mayor_edad') else 'N']
         )
     except Exception as e:
         print(f'[ERROR] Legal acceptance: {e}')

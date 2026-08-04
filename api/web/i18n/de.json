@@ -692,7 +692,10 @@
     "error_longitud": "Passwort muss mindestens 8 Zeichen lang sein",
     "empresa_creada": "Unternehmen erfolgreich erstellt!",
     "error_crear": "Fehler beim Erstellen des Unternehmens",
-    "errorConexion": "Verbindungsfehler. Versuchen Sie es erneut."
+    "errorConexion": "Verbindungsfehler. Versuchen Sie es erneut.",
+    "legal_accept_title": "Ich habe gelesen und akzeptiere",
+    "legal_accept_text": "die Bedingungen, Datenschutzrichtlinien und Richtlinien der Plattform. Ich bestätige, dass ich über 18 Jahre alt bin.",
+    "legal_required": "Sie müssen die Bedingungen akzeptieren und bestätigen, dass Sie über 18 Jahre alt sind"
   },
   "ayuda": {
     "page_title": "Hilfezentrum",

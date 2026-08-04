@@ -692,7 +692,10 @@
     "error_longitud": "Password must be at least 8 characters",
     "empresa_creada": "Company created successfully!",
     "error_crear": "Error creating company",
-    "errorConexion": "Connection error. Try again."
+    "errorConexion": "Connection error. Try again.",
+    "legal_accept_title": "I have read and accept",
+    "legal_accept_text": "the terms, privacy and platform policies. I confirm I am over 18 years old.",
+    "legal_required": "You must accept the terms and confirm you are over 18 years old"
   },
   "ayuda": {
     "page_title": "Help Center",

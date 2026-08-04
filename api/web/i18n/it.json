@@ -692,7 +692,10 @@
     "error_longitud": "La password deve essere di almeno 8 caratteri",
     "empresa_creada": "Azienda creata con successo!",
     "error_crear": "Errore nella creazione dell'azienda",
-    "errorConexion": "Errore di connessione. Riprova."
+    "errorConexion": "Errore di connessione. Riprova.",
+    "legal_accept_title": "Ho letto e accetto",
+    "legal_accept_text": "i termini, la privacy e le politiche della piattaforma. Confermo di essere maggiore di 18 anni.",
+    "legal_required": "Devi accettare i termini e confermare di essere maggiore di 18 anni"
   },
   "ayuda": {
     "page_title": "Centro Assistenza",

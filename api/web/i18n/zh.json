@@ -692,7 +692,10 @@
     "error_longitud": "密码至少需要8个字符",
     "empresa_creada": "公司创建成功！",
     "error_crear": "创建公司失败",
-    "errorConexion": "连接错误，请重试。"
+    "errorConexion": "连接错误，请重试。",
+    "legal_accept_title": "我已阅读并接受",
+    "legal_accept_text": "平台的条款、隐私和政策。我确认已年满18周岁。",
+    "legal_required": "您必须接受条款并确认已年满18周岁"
   },
   "ayuda": {
     "page_title": "帮助中心",

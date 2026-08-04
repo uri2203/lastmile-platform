@@ -692,7 +692,10 @@
     "error_longitud": "Wachtwoord moet minimaal 8 tekens bevatten",
     "empresa_creada": "Bedrijf succesvol aangemaakt!",
     "error_crear": "Fout bij het aanmaken van bedrijf",
-    "errorConexion": "Verbindingsfout. Probeer het opnieuw."
+    "errorConexion": "Verbindingsfout. Probeer het opnieuw.",
+    "legal_accept_title": "Ik heb gelezen en ga akkoord",
+    "legal_accept_text": "de voorwaarden, het privacybeleid en het platformbeleid. Ik bevestig dat ik ouder ben dan 18 jaar.",
+    "legal_required": "U moet de voorwaarden accepteren en bevestigen dat u ouder bent dan 18 jaar"
   },
   "ayuda": {
     "page_title": "Hulpcentrum",

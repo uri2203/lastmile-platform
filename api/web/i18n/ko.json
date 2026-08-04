@@ -692,7 +692,10 @@
     "error_longitud": "비밀번호는 최소 8자 이상이어야 합니다",
     "empresa_creada": "회사가 성공적으로 생성되었습니다!",
     "error_crear": "회사 생성 오류",
-    "errorConexion": "연결 오류. 다시 시도하세요."
+    "errorConexion": "연결 오류. 다시 시도하세요.",
+    "legal_accept_title": "읽고 동의합니다",
+    "legal_accept_text": "이용약관, 개인정보처리방침 및 플랫폼 정책. 만 18세 이상임을 확인합니다.",
+    "legal_required": "이용약관에 동의하고 만 18세 이상임을 확인해야 합니다"
   },
   "ayuda": {
     "page_title": "도움말 센터",

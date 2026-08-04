@@ -519,6 +519,17 @@
           <input type="password" id="usr-pass2" data-i18n-placeholder="onboarding.confirmar_ph" placeholder="Repite tu contraseña">
         </div>
 
+        <div style="margin: 20px 0;">
+          <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border); transition: all 0.2s;">
+            <input type="checkbox" id="legalAccept" style="margin-top: 2px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0;">
+            <span style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+              <strong style="color: var(--text);" data-i18n="onboarding.legal_accept_title">He leído y acepto</strong>
+              <span data-i18n="onboarding.legal_accept_text">los términos, privacidad y políticas de la plataforma. Confirmo que soy mayor de 18 años.</span>
+            </span>
+          </label>
+          <div id="legalError" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none;" data-i18n="onboarding.legal_required">Debes aceptar los términos y confirmar que eres mayor de 18 años</div>
+        </div>
+
         <div class="step-nav">
           <button class="btn btn-ghost" onclick="goStep(3)"><i class="fas fa-arrow-left"></i> <span data-i18n="onboarding.btn_atras">Atrás</span></button>
           <button class="btn btn-success" onclick="crearCuenta()"><i class="fas fa-rocket"></i> <span data-i18n="onboarding.crear_mi_empresa">Crear Mi Empresa</span></button>
@@ -626,6 +637,16 @@
         return;
       }
 
+      // Age verification check
+      const legalAccept = document.getElementById('legalAccept');
+      const legalError = document.getElementById('legalError');
+      if (!legalAccept || !legalAccept.checked) {
+        if (legalError) legalError.style.display = 'block';
+        Utils.toast(window.i18n.t('onboarding.legal_required'), 'error');
+        return;
+      }
+      if (legalError) legalError.style.display = 'none';
+
       const btn = event.target;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + window.i18n.t('onboarding.creando');
@@ -648,7 +669,12 @@
               password: pass,
               telefono: telefono
             },
-            plan: selectedPlan.toUpperCase()
+            plan: selectedPlan.toUpperCase(),
+            legal: {
+              mayor_edad: true,
+              terminos: true,
+              privacidad: true
+            }
           })
         });
 
