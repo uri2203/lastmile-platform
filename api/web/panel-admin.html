@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
@@ -82,7 +82,7 @@ tr:hover td{background:var(--bg-card-hover)}
 .activity-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px}
 .activity-dot.green{background:var(--success)}.activity-dot.yellow{background:var(--warning)}.activity-dot.red{background:var(--danger)}
 
-/* ── LIGHT THEME OVERRIDES ── */
+/* -- LIGHT THEME OVERRIDES -- */
 html[data-theme="light"]{color-scheme:light}
 html[data-theme="dark"]{color-scheme:dark}
 [data-theme="light"] .toast{color:#fff}
@@ -132,18 +132,18 @@ html[data-theme="dark"]{color-scheme:dark}
     <div style="display:flex;align-items:center;gap:14px;">
       <button class="btn btn-ghost btn-sm" onclick="refreshData()" title="Actualizar"><i class="fas fa-sync-alt" style="font-size:11px;"></i></button>
       <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-secondary);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">
-        <option value="es">🇲🇽 ES</option>
-        <option value="en">🇺🇸 EN</option>
-        <option value="pt">🇧🇷 PT</option>
-        <option value="fr">🇫🇷 FR</option>
-        <option value="de">🇩🇪 DE</option>
-        <option value="zh">🇨🇳 ZH</option>
-        <option value="ja">🇯🇵 JA</option>
-        <option value="ko">🇰🇷 KO</option>
-        <option value="ar">🇸🇦 AR</option>
-        <option value="hi">🇮🇳 HI</option>
-        <option value="it">🇮🇹 IT</option>
-        <option value="nl">🇳🇱 NL</option>
+        <option value="es">???? ES</option>
+        <option value="en">???? EN</option>
+        <option value="pt">???? PT</option>
+        <option value="fr">???? FR</option>
+        <option value="de">???? DE</option>
+        <option value="zh">???? ZH</option>
+        <option value="ja">???? JA</option>
+        <option value="ko">???? KO</option>
+        <option value="ar">???? AR</option>
+        <option value="hi">???? HI</option>
+        <option value="it">???? IT</option>
+        <option value="nl">???? NL</option>
       </select>
       <button class="theme-toggle" title="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
       <div id="notif-bell" style="position:relative;cursor:pointer;" onclick="toggleNotifDropdown()">
@@ -345,14 +345,14 @@ Direccion no encontrada</textarea></div>
       <div class="card" style="text-align:center;">
         <div style="width:48px;height:48px;background:var(--warning-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><i class="fas fa-clock" style="color:var(--warning);font-size:18px;"></i></div>
         <div style="font-size:24px;font-weight:700;color:var(--warning);">+14</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Días Bonus por Referido</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">D�as Bonus por Referido</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-size:13px;font-weight:600;margin-bottom:16px;"><i class="fas fa-share-alt" style="color:var(--accent);margin-right:6px;"></i> Tu Código y Link de Referido</h3>
+      <h3 style="font-size:13px;font-weight:600;margin-bottom:16px;"><i class="fas fa-share-alt" style="color:var(--accent);margin-right:6px;"></i> Tu C�digo y Link de Referido</h3>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
-          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Tu Código</label>
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Tu C�digo</label>
           <div style="display:flex;gap:8px;">
             <input type="text" id="refMyCode" class="input" readonly style="font-size:18px;font-weight:700;letter-spacing:2px;color:var(--accent);background:rgba(99,102,241,0.05);">
             <button class="btn btn-primary" onclick="copyRefCode()" style="width:auto;padding:8px 16px;"><i class="fas fa-copy"></i> Copiar</button>
@@ -367,7 +367,7 @@ Direccion no encontrada</textarea></div>
         </div>
       </div>
       <div style="margin-top:12px;padding:12px;background:rgba(99,102,241,0.05);border-radius:8px;border-left:3px solid var(--accent);">
-        <p style="font-size:12px;color:var(--text-secondary);margin:0;"><strong style="color:var(--accent);">¿Cómo funciona?</strong> Comparte tu código o link. Cuando alguien se registre con tu código, ambos ganan <strong>2 semanas extra de prueba gratis</strong>. No hay límite de referidos.</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin:0;"><strong style="color:var(--accent);">�C�mo funciona?</strong> Comparte tu c�digo o link. Cuando alguien se registre con tu c�digo, ambos ganan <strong>2 semanas extra de prueba gratis</strong>. No hay l�mite de referidos.</p>
       </div>
     </div>
     <div class="card">
@@ -541,7 +541,7 @@ Direccion no encontrada</textarea></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Monto Base ($)</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="monto_base" value="45.00" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por Kilogramo</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="monto_por_kg" value="8.00" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por Kilometro</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="monto_por_km" value="5.00" step="0.50" min="0"></div>
-            <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por m³</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="monto_por_m3" value="0" step="0.50" min="0"></div>
+            <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por m�</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="monto_por_m3" value="0" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Peso Min (kg)</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="peso_min_kg" value="0.5" step="0.1" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Peso Max (kg)</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="peso_max_kg" value="15.0" step="0.5" min="0.5"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Monto Minimo ($)</label><input type="number" class="input tarifa-input" data-serv="EXPRESS" data-field="monto_minimo" value="45.00" step="1" min="0"></div>
@@ -556,7 +556,7 @@ Direccion no encontrada</textarea></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Monto Base ($)</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="monto_base" value="35.00" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por Kilogramo</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="monto_por_kg" value="5.00" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por Kilometro</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="monto_por_km" value="3.50" step="0.50" min="0"></div>
-            <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por m³</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="monto_por_m3" value="0" step="0.50" min="0"></div>
+            <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por m�</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="monto_por_m3" value="0" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Peso Min (kg)</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="peso_min_kg" value="0.5" step="0.1" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Peso Max (kg)</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="peso_max_kg" value="30.0" step="0.5" min="0.5"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Monto Minimo ($)</label><input type="number" class="input tarifa-input" data-serv="ESTANDAR" data-field="monto_minimo" value="35.00" step="1" min="0"></div>
@@ -571,7 +571,7 @@ Direccion no encontrada</textarea></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Monto Base ($)</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="monto_base" value="25.00" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por Kilogramo</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="monto_por_kg" value="3.00" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por Kilometro</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="monto_por_km" value="2.00" step="0.50" min="0"></div>
-            <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por m³</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="monto_por_m3" value="0" step="0.50" min="0"></div>
+            <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">$ por m�</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="monto_por_m3" value="0" step="0.50" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Peso Min (kg)</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="peso_min_kg" value="1.0" step="0.1" min="0"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Peso Max (kg)</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="peso_max_kg" value="30.0" step="0.5" min="0.5"></div>
             <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Monto Minimo ($)</label><input type="number" class="input tarifa-input" data-serv="ECONOMICO" data-field="monto_minimo" value="25.00" step="1" min="0"></div>
@@ -598,7 +598,7 @@ Direccion no encontrada</textarea></div>
         <div id="cotizador-resultado" style="padding:12px;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-card);display:none;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
             <div><span style="color:var(--text-muted);">Peso real:</span> <span id="res-peso-real">-</span></div>
-            <div><span style="color:var(--text-muted);">Peso volumétrico:</span> <span id="res-peso-vol">-</span></div>
+            <div><span style="color:var(--text-muted);">Peso volum�trico:</span> <span id="res-peso-vol">-</span></div>
             <div><span style="color:var(--text-muted);">Monto base:</span> <span id="res-base">-</span></div>
             <div><span style="color:var(--text-muted);">Costo peso:</span> <span id="res-peso">-</span></div>
             <div><span style="color:var(--text-muted);">Costo distancia:</span> <span id="res-km">-</span></div>
@@ -626,6 +626,8 @@ Direccion no encontrada</textarea></div>
   }
 </script>
 <script src="panel-admin.js"></script>
+
+  <script src="js/pwa-install.js"></script>
 </body>
 </html>
 

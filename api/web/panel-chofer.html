@@ -794,41 +794,6 @@
 
     if (!navigator.onLine) showOfflineIndicator();
 
-    /* ---- PWA Service Worker + Push ---- */
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        if ('sync' in reg) console.log('[PWA] Background Sync available');
-        if ('pushManager' in reg) {
-          console.log('[PWA] Push Notifications available');
-          reg.pushManager.getSubscription().then(sub => {
-            if (!sub) {
-              fetch('/api/vapid-public-key').then(r => r.json()).then(d => {
-                const vapidKey = urlBase64ToUint8Array(d.publicKey);
-                reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey }).then(subscription => {
-                  const user = localStorage.getItem('user') || 'chofer1';
-                  const empId = localStorage.getItem('empId') || '1';
-                  fetch('/api/push/subscribe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Emp-Id': empId },
-                    body: JSON.stringify({ user_id: user, subscription, emp_id: parseInt(empId) })
-                  }).then(() => console.log('[PWA] Push subscribed'));
-                });
-              });
-            }
-          });
-        }
-      }).catch(() => {});
-    }
-
-    function urlBase64ToUint8Array(base64String) {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const rawData = window.atob(base64);
-      const outputArray = new Uint8Array(rawData.length);
-      for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-      return outputArray;
-    }
-
     /* ---- i18n ---- */
     window.i18n.init().then(() => {
       const sel = document.getElementById('lang-select');
@@ -839,5 +804,6 @@
       iniciarGPS();
     });
   </script>
+  <script src="js/pwa-install.js"></script>
 </body>
 </html>
