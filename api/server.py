@@ -2655,7 +2655,7 @@ def get_cash_summary(cho_id):
     )
 
     total_delivered_cod = query(
-        "SELECT COUNT(*) as count, COALESCE(SUM(PED_COSTO_TOTAL), 0) as total "
+        "SELECT COUNT(*) as count, COALESCE(SUM(PED_CANTIDAD_COBRADA), 0) as total "
         "FROM PEDIDOS "
         "WHERE EMP_ID=? AND CHO_ID=? AND PED_PAGO_ESTATUS='COBRADO'",
         [emp_id, cho_id]
@@ -2696,9 +2696,12 @@ def generate_settlement():
         return jsonify({'success': False, 'error': 'No hay cobros pendientes para este chofer'}), 400
 
     total_cod = sum(float(h.get('CASH_MONTO', 0)) for h in holdings)
-    # Get driver commission percentage
-    cho_data = query("SELECT CHO_COMISION_PCT FROM CHOFERES WHERE CHO_ID=?", [cho_id])
-    comision_pct = float(cho_data[0].get('CHO_COMISION_PCT', 0)) if cho_data else 0
+    # Get driver commission percentage (safe if column doesn't exist)
+    try:
+        cho_data = query("SELECT CHO_COMISION_PCT FROM CHOFERES WHERE CHO_ID=?", [cho_id])
+        comision_pct = float(cho_data[0].get('CHO_COMISION_PCT', 0) or 0) if cho_data else 0
+    except Exception:
+        comision_pct = 0
     comision = total_cod * (comision_pct / 100)
     a_depositar = total_cod - comision
 
