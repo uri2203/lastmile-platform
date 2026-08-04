@@ -261,29 +261,43 @@ def init_schema():
 
 
 def _init_postgres_schema():
-    """Create all tables and views in PostgreSQL."""
+    """Create all tables and views in PostgreSQL.
+    Uses a dedicated connection that is ALWAYS closed after init (never returned to pool).
+    This avoids poisoning the pool with aborted transactions."""
     schema_path = os.path.join(os.path.dirname(__file__), 'schema_postgres.sql')
-    if os.path.exists(schema_path):
-        with open(schema_path, 'r') as f:
-            schema_sql = f.read()
-        conn = get_db()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(schema_sql)
-            conn.commit()
-            cursor.close()
-            print('[DB] PostgreSQL schema initialized')
-        except Exception as e:
-            # Rollback the failed transaction to avoid leaving connection in aborted state
+    if not os.path.exists(schema_path):
+        print('[DB] WARNING: schema_postgres.sql not found')
+        return
+
+    with open(schema_path, 'r') as f:
+        schema_sql = f.read()
+
+    # Use a DEDICATED connection, not the pool — close it regardless of success/failure.
+    url = DATABASE_URL
+    if 'sslmode' not in url:
+        url += '&sslmode=require' if '?' in url else '?sslmode=require'
+    conn = None
+    try:
+        conn = psycopg2.connect(url, connect_timeout=10)
+        conn.autocommit = False
+        cursor = conn.cursor()
+        cursor.execute(schema_sql)
+        conn.commit()
+        cursor.close()
+        print('[DB] PostgreSQL schema initialized')
+    except Exception as e:
+        if conn:
             try:
                 conn.rollback()
             except Exception:
                 pass
-            print(f'[DB] Schema init error (rolled back): {e}')
-        finally:
-            _release_conn()
-    else:
-        print('[DB] WARNING: schema_postgres.sql not found')
+        print(f'[DB] Schema init error (rolled back): {e}')
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def check_empty():
