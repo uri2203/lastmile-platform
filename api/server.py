@@ -412,6 +412,12 @@ else:
     except Exception as e:
         print(f'[DB] Lockout columns check skipped: {e}')
 
+    # Auto-add COD columns and tables if missing
+    try:
+        ensure_cod_columns()
+    except Exception as e:
+        print(f'[DB] COD columns check skipped: {e}')
+
 
 def ensure_lockout_columns():
     """Add account lockout and email verification columns if they don't exist."""
@@ -446,6 +452,75 @@ def ensure_lockout_columns():
     # Auto-verify existing users created before email verification was added
     try:
         execute("UPDATE EMPRESAS SET EMP_EMAIL_VERIFIED='S' WHERE EMP_EMAIL_VERIFIED='N' AND EMP_VERIFICATION_TOKEN IS NULL")
+    except Exception:
+        pass
+
+
+def ensure_cod_columns():
+    """Add COD columns and tables if they don't exist."""
+    if not USE_POSTGRES:
+        return
+    # COD columns on PEDIDOS
+    for col in [
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_MONEDA TEXT DEFAULT 'MXN'",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_TIPO_ENVIO TEXT DEFAULT 'ESTANDAR'",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_PAGO_ESTATUS TEXT DEFAULT 'PENDIENTE'",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_PAGO_FECHA TIMESTAMP",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_CANTIDAD_COBRADA REAL DEFAULT 0",
+    ]:
+        try:
+            execute(col)
+        except Exception:
+            pass
+    # COD tables
+    for ddl in [
+        """CREATE TABLE IF NOT EXISTS DRIVER_CASH_HOLDINGS (
+            HOLDING_ID SERIAL PRIMARY KEY,
+            EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID),
+            CHO_ID INTEGER NOT NULL,
+            PED_ID INTEGER NOT NULL REFERENCES PEDIDOS(PED_ID),
+            CASH_MONTO REAL NOT NULL,
+            CASH_MONEDA TEXT DEFAULT 'MXN',
+            CASH_ESTADO TEXT DEFAULT 'HOLDING',
+            CASH_FECHA_COBRO TIMESTAMP DEFAULT NOW(),
+            CASH_FECHA_DEPOSITO TIMESTAMP,
+            CASH_NOTAS TEXT,
+            CASH_DEPOSITO_REF TEXT)""",
+        """CREATE TABLE IF NOT EXISTS DRIVER_SETTLEMENTS (
+            SETTLE_ID SERIAL PRIMARY KEY,
+            EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID),
+            CHO_ID INTEGER NOT NULL,
+            SETTLE_FECHA_INICIO TIMESTAMP NOT NULL,
+            SETTLE_FECHA_FIN TIMESTAMP NOT NULL,
+            SETTLE_TOTAL_PEDIDOS INTEGER DEFAULT 0,
+            SETTLE_TOTAL_COD REAL DEFAULT 0,
+            SETTLE_TOTAL_COMISION REAL DEFAULT 0,
+            SETTLE_TOTAL_A_DEPOSITAR REAL DEFAULT 0,
+            SETTLE_DEPOSITADO REAL DEFAULT 0,
+            SETTLE_FECHA_DEPOSITO TIMESTAMP,
+            SETTLE_ESTATUS TEXT DEFAULT 'PENDIENTE',
+            SETTLE_CREATED TIMESTAMP DEFAULT NOW(),
+            SETTLE_NOTAS TEXT)""",
+        """CREATE TABLE IF NOT EXISTS SETTLEMENT_LINE_ITEMS (
+            SLI_ID SERIAL PRIMARY KEY,
+            SETTLE_ID INTEGER NOT NULL REFERENCES DRIVER_SETTLEMENTS(SETTLE_ID),
+            PED_ID INTEGER NOT NULL REFERENCES PEDIDOS(PED_ID),
+            SLI_MONTO_ESPERADO REAL NOT NULL,
+            SLI_MONTO_COBRADO REAL DEFAULT 0,
+            SLI_DIFERENCIA REAL DEFAULT 0,
+            SLI_ESTADO TEXT DEFAULT 'PENDIENTE')""",
+    ]:
+        try:
+            execute(ddl)
+        except Exception:
+            pass
+    # NOTIFICACIONES table
+    try:
+        execute("""CREATE TABLE IF NOT EXISTS NOTIFICACIONES (
+            NOT_ID SERIAL PRIMARY KEY,
+            EMP_ID INTEGER REFERENCES EMPRESAS(EMP_ID),
+            NOT_TIPO TEXT, NOT_MENSAJE TEXT, NOT_ESTADO TEXT DEFAULT 'PENDIENTE',
+            PED_ID INTEGER, NOT_CREATED TIMESTAMP DEFAULT NOW())""")
     except Exception:
         pass
 
