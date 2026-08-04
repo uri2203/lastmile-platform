@@ -443,6 +443,11 @@ def ensure_lockout_columns():
         execute("ALTER TABLE EMPRESAS ADD COLUMN IF NOT EXISTS EMP_VERIFICATION_EXPIRES TIMESTAMP")
     except Exception:
         pass
+    # Auto-verify existing users created before email verification was added
+    try:
+        execute("UPDATE EMPRESAS SET EMP_EMAIL_VERIFIED='S' WHERE EMP_EMAIL_VERIFIED='N' AND EMP_VERIFICATION_TOKEN IS NULL")
+    except Exception:
+        pass
 
 
 def get_emp_id():
