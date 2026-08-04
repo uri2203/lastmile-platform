@@ -772,8 +772,10 @@ def handle_too_large(e):
 def handle_exception(e):
     if isinstance(e, HTTPException):
         return e
-    error_logger.error(f'Unhandled: {str(e)}', exc_info=True)
-    return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
+    error_msg = f'Unhandled: {type(e).__name__}: {str(e)}'
+    error_logger.error(error_msg, exc_info=True)
+    print(f'[ERROR] {error_msg}')
+    return jsonify({'success': False, 'error': 'Error interno del servidor', 'detail': str(e)[:200]}), 500
 
 
 # ========================================
