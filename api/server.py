@@ -470,15 +470,15 @@ def ensure_cod_columns():
     ]:
         try:
             execute(col)
-        except Exception:
-            pass
-    # COD tables
+        except Exception as e:
+            print(f'[DB] COD column skip: {e}')
+    # COD tables (without foreign keys to avoid cascade issues)
     for ddl in [
         """CREATE TABLE IF NOT EXISTS DRIVER_CASH_HOLDINGS (
             HOLDING_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID),
+            EMP_ID INTEGER NOT NULL,
             CHO_ID INTEGER NOT NULL,
-            PED_ID INTEGER NOT NULL REFERENCES PEDIDOS(PED_ID),
+            PED_ID INTEGER NOT NULL,
             CASH_MONTO REAL NOT NULL,
             CASH_MONEDA TEXT DEFAULT 'MXN',
             CASH_ESTADO TEXT DEFAULT 'HOLDING',
@@ -488,7 +488,7 @@ def ensure_cod_columns():
             CASH_DEPOSITO_REF TEXT)""",
         """CREATE TABLE IF NOT EXISTS DRIVER_SETTLEMENTS (
             SETTLE_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL REFERENCES EMPRESAS(EMP_ID),
+            EMP_ID INTEGER NOT NULL,
             CHO_ID INTEGER NOT NULL,
             SETTLE_FECHA_INICIO TIMESTAMP NOT NULL,
             SETTLE_FECHA_FIN TIMESTAMP NOT NULL,
@@ -503,26 +503,22 @@ def ensure_cod_columns():
             SETTLE_NOTAS TEXT)""",
         """CREATE TABLE IF NOT EXISTS SETTLEMENT_LINE_ITEMS (
             SLI_ID SERIAL PRIMARY KEY,
-            SETTLE_ID INTEGER NOT NULL REFERENCES DRIVER_SETTLEMENTS(SETTLE_ID),
-            PED_ID INTEGER NOT NULL REFERENCES PEDIDOS(PED_ID),
+            SETTLE_ID INTEGER NOT NULL,
+            PED_ID INTEGER NOT NULL,
             SLI_MONTO_ESPERADO REAL NOT NULL,
             SLI_MONTO_COBRADO REAL DEFAULT 0,
             SLI_DIFERENCIA REAL DEFAULT 0,
             SLI_ESTADO TEXT DEFAULT 'PENDIENTE')""",
+        """CREATE TABLE IF NOT EXISTS NOTIFICACIONES (
+            NOT_ID SERIAL PRIMARY KEY,
+            EMP_ID INTEGER,
+            NOT_TIPO TEXT, NOT_MENSAJE TEXT, NOT_ESTADO TEXT DEFAULT 'PENDIENTE',
+            PED_ID INTEGER, NOT_CREATED TIMESTAMP DEFAULT NOW())""",
     ]:
         try:
             execute(ddl)
-        except Exception:
-            pass
-    # NOTIFICACIONES table
-    try:
-        execute("""CREATE TABLE IF NOT EXISTS NOTIFICACIONES (
-            NOT_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER REFERENCES EMPRESAS(EMP_ID),
-            NOT_TIPO TEXT, NOT_MENSAJE TEXT, NOT_ESTADO TEXT DEFAULT 'PENDIENTE',
-            PED_ID INTEGER, NOT_CREATED TIMESTAMP DEFAULT NOW())""")
-    except Exception:
-        pass
+        except Exception as e:
+            print(f'[DB] COD table skip: {e}')
 
 
 def get_emp_id():
