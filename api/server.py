@@ -4794,6 +4794,114 @@ def ai_optimize_route():
     return jsonify({'success': True, 'result': result})
 
 
+@app.route('/api/ai/batch-optimize', methods=['POST'])
+def ai_batch_optimize():
+    """Optimiza rutas para TODOS los pedidos pendientes y choferes del tenant.
+    Body: {"depot_lat": 19.43, "depot_lng": -99.13} (optional)
+    Pulls real PEDIDOS + CHOFERES from DB."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    depot_lat = data.get('depot_lat', 19.4326)
+    depot_lng = data.get('depot_lng', -99.1332)
+    start_location = {'lat': depot_lat, 'lng': depot_lng}
+
+    # Get pending orders with coordinates
+    pedidos = query(
+        "SELECT PED_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR, "
+        "PED_LATITUD, PED_LONGITUD, PED_PRIORIDAD, PED_BULTOS, PED_COSTO_TOTAL "
+        "FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO') "
+        "AND PED_LATITUD IS NOT NULL AND PED_LONGITUD IS NOT NULL",
+        [emp_id]
+    )
+    orders = []
+    for p in pedidos:
+        orders.append({
+            'id': p['PED_ID'],
+            'lat': float(p['PED_LATITUD']),
+            'lng': float(p['PED_LONGITUD']),
+            'priority': (p.get('PED_PRIORIDAD') or 'normal').lower(),
+            'name': p.get('PED_CLIENTE_NOMBRE', ''),
+            'address': p.get('PED_DESTINO_DIR', ''),
+            'packages': p.get('PED_BULTOS', 1) or 1,
+            'cost': float(p.get('PED_COSTO_TOTAL', 0) or 0)
+        })
+
+    # Get active drivers
+    choferes = query(
+        "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, CHO_LAT_ACTUAL, CHO_LNG_ACTUAL "
+        "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+        [emp_id]
+    )
+    drivers = []
+    for c in choferes:
+        lat = float(c.get('CHO_LAT_ACTUAL') or depot_lat)
+        lng = float(c.get('CHO_LNG_ACTUAL') or depot_lng)
+        drivers.append({
+            'id': c['CHO_ID'],
+            'lat': lat,
+            'lng': lng,
+            'name': f"{c['CHO_NOMBRE']} {c['CHO_APELLIDO']}",
+            'capacity': 10,
+            'current_orders': []
+        })
+
+    if not orders:
+        return jsonify({'success': True, 'data': {'routes': {}, 'summary': {'total_orders': 0, 'message': 'No hay pedidos pendientes con coordenadas'}}})
+    if not drivers:
+        return jsonify({'success': True, 'data': {'routes': {}, 'summary': {'total_orders': len(orders), 'drivers_used': 0, 'message': 'No hay choferes activos'}}})
+
+    result = optimize_routes(orders, drivers, start_location)
+
+    # Save optimized routes as PEDIDO_HISTORIAL entries
+    routes = result.get('routes', {})
+    for driver_id, route_data in routes.items():
+        for idx, stop in enumerate(route_data.get('route', [])):
+            if 'id' in stop:
+                try:
+                    execute(
+                        "INSERT INTO PEDIDO_HISTORIAL (PED_ID, PH_ESTADO, PH_NOTAS, PH_LAT, PH_LNG) "
+                        "VALUES (?, 'RUTA_OPTIMIZADA', ?, ?, ?)",
+                        [stop['id'], f"Posición #{idx+1} en ruta optimizada del chofer {driver_id}",
+                         stop.get('lat'), stop.get('lng')]
+                    )
+                except Exception:
+                    pass
+
+    return jsonify({'success': True, 'data': result})
+
+
+@app.route('/api/ai/route-stats', methods=['GET'])
+def ai_route_stats():
+    """Estadísticas de optimización de rutas del tenant."""
+    emp_id = get_emp_id()
+    try:
+        today_routes = query(
+            "SELECT COUNT(*) as cnt FROM PEDIDO_HISTORIAL "
+            "WHERE PH_ESTADO='RUTA_OPTIMIZADA' AND DATE(PH_CREATED) = CURRENT_DATE",
+            []
+        )
+        total_optimized = today_routes[0].get('CNT', 0) if today_routes else 0
+    except Exception:
+        total_optimized = 0
+
+    pending = query(
+        "SELECT COUNT(*) as cnt FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO')",
+        [emp_id]
+    )
+    active_drivers = query(
+        "SELECT COUNT(*) as cnt FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+        [emp_id]
+    )
+    return jsonify({
+        'success': True,
+        'data': {
+            'pending_orders': pending[0].get('CNT', 0) if pending else 0,
+            'active_drivers': active_drivers[0].get('CNT', 0) if active_drivers else 0,
+            'optimized_today': total_optimized
+        }
+    })
+
+
 @app.route('/api/ai/assign', methods=['POST'])
 def ai_smart_assign():
     """Agente 2: Asigna pedido al chofer óptimo"""
@@ -4880,6 +4988,585 @@ def ai_sentiment():
         return jsonify({'error': 'text requerido'}), 400
     result = sentiment_analyzer.analyze(text)
     return jsonify({'success': True, 'result': result})
+
+
+# ========================================
+# FEATURE 5: MARKETPLACE DE CHOFERES
+# ========================================
+@app.route('/api/marketplace/drivers', methods=['GET'])
+def marketplace_list_drivers():
+    """Lista choferes disponibles para el marketplace (contratación on-demand)."""
+    emp_id = get_emp_id()
+    zona = request.args.get('zona')
+    tipo = request.args.get('tipo', 'all')
+
+    sql = "SELECT c.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO, " \
+          "c.CHO_LAT_ACTUAL, c.CHO_LNG_ACTUAL, c.CHO_STATUS, " \
+          "v.VEH_PLACAS, v.VEH_TIPO " \
+          "FROM CHOFERES c LEFT JOIN VEHICULOS v ON c.VEH_ID = v.VEH_ID " \
+          "WHERE c.EMP_ID=?"
+    params = [emp_id]
+    if tipo == 'disponible':
+        sql += " AND c.CHO_STATUS='ACTIVO'"
+    sql += " ORDER BY c.CHO_NOMBRE"
+
+    drivers = query(sql, params)
+    return jsonify({'success': True, 'data': drivers})
+
+
+@app.route('/api/marketplace/assign', methods=['POST'])
+def marketplace_assign():
+    """Asignación inteligente de chofer a pedido con scoring."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    ped_id = data.get('ped_id')
+    cho_id = data.get('cho_id')
+
+    if not ped_id:
+        return jsonify({'success': False, 'error': 'ped_id required'}), 400
+
+    pedido = query("SELECT * FROM PEDIDOS WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
+    if not pedido:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+
+    if cho_id:
+        # Direct assignment
+        execute("UPDATE PEDIDOS SET CHO_ID=?, PED_ESTADO='ASIGNADO' WHERE PED_ID=?", [cho_id, ped_id])
+        return jsonify({'success': True, 'message': f'Pedido {ped_id} asignado al chofer {cho_id}'})
+
+    # Auto-assign: find best available driver
+    drivers = query(
+        "SELECT CHO_ID, CHO_NOMBRE, CHO_LAT_ACTUAL, CHO_LNG_ACTUAL "
+        "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+        [emp_id]
+    )
+    if not drivers:
+        return jsonify({'success': False, 'error': 'No hay choferes disponibles'}), 400
+
+    p = pedido[0]
+    p_lat = float(p.get('PED_LATITUD') or 19.4326)
+    p_lng = float(p.get('PED_LONGITUD') or -99.1332)
+
+    def dist(c):
+        import math
+        lat1 = math.radians(float(c.get('CHO_LAT_ACTUAL') or 19.4326))
+        lon1 = math.radians(float(c.get('CHO_LNG_ACTUAL') or -99.1332))
+        lat2 = math.radians(p_lat)
+        lon2 = math.radians(p_lng)
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+        return 6371 * 2 * math.asin(math.sqrt(a))
+
+    best = min(drivers, key=dist)
+    execute("UPDATE PEDIDOS SET CHO_ID=?, PED_ESTADO='ASIGNADO' WHERE PED_ID=?", [best['CHO_ID'], ped_id])
+    return jsonify({
+        'success': True,
+        'assigned_to': best['CHO_ID'],
+        'driver_name': f"{best['CHO_NOMBRE']} {best['CHO_APELLIDO']}",
+        'distance_km': round(dist(best), 2)
+    })
+
+
+# ========================================
+# FEATURE 6: E-COMMERCE INTEGRATIONS
+# ========================================
+@app.route('/api/ecommerce/integrations', methods=['GET'])
+def ecommerce_integrations():
+    """Lista integraciones e-commerce disponibles."""
+    integrations = [
+        {'id': 'shopify', 'name': 'Shopify', 'icon': '🛒', 'status': 'available', 'description': 'Sincroniza pedidos de Shopify automáticamente'},
+        {'id': 'woocommerce', 'name': 'WooCommerce', 'icon': '🟣', 'status': 'available', 'description': 'Integra con tu tienda WordPress'},
+        {'id': 'mercadolibre', 'name': 'MercadoLibre', 'icon': '🟡', 'status': 'available', 'description': 'Recibe pedidos de MercadoLibre'},
+        {'id': 'amazon', 'name': 'Amazon', 'icon': '📦', 'status': 'available', 'description': 'Conecta con Amazon Marketplace'},
+        {'id': 'custom_api', 'name': 'API Personalizada', 'icon': '🔌', 'status': 'available', 'description': 'Webhook para cualquier plataforma'},
+    ]
+    return jsonify({'success': True, 'data': integrations})
+
+
+@app.route('/api/ecommerce/sync', methods=['POST'])
+def ecommerce_sync():
+    """Sincroniza un pedido desde una plataforma e-commerce."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    platform = data.get('platform', 'custom')
+    order_data = data.get('order', {})
+
+    if not order_data:
+        return jsonify({'success': False, 'error': 'order data required'}), 400
+
+    # Create pedido from e-commerce data
+    numero = f"EC-{platform.upper()[:3]}-{int(__import__('time').time()) % 100000}"
+    execute(
+        '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, PED_CLIENTE_NOMBRE, PED_CLIENTE_TELEFONO,
+           PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD, PED_BULTOS, PED_COSTO_TOTAL,
+           PED_FORMA_PAGO, PED_ESTADO, PED_TIPO_ENVIO)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', 'ECOMMERCE')''',
+        [emp_id, numero,
+         order_data.get('customer_name', ''), order_data.get('phone', ''),
+         order_data.get('address', ''), order_data.get('neighborhood', ''),
+         order_data.get('city', ''), order_data.get('packages', 1),
+         order_data.get('total', 0), order_data.get('payment_method', 'PREPAGO')]
+    )
+    return jsonify({'success': True, 'message': f'Pedido {numero} creado desde {platform}', 'numero': numero})
+
+
+@app.route('/api/ecommerce/webhook', methods=['POST'])
+def ecommerce_webhook():
+    """Webhook genérico para recibir pedidos de cualquier plataforma."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    platform = request.headers.get('X-Platform', 'webhook')
+
+    order = data.get('order', data.get('data', data))
+    numero = f"WH-{platform[:5].upper()}-{int(__import__('time').time()) % 100000}"
+
+    execute(
+        '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, PED_CLIENTE_NOMBRE, PED_CLIENTE_TELEFONO,
+           PED_DESTINO_DIR, PED_BULTOS, PED_COSTO_TOTAL, PED_ESTADO, PED_TIPO_ENVIO)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', 'ECOMMERCE')''',
+        [emp_id, numero,
+         order.get('customer_name', order.get('name', '')),
+         order.get('phone', order.get('phone_number', '')),
+         order.get('address', order.get('shipping_address', '')),
+         order.get('packages', order.get('quantity', 1)),
+         order.get('total', order.get('amount', 0))]
+    )
+    return jsonify({'success': True, 'numero': numero})
+
+
+# ========================================
+# FEATURE 7: APP CLIENTE FINAL
+# ========================================
+@app.route('/api/cliente/tracking/<token>', methods=['GET'])
+def cliente_tracking(token):
+    """Tracking público para el cliente final por token opaco."""
+    pedidos = query(
+        "SELECT PED_ID, PED_NUMERO, PED_ESTADO, PED_DESTINO_DIR, PED_DESTINO_CIUDAD, "
+        "PED_FECHA_PEDIDO, PED_FECHA_ENTREGA_REAL, PED_LATITUD, PED_LONGITUD, "
+        "PED_COSTO_TOTAL, PED_MONEDA "
+        "FROM PEDIDOS WHERE PED_TOKEN=?",
+        [token]
+    )
+    if not pedidos:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+
+    p = pedidos[0]
+    chofer = None
+    if p.get('PED_ESTADO') in ('EN_RUTA', 'ASIGNADO'):
+        ch = query(
+            "SELECT c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO "
+            "FROM PEDIDOS p JOIN CHOFERES c ON p.CHO_ID = c.CHO_ID WHERE p.PED_ID=?",
+            [p['PED_ID']]
+        )
+        if ch:
+            chofer = ch[0]
+
+    tracking_history = []
+    try:
+        tracking_history = query(
+            "SELECT PH_ESTADO, PH_FECHA, PH_LAT, PH_LNG, PH_NOTAS "
+            "FROM PEDIDO_HISTORIAL WHERE PED_ID=? ORDER BY PH_FECHA DESC LIMIT 20",
+            [p['PED_ID']]
+        )
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'pedido': p,
+            'chofer': chofer,
+            'history': tracking_history,
+            'status_labels': {
+                'PENDIENTE': 'Pedido recibido',
+                'ASIGNADO': 'Chofer asignado',
+                'EN_RUTA': 'En camino',
+                'ENTREGADO': 'Entregado',
+                'FALLIDO': 'No se pudo entregar'
+            }
+        }
+    })
+
+
+@app.route('/api/cliente/rate', methods=['POST'])
+def cliente_rate():
+    """El cliente final califica su entrega."""
+    data = request.json or {}
+    token = data.get('token')
+    rating = data.get('rating', 0)
+    comment = data.get('comment', '')
+
+    if not token or not rating:
+        return jsonify({'success': False, 'error': 'token and rating required'}), 400
+
+    pedidos = query("SELECT PED_ID, EMP_ID FROM PEDIDOS WHERE PED_TOKEN=?", [token])
+    if not pedidos:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+
+    ped_id = pedidos[0]['PED_ID']
+    emp_id = pedidos[0]['EMP_ID']
+
+    try:
+        execute(
+            "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_CALIFICACION INTEGER",
+            []
+        )
+        execute(
+            "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_COMENTARIO TEXT",
+            []
+        )
+    except Exception:
+        pass
+
+    execute("UPDATE PEDIDOS SET PED_CALIFICACION=?, PED_COMENTARIO=? WHERE PED_ID=?",
+            [int(rating), comment, ped_id])
+    return jsonify({'success': True, 'message': 'Gracias por tu calificación'})
+
+
+# ========================================
+# FEATURE 8: LOGÍSTICA INVERSA
+# ========================================
+@app.route('/api/reverse-logistics', methods=['GET'])
+def reverse_logistics_list():
+    """Lista devoluciones y logística inversa."""
+    emp_id = get_emp_id()
+    estado = request.args.get('estado')
+
+    sql = "SELECT * FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO='DEVUELTO'"
+    params = [emp_id]
+    if estado:
+        sql += " AND PED_TIPO_ENVIO=?"
+        params.append(estado)
+    sql += " ORDER BY PED_FECHA_PEDIDO DESC LIMIT 100"
+
+    try:
+        returns = query(sql, params)
+    except Exception:
+        returns = []
+
+    return jsonify({'success': True, 'data': returns})
+
+
+@app.route('/api/reverse-logistics/create', methods=['POST'])
+def reverse_logistics_create():
+    """Crea una solicitud de logística inversa (devolución)."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    ped_id_original = data.get('ped_id_original')
+    motivo = data.get('motivo', 'cliente_solicita')
+    notas = data.get('notas', '')
+
+    if not ped_id_original:
+        return jsonify({'success': False, 'error': 'ped_id_original required'}), 400
+
+    original = query("SELECT * FROM PEDIDOS WHERE PED_ID=? AND EMP_ID=?", [ped_id_original, emp_id])
+    if not original:
+        return jsonify({'success': False, 'error': 'Pedido original no encontrado'}), 404
+
+    orig = original[0]
+    numero = f"INV-{int(__import__('time').time()) % 100000}"
+
+    execute(
+        '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, PED_CLIENTE_NOMBRE, PED_CLIENTE_TELEFONO,
+           PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD, PED_BULTOS, PED_COSTO_TOTAL,
+           PED_ESTADO, PED_TIPO_ENVIO)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 'PENDIENTE', ?)''',
+        [emp_id, numero, orig.get('PED_CLIENTE_NOMBRE', ''), orig.get('PED_CLIENTE_TELEFONO', ''),
+         orig.get('PED_DESTINO_DIR', ''), orig.get('PED_DESTINO_COL', ''), orig.get('PED_DESTINO_CIUDAD', ''),
+         orig.get('PED_BULTOS', 1), f"INVOLUCRA:{motivo}"]
+    )
+
+    try:
+        execute(
+            "UPDATE PEDIDOS SET PED_ESTADO='DEVUELTO' WHERE PED_ID=?",
+            [ped_id_original]
+        )
+    except Exception:
+        pass
+
+    return jsonify({'success': True, 'message': f'Devolución {numero} creada', 'numero': numero})
+
+
+@app.route('/api/reverse-logistics/<int:return_id>/resolve', methods=['POST'])
+def reverse_logistics_resolve(return_id):
+    """Resuelve una devolución."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    resolucion = data.get('resolucion', 'REEMBOLSADO')
+
+    execute(
+        "UPDATE PEDIDOS SET PED_ESTADO='RESUELTO', PED_NOTAS=? WHERE PED_ID=? AND EMP_ID=?",
+        [resolucion, return_id, emp_id]
+    )
+    return jsonify({'success': True, 'message': f'Devolución {return_id} resuelta como {resolucion}'})
+
+
+# ========================================
+# FEATURE 9: PREDICTIVE ANALYTICS
+# ========================================
+@app.route('/api/analytics/demand-forecast', methods=['GET'])
+def analytics_demand_forecast():
+    """Pronóstico de demanda basado en datos históricos."""
+    emp_id = get_emp_id()
+
+    try:
+        daily = query(
+            "SELECT DATE(PED_FECHA_PEDIDO) as dia, COUNT(*) as pedidos, "
+            "SUM(PED_COSTO_TOTAL) as ingresos "
+            "FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '90 days' "
+            "GROUP BY dia ORDER BY dia",
+            [emp_id]
+        )
+    except Exception:
+        daily = []
+
+    # Calculate trends
+    if len(daily) >= 7:
+        recent_7 = sum(d.get('PEDIDOS', 0) for d in daily[-7:]) / 7
+        prev_7 = sum(d.get('PEDIDOS', 0) for d in daily[-14:-7]) / 7 if len(daily) >= 14 else recent_7
+        trend = ((recent_7 - prev_7) / max(prev_7, 1)) * 100
+    else:
+        recent_7 = 0
+        trend = 0
+
+    # Day-of-week analysis
+    dow_counts = {}
+    for d in daily:
+        if d.get('dia'):
+            from datetime import datetime
+            try:
+                dt = datetime.strptime(str(d['dia']), '%Y-%m-%d')
+                dow = dt.strftime('%A')
+                dow_counts[dow] = dow_counts.get(dow, 0) + (d.get('PEDIDOS', 0) or 0)
+            except Exception:
+                pass
+
+    peak_day = max(dow_counts, key=dow_counts.get) if dow_counts else 'N/A'
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'daily_trend': daily[-30:],
+            'avg_daily_orders': round(recent_7, 1),
+            'trend_pct': round(trend, 1),
+            'peak_day': peak_day,
+            'forecast_next_7': round(recent_7 * (1 + trend/100), 0),
+            'revenue_forecast': round(sum(d.get('INGRESOS', 0) or 0 for d in daily[-7:]) * (1 + trend/100), 2)
+        }
+    })
+
+
+@app.route('/api/analytics/performance', methods=['GET'])
+def analytics_performance():
+    """Métricas de rendimiento del tenant."""
+    emp_id = get_emp_id()
+
+    try:
+        stats = query(
+            "SELECT "
+            "COUNT(*) as total_pedidos, "
+            "SUM(CASE WHEN PED_ESTADO='ENTREGADO' THEN 1 ELSE 0 END) as entregados, "
+            "SUM(CASE WHEN PED_ESTADO='FALLIDO' THEN 1 ELSE 0 END) as fallidos, "
+            "SUM(CASE WHEN PED_ESTADO='EN_RUTA' THEN 1 ELSE 0 END) as en_ruta, "
+            "SUM(PED_COSTO_TOTAL) as ingresos_totales, "
+            "AVG(PED_CALIFICACION) as calificacion_promedio "
+            "FROM PEDIDOS WHERE EMP_ID=? AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days'",
+            [emp_id]
+        )
+        s = stats[0] if stats else {}
+    except Exception:
+        s = {}
+
+    delivered = s.get('ENTREGADOS', 0) or 0
+    total = s.get('TOTAL_PEDIDOS', 0) or 0
+    success_rate = (delivered / max(total, 1)) * 100
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'total_orders_30d': total,
+            'delivered': delivered,
+            'in_transit': s.get('EN_RUTA', 0) or 0,
+            'failed': s.get('FALLIDOS', 0) or 0,
+            'success_rate': round(success_rate, 1),
+            'revenue_30d': float(s.get('INGRESOS_TOTALES', 0) or 0),
+            'avg_rating': round(float(s.get('CALIFICACION_PROMEDIO', 0) or 0), 1),
+            'cost_per_delivery': round(float(s.get('INGRESOS_TOTALES', 0) or 0) / max(delivered, 1), 2)
+        }
+    })
+
+
+@app.route('/api/analytics/heatmap', methods=['GET'])
+def analytics_heatmap():
+    """Datos de mapa de calor de entregas."""
+    emp_id = get_emp_id()
+    try:
+        points = query(
+            "SELECT PED_LATITUD as lat, PED_LONGITUD as lng, PED_ESTADO as status "
+            "FROM PEDIDOS WHERE EMP_ID=? "
+            "AND PED_LATITUD IS NOT NULL AND PED_LONGITUD IS NOT NULL "
+            "AND PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days'",
+            [emp_id]
+        )
+    except Exception:
+        points = []
+
+    return jsonify({'success': True, 'data': points})
+
+
+# ========================================
+# FEATURE 10: GAMIFICACIÓN
+# ========================================
+@app.route('/api/gamification/leaderboard', methods=['GET'])
+def gamification_leaderboard():
+    """Leaderboard de choferes con puntos, badges y ranking."""
+    emp_id = get_emp_id()
+
+    try:
+        drivers = query(
+            "SELECT c.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO, "
+            "COUNT(p.PED_ID) as total_entregas, "
+            "SUM(CASE WHEN p.PED_ESTADO='ENTREGADO' THEN 1 ELSE 0 END) as entregas_exitosas, "
+            "AVG(p.PED_CALIFICACION) as calificacion "
+            "FROM CHOFERES c "
+            "LEFT JOIN PEDIDOS p ON c.CHO_ID = p.CHO_ID AND p.PED_FECHA_PEDIDO >= CURRENT_DATE - INTERVAL '30 days' "
+            "WHERE c.EMP_ID=? "
+            "GROUP BY c.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO",
+            [emp_id]
+        )
+    except Exception:
+        drivers = []
+
+    leaderboard = []
+    for d in drivers:
+        entregas = d.get('ENTREGAS_EXITOSAS', 0) or 0
+        cal = float(d.get('CALIFICACION', 0) or 0)
+        # Points: 10 per delivery + 5 per star rating
+        puntos = entregas * 10 + int(cal * 5)
+
+        badges = []
+        if entregas >= 100: badges.append('🏆 Century Club')
+        elif entregas >= 50: badges.append('⭐ Gold Driver')
+        elif entregas >= 10: badges.append('silver')
+        if cal >= 4.5: badges.append('💎 Five Star')
+        elif cal >= 4.0: badges.append('⭐ Top Rated')
+        if entregas >= 10 and cal >= 4.0: badges.append('🎯 Precision Pro')
+
+        tasa_exito = (entregas / max(d.get('TOTAL_ENTREGAS', 1), 1)) * 100
+
+        leaderboard.append({
+            'cho_id': d['CHO_ID'],
+            'nombre': f"{d['CHO_NOMBRE']} {d['CHO_APELLIDO']}",
+            'entregas': entregas,
+            'tasa_exito': round(tasa_exito, 1),
+            'calificacion': round(cal, 1),
+            'puntos': puntos,
+            'badges': badges
+        })
+
+    leaderboard.sort(key=lambda x: x['puntos'], reverse=True)
+    for i, d in enumerate(leaderboard):
+        d['rank'] = i + 1
+
+    return jsonify({'success': True, 'data': leaderboard})
+
+
+@app.route('/api/gamification/challenges', methods=['GET'])
+def gamification_challenges():
+    """Retos/challenges activos para los choferes."""
+    emp_id = get_emp_id()
+
+    from datetime import datetime, timedelta
+    today = datetime.now()
+
+    challenges = [
+        {
+            'id': 1,
+            'title': '🔥 Racha de 7 días',
+            'description': 'Entrega al menos 1 pedido cada día por 7 días consecutivos',
+            'target': 7,
+            'reward': '500 puntos',
+            'type': 'streak'
+        },
+        {
+            'id': 2,
+            'title': '⭐ 5 Estrellas',
+            'description': 'Mantén calificación promedio de 5.0 por una semana',
+            'target': 5.0,
+            'reward': '1000 puntos + Badge Diamante',
+            'type': 'rating'
+        },
+        {
+            'id': 3,
+            'title': '📦 50 Entregas',
+            'description': 'Completa 50 entregas este mes',
+            'target': 50,
+            'reward': '2000 puntos + Badge Oro',
+            'type': 'volume'
+        },
+        {
+            'id': 4,
+            'title': '⚡ Express Champion',
+            'description': 'Completa 10 entregas express en un solo día',
+            'target': 10,
+            'reward': '750 puntos',
+            'type': 'daily'
+        },
+        {
+            'id': 5,
+            'title': '🎯 100% Éxito',
+            'description': 'Mantén 100% tasa de entrega exitosa por 50 pedidos',
+            'target': 50,
+            'reward': '1500 puntos + Badge Precision',
+            'type': 'accuracy'
+        }
+    ]
+
+    return jsonify({'success': True, 'data': challenges})
+
+
+@app.route('/api/gamification/achievements/<int:cho_id>', methods=['GET'])
+def gamification_achievements(cho_id):
+    """Logro de un chofer específico."""
+    emp_id = get_emp_id()
+
+    try:
+        stats = query(
+            "SELECT "
+            "COUNT(*) as total, "
+            "SUM(CASE WHEN PED_ESTADO='ENTREGADO' THEN 1 ELSE 0 END) as entregas, "
+            "AVG(PED_CALIFICACION) as cal "
+            "FROM PEDIDOS WHERE CHO_ID=? AND EMP_ID=?",
+            [cho_id, emp_id]
+        )
+        s = stats[0] if stats else {}
+    except Exception:
+        s = {}
+
+    entregas = s.get('ENTREGAS', 0) or 0
+    cal = float(s.get('CAL', 0) or 0)
+    puntos = entregas * 10 + int(cal * 5)
+
+    all_badges = []
+    if entregas >= 10: all_badges.append({'id': 'rookie', 'name': '🚀 Rookie', 'desc': '10+ entregas'})
+    if entregas >= 50: all_badges.append({'id': 'gold', 'name': '⭐ Gold Driver', 'desc': '50+ entregas'})
+    if entregas >= 100: all_badges.append({'id': 'century', 'name': '🏆 Century Club', 'desc': '100+ entregas'})
+    if entregas >= 500: all_badges.append({'id': 'legend', 'name': '👑 Legend', 'desc': '500+ entregas'})
+    if cal >= 4.0: all_badges.append({'id': 'top_rated', 'name': '💎 Top Rated', 'desc': '4.0+ stars'})
+    if cal >= 4.5: all_badges.append({'id': 'five_star', 'name': '🌟 Five Star', 'desc': '4.5+ stars'})
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'cho_id': cho_id,
+            'puntos': puntos,
+            'entregas': entregas,
+            'calificacion': round(cal, 1),
+            'badges': all_badges,
+            'next_badge': '🏆 Century Club' if entregas < 100 else '👑 Legend' if entregas < 500 else 'Max level!'
+        }
+    })
 
 
 # ========================================
