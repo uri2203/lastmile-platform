@@ -3964,16 +3964,78 @@ def test_notification():
 @app.route('/api/notifications/config', methods=['GET'])
 def get_notification_config():
     if not notification_service:
-        return jsonify({'success': True, 'data': {'email_enabled': False, 'sms_enabled': False, 'email_provider': 'None', 'sms_provider': 'None'}})
+        return jsonify({'success': True, 'data': {'email_enabled': False, 'sms_enabled': False, 'whatsapp_enabled': False, 'email_provider': 'None', 'sms_provider': 'None', 'whatsapp_provider': 'None'}})
+    wa_status = notification_service.whatsapp.get_status() if notification_service.whatsapp else {'enabled': False}
     return jsonify({
         'success': True,
         'data': {
             'email_enabled': notification_service.email.enabled,
             'sms_enabled': notification_service.sms.enabled,
+            'whatsapp_enabled': wa_status.get('enabled', False),
             'email_provider': 'Resend' if notification_service.email.enabled else 'None',
             'sms_provider': 'Twilio' if notification_service.sms.enabled else 'None',
+            'whatsapp_provider': 'Twilio WhatsApp' if wa_status.get('enabled') else 'None',
         }
     })
+
+
+@app.route('/api/whatsapp/send', methods=['POST'])
+def send_whatsapp():
+    """Send a WhatsApp message. Requires auth."""
+    data = request.get_json() or {}
+    to = data.get('to', '').strip()
+    message = data.get('message', '').strip()
+    template_sid = data.get('template_sid')
+    template_vars = data.get('template_vars')
+
+    if not to:
+        return jsonify({'success': False, 'error': 'Phone number required'}), 400
+    if not message and not template_sid:
+        return jsonify({'success': False, 'error': 'Message or template_sid required'}), 400
+
+    if not notification_service or not notification_service.whatsapp:
+        return jsonify({'success': False, 'error': 'WhatsApp service not available'}), 503
+
+    if template_sid:
+        result = notification_service.whatsapp.send_template(to, template_sid, variables=template_vars)
+    else:
+        result = notification_service.whatsapp.send(to, message)
+
+    return jsonify(result), 200 if result.get('success') else 500
+
+
+@app.route('/api/whatsapp/webhook', methods=['GET', 'POST'])
+def whatsapp_webhook():
+    """Twilio WhatsApp webhook for delivery receipts and incoming messages."""
+    if request.method == 'GET':
+        # Webhook verification
+        return jsonify({'status': 'ok'})
+
+    try:
+        data = request.form or request.get_json() or {}
+        message_sid = data.get('MessageSid', '')
+        message_status = data.get('MessageStatus', '')
+        to_number = data.get('To', '')
+        from_number = data.get('From', '')
+        body = data.get('Body', '')
+
+        print(f'[WHATSAPP WEBHOOK] SID={message_sid} Status={message_status} From={from_number} To={to_number}')
+
+        # Update SMS_ENVIADOS table if message was tracked
+        if message_sid:
+            try:
+                execute(
+                    "UPDATE SMS_ENVIADOS SET SMS_PLATAFORMA='WHATSAPP', SMS_FECHA_ENVIO=NOW() "
+                    "WHERE SMS_ERROR LIKE ?",
+                    [f'%{message_sid}%']
+                )
+            except Exception:
+                pass
+
+        return jsonify({'status': 'received'}), 200
+    except Exception as e:
+        print(f'[WHATSAPP WEBHOOK] Error: {e}')
+        return jsonify({'status': 'error'}), 500
 
 
 @app.route('/api/billing/planes', methods=['GET'])

@@ -544,6 +544,11 @@ class NotificationService:
     def __init__(self):
         self.email = EmailService()
         self.sms = SMSService()
+        try:
+            from whatsapp_service import whatsapp_service
+            self.whatsapp = whatsapp_service
+        except Exception:
+            self.whatsapp = None
 
     def _get_tenant_lang(self, emp_id):
         """Detect language from tenant's fiscal country config."""
@@ -648,7 +653,7 @@ class NotificationService:
             'tracking_url': f"{base_url}/tracking?pedido={pedido_id}",
         }
 
-        results = {'email': None, 'sms': None}
+        results = {'email': None, 'sms': None, 'whatsapp': None}
 
         # Get contacts
         if cli_id:
@@ -660,6 +665,8 @@ class NotificationService:
             if contacts.get('phone'):
                 sms_text = template['sms'].format(**vars)
                 results['sms'] = self.sms.send(contacts['phone'], sms_text)
+                if self.whatsapp and self.whatsapp.enabled:
+                    results['whatsapp'] = self.whatsapp.send(contacts['phone'], sms_text)
 
         if chofer_id and template_key == 'pedido_asignado_chofer':
             contacts = self.get_chofer_contacts(chofer_id)
@@ -670,6 +677,8 @@ class NotificationService:
             if contacts.get('phone'):
                 sms_text = template['sms'].format(**vars)
                 results['sms'] = self.sms.send(contacts['phone'], sms_text)
+                if self.whatsapp and self.whatsapp.enabled:
+                    results['whatsapp'] = self.whatsapp.send(contacts['phone'], sms_text)
 
         if emp_id and template_key in ('pedido_creado', 'pedido_entregado', 'pedido_cancelado', 'pago_recibido'):
             contacts = self.get_empresa_contacts(emp_id)
@@ -688,24 +697,27 @@ class NotificationService:
         """Log notification to database."""
         from db import execute
         try:
+            has_any = results.get('email') or results.get('sms') or results.get('whatsapp')
             execute(
                 "INSERT INTO NOTIFICACIONES (EMP_ID, NOT_TIPO, NOT_MENSAJE, NOT_ESTADO, PED_ID, NOT_CREATED) "
                 "VALUES (?, ?, ?, ?, ?, NOW())",
                 [emp_id, template_key,
                  json.dumps({'template': template_key, 'pedido_id': pedido_id, 'results': str(results)}),
-                 'ENVIADO' if results.get('email') or results.get('sms') else 'LOG',
+                 'ENVIADO' if has_any else 'LOG',
                  pedido_id]
             )
         except Exception:
             pass
 
-    def send_custom(self, to_email=None, to_phone=None, subject=None, html=None, sms_text=None):
+    def send_custom(self, to_email=None, to_phone=None, subject=None, html=None, sms_text=None, whatsapp_text=None):
         """Send custom notification."""
-        results = {'email': None, 'sms': None}
+        results = {'email': None, 'sms': None, 'whatsapp': None}
         if to_email and subject and html:
             results['email'] = self.email.send(to_email, subject, html)
         if to_phone and sms_text:
             results['sms'] = self.sms.send(to_phone, sms_text)
+        if to_phone and (whatsapp_text or sms_text) and self.whatsapp and self.whatsapp.enabled:
+            results['whatsapp'] = self.whatsapp.send(to_phone, whatsapp_text or sms_text)
         return results
 
 
