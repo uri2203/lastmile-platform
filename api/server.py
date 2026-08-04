@@ -418,6 +418,12 @@ else:
     except Exception as e:
         print(f'[DB] COD columns check skipped: {e}')
 
+    # Auto-create critical views if missing (views are at end of schema, easily lost in failed init)
+    try:
+        ensure_views()
+    except Exception as e:
+        print(f'[DB] Views check skipped: {e}')
+
 
 def ensure_lockout_columns():
     """Add account lockout and email verification columns if they don't exist."""
@@ -522,6 +528,48 @@ def ensure_cod_columns():
         except Exception as e:
             tbl = ddl.split('IF NOT EXISTS')[1].split('(')[0].strip() if 'IF NOT EXISTS' in ddl else '?'
             print(f'[DB] COD table FAIL [{tbl}]: {e}')
+
+
+def ensure_views():
+    """Create critical views independently of init_schema.
+    If init_schema fails (e.g. a later statement errors), views won't be created.
+    This function ensures they exist regardless."""
+    if not USE_POSTGRES:
+        return
+    views = [
+        ("V_PEDIDOS_COMPLETO", """CREATE OR REPLACE VIEW V_PEDIDOS_COMPLETO AS
+            SELECT p.*, e.EMP_NOMBRE,
+                (SELECT COUNT(*) FROM PEDIDO_HISTORIAL h WHERE h.PED_ID = p.PED_ID) as TOTAL_MOVIMIENTOS
+            FROM PEDIDOS p
+            LEFT JOIN EMPRESAS e ON p.EMP_ID = e.EMP_ID"""),
+        ("V_RENDIMIENTO_CHOFERES", """CREATE OR REPLACE VIEW V_RENDIMIENTO_CHOFERES AS
+            SELECT c.CHO_ID, c.EMP_ID, c.CHO_NOMBRE, c.CHO_APELLIDO,
+                (SELECT COUNT(*) FROM PEDIDOS p WHERE p.CHO_ID = c.CHO_ID AND p.PED_ESTADO = 'ENTREGADO') as ENTREGAS_REALIZADAS,
+                (SELECT COUNT(*) FROM PEDIDOS p WHERE p.CHO_ID = c.CHO_ID) as TOTAL_ASIGNACIONES,
+                CASE WHEN (SELECT COUNT(*) FROM PEDIDOS p WHERE p.CHO_ID = c.CHO_ID) > 0
+                    THEN ROUND(CAST((SELECT COUNT(*) FROM PEDIDOS p WHERE p.CHO_ID = c.CHO_ID AND p.PED_ESTADO = 'ENTREGADO') AS NUMERIC) * 100.0 / (SELECT COUNT(*) FROM PEDIDOS p WHERE p.CHO_ID = c.CHO_ID), 1)
+                    ELSE 0 END as TASA_EXITO,
+                (SELECT AVG(CASE WHEN p.PED_FECHA_ENTREGA_REAL IS NOT NULL AND p.PED_FECHA_RECOLECTA IS NOT NULL
+                    THEN EXTRACT(EPOCH FROM (p.PED_FECHA_ENTREGA_REAL::timestamp - p.PED_FECHA_RECOLECTA::timestamp)) / 3600
+                    ELSE NULL END)
+                    FROM PEDIDOS p WHERE p.CHO_ID = c.CHO_ID AND p.PED_ESTADO = 'ENTREGADO') as PROMEDIO_HORAS,
+                (SELECT COALESCE(SUM(t.TRK_VELOCIDAD), 0) / CASE WHEN COUNT(t.TRK_ID) > 0 THEN COUNT(t.TRK_ID) ELSE 1 END
+                    FROM TRACKING t WHERE t.CHO_ID = c.CHO_ID) as VELOCIDAD_PROMEDIO
+            FROM CHOFERES c"""),
+        ("V_DASHBOARD_RESUMEN", """CREATE OR REPLACE VIEW V_DASHBOARD_RESUMEN AS
+            SELECT e.EMP_ID, e.EMP_NOMBRE,
+                (SELECT COUNT(*) FROM PEDIDOS p WHERE p.EMP_ID = e.EMP_ID AND p.PED_FECHA_PEDIDO >= CURRENT_DATE) as PEDIDOS_HOY,
+                (SELECT COUNT(*) FROM PEDIDOS p WHERE p.EMP_ID = e.EMP_ID AND p.PED_ESTADO = 'EN_RUTA') as EN_RUTA,
+                (SELECT COUNT(*) FROM PEDIDOS p WHERE p.EMP_ID = e.EMP_ID AND p.PED_ESTADO = 'ENTREGADO' AND p.PED_FECHA_PEDIDO >= CURRENT_DATE) as ENTREGADOS_HOY,
+                (SELECT COALESCE(SUM(p2.PED_COSTO_TOTAL), 0) FROM PEDIDOS p2 WHERE p2.EMP_ID = e.EMP_ID AND p2.PED_ESTADO = 'ENTREGADO') as INGRESOS_MES
+            FROM EMPRESAS e"""),
+    ]
+    for name, ddl in views:
+        try:
+            execute(ddl)
+            print(f'[DB] View ensured: {name}')
+        except Exception as e:
+            print(f'[DB] View FAIL [{name}]: {e}')
 
 
 def get_emp_id():
@@ -4836,23 +4884,37 @@ def ai_sentiment():
 # ========================================
 @app.route('/api/debug/db-tables', methods=['GET'])
 def debug_db_tables():
-    """Check which COD tables exist in the DB."""
+    """Check which tables exist in the DB."""
     emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'error': 'No auth'}), 401
     results = {}
-    for tbl in ['PEDIDOS', 'CHOFERES', 'USUARIOS', 'EMPRESAS',
-                'DRIVER_CASH_HOLDINGS', 'DRIVER_SETTLEMENTS', 'SETTLEMENT_LINE_ITEMS', 'NOTIFICACIONES']:
+    # Check all tables the system needs
+    all_tables = [
+        'PEDIDOS', 'CHOFERES', 'USUARIOS', 'EMPRESAS', 'CLIENTES_LM',
+        'VEHICULOS', 'TRACKING', 'PEDIDO_HISTORIAL', 'INCIDENCIAS',
+        'DRIVER_CASH_HOLDINGS', 'DRIVER_SETTLEMENTS', 'SETTLEMENT_LINE_ITEMS',
+        'NOTIFICACIONES', 'LEGAL_ACCEPTANCE', 'TENANT_FISCAL_CONFIG',
+        'PUSH_SUBSCRIPTIONS', 'TENANT_PAYMENT_METHODS', 'FISCAL_INVOICES'
+    ]
+    for tbl in all_tables:
         try:
             rows = query(f"SELECT COUNT(*) as cnt FROM {tbl}", [])
             results[tbl] = {'exists': True, 'count': rows[0].get('CNT', 0) if rows else 0}
         except Exception as e:
-            results[tbl] = {'exists': False, 'error': str(e)[:200]}
+            results[tbl] = {'exists': False, 'error': str(e)[:150]}
+    # Check views
+    for vw in ['V_PEDIDOS_COMPLETO', 'V_DASHBOARD_RESUMEN', 'V_RENDIMIENTO_CHOFERES',
+               'V_ESTADO_FLOTA', 'V_COSTOS_RUTA', 'V_TOP_CLIENTES', 'V_KPI_CONSOLIDADO']:
+        try:
+            rows = query(f"SELECT COUNT(*) as cnt FROM {vw}", [])
+            results[f'VIEW:{vw}'] = {'exists': True, 'count': rows[0].get('CNT', 0) if rows else 0}
+        except Exception as e:
+            results[f'VIEW:{vw}'] = {'exists': False, 'error': str(e)[:150]}
     # Check PEDIDOS columns
     try:
-        cols = query("SELECT column_name FROM information_schema.columns WHERE table_name='pedidos'", [])
-        ped_cols = [c['column_name'] for c in cols]
-        results['PEDIDOS_COLUMNS'] = ped_cols
+        cols = query("SELECT column_name FROM information_schema.columns WHERE table_name='pedidos' ORDER BY ordinal_position", [])
+        results['PEDIDOS_COLUMNS'] = [c['column_name'] for c in cols]
     except Exception as e:
         results['PEDIDOS_COLUMNS'] = str(e)[:200]
     return jsonify({'success': True, 'tables': results})
