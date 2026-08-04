@@ -120,17 +120,29 @@ def set_tenant_context(emp_id):
     """
     if not USE_POSTGRES or emp_id is None:
         return
+    conn = None
     try:
         conn = get_db()
         cursor = conn.cursor()
         try:
             cursor.execute("SELECT set_current_tenant(%s)", [int(emp_id)])
         except Exception:
+            # If set_current_tenant doesn't exist, rollback the aborted transaction first
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            cursor = conn.cursor()
             cursor.execute("SET app.current_emp_id = %s", [str(emp_id)])
         conn.commit()
         cursor.close()
     except Exception:
-        pass  # RLS not enabled or SQLite
+        # Rollback to prevent leaving connection in aborted state
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
 
 
 def _release_conn():
