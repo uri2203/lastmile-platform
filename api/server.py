@@ -4844,8 +4844,8 @@ def debug_db_tables():
     for tbl in ['PEDIDOS', 'CHOFERES', 'USUARIOS', 'EMPRESAS',
                 'DRIVER_CASH_HOLDINGS', 'DRIVER_SETTLEMENTS', 'SETTLEMENT_LINE_ITEMS', 'NOTIFICACIONES']:
         try:
-            rows = query(f"SELECT COUNT(*) as cnt FROM {tbl} WHERE EMP_ID=0", [])
-            results[tbl] = {'exists': True, 'count': rows[0]['cnt'] if rows else 0}
+            rows = query(f"SELECT COUNT(*) as cnt FROM {tbl}", [])
+            results[tbl] = {'exists': True, 'count': rows[0].get('CNT', 0) if rows else 0}
         except Exception as e:
             results[tbl] = {'exists': False, 'error': str(e)[:200]}
     # Check PEDIDOS columns

@@ -71,12 +71,29 @@ def get_db():
         # Check if current thread already has an open connection
         conn = getattr(_thread_local, 'pg_conn', None)
         if conn and not conn.closed:
-            return conn
+            # Check if connection is in a usable state (not in an aborted transaction)
+            try:
+                conn.isolation_level  # simple validity check
+            except Exception:
+                # Connection is broken, close and get a new one
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _thread_local.pg_conn = None
+                conn = None
+            if conn:
+                return conn
 
         # Get from pool or create direct
         pool = _get_pool()
         if pool:
             conn = pool.getconn()
+            # Reset connection state to clear any stale aborted transactions
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         else:
             url = DATABASE_URL
             if 'sslmode' not in url:
@@ -256,6 +273,13 @@ def _init_postgres_schema():
             conn.commit()
             cursor.close()
             print('[DB] PostgreSQL schema initialized')
+        except Exception as e:
+            # Rollback the failed transaction to avoid leaving connection in aborted state
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            print(f'[DB] Schema init error (rolled back): {e}')
         finally:
             _release_conn()
     else:
