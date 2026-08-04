@@ -424,6 +424,12 @@ else:
     except Exception as e:
         print(f'[DB] Views check skipped: {e}')
 
+    # Auto-add GPS columns if missing (needed for route optimization)
+    try:
+        ensure_gps_columns()
+    except Exception as e:
+        print(f'[DB] GPS columns check skipped: {e}')
+
 
 def ensure_lockout_columns():
     """Add account lockout and email verification columns if they don't exist."""
@@ -570,6 +576,26 @@ def ensure_views():
             print(f'[DB] View ensured: {name}')
         except Exception as e:
             print(f'[DB] View FAIL [{name}]: {e}')
+
+
+def ensure_gps_columns():
+    """Add GPS and rating columns if missing."""
+    if not USE_POSTGRES:
+        return
+    for col in [
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_LATITUD REAL",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_LONGITUD REAL",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_CALIFICACION INTEGER",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_COMENTARIO TEXT",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_TOKEN TEXT",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_NOTAS TEXT",
+        "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LAT_ACTUAL REAL",
+        "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LNG_ACTUAL REAL",
+    ]:
+        try:
+            execute(col)
+        except Exception:
+            pass
 
 
 def get_emp_id():
@@ -4806,13 +4832,22 @@ def ai_batch_optimize():
     start_location = {'lat': depot_lat, 'lng': depot_lng}
 
     # Get pending orders with coordinates
-    pedidos = query(
-        "SELECT PED_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR, "
-        "PED_LATITUD, PED_LONGITUD, PED_PRIORIDAD, PED_BULTOS, PED_COSTO_TOTAL "
-        "FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO') "
-        "AND PED_LATITUD IS NOT NULL AND PED_LONGITUD IS NOT NULL",
-        [emp_id]
-    )
+    try:
+        pedidos = query(
+            "SELECT PED_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR, "
+            "COALESCE(PED_LATITUD, 0) as PED_LATITUD, COALESCE(PED_LONGITUD, 0) as PED_LONGITUD, "
+            "PED_PRIORIDAD, PED_BULTOS, PED_COSTO_TOTAL "
+            "FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO')",
+            [emp_id]
+        )
+    except Exception:
+        pedidos = query(
+            "SELECT PED_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR, "
+            "0 as PED_LATITUD, 0 as PED_LONGITUD, "
+            "PED_PRIORIDAD, PED_BULTOS, PED_COSTO_TOTAL "
+            "FROM PEDIDOS WHERE EMP_ID=? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO')",
+            [emp_id]
+        )
     orders = []
     for p in pedidos:
         orders.append({
@@ -4827,11 +4862,20 @@ def ai_batch_optimize():
         })
 
     # Get active drivers
-    choferes = query(
-        "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, CHO_LAT_ACTUAL, CHO_LNG_ACTUAL "
-        "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
-        [emp_id]
-    )
+    try:
+        choferes = query(
+            "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, "
+            "COALESCE(CHO_LAT_ACTUAL, 0) as CHO_LAT_ACTUAL, COALESCE(CHO_LNG_ACTUAL, 0) as CHO_LNG_ACTUAL "
+            "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+            [emp_id]
+        )
+    except Exception:
+        choferes = query(
+            "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, "
+            "0 as CHO_LAT_ACTUAL, 0 as CHO_LNG_ACTUAL "
+            "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+            [emp_id]
+        )
     drivers = []
     for c in choferes:
         lat = float(c.get('CHO_LAT_ACTUAL') or depot_lat)
@@ -4997,11 +5041,10 @@ def ai_sentiment():
 def marketplace_list_drivers():
     """Lista choferes disponibles para el marketplace (contratación on-demand)."""
     emp_id = get_emp_id()
-    zona = request.args.get('zona')
     tipo = request.args.get('tipo', 'all')
 
     sql = "SELECT c.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO, " \
-          "c.CHO_LAT_ACTUAL, c.CHO_LNG_ACTUAL, c.CHO_STATUS, " \
+          "c.CHO_STATUS, " \
           "v.VEH_PLACAS, v.VEH_TIPO " \
           "FROM CHOFERES c LEFT JOIN VEHICULOS v ON c.VEH_ID = v.VEH_ID " \
           "WHERE c.EMP_ID=?"
