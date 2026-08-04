@@ -49,7 +49,7 @@ def _handle_stripe_event(ev):
         currency = (obj.get('currency') or 'mxn').upper()
         if oid:
             try:
-                execute("UPDATE PEDIDOS SET PED_ESTADO='PAGADA', PED_MONEDA=?, PED_COSTO_TOTAL=? WHERE PED_ID=?", [currency, total, int(oid)])
+                execute("UPDATE PEDIDOS SET PED_ESTADO='PAGADA', PED_MONEDA=?, PED_COSTO_TOTAL=?, PED_PAGO_ESTATUS='PAGADO', PED_PAGO_FECHA=NOW() WHERE PED_ID=?", [currency, total, int(oid)])
             except Exception:
                 pass
         wh_logger.info(f'Stripe checkout OK: order={oid} {total} {currency}')
@@ -86,7 +86,7 @@ def mercadopago_webhook():
                 if status == 'approved' and oid:
                     from db import execute
                     try:
-                        execute("UPDATE PEDIDOS SET PED_ESTADO='PAGADA', PED_MONEDA=?, PED_COSTO_TOTAL=? WHERE PED_ID=?", [curr, amount, int(oid)])
+                        execute("UPDATE PEDIDOS SET PED_ESTADO='PAGADA', PED_MONEDA=?, PED_COSTO_TOTAL=?, PED_PAGO_ESTATUS='PAGADO', PED_PAGO_FECHA=NOW() WHERE PED_ID=?", [curr, amount, int(oid)])
                     except Exception:
                         pass
         except Exception as e:

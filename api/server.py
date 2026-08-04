@@ -2323,12 +2323,16 @@ def create_pedido():
     execute(
         '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, CLI_ID, PED_CLIENTE_NOMBRE,
            PED_CLIENTE_TELEFONO, PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD,
-           PED_PESO_KG, PED_BULTOS, PED_COSTO_TOTAL, PED_FORMA_PAGO, PED_ESTADO, PED_PRIORIDAD)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)''',
+           PED_PESO_KG, PED_BULTOS, PED_COSTO_TOTAL, PED_FORMA_PAGO, PED_MONEDA,
+           PED_TIPO_ENVIO, PED_PAGO_ESTATUS, PED_ESTADO, PED_PRIORIDAD)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)''',
         [emp_id, p.get('pedNumero'), p.get('cliId'), p.get('clienteNombre'),
          p.get('clienteTelefono'), p.get('destinoDir'), p.get('destinoCol'),
          p.get('destinoCiudad'), p.get('pesoKg', 0), p.get('bultos', 1),
-         p.get('costoTotal', 0), p.get('formaPago', 'EFECTIVO'), p.get('prioridad', 'NORMAL')]
+         p.get('costoTotal', 0), p.get('formaPago', 'EFECTIVO'),
+         p.get('moneda', 'MXN'), p.get('tipoEnvio', 'ESTANDAR'),
+         'PAGADO' if p.get('formaPago') != 'EFECTIVO' else 'PENDIENTE',
+         p.get('prioridad', 'NORMAL')]
     )
     # Get the new pedido ID
     try:
@@ -2464,6 +2468,238 @@ def get_pedidos_estadisticas():
         "COALESCE(SUM(PED_COSTO_TOTAL), 0) as ingresos_totales "
         "FROM PEDIDOS WHERE EMP_ID = ?", [emp_id])
     return jsonify({'success': True, 'data': data[0] if data else {}})
+
+
+# ========================================
+# MODULO: COD (CONTRA ENTREGA) + CONCILIACION
+# ========================================
+
+@app.route('/api/pedidos/<int:ped_id>/collect-cash', methods=['POST'])
+def collect_cash(ped_id):
+    """Driver confirms cash collection for a COD order."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    monto = data.get('monto', 0)
+    notas = data.get('notas', '')
+
+    if not monto or float(monto) <= 0:
+        return jsonify({'success': False, 'error': 'Monto invalido'}), 400
+
+    # Verify order exists and is COD
+    rows = query("SELECT * FROM PEDIDOS WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
+    if not rows:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+
+    pedido = rows[0]
+    cho_id = pedido.get('CHO_ID')
+    if not cho_id:
+        return jsonify({'success': False, 'error': 'Pedido sin chofer asignado'}), 400
+
+    # Update pedido
+    execute(
+        "UPDATE PEDIDOS SET PED_CANTIDAD_COBRADA=?, PED_PAGO_ESTATUS='COBRADO', PED_PAGO_FECHA=NOW() WHERE PED_ID=?",
+        [float(monto), ped_id]
+    )
+
+    # Record cash holding
+    execute(
+        "INSERT INTO DRIVER_CASH_HOLDINGS (EMP_ID, CHO_ID, PED_ID, CASH_MONTO, CASH_ESTADO, CASH_NOTAS) "
+        "VALUES (?, ?, ?, ?, 'HOLDING', ?)",
+        [emp_id, cho_id, ped_id, float(monto), notas]
+    )
+
+    return jsonify({'success': True, 'message': f'Cobro de ${float(monto):,.2f} registrado'})
+
+
+@app.route('/api/choferes/<int:cho_id>/cash-summary', methods=['GET'])
+def get_cash_summary(cho_id):
+    """Get cash holdings summary for a driver."""
+    emp_id = get_emp_id()
+
+    holdings = query(
+        "SELECT h.*, p.PED_NUMERO, p.PED_CLIENTE_NOMBRE, p.PED_DESTINO_DIR "
+        "FROM DRIVER_CASH_HOLDINGS h "
+        "LEFT JOIN PEDIDOS p ON h.PED_ID = p.PED_ID "
+        "WHERE h.EMP_ID=? AND h.CHO_ID=? AND h.CASH_ESTADO='HOLDING' "
+        "ORDER BY h.CASH_FECHA_COBRO DESC",
+        [emp_id, cho_id]
+    )
+
+    total_holding = query(
+        "SELECT COALESCE(SUM(CASH_MONTO), 0) as total "
+        "FROM DRIVER_CASH_HOLDINGS "
+        "WHERE EMP_ID=? AND CHO_ID=? AND CASH_ESTADO='HOLDING'",
+        [emp_id, cho_id]
+    )
+
+    total_delivered_cod = query(
+        "SELECT COUNT(*) as count, COALESCE(SUM(PED_COSTO_TOTAL), 0) as total "
+        "FROM PEDIDOS "
+        "WHERE EMP_ID=? AND CHO_ID=? AND PED_PAGO_ESTATUS='COBRADO'",
+        [emp_id, cho_id]
+    )
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'holdings': holdings,
+            'total_holding': total_holding[0]['total'] if total_holding else 0,
+            'total_delivered_cod': total_delivered_cod[0]['total'] if total_delivered_cod else 0,
+            'count_delivered_cod': total_delivered_cod[0]['count'] if total_delivered_cod else 0,
+        }
+    })
+
+
+@app.route('/api/settlements/generate', methods=['POST'])
+def generate_settlement():
+    """Generate a settlement for a driver's COD cash holdings."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    cho_id = data.get('cho_id')
+    fecha_inicio = data.get('fecha_inicio')
+    fecha_fin = data.get('fecha_fin')
+
+    if not cho_id:
+        return jsonify({'success': False, 'error': 'cho_id required'}), 400
+
+    # Get un-reconciled cash holdings
+    holdings = query(
+        "SELECT * FROM DRIVER_CASH_HOLDINGS "
+        "WHERE EMP_ID=? AND CHO_ID=? AND CASH_ESTADO='HOLDING' "
+        "AND CASH_FECHA_COBRO BETWEEN ? AND ?",
+        [emp_id, cho_id, fecha_inicio or '2000-01-01', fecha_fin or '2099-12-31']
+    )
+
+    if not holdings:
+        return jsonify({'success': False, 'error': 'No hay cobros pendientes para este chofer'}), 400
+
+    total_cod = sum(float(h.get('CASH_MONTO', 0)) for h in holdings)
+    # Get driver commission percentage
+    cho_data = query("SELECT CHO_COMISION_PCT FROM CHOFERES WHERE CHO_ID=?", [cho_id])
+    comision_pct = float(cho_data[0].get('CHO_COMISION_PCT', 0)) if cho_data else 0
+    comision = total_cod * (comision_pct / 100)
+    a_depositar = total_cod - comision
+
+    # Create settlement
+    execute(
+        "INSERT INTO DRIVER_SETTLEMENTS "
+        "(EMP_ID, CHO_ID, SETTLE_FECHA_INICIO, SETTLE_FECHA_FIN, SETTLE_TOTAL_PEDIDOS, "
+        "SETTLE_TOTAL_COD, SETTLE_TOTAL_COMISION, SETTLE_TOTAL_A_DEPOSITAR, SETTLE_ESTATUS) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE')",
+        [emp_id, cho_id, fecha_inicio, fecha_fin, len(holdings), total_cod, comision, a_depositar]
+    )
+
+    settle_row = query("SELECT MAX(SETTLE_ID) as id FROM DRIVER_SETTLEMENTS WHERE EMP_ID=? AND CHO_ID=?", [emp_id, cho_id])
+    settle_id = settle_row[0]['id'] if settle_row else None
+
+    # Create line items
+    for h in holdings:
+        execute(
+            "INSERT INTO SETTLEMENT_LINE_ITEMS (SETTLE_ID, PED_ID, SLI_MONTO_ESPERADO, SLI_MONTO_COBRADO, SLI_DIFERENCIA) "
+            "VALUES (?, ?, ?, ?, 0)",
+            [settle_id, h['PED_ID'], float(h['CASH_MONTO']), float(h['CASH_MONTO'])]
+        )
+
+    return jsonify({
+        'success': True,
+        'settlement_id': settle_id,
+        'total_cod': total_cod,
+        'comision': comision,
+        'a_depositar': a_depositar,
+        'pedidos': len(holdings)
+    })
+
+
+@app.route('/api/settlements/<int:settle_id>/deposit', methods=['POST'])
+def record_deposit(settle_id):
+    """Record that a driver deposited the cash."""
+    emp_id = get_emp_id()
+    data = request.get_json() or {}
+    monto = data.get('monto', 0)
+    referencia = data.get('referencia', '')
+
+    rows = query("SELECT * FROM DRIVER_SETTLEMENTS WHERE SETTLE_ID=? AND EMP_ID=?", [settle_id, emp_id])
+    if not rows:
+        return jsonify({'success': False, 'error': 'Settlement no encontrado'}), 404
+
+    settlement = rows[0]
+    execute(
+        "UPDATE DRIVER_SETTLEMENTS SET SETTLE_DEPOSITADO=?, SETTLE_FECHA_DEPOSITO=NOW(), "
+        "SETTLE_ESTATUS='COMPLETADO', SETTLE_NOTAS=? WHERE SETTLE_ID=?",
+        [float(monto), referencia, settle_id]
+    )
+
+    # Update cash holdings to DEPOSITED
+    execute(
+        "UPDATE DRIVER_CASH_HOLDINGS SET CASH_ESTADO='DEPOSITED', CASH_FECHA_DEPOSITO=NOW(), "
+        "CASH_DEPOSITO_REF=? WHERE CASH_ESTADO='HOLDING' AND CHO_ID=? AND EMP_ID=?",
+        [referencia, settlement['CHO_ID'], emp_id]
+    )
+
+    return jsonify({'success': True, 'message': 'Deposito registrado exitosamente'})
+
+
+@app.route('/api/settlements', methods=['GET'])
+def get_settlements():
+    """List settlements for the tenant."""
+    emp_id = get_emp_id()
+    cho_id = request.args.get('cho_id')
+
+    sql = "SELECT s.*, c.CHO_NOMBRE, c.CHO_APELLIDO FROM DRIVER_SETTLEMENTS s " \
+          "LEFT JOIN CHOFERES c ON s.CHO_ID = c.CHO_ID WHERE s.EMP_ID=?"
+    params = [emp_id]
+    if cho_id:
+        sql += " AND s.CHO_ID=?"
+        params.append(cho_id)
+    sql += " ORDER BY s.SETTLE_CREATED DESC"
+
+    settlements = query(sql, params)
+    return jsonify({'success': True, 'data': settlements})
+
+
+@app.route('/api/cod/dashboard', methods=['GET'])
+def cod_dashboard():
+    """COD overview dashboard for admin."""
+    emp_id = get_emp_id()
+
+    total_cod_hoy = query(
+        "SELECT COUNT(*) as count, COALESCE(SUM(PED_CANTIDAD_COBRADA), 0) as total "
+        "FROM PEDIDOS WHERE EMP_ID=? AND PED_PAGO_ESTATUS='COBRADO' "
+        "AND DATE(PED_PAGO_FECHA) = CURRENT_DATE",
+        [emp_id]
+    )
+
+    total_holdings = query(
+        "SELECT COALESCE(SUM(CASH_MONTO), 0) as total, COUNT(*) as count "
+        "FROM DRIVER_CASH_HOLDINGS WHERE EMP_ID=? AND CASH_ESTADO='HOLDING'",
+        [emp_id]
+    )
+
+    choferes_con_cobros = query(
+        "SELECT h.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO, "
+        "COUNT(*) as pedidos, SUM(h.CASH_MONTO) as total "
+        "FROM DRIVER_CASH_HOLDINGS h "
+        "LEFT JOIN CHOFERES c ON h.CHO_ID = c.CHO_ID "
+        "WHERE h.EMP_ID=? AND h.CASH_ESTADO='HOLDING' "
+        "GROUP BY h.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO",
+        [emp_id]
+    )
+
+    settlements_pendientes = query(
+        "SELECT COUNT(*) as count, COALESCE(SUM(SETTLE_TOTAL_A_DEPOSITAR), 0) as total "
+        "FROM DRIVER_SETTLEMENTS WHERE EMP_ID=? AND SETTLE_ESTATUS='PENDIENTE'",
+        [emp_id]
+    )
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'cod_hoy': total_cod_hoy[0] if total_cod_hoy else {'count': 0, 'total': 0},
+            'holdings': total_holdings[0] if total_holdings else {'total': 0, 'count': 0},
+            'choferes_con_cobros': choferes_con_cobros,
+            'settlements_pendientes': settlements_pendientes[0] if settlements_pendientes else {'count': 0, 'total': 0},
+        }
+    })
 
 
 @app.route('/api/tarifas', methods=['GET'])
