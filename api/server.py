@@ -473,68 +473,38 @@ def ensure_cod_columns():
     """Add COD columns and tables if they don't exist."""
     if not USE_POSTGRES:
         return
-    # COD columns on PEDIDOS
-    for col in [
+    from db import run_setup_sql
+    statements = [
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_MONEDA TEXT DEFAULT 'MXN'",
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_TIPO_ENVIO TEXT DEFAULT 'ESTANDAR'",
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_PAGO_ESTATUS TEXT DEFAULT 'PENDIENTE'",
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_PAGO_FECHA TIMESTAMP",
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_CANTIDAD_COBRADA REAL DEFAULT 0",
-    ]:
-        try:
-            execute(col)
-        except Exception as e:
-            print(f'[DB] COD column skip: {e}')
-    # COD tables (without foreign keys to avoid cascade issues)
-    for ddl in [
         """CREATE TABLE IF NOT EXISTS DRIVER_CASH_HOLDINGS (
             HOLDING_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL,
-            CHO_ID INTEGER NOT NULL,
-            PED_ID INTEGER NOT NULL,
-            CASH_MONTO REAL NOT NULL,
-            CASH_MONEDA TEXT DEFAULT 'MXN',
-            CASH_ESTADO TEXT DEFAULT 'HOLDING',
-            CASH_FECHA_COBRO TIMESTAMP DEFAULT NOW(),
-            CASH_FECHA_DEPOSITO TIMESTAMP,
-            CASH_NOTAS TEXT,
-            CASH_DEPOSITO_REF TEXT)""",
+            EMP_ID INTEGER NOT NULL, CHO_ID INTEGER NOT NULL, PED_ID INTEGER NOT NULL,
+            CASH_MONTO REAL NOT NULL, CASH_MONEDA TEXT DEFAULT 'MXN',
+            CASH_ESTADO TEXT DEFAULT 'HOLDING', CASH_FECHA_COBRO TIMESTAMP DEFAULT NOW(),
+            CASH_FECHA_DEPOSITO TIMESTAMP, CASH_NOTAS TEXT, CASH_DEPOSITO_REF TEXT)""",
         """CREATE TABLE IF NOT EXISTS DRIVER_SETTLEMENTS (
             SETTLE_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER NOT NULL,
-            CHO_ID INTEGER NOT NULL,
-            SETTLE_FECHA_INICIO TIMESTAMP NOT NULL,
-            SETTLE_FECHA_FIN TIMESTAMP NOT NULL,
-            SETTLE_TOTAL_PEDIDOS INTEGER DEFAULT 0,
-            SETTLE_TOTAL_COD REAL DEFAULT 0,
-            SETTLE_TOTAL_COMISION REAL DEFAULT 0,
-            SETTLE_TOTAL_A_DEPOSITAR REAL DEFAULT 0,
-            SETTLE_DEPOSITADO REAL DEFAULT 0,
-            SETTLE_FECHA_DEPOSITO TIMESTAMP,
-            SETTLE_ESTATUS TEXT DEFAULT 'PENDIENTE',
-            SETTLE_CREATED TIMESTAMP DEFAULT NOW(),
+            EMP_ID INTEGER NOT NULL, CHO_ID INTEGER NOT NULL,
+            SETTLE_FECHA_INICIO TIMESTAMP NOT NULL, SETTLE_FECHA_FIN TIMESTAMP NOT NULL,
+            SETTLE_TOTAL_PEDIDOS INTEGER DEFAULT 0, SETTLE_TOTAL_COD REAL DEFAULT 0,
+            SETTLE_TOTAL_COMISION REAL DEFAULT 0, SETTLE_TOTAL_A_DEPOSITAR REAL DEFAULT 0,
+            SETTLE_DEPOSITADO REAL DEFAULT 0, SETTLE_FECHA_DEPOSITO TIMESTAMP,
+            SETTLE_ESTATUS TEXT DEFAULT 'PENDIENTE', SETTLE_CREATED TIMESTAMP DEFAULT NOW(),
             SETTLE_NOTAS TEXT)""",
         """CREATE TABLE IF NOT EXISTS SETTLEMENT_LINE_ITEMS (
-            SLI_ID SERIAL PRIMARY KEY,
-            SETTLE_ID INTEGER NOT NULL,
-            PED_ID INTEGER NOT NULL,
-            SLI_MONTO_ESPERADO REAL NOT NULL,
-            SLI_MONTO_COBRADO REAL DEFAULT 0,
-            SLI_DIFERENCIA REAL DEFAULT 0,
-            SLI_ESTADO TEXT DEFAULT 'PENDIENTE')""",
+            SLI_ID SERIAL PRIMARY KEY, SETTLE_ID INTEGER NOT NULL, PED_ID INTEGER NOT NULL,
+            SLI_MONTO_ESPERADO REAL NOT NULL, SLI_MONTO_COBRADO REAL DEFAULT 0,
+            SLI_DIFERENCIA REAL DEFAULT 0, SLI_ESTADO TEXT DEFAULT 'PENDIENTE')""",
         """CREATE TABLE IF NOT EXISTS NOTIFICACIONES (
-            NOT_ID SERIAL PRIMARY KEY,
-            EMP_ID INTEGER,
+            NOT_ID SERIAL PRIMARY KEY, EMP_ID INTEGER,
             NOT_TIPO TEXT, NOT_MENSAJE TEXT, NOT_ESTADO TEXT DEFAULT 'PENDIENTE',
             PED_ID INTEGER, NOT_CREATED TIMESTAMP DEFAULT NOW())""",
-    ]:
-        try:
-            execute(ddl)
-            tbl = ddl.split('IF NOT EXISTS')[1].split('(')[0].strip()
-            print(f'[DB] COD table ensured: {tbl}')
-        except Exception as e:
-            tbl = ddl.split('IF NOT EXISTS')[1].split('(')[0].strip() if 'IF NOT EXISTS' in ddl else '?'
-            print(f'[DB] COD table FAIL [{tbl}]: {e}')
+    ]
+    run_setup_sql(statements)
 
 
 def ensure_views():
@@ -543,6 +513,7 @@ def ensure_views():
     This function ensures they exist regardless."""
     if not USE_POSTGRES:
         return
+    from db import run_setup_sql
     views = [
         ("V_PEDIDOS_COMPLETO", """CREATE OR REPLACE VIEW V_PEDIDOS_COMPLETO AS
             SELECT p.*, e.EMP_NOMBRE,
@@ -573,7 +544,7 @@ def ensure_views():
     ]
     for name, ddl in views:
         try:
-            execute(ddl)
+            run_setup_sql([ddl])
             print(f'[DB] View ensured: {name}')
         except Exception as e:
             print(f'[DB] View FAIL [{name}]: {e}')
@@ -583,7 +554,8 @@ def ensure_gps_columns():
     """Add GPS and rating columns if missing."""
     if not USE_POSTGRES:
         return
-    for col in [
+    from db import run_setup_sql
+    run_setup_sql([
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_LATITUD REAL",
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_LONGITUD REAL",
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_CALIFICACION INTEGER",
@@ -593,11 +565,7 @@ def ensure_gps_columns():
         "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_MONEDA TEXT DEFAULT 'MXN'",
         "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LAT_ACTUAL REAL",
         "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LNG_ACTUAL REAL",
-    ]:
-        try:
-            execute(col)
-        except Exception:
-            pass
+    ])
 
 
 def get_emp_id():

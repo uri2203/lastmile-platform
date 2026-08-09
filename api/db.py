@@ -321,6 +321,36 @@ def check_empty():
         return True
 
 
+def run_setup_sql(sql_list):
+    """Execute a list of DDL/DML statements using a dedicated connection (not pool).
+    Use for schema setup operations like ALTER TABLE ADD COLUMN.
+    """
+    if not USE_POSTGRES:
+        return
+    url = DATABASE_URL
+    if 'sslmode' not in url:
+        url += '&sslmode=require' if '?' in url else '?sslmode=require'
+    conn = None
+    try:
+        conn = psycopg2.connect(url, connect_timeout=10)
+        conn.autocommit = True
+        cur = conn.cursor()
+        for sql in sql_list:
+            try:
+                cur.execute(sql)
+            except Exception as e:
+                # Column may already exist or other non-critical DDL error
+                print(f'[DB] setup_sql warning: {e}')
+    except Exception as e:
+        print(f'[DB] setup_sql error: {e}')
+    finally:
+        if conn and not conn.closed:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 def get_db_info():
     """Return database info for health checks."""
     if USE_POSTGRES:
