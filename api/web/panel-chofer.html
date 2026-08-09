@@ -660,10 +660,21 @@
           const empId = localStorage.getItem('empId') || '1';
           ws.emit('subscribe', { emp_id: parseInt(empId) });
           console.log('[WS] Conectado');
+          updateWsBadge(true);
         });
-        ws.on('disconnect', () => { wsConnected = false; console.log('[WS] Desconectado'); });
-        ws.on('reconnect', () => { wsConnected = true; });
+        ws.on('disconnect', () => { wsConnected = false; updateWsBadge(false); console.log('[WS] Desconectado'); });
+        ws.on('reconnect', () => { wsConnected = true; updateWsBadge(true); });
       } catch (e) { console.warn('[WS] Error:', e); }
+    }
+
+    function updateWsBadge(connected) {
+      const badge = document.getElementById('gps-status');
+      if (!badge) return;
+      if (connected) {
+        badge.className = 'gps-badge online';
+      } else {
+        badge.className = 'gps-badge offline';
+      }
     }
 
     function iniciarGPS() {

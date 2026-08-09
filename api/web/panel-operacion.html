@@ -128,6 +128,10 @@
         <div class="page-header">
           <h1 data-i18n="operacion.dashboard_title">Dashboard de Operación</h1>
           <div class="page-header-actions">
+            <span id="ws-status" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:500;background:var(--surface);border:1px solid var(--border);">
+              <span id="ws-dot" style="width:8px;height:8px;border-radius:50%;background:#6b7280;"></span>
+              <span id="ws-label">WS: --</span>
+            </span>
             <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">
               <i class="fas fa-sync-alt"></i> <span data-i18n="operacion.refresh">Actualizar</span>
             </button>
@@ -452,12 +456,13 @@
         ws = io(API_BASE, opts);
         ws.on('connect', () => {
           wsConnected = true;
+          updateWsStatus(true);
           const user = JSON.parse(localStorage.getItem('user') || '{}');
           const empId = user.emp_id || localStorage.getItem('empId') || '1';
           ws.emit('subscribe', { emp_id: parseInt(empId) });
           console.log('[WS-OPERACION] Conectado');
         });
-        ws.on('disconnect', () => { wsConnected = false; });
+        ws.on('disconnect', () => { wsConnected = false; updateWsStatus(false); });
         ws.on('driver_location', (data) => {
           liveDriverPositions[data.choId] = data;
           updateDriverMarker(data);
@@ -468,6 +473,13 @@
           }
         });
       } catch (e) { console.warn('[WS-OPERACION] Error:', e); }
+    }
+
+    function updateWsStatus(connected) {
+      const dot = document.getElementById('ws-dot');
+      const label = document.getElementById('ws-label');
+      if (dot) dot.style.background = connected ? '#22c55e' : '#ef4444';
+      if (label) label.textContent = connected ? 'WS: Online' : 'WS: Offline';
     }
 
     function updateDriverMarker(data) {

@@ -398,15 +398,24 @@ audit_handler.setFormatter(logging.Formatter('%(asctime)s [AUDIT] %(message)s'))
 audit_logger.addHandler(audit_handler)
 
 
-def log_audit(action, details=None):
-    """Log a sensitive operation for audit trail."""
+def log_audit(action, details=None, tabla=None, registro_id=None):
+    """Log a sensitive operation for audit trail (file + DB)."""
     user = getattr(g, 'usuario', 'system')
-    emp = getattr(g, 'emp_id', '-')
+    emp = getattr(g, 'emp_id', None)
     ip = request.remote_addr or '-'
     msg = f'action={action} user={user} emp={emp} ip={ip}'
     if details:
         msg += f' details={details}'
     audit_logger.info(msg)
+    # Also write to AUDIT_LOG DB table
+    try:
+        if emp:
+            execute(
+                "INSERT INTO AUDIT_LOG (EMP_ID, AUD_USUARIO, AUD_ACCION, AUD_TABLA, AUD_REGISTRO_ID, AUD_DETALLE, AUD_IP) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [emp, user, action, tabla, registro_id, str(details)[:500] if details else None, ip]
+            )
+    except Exception as e:
+        print(f'[AUDIT] DB write failed: {e}')
 
 # ========================================
 # DATABASE: Auto-detect SQLite or PostgreSQL via DATABASE_URL

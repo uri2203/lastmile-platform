@@ -462,12 +462,12 @@ Direccion no encontrada</textarea></div>
     <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>#</th><th data-i18n="settings.subject">Asunto</th><th data-i18n="common.client">Cliente</th><th data-i18n="common.priority">Prioridad</th><th data-i18n="common.status">Estado</th><th data-i18n="settings.assignedTo">Asignado</th><th data-i18n="common.created">Creado</th><th data-i18n="common.actions">Acciones</th></tr></thead><tbody id="ticketsTableBody"></tbody></table></div>
   </div>
   <div class="section" id="section-auditoria">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;"><h2 style="font-size:18px;font-weight:600;" data-i18n="settings.audit">Auditoria del Sistema</h2><button class="btn btn-ghost" data-i18n="common.export"><i class="fas fa-file-export" style="font-size:10px;"></i> Exportar Log</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;"><h2 style="font-size:18px;font-weight:600;" data-i18n="settings.audit">Auditoria del Sistema</h2><button class="btn btn-ghost" onclick="exportAudit()"><i class="fas fa-file-export" style="font-size:10px;"></i> Exportar Log</button></div>
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-      <input type="text" class="input" placeholder="Buscar en logs..." style="width:240px;">
-      <select class="input" style="width:160px;"><option>Todos los tipos</option><option>CREATE</option><option>UPDATE</option><option>DELETE</option><option>LOGIN</option></select>
-      <select class="input" style="width:160px;"><option>Todos los usuarios</option><option>Admin</option><option>Operador</option><option>Chofer</option></select>
-      <input type="date" class="input" style="width:160px;">
+      <input type="text" class="input" id="audit-search" placeholder="Buscar en logs..." style="width:240px;" oninput="filterAudit()">
+      <select class="input" id="audit-type" style="width:160px;" onchange="filterAudit()"><option value="">Todos los tipos</option><option>CREATE</option><option>UPDATE</option><option>DELETE</option><option>LOGIN</option></select>
+      <select class="input" id="audit-user" style="width:160px;" onchange="filterAudit()"><option value="">Todos los usuarios</option></select>
+      <input type="date" class="input" id="audit-date" style="width:160px;" onchange="filterAudit()">
     </div>
     <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th data-i18n="settings.timestamp">Timestamp</th><th data-i18n="common.user">Usuario</th><th data-i18n="settings.action">Accion</th><th data-i18n="settings.entity">Entidad</th><th data-i18n="common.detail">Detalle</th><th>IP</th></tr></thead><tbody id="auditTableBody"></tbody></table></div>
   </div>

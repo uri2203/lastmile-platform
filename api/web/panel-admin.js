@@ -794,26 +794,61 @@ function eliminarUsuario(id,nombre){
 /* ==========================================
    AUDIT
    ========================================== */
+let allAuditData = [];
+
 function renderAudit(){
   apiGet('/api/audit?emp_id=1').then(res=>{
     if(!res.data)return;
-    const tbody=document.getElementById('auditTableBody');
-    if(!tbody)return;
-    tbody.innerHTML=res.data.slice(0,30).map(a=>{
-      const ts=a.AUD_FECHA||a.timestamp||'-';
-      const usuario=a.AUD_USUARIO||a.usuario||'-';
-      const accion=a.AUD_ACCION||a.accion||'-';
-      const entidad=a.AUD_ENTIDAD||a.entidad||'-';
-      const detalle=a.AUD_DETALLE||a.detalle||'-';
-      return '<tr>'+
-        '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">'+ts+'</td>'+
-        '<td style="font-weight:500;">'+usuario+'</td>'+
-        '<td>'+statusBadge(accion.toLowerCase())+'</td>'+
-        '<td>'+entidad+'</td>'+
-        '<td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+detalle+'</td>'+
-        '</tr>';
-    }).join('');
+    allAuditData = res.data;
+    // Populate user filter
+    const users = [...new Set(res.data.map(a => a.AUD_USUARIO || a.usuario).filter(Boolean))];
+    const userSelect = document.getElementById('audit-user');
+    if (userSelect && userSelect.options.length <= 1) {
+      users.forEach(u => { const opt = document.createElement('option'); opt.value = u; opt.textContent = u; userSelect.appendChild(opt); });
+    }
+    filterAudit();
   }).catch(()=>{});
+}
+
+function filterAudit(){
+  const tbody = document.getElementById('auditTableBody');
+  if (!tbody) return;
+  const search = (document.getElementById('audit-search')?.value || '').toLowerCase();
+  const type = document.getElementById('audit-type')?.value || '';
+  const user = document.getElementById('audit-user')?.value || '';
+  const date = document.getElementById('audit-date')?.value || '';
+  let filtered = allAuditData;
+  if (search) filtered = filtered.filter(a => (a.AUD_ACCION||'').toLowerCase().includes(search) || (a.AUD_DETALLE||'').toLowerCase().includes(search) || (a.AUD_USUARIO||'').toLowerCase().includes(search));
+  if (type) filtered = filtered.filter(a => (a.AUD_ACCION||'').toUpperCase() === type);
+  if (user) filtered = filtered.filter(a => (a.AUD_USUARIO||'') === user);
+  if (date) filtered = filtered.filter(a => a.AUD_FECHA && a.AUD_FECHA.startsWith(date));
+  tbody.innerHTML = filtered.slice(0,50).map(a=>{
+    const ts=a.AUD_FECHA||a.timestamp||'-';
+    const usuario=a.AUD_USUARIO||a.usuario||'-';
+    const accion=a.AUD_ACCION||a.accion||'-';
+    const entidad=a.AUD_TABLA||a.AUD_ENTIDAD||a.entidad||'-';
+    const detalle=a.AUD_DETALLE||a.detalle||'-';
+    const ip=a.AUD_IP||'-';
+    return '<tr>'+
+      '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">'+ts+'</td>'+
+      '<td style="font-weight:500;">'+usuario+'</td>'+
+      '<td>'+statusBadge(accion.toLowerCase())+'</td>'+
+      '<td>'+entidad+'</td>'+
+      '<td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+detalle+'">'+detalle+'</td>'+
+      '<td style="font-size:11px;color:var(--text-muted);">'+ip+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+function exportAudit(){
+  if (!allAuditData.length) return;
+  const header = 'Timestamp,Usuario,Accion,Entidad,Detalle,IP\n';
+  const rows = allAuditData.map(a => `"${a.AUD_FECHA||''}","${a.AUD_USUARIO||''}","${a.AUD_ACCION||''}","${a.AUD_TABLA||''}","${(a.AUD_DETALLE||'').replace(/"/g,'""')}","${a.AUD_IP||''}"`).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = 'audit_log_' + new Date().toISOString().slice(0,10) + '.csv';
+  link.click(); URL.revokeObjectURL(url);
 }
 
 /* ==========================================
