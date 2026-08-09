@@ -5885,43 +5885,6 @@ def debug_force_gps():
     return jsonify({'success': True, 'ddl_results': results})
 
 
-@app.route('/api/debug/test-insert', methods=['POST'])
-def debug_test_insert():
-    """Direct INSERT test with dedicated connection."""
-    emp_id = get_emp_id()
-    if not emp_id:
-        return jsonify({'error': 'No auth'}), 401
-    if not USE_POSTGRES:
-        return jsonify({'error': 'Not PostgreSQL'}), 400
-    import psycopg2
-    url = os.environ.get('DATABASE_URL', '')
-    if 'sslmode' not in url:
-        url += '&sslmode=require' if '?' in url else '?sslmode=require'
-    results = {}
-    conn = None
-    try:
-        conn = psycopg2.connect(url, connect_timeout=10)
-        conn.autocommit = True
-        cur = conn.cursor()
-        try:
-            cur.execute("INSERT INTO TICKETS (EMP_ID, TICKET_NUM, TICKET_ASUNTO, TICKET_ESTADO, TICKET_PRIORIDAD, TICKET_CATEGORIA) VALUES (%s, %s, %s, %s, %s, %s)",
-                       [emp_id, 'TKT-TEST-00001', 'Debug test', 'ABIERTO', 'MEDIA', 'GENERAL'])
-            results['insert'] = 'OK'
-        except Exception as e:
-            results['insert'] = str(e)[:200]
-        try:
-            cur.execute("SELECT COUNT(*) FROM TICKETS WHERE EMP_ID=%s", [emp_id])
-            results['count'] = cur.fetchone()[0]
-        except Exception as e:
-            results['count_error'] = str(e)[:200]
-    except Exception as e:
-        results['connection'] = str(e)[:200]
-    finally:
-        if conn and not conn.closed:
-            conn.close()
-    return jsonify({'success': True, 'results': results})
-
-
 # ========================================
 # INICIAR SERVIDOR
 # ========================================
