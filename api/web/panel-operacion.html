@@ -1030,27 +1030,46 @@
     // ========================================
     // REPORTES
     // ========================================
-    function loadReportes() {
-      const totalEnvios = DEMO_PEDIDOS.length;
-      const ingresos = DEMO_PEDIDOS.reduce((s, p) => s + (p.PED_COSTO_TOTAL || 0), 0);
-      const entregados = DEMO_PEDIDOS.filter(p => p.PED_ESTADO === 'ENTREGADO').length;
+    async function loadReportes() {
+      let entregas = [], choferesRend = [];
+      try {
+        const [entregasRes, rendRes] = await Promise.all([
+          api('/api/reportes/entregas'),
+          api('/api/reportes/rendimiento-choferes')
+        ]);
+        if (entregasRes.success) entregas = entregasRes.data || [];
+        if (rendRes.success) choferesRend = rendRes.data || [];
+      } catch(e) { Utils.toast('Error cargando reportes', 'error'); }
+
+      const totalEnvios = entregas.length;
+      const ingresos = entregas.reduce((s, p) => s + (p.PED_COSTO_TOTAL || 0), 0);
+      const entregados = entregas.filter(p => p.PED_ESTADO === 'ENTREGADO').length;
       const tasaExito = totalEnvios > 0 ? Math.round((entregados / totalEnvios) * 100) : 0;
 
       document.getElementById('rep-total-envios').textContent = totalEnvios;
       document.getElementById('rep-ingresos').textContent = Utils.$(ingresos);
       document.getElementById('rep-tasa-exito').textContent = tasaExito + '%';
 
-      renderPedidosChart();
-      renderChoferesChart();
+      renderPedidosChart(entregas);
+      renderChoferesChart(choferesRend);
     }
 
-    function renderPedidosChart() {
+    function renderPedidosChart(entregas) {
       const ctx = document.getElementById('chart-pedidos-dia');
       if (!ctx) return;
       if (ctx._chart) ctx._chart.destroy();
 
-      const labels = [window.i18n.t('operacion.dia_lun'), window.i18n.t('operacion.dia_mar'), window.i18n.t('operacion.dia_mie'), window.i18n.t('operacion.dia_jue'), window.i18n.t('operacion.dia_vie'), window.i18n.t('operacion.dia_sab'), window.i18n.t('operacion.dia_dom')];
-      const data = [12, 19, 8, 15, 22, 14, 10];
+      const dayNames = [window.i18n.t('operacion.dia_lun'), window.i18n.t('operacion.dia_mar'), window.i18n.t('operacion.dia_mie'), window.i18n.t('operacion.dia_jue'), window.i18n.t('operacion.dia_vie'), window.i18n.t('operacion.dia_sab'), window.i18n.t('operacion.dia_dom')];
+      // Count orders per day of week from real data
+      const dayCounts = [0,0,0,0,0,0,0];
+      (entregas || []).forEach(e => {
+        if (e.PED_FECHA_PEDIDO) {
+          const d = new Date(e.PED_FECHA_PEDIDO);
+          const day = (d.getDay() + 6) % 7; // Mon=0 .. Sun=6
+          dayCounts[day]++;
+        }
+      });
+      const data = dayCounts.some(c => c > 0) ? dayCounts : [0,0,0,0,0,0,0];
       const theme = ThemeManager.get();
       const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = theme === 'dark' ? '#8a8a9a' : '#6b7280';
@@ -1058,17 +1077,13 @@
       ctx._chart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels,
+          labels: dayNames,
           datasets: [{
             label: window.i18n.t('operacion.pedidos'),
             data,
             borderColor: '#6366f1',
             backgroundColor: 'rgba(99,102,241,0.08)',
-            borderWidth: 2,
-            tension: 0.4,
-            pointRadius: 3,
-            pointBackgroundColor: '#6366f1',
-            fill: true
+            borderWidth: 2, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#6366f1', fill: true
           }]
         },
         options: {
@@ -1082,13 +1097,14 @@
       });
     }
 
-    function renderChoferesChart() {
+    function renderChoferesChart(choferesRend) {
       const ctx = document.getElementById('chart-choferes-top');
       if (!ctx) return;
       if (ctx._chart) ctx._chart.destroy();
 
-      const names = DEMO_DRIVERS.map(d => d.nombre.split(' ')[0]);
-      const entregas = DEMO_DRIVERS.map(d => d.entregas);
+      const drivers = (choferesRend && choferesRend.length > 0) ? choferesRend.slice(0, 5) : [];
+      const names = drivers.map(d => (d.CHO_NOMBRE || '').split(' ')[0] || 'N/A');
+      const entregas = drivers.map(d => d.TOTAL_ENTREGAS || d.entregas || 0);
       const theme = ThemeManager.get();
       const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = theme === 'dark' ? '#8a8a9a' : '#6b7280';
@@ -1096,13 +1112,12 @@
       ctx._chart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: names,
+          labels: names.length > 0 ? names : ['--'],
           datasets: [{
             label: window.i18n.t('operacion.entregas'),
-            data: entregas,
+            data: entregas.length > 0 ? entregas : [0],
             backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
-            borderRadius: 4,
-            barThickness: 28
+            borderRadius: 4, barThickness: 28
           }]
         },
         options: {

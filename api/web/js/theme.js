@@ -149,7 +149,7 @@ const Utils = {
   
   // API call
   async api(endpoint, options = {}) {
-    const API_BASE = window.API_BASE || 'http://localhost:5000';
+    const API_BASE = window.API_BASE || window.location.origin;
     try {
       const headers = {
         'Content-Type': 'application/json',

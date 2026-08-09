@@ -11,7 +11,7 @@ class AIChat {
     this.isOpen = false;
     this.messages = [];
     this.isLoading = false;
-    this.apiBase = options.apiBase || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
+    this.apiBase = options.apiBase || window.location.origin;
     
     this.init();
   }
