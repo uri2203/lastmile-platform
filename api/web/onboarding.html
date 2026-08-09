@@ -295,6 +295,15 @@
       color: var(--accent);
     }
 
+    .legal-checkbox:hover {
+      background: var(--bg-card-hover, rgba(255,255,255,0.03));
+    }
+
+    .legal-checkbox:has(input:checked) {
+      border-color: var(--accent);
+      background: var(--accent-bg, rgba(79,70,229,0.05));
+    }
+
     @media (max-width: 480px) {
       .onboard-card {
         padding: 24px 16px;
@@ -519,15 +528,55 @@
           <input type="password" id="usr-pass2" data-i18n-placeholder="onboarding.confirmar_ph" placeholder="Repite tu contraseña">
         </div>
 
-        <div style="margin: 20px 0;">
-          <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border); transition: all 0.2s;">
-            <input type="checkbox" id="legalAccept" style="margin-top: 2px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0;">
-            <span style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-              <strong style="color: var(--text);" data-i18n="onboarding.legal_accept_title">He leído y acepto</strong>
-              <span data-i18n="onboarding.legal_accept_text">los términos, privacidad y políticas de la plataforma. Confirmo que soy mayor de 18 años.</span>
+        <div class="legal-acceptance-group" style="margin: 20px 0;">
+          <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;" data-i18n="onboarding.legal_accept_title">He leído y acepto</div>
+
+          <label class="legal-checkbox" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border-primary);margin-bottom:6px;transition:background 0.15s;">
+            <input type="checkbox" id="legalTerminos" class="legal-check" style="margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+            <span style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+              <span data-i18n="onboarding.legal_acepto_los">Acepto los</span>
+              <a href="/legal/terminos-condiciones.html" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">Términos y Condiciones</a>
             </span>
           </label>
-          <div id="legalError" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none;" data-i18n="onboarding.legal_required">Debes aceptar los términos y confirmar que eres mayor de 18 años</div>
+
+          <label class="legal-checkbox" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border-primary);margin-bottom:6px;transition:background 0.15s;">
+            <input type="checkbox" id="legalPrivacidad" class="legal-check" style="margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+            <span style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+              <span data-i18n="onboarding.legal_acepto_el">Acepto el</span>
+              <a href="/legal/aviso-privacidad.html" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">Aviso de Privacidad</a>
+            </span>
+          </label>
+
+          <label class="legal-checkbox" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border-primary);margin-bottom:6px;transition:background 0.15s;">
+            <input type="checkbox" id="legalCookies" class="legal-check" style="margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+            <span style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+              <span data-i18n="onboarding.legal_acepto_la">Acepto la</span>
+              <a href="/legal/politica-cookies.html" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">Política de Cookies</a>
+            </span>
+          </label>
+
+          <label class="legal-checkbox" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border-primary);margin-bottom:6px;transition:background 0.15s;">
+            <input type="checkbox" id="legalPagos" class="legal-check" style="margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+            <span style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+              <span data-i18n="onboarding.legal_acepto_la">Acepto la</span>
+              <a href="/legal/politica-cobros-reembolsos.html" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">Política de Cobros y Reembolsos</a>
+            </span>
+          </label>
+
+          <label class="legal-checkbox" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border-primary);margin-bottom:6px;transition:background 0.15s;">
+            <input type="checkbox" id="legalIA" class="legal-check" style="margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+            <span style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+              <span data-i18n="onboarding.legal_acepto_la">Acepto la</span>
+              <a href="/legal/politica-ia.html" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">Política de Regulaciones de IA</a>
+            </span>
+          </label>
+
+          <label class="legal-checkbox" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border-primary);margin-bottom:6px;transition:background 0.15s;">
+            <input type="checkbox" id="legalEdad" class="legal-check" style="margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+            <span style="font-size:13px;color:var(--text-secondary);line-height:1.5;" data-i18n="onboarding.legal_mayor_edad">Confirmo que soy mayor de 18 años</span>
+          </label>
+
+          <div id="legalError" style="color:#ef4444;font-size:12px;margin-top:8px;display:none;" data-i18n="onboarding.legal_required">Debes aceptar todas las políticas y confirmar que eres mayor de 18 años</div>
         </div>
 
         <div class="step-nav">
@@ -559,14 +608,6 @@
 
     <div class="onboard-footer">
       <span data-i18n="onboarding.ya_tienes">¿Ya tienes cuenta?</span> <a href="index.html" data-i18n="onboarding.iniciar_sesion">Iniciar sesión</a>
-      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:11px;">
-        <a href="/terminos" style="color:var(--text-muted);text-decoration:none">Terminos</a>
-        <a href="/privacidad" style="color:var(--text-muted);text-decoration:none">Privacidad</a>
-        <a href="/cookies" style="color:var(--text-muted);text-decoration:none">Cookies</a>
-        <a href="/privacidad-eeuu" style="color:var(--text-muted);text-decoration:none">Privacidad EE.UU.</a>
-        <a href="/regulaciones-ia" style="color:var(--text-muted);text-decoration:none">Regulaciones IA</a>
-        <a href="/proteccion-datos" style="color:var(--text-muted);text-decoration:none">Proteccion de Datos</a>
-      </div>
     </div>
   </div>
 
@@ -637,10 +678,11 @@
         return;
       }
 
-      // Age verification check
-      const legalAccept = document.getElementById('legalAccept');
+      // Legal acceptance check — all individual checkboxes required
+      const legalChecks = ['legalTerminos','legalPrivacidad','legalCookies','legalPagos','legalIA','legalEdad'];
+      const allChecked = legalChecks.every(id => document.getElementById(id)?.checked);
       const legalError = document.getElementById('legalError');
-      if (!legalAccept || !legalAccept.checked) {
+      if (!allChecked) {
         if (legalError) legalError.style.display = 'block';
         Utils.toast(window.i18n.t('onboarding.legal_required'), 'error');
         return;
@@ -671,9 +713,12 @@
             },
             plan: selectedPlan.toUpperCase(),
             legal: {
-              mayor_edad: true,
-              terminos: true,
-              privacidad: true
+              mayor_edad: document.getElementById('legalEdad').checked,
+              terminos: document.getElementById('legalTerminos').checked,
+              privacidad: document.getElementById('legalPrivacidad').checked,
+              cookies: document.getElementById('legalCookies').checked,
+              pagos: document.getElementById('legalPagos').checked,
+              ia: document.getElementById('legalIA').checked
             }
           })
         });
@@ -701,5 +746,13 @@
     document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
   </script>
   <script src="js/cookie-consent.js"></script>
+  <div style="text-align:center; padding:1rem; color:#666; font-size:0.75rem; border-top:1px solid #eee; margin-top:2rem;">
+    <a href="/legal/terminos-condiciones.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Terminos y Condiciones</a> |
+    <a href="/legal/aviso-privacidad.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Aviso de Privacidad</a> |
+    <a href="/legal/politica-cookies.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Politica de Cookies</a> |
+    <a href="/legal/politica-cobros-reembolsos.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Politica de Cobros</a> |
+    <a href="/legal/deslinde-responsabilidades.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Deslinde</a> |
+    <a href="/legal/politica-ia.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Politica de IA</a>
+  </div>
 </body>
 </html>

@@ -725,6 +725,7 @@ PUBLIC_API_PATHS = {
     '/api/push/subscribe',
     '/api/legal/documents',
     '/api/legal/consent',
+    '/api/legal/accept',
     '/api/legal/age-verify',
 }
 # Prefijos publicos: tracking del cliente final por token opaco en la URL.
