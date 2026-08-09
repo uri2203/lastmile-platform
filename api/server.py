@@ -781,6 +781,19 @@ def after_request(response):
         emp_id = getattr(g, 'emp_id', '-')
         ip = request.remote_addr or '-'
         request_logger.info(f'{method} {path} => {status} [{elapsed}ms] emp={emp_id} ip={ip}')
+    # Release PostgreSQL connection back to pool at end of request
+    if USE_POSTGRES:
+        try:
+            from db import _release_conn, get_db
+            conn = get_db()
+            if conn and not conn.closed:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+            _release_conn()
+        except Exception:
+            pass
     return response
 
 
@@ -5729,28 +5742,19 @@ def create_ticket():
     categoria = data.get('categoria', 'GENERAL')
     ident = current_identity() or {}
     user_id = ident.get('usu_id')
-    # Generate ticket number and INSERT - all with dedicated connection
+    # Generate ticket number and INSERT
     try:
-        import psycopg2
-        url = os.environ.get('DATABASE_URL', '')
-        if 'sslmode' not in url:
-            url += '&sslmode=require' if '?' in url else '?sslmode=require'
-        conn = psycopg2.connect(url, connect_timeout=10)
-        conn.autocommit = True
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM TICKETS WHERE EMP_ID=%s", [emp_id])
-        num = (cur.fetchone()[0] or 0) + 1
+        count = query("SELECT COUNT(*) as cnt FROM TICKETS WHERE EMP_ID=%s", [emp_id])
+        num = (count[0]['cnt'] if count else 0) + 1
         ticket_num = f"TKT-{emp_id}-{num:05d}"
-        cur.execute(
+        execute(
             "INSERT INTO TICKETS (EMP_ID, TICKET_NUM, TICKET_ASUNTO, TICKET_DESCRIPCION, "
             "TICKET_PRIORIDAD, TICKET_CATEGORIA, TICKET_CREADO_POR) VALUES (%s,%s,%s,%s,%s,%s,%s)",
             [emp_id, ticket_num, asunto, desc, prioridad, categoria, user_id]
         )
-        cur.close()
-        conn.close()
     except Exception as e:
         print(f'[TICKETS] INSERT error: {e}')
-        return jsonify({'success': False, 'error': 'Error creating ticket', 'debug': str(e)[:300]}), 500
+        return jsonify({'success': False, 'error': 'Error creating ticket'}), 500
     return jsonify({'success': True, 'ticket_num': ticket_num, 'message': 'Ticket creado'})
 
 @app.route('/api/tickets/<int:ticket_id>', methods=['GET'])
