@@ -1454,7 +1454,7 @@ def health():
         'services': {
             'stripe': checks['stripe'],
             'mercadopago': checks['mp'],
-            'rate_limit': '200/min',
+            'rate_limit': '300/min',
         }
     })
 
