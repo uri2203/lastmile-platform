@@ -19,6 +19,7 @@ from security import hash_password, verify_password, is_legacy_hash, validate_pa
 from webhooks import webhook_bp
 from monitoring import init_monitoring
 from agents import RouteOptimizer, SmartAssignment, ETAPredictor, SupportChatbot, DemandForecaster, DynamicPricing, FraudDetector, SentimentAnalyzer
+from ai_service import optimize_routes
 import os
 import time
 import re
@@ -5187,7 +5188,7 @@ def cliente_tracking(token):
     """Tracking público para el cliente final por token opaco."""
     pedidos = query(
         "SELECT PED_ID, PED_NUMERO, PED_ESTADO, PED_DESTINO_DIR, PED_DESTINO_CIUDAD, "
-        "PED_FECHA_PEDIDO, PED_FECHA_ENTREGA_REAL, PED_LATITUD, PED_LONGITUD, "
+        "PED_FECHA_PEDIDO, PED_FECHA_ENTREGA_REAL, "
         "PED_COSTO_TOTAL, PED_MONEDA "
         "FROM PEDIDOS WHERE PED_TOKEN=?",
         [token]
