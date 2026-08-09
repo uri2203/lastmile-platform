@@ -461,6 +461,11 @@
         ws.on('driver_location', (data) => {
           liveDriverPositions[data.choId] = data;
           updateDriverMarker(data);
+          // Throttled table refresh to show online status
+          if (!window._choferesRefreshPending) {
+            window._choferesRefreshPending = true;
+            setTimeout(() => { window._choferesRefreshPending = false; loadChoferes(); }, 5000);
+          }
         });
       } catch (e) { console.warn('[WS-OPERACION] Error:', e); }
     }
@@ -890,8 +895,14 @@
         const entregas = d.entregas || d.TOTAL_ENTREGAS || 0;
         const tasa = d.TASA_EXITO || (entregas > 0 ? Math.round(85 + Math.random() * 15) : 0);
         const tiempo = d.TIEMPO_PROM_ESPERA || Math.round(20 + Math.random() * 15);
-        const lat = d.lat || (19.4326 + (Math.random() - 0.5) * 0.02);
-        const lng = d.lng || (-99.1332 + (Math.random() - 0.5) * 0.02);
+        const choId = d.CHO_ID || d.cho_id || d.id;
+        const livePos = liveDriverPositions[choId];
+        const isOnline = !!livePos;
+        const onlineDot = isOnline
+          ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:6px;" title="Online"></span>'
+          : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#6b7280;margin-right:6px;" title="Offline"></span>';
+        const lat = livePos ? livePos.lat : (d.lat || (19.4326 + (Math.random() - 0.5) * 0.02));
+        const lng = livePos ? livePos.lng : (d.lng || (-99.1332 + (Math.random() - 0.5) * 0.02));
         const tasaClass = tasa >= 85 ? 'text-success' : tasa >= 70 ? 'text-warning' : 'text-danger';
 
         return `
@@ -899,10 +910,10 @@
           <td>
             <div class="flex items-center gap-sm">
               <div class="avatar sm">${nombre.split(' ').map(n=>n[0]).join('')}</div>
-              <strong>${nombre}</strong>
+              <strong>${onlineDot}${nombre}</strong>
             </div>
           </td>
-          <td>${Utils.badge(estatus)}</td>
+          <td>${Utils.badge(isOnline ? 'EN LINEA' : estatus)}</td>
           <td class="text-xs text-muted">${lat.toFixed(4)}, ${lng.toFixed(4)}</td>
           <td><strong>${entregas}</strong></td>
           <td class="${tasaClass} font-semibold">${tasa}%</td>

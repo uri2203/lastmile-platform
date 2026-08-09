@@ -1476,3 +1476,27 @@ async function createTicket() {
 }
 
 document.addEventListener('DOMContentLoaded', () => { setTimeout(loadTickets, 500); });
+
+async function saveAdminConfig() {
+  const configInputs = document.querySelectorAll('#section-config .input');
+  const configToggles = document.querySelectorAll('#section-config .toggle');
+  const config = {
+    coverage_radius_km: configInputs[0] ? parseFloat(configInputs[0].value) : 50,
+    max_delivery_time_min: configInputs[1] ? parseInt(configInputs[1].value) : 120,
+    max_retries: configInputs[2] ? parseInt(configInputs[2].value) : 3,
+    base_rate: configInputs[3] ? parseFloat(configInputs[3].value) : 45,
+    gps_interval_sec: configInputs[4] ? parseInt(configInputs[4].value) : 30,
+    min_precision_m: configInputs[5] ? parseInt(configInputs[5].value) : 10,
+    geofencing: configToggles[0] ? configToggles[0].classList.contains('active') : true,
+    speed_alerts: configToggles[1] ? configToggles[1].classList.contains('active') : true,
+    service_interval_km: configInputs[6] ? parseInt(configInputs[6].value) : 10000,
+    pre_service_alert_km: configInputs[7] ? parseInt(configInputs[7].value) : 500,
+    maintenance_notifications: configToggles[2] ? configToggles[2].classList.contains('active') : true,
+    auto_assign_inspection: configToggles[3] ? configToggles[3].classList.contains('active') : false,
+  };
+  try {
+    const result = await api('/api/saas/config', { method: 'POST', body: JSON.stringify(config) });
+    if (result.success) showToast('Configuracion guardada', 'success');
+    else showToast('Error al guardar', 'error');
+  } catch(e) { showToast('Error de conexion', 'error'); }
+}

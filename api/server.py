@@ -482,6 +482,28 @@ else:
     except Exception as e:
         print(f'[DB] Tickets table check skipped: {e}')
 
+    # Auto-create SaaS config table if missing
+    try:
+        ensure_saas_config_table()
+    except Exception as e:
+        print(f'[DB] SaaS config table check skipped: {e}')
+
+
+def ensure_saas_config_table():
+    """Create SaaS configuration table if it doesn't exist."""
+    if not USE_POSTGRES:
+        return
+    from db import run_setup_sql
+    run_setup_sql([
+        """CREATE TABLE IF NOT EXISTS SAAS_CONFIG (
+            CONFIG_ID SERIAL PRIMARY KEY,
+            CONFIG_KEY TEXT UNIQUE NOT NULL,
+            CONFIG_VALUE TEXT,
+            CONFIG_TYPE TEXT DEFAULT 'text',
+            UPDATED_AT TIMESTAMP DEFAULT NOW()
+        )""",
+    ])
+
 
 def ensure_tickets_table():
     """Create support tickets table if it doesn't exist."""
@@ -751,6 +773,15 @@ def before_request():
                 return jsonify({'success': False, 'error': 'No autorizado'}), 403
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'No autorizado'}), 403
+
+    # Maintenance mode: block all non-superadmin API requests
+    if g.rol != 'superadmin':
+        try:
+            rows = query("SELECT CONFIG_VALUE FROM SAAS_CONFIG WHERE CONFIG_KEY = 'maintenance_mode' LIMIT 1")
+            if rows and rows[0]['CONFIG_VALUE'].lower() in ('true', '1', 'yes'):
+                return jsonify({'success': False, 'error': 'Sistema en mantenimiento. Intente mas tarde.'}), 503
+        except Exception:
+            pass  # table might not exist yet
 
     # Contexto de tenant para RLS (best-effort; no-op en SQLite).
     try:
@@ -4135,23 +4166,53 @@ def saas_tenants_chart():
 
 @app.route('/api/saas/config', methods=['GET'])
 def get_saas_config():
-    return jsonify({'success': True, 'data': {
+    defaults = {
         'platform_name': 'Last Mile Delivery SaaS',
         'currency': 'MXN',
         'timezone': 'America/Mexico_City',
         'trial_days': 14,
         'max_free_tenants': 3,
         'maintenance_mode': False,
-    }})
+        'rate_limit': 300,
+    }
+    try:
+        rows = query('SELECT CONFIG_KEY, CONFIG_VALUE FROM SAAS_CONFIG')
+        db_config = {r['CONFIG_KEY']: r['CONFIG_VALUE'] for r in rows}
+        for k, v in defaults.items():
+            raw = db_config.get(k)
+            if raw is not None:
+                if isinstance(v, bool):
+                    defaults[k] = raw.lower() in ('true', '1', 'yes')
+                elif isinstance(v, int):
+                    try: defaults[k] = int(raw)
+                    except: pass
+                else:
+                    defaults[k] = raw
+    except Exception as e:
+        print(f'[SAAS] Config read fallback: {e}')
+    return jsonify({'success': True, 'data': defaults})
+
 
 @app.route('/api/saas/config', methods=['POST'])
 @requiere_superadmin
 def save_saas_config():
     """Save SaaS platform config (maintenance mode, limits, etc.)."""
     data = request.get_json(force=True, silent=True) or {}
-    # Store in a simple table or file; for now, acknowledge and log
-    print(f'[SAAS] Config saved: {json.dumps(data, default=str)[:200]}')
-    return jsonify({'success': True, 'message': 'Configuracion guardada'})
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    try:
+        for key, value in data.items():
+            run_setup_sql([
+                f"""INSERT INTO SAAS_CONFIG (CONFIG_KEY, CONFIG_VALUE, UPDATED_AT)
+                    VALUES ('{key}', '{str(value)}', NOW())
+                    ON CONFLICT (CONFIG_KEY)
+                    DO UPDATE SET CONFIG_VALUE = EXCLUDED.CONFIG_VALUE, UPDATED_AT = NOW()"""
+            ])
+        print(f'[SAAS] Config saved: {json.dumps(data, default=str)[:200]}')
+        return jsonify({'success': True, 'message': 'Configuracion guardada'})
+    except Exception as e:
+        print(f'[SAAS] Config save error: {e}')
+        return jsonify({'error': str(e)}), 500
 
 
 # ========================================
@@ -5680,6 +5741,7 @@ def gamification_achievements(cho_id):
 # DEBUG: DB Table Status
 # ========================================
 @app.route('/api/debug/db-tables', methods=['GET'])
+@requiere_superadmin
 def debug_db_tables():
     """Check which tables exist in the DB."""
     emp_id = get_emp_id()
@@ -5833,6 +5895,7 @@ def ticket_stats():
     return jsonify({'success': True, 'by_estado': stats, 'by_prioridad': by_priority})
 
 @app.route('/api/debug/ensure-cod', methods=['POST'])
+@requiere_superadmin
 def debug_ensure_cod():
     """Force re-run ensure_cod_columns and report results."""
     emp_id = get_emp_id()
@@ -5851,6 +5914,7 @@ def debug_ensure_cod():
 
 
 @app.route('/api/debug/force-gps', methods=['POST'])
+@requiere_superadmin
 def debug_force_gps():
     """Force add GPS columns and report results."""
     emp_id = get_emp_id()

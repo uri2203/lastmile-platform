@@ -361,7 +361,10 @@
     "mi_ubicacion": "Mi ubicacion",
     "permiso_denegado": "Permiso denegado",
     "senal_debil": "Senal debil",
-    "timeout_gps": "Timeout GPS"
+    "timeout_gps": "Timeout GPS",
+    "entrega_offline": "Entrega guardada offline. Se sincronizara al reconectar.",
+    "incidencia_offline": "Incidencia guardada offline. Se sincronizara al reconectar.",
+    "modo_offline": "Modo Offline"
   },
   "cliente": {
     "portal_title": "Portal Cliente",

@@ -513,7 +513,7 @@
       if (!navigator.onLine) {
         if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
         loadMisEntregas();
-        Utils.toast('Entrega guardada offline. Se sincronizará al reconectar.', 'info');
+        Utils.toast(window.i18n.t('chofer.entrega_offline'), 'info');
         return;
       }
       try {
@@ -525,7 +525,7 @@
       } catch (e) {
         if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
         loadMisEntregas();
-        Utils.toast('Entrega guardada offline. Se sincronizará al reconectar.', 'info');
+        Utils.toast(window.i18n.t('chofer.entrega_offline'), 'info');
       }
     }
 
@@ -536,7 +536,7 @@
       if (!navigator.onLine) {
         if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
         loadMisEntregas();
-        Utils.toast('Incidencia guardada offline. Se sincronizará al reconectar.', 'info');
+        Utils.toast(window.i18n.t('chofer.incidencia_offline'), 'info');
         return;
       }
       try {
@@ -548,7 +548,7 @@
       } catch (e) {
         if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
         loadMisEntregas();
-        Utils.toast('Incidencia guardada offline. Se sincronizará al reconectar.', 'info');
+        Utils.toast(window.i18n.t('chofer.incidencia_offline'), 'info');
       }
     }
 
@@ -808,7 +808,7 @@
         bar = document.createElement('div');
         bar.id = 'offline-bar';
         bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:white;text-align:center;padding:6px;font-size:12px;font-weight:600;';
-        bar.textContent = window.i18n.t('chofer.sin_gps') + ' - Modo Offline';
+        bar.textContent = window.i18n.t('chofer.sin_gps') + ' - ' + window.i18n.t('chofer.modo_offline');
         document.body.prepend(bar);
       }
     }
