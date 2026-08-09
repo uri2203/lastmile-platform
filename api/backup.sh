@@ -5,7 +5,7 @@
 
 BACKUP_DIR="/data/backups"
 URL="https://lastmile-platform.onrender.com/api/cron/backup/download"
-KEY="${CRON_API_KEY:-lastmile-cron-2026}"
+KEY="${CRON_API_KEY:?CRON_API_KEY environment variable must be set}"
 DATE=$(date +%Y%m%d_%H%M%S)
 FILE="$BACKUP_DIR/lastmile_backup_$DATE.json"
 

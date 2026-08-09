@@ -76,7 +76,7 @@ class CFDIService:
                 logger.error(f'[CFDI] Customer create error {resp.status_code}: {resp.text[:200]}')
                 return {'success': False, 'error': resp.text[:200]}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de facturacion'}
 
     def create_product(self, nombre, clave=None, precio=0, unidad='H87'):
         """Create a product/service in FacturAPI."""
@@ -103,7 +103,7 @@ class CFDIService:
             else:
                 return {'success': False, 'error': resp.text[:200]}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de facturacion'}
 
     def create_invoice(self, pedido_id, emp_id):
         """Create and stamp a CFDI for a pedido."""
@@ -179,7 +179,7 @@ class CFDIService:
 
         except Exception as e:
             logger.error(f'[CFDI] Exception: {str(e)}')
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de facturacion'}
 
     def cancel_invoice(self, cfdi_id, emp_id, motivo='Cancelacion'):
         """Cancel a stamped CFDI."""
@@ -218,7 +218,7 @@ class CFDIService:
                 return {'success': False, 'error': resp.text[:200]}
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de facturacion'}
 
     def get_status(self):
         """Check if FacturAPI is configured and responding."""
@@ -277,7 +277,7 @@ class CFDIService:
                 'mode': 'mock'
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de facturacion'}
 
     def _save_cfdi(self, pedido_id, emp_id, data, pedido):
         """Save CFDI to database."""

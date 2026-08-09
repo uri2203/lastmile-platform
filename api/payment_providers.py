@@ -76,7 +76,7 @@ class StripeProvider:
             return {'success': True, 'session_id': session.id, 'url': session.url}
         except Exception as e:
             logger.error(f'Stripe error: {e}')
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def create_payment_intent(self, data: Dict[str, Any]) -> Dict[str, Any]:
         if not self.enabled:
@@ -93,7 +93,7 @@ class StripeProvider:
             return {'success': True, 'payment_intent_id': intent.id, 'client_secret': intent.client_secret}
         except Exception as e:
             logger.error(f'Stripe PI error: {e}')
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def confirm_payment(self, payment_intent_id: str) -> Dict[str, Any]:
         if not self.enabled:
@@ -104,7 +104,7 @@ class StripeProvider:
             intent = stripe.PaymentIntent.retrieve(payment_intent_id)
             return {'success': True, 'status': intent.status, 'amount': intent.amount / 100}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def refund(self, payment_intent_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
         if not self.enabled:
@@ -118,7 +118,7 @@ class StripeProvider:
             refund = stripe.Refund.create(**params)
             return {'success': True, 'refund_id': refund.id, 'status': refund.status}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def get_supported_methods(self, country_code: str) -> List[str]:
         return self.COUNTRY_METHODS.get(country_code.upper(), [])
@@ -160,7 +160,7 @@ class MercadoPagoProvider:
             return {'success': False, 'error': f'HTTP {r.status_code}: {r.text[:200]}'}
         except Exception as e:
             logger.error(f'MP preference error: {e}')
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def create_pix_payment(self, data: Dict[str, Any]) -> Dict[str, Any]:
         if not self.enabled:
@@ -189,7 +189,7 @@ class MercadoPagoProvider:
                 }
             return {'success': False, 'error': f'HTTP {r.status_code}: {r.text[:200]}'}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def get_payment_status(self, payment_id: str) -> Dict[str, Any]:
         if not self.enabled:
@@ -206,7 +206,7 @@ class MercadoPagoProvider:
                 return {'success': True, 'status': pay.get('status'), 'status_detail': pay.get('status_detail')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def refund(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
         if not self.enabled:
@@ -227,7 +227,7 @@ class MercadoPagoProvider:
                 return {'success': True, 'refund_id': ref.get('id'), 'status': ref.get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de proveedor de pago'}
 
     def get_supported_methods(self, country_code: str) -> List[str]:
         return self.COUNTRY_METHODS.get(country_code.upper(), [])

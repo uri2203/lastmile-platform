@@ -64,7 +64,11 @@ def _cleanup_blacklist():
 
 def _secret():
     """Clave de firma. Misma que usa Flask (FLASK_SECRET_KEY)."""
-    return os.environ.get('FLASK_SECRET_KEY', 'lastmile-dev-key-change-in-prod')
+    try:
+        from flask import current_app
+        return current_app.config.get('SECRET_KEY') or os.environ.get('FLASK_SECRET_KEY', '')
+    except RuntimeError:
+        return os.environ.get('FLASK_SECRET_KEY', '')
 
 
 def generate_token(usu_id, emp_id, rol, usuario=''):

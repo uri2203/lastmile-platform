@@ -55,7 +55,7 @@ class EmailService:
                 return {'success': False, 'error': resp.text[:200]}
         except Exception as e:
             logger.error(f'[EMAIL] Exception: {str(e)}')
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de notificacion'}
 
 
 # ========================================
@@ -90,7 +90,7 @@ class SMSService:
             return {'success': True, 'sid': sms.sid}
         except Exception as e:
             logger.error(f'[SMS] Exception: {str(e)}')
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': 'Error de notificacion'}
 
 
 # ========================================

@@ -72,9 +72,8 @@ class WhatsAppService:
             return {'success': True, 'sid': msg.sid, 'status': msg.status}
 
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f'[WHATSAPP] Exception sending to {to}: {error_msg}')
-            return {'success': False, 'error': error_msg[:200]}
+            logger.error(f'[WHATSAPP] Exception sending to {to}: {str(e)}')
+            return {'success': False, 'error': 'Error de WhatsApp'}
 
     def send_template(self, to, template_sid, language='es', variables=None):
         """
@@ -111,7 +110,7 @@ class WhatsAppService:
 
         except Exception as e:
             logger.error(f'[WHATSAPP] Template exception to {to}: {str(e)}')
-            return {'success': False, 'error': str(e)[:200]}
+            return {'success': False, 'error': 'Error de WhatsApp'}
 
     def get_status(self):
         """Return service configuration status."""

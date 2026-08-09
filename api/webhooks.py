@@ -28,7 +28,9 @@ def stripe_webhook():
             _handle_stripe_event(ev)
         except Exception as e:
             wh_logger.warning(f'Stripe wh err: {e}')
-            return jsonify({'error': str(e)}), 400
+            return jsonify({'error': 'Webhook processing failed'}), 400
+    elif STRIPE_WEBHOOK_SECRET and not sig:
+        return jsonify({'error': 'Missing Stripe-Signature header'}), 400
     else:
         try:
             ev = json.loads(payload)
@@ -164,7 +166,7 @@ def create_payment():
         return jsonify({'success': False, 'error': 'No payment provider configured'}), 400
     except Exception as e:
         wh_logger.error(f'create_payment err: {e}')
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Error processing payment'}), 500
 
 
 def _create_stripe_session(amount, currency, description, metadata, country, method):
@@ -252,7 +254,8 @@ def get_payment_status(payment_id, provider):
             return jsonify({'success': False, 'error': f'MP API: {r.status_code}'}), 400
         return jsonify({'success': False, 'error': 'Unknown provider'}), 400
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f'[WEBHOOK] payment-status error: {type(e).__name__}: {e}')
+        return jsonify({'success': False, 'error': 'Error checking payment status'}), 500
 
 
 @webhook_bp.route('/api/payments/refund', methods=['POST'])
@@ -284,7 +287,8 @@ def refund_payment():
             return jsonify({'success': False, 'error': f'MP API: {r.status_code}'}), 400
         return jsonify({'success': False, 'error': 'Unknown provider'}), 400
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f'[WEBHOOK] refund error: {type(e).__name__}: {e}')
+        return jsonify({'success': False, 'error': 'Error processing refund'}), 500
 
 
 @webhook_bp.route('/api/payments/methods/<country_code>', methods=['GET'])
@@ -345,4 +349,5 @@ def multi_country_analytics():
             data['orders_by_status'] = []
         return jsonify({'success': True, 'data': data})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'trace': _tb.format_exc()}), 500
+        print(f'[WEBHOOK] analytics error: {type(e).__name__}: {e}')
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500

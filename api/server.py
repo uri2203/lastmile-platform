@@ -66,14 +66,18 @@ init_monitoring(app)
 # Max request body size: 10MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
-# Validate FLASK_SECRET_KEY in production
+# Validate FLASK_SECRET_KEY - always require it, generate random in dev only
 _secret_key = os.environ.get('FLASK_SECRET_KEY', '')
 if not _secret_key or _secret_key == 'lastmile-dev-key-change-in-prod':
     if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER'):
         print('[SECURITY] FATAL: FLASK_SECRET_KEY not set. Aborting startup to prevent JWT forgery.')
         import sys
         sys.exit(1)
-app.secret_key = _secret_key or 'lastmile-dev-key-change-in-prod'
+    else:
+        import secrets as _secrets
+        _secret_key = _secrets.token_hex(32)
+        print('[SECURITY] WARNING: Using random FLASK_SECRET_KEY for this session. Set FLASK_SECRET_KEY env var for persistence.')
+app.secret_key = _secret_key
 
 # ========================================
 # CORS: Restringido por origen en produccion
@@ -416,6 +420,18 @@ def log_audit(action, details=None, tabla=None, registro_id=None):
             )
     except Exception as e:
         print(f'[AUDIT] DB write failed: {e}')
+
+
+def safe_error(e, action='operation'):
+    """Return a safe error response without leaking internals. Log details server-side."""
+    import traceback as _tb
+    err_id = f'{action}_{int(time.time()*1000) % 100000}'
+    print(f'[ERROR] {err_id}: {type(e).__name__}: {e}')
+    print(f'[ERROR] {err_id} trace: {_tb.format_exc()[:500]}')
+    is_prod = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER')
+    detail = str(e)[:80] if not is_prod else f'Error interno (ref: {err_id})'
+    return jsonify({'success': False, 'error': detail}), 500
+
 
 # ========================================
 # DATABASE: Auto-detect SQLite or PostgreSQL via DATABASE_URL
@@ -1232,7 +1248,7 @@ def billing_dashboard():
         data = get_billing_dashboard(emp_id)
         return jsonify({'success': True, 'data': data})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'get_billing_dashboard')
 
 
 @app.route('/api/billing/limits', methods=['GET'])
@@ -1244,7 +1260,7 @@ def billing_limits():
         result = check_limits(emp_id)
         return jsonify({'success': True, 'data': result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'check_billing_limits')
 
 
 @app.route('/api/billing/track', methods=['POST'])
@@ -1261,7 +1277,7 @@ def billing_track():
         track_usage(emp_id, metric, count)
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'track_usage')
 
 
 @app.route('/api/billing/auto-charge', methods=['POST'])
@@ -1277,7 +1293,7 @@ def auto_charge():
         result = run_auto_billing()
         return jsonify({'success': True, 'data': result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'auto_charge')
 
 
 @app.route('/api/billing/usage', methods=['GET'])
@@ -1289,7 +1305,7 @@ def billing_usage():
         usage = get_usage(emp_id)
         return jsonify({'success': True, 'data': usage})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'get_billing_usage')
 
 
 @app.route('/api/admin/tenants-usage', methods=['GET'])
@@ -1307,7 +1323,7 @@ def admin_tenants_usage():
         )
         return jsonify({'success': True, 'data': rows})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'admin_tenants_usage')
 
 
 @app.route('/api/referrals/my-code', methods=['GET'])
@@ -1323,7 +1339,7 @@ def my_referral_code():
             return jsonify({'success': True, 'referral_code': code, 'referral_link': f'/register?ref={code}'})
         return jsonify({'success': False, 'error': 'Empresa no encontrada'}), 404
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'get_referral_code')
 
 
 @app.route('/api/referrals/stats', methods=['GET'])
@@ -1369,7 +1385,7 @@ def referral_stats():
             'referrals': referrals or []
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'get_referral_stats')
 
 
 @app.route('/api/admin/legal-acceptance', methods=['GET'])
@@ -1396,7 +1412,7 @@ def admin_legal_acceptance():
             )
         return jsonify({'success': True, 'data': rows})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'admin_legal_acceptance')
 
 
 @app.route('/api/legal/my-acceptance', methods=['GET'])
@@ -1419,7 +1435,7 @@ def my_legal_acceptance():
             )
         return jsonify({'success': True, 'data': rows})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'get_my_legal_acceptance')
 
 
 @app.route('/api/legal/verify/<int:usr_id>', methods=['GET'])
@@ -1449,7 +1465,7 @@ def verify_legal_acceptance(usr_id):
             })
         return jsonify({'success': True, 'accepted': False, 'details': None})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'verify_legal_acceptance')
 
 
 # ========================================
@@ -2218,7 +2234,7 @@ def setup_usuarios():
 
         return jsonify({'success': True, 'message': f'Tabla USUARIOS creada con {len(users)} usuarios'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'setup_usuarios')
 
 
 # ========================================
@@ -2305,7 +2321,7 @@ def setup_zonas():
 
         return jsonify({'success': True, 'message': f'Zonas creadas: {len(zones)} zonas, {len(tariffs)} tarifas'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'setup_zonas')
 
 
 # ========================================
@@ -2345,7 +2361,7 @@ def create_zona():
 
         return jsonify({'success': True, 'message': f'Zona "{nombre}" creada', 'zon_id': zon_id})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'create_zona')
 
 
 @app.route('/api/zonas/<int:zon_id>', methods=['GET'])
@@ -2386,7 +2402,7 @@ def update_zona(zon_id):
 
         return jsonify({'success': True, 'message': 'Zona actualizada'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_zona')
 
 
 @app.route('/api/zonas/<int:zon_id>', methods=['DELETE'])
@@ -2398,7 +2414,7 @@ def delete_zona(zon_id):
         log_audit('zona_deleted', f'zon_id={zon_id}')
         return jsonify({'success': True, 'message': 'Zona eliminada'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_zona')
 
 
 @app.route('/api/zonas/cotizar', methods=['POST'])
@@ -2635,7 +2651,7 @@ def asignar_pedido(ped_id):
                 [ped_id, data.get('usuario', 'SYSTEM'), notas])
         return jsonify({'success': True, 'message': 'Chofer asignado al pedido'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return safe_error(e, 'asignar_pedido')
 
 
 @app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT', 'POST'])
@@ -2713,7 +2729,7 @@ def update_pedido(ped_id):
         )
         return jsonify({'success': True, 'message': 'Pedido actualizado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_pedido')
 
 
 @app.route('/api/pedidos/estadisticas', methods=['GET'])
@@ -3002,7 +3018,7 @@ def delete_chofer(cho_id):
         log_audit('chofer_soft_deleted', f'cho_id={cho_id}')
         return jsonify({'success': True, 'message': 'Chofer desactivado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_chofer')
 
 
 @app.route('/api/choferes', methods=['POST'])
@@ -3024,7 +3040,7 @@ def create_chofer():
         )
         return jsonify({'success': True, 'message': 'Chofer creado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'create_chofer')
 
 
 @app.route('/api/choferes/<int:cho_id>', methods=['PUT'])
@@ -3043,7 +3059,7 @@ def update_chofer(cho_id):
         )
         return jsonify({'success': True, 'message': 'Chofer actualizado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_chofer')
 
 
 # ========================================
@@ -3069,7 +3085,7 @@ def delete_vehiculo(veh_id):
         log_audit('vehiculo_deleted', f'veh_id={veh_id}')
         return jsonify({'success': True, 'message': 'Vehiculo eliminado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_vehiculo')
 
 
 @app.route('/api/vehiculos', methods=['POST'])
@@ -3092,7 +3108,7 @@ def create_vehiculo():
         )
         return jsonify({'success': True, 'message': 'Vehiculo creado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'create_vehiculo')
 
 
 @app.route('/api/vehiculos/<int:veh_id>', methods=['PUT'])
@@ -3112,7 +3128,7 @@ def update_vehiculo(veh_id):
         )
         return jsonify({'success': True, 'message': 'Vehiculo actualizado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_vehiculo')
 
 
 # ========================================
@@ -3138,7 +3154,7 @@ def delete_cliente(cli_id):
         log_audit('cliente_soft_deleted', f'cli_id={cli_id}')
         return jsonify({'success': True, 'message': 'Cliente desactivado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_cliente')
 
 
 @app.route('/api/clientes', methods=['POST'])
@@ -3161,7 +3177,7 @@ def create_cliente():
         )
         return jsonify({'success': True, 'message': 'Cliente creado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'create_cliente')
 
 
 @app.route('/api/clientes/<int:cli_id>', methods=['PUT'])
@@ -3183,7 +3199,7 @@ def update_cliente(cli_id):
         )
         return jsonify({'success': True, 'message': 'Cliente actualizado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_cliente')
 
 
 # ========================================
@@ -3515,7 +3531,7 @@ def delete_pago(pag_id):
         log_audit('pago_deleted', f'pag_id={pag_id}')
         return jsonify({'success': True, 'message': 'Pago eliminado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_pago')
 
 
 @app.route('/api/pagos/oxxo', methods=['POST'])
@@ -3573,7 +3589,7 @@ def delete_usuario(usu_id):
         log_audit('usuario_deleted', f'usu_id={usu_id}')
         return jsonify({'success': True, 'message': 'Usuario eliminado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_usuario')
 
 
 @app.route('/api/usuarios', methods=['POST'])
@@ -3601,7 +3617,7 @@ def create_usuario():
         )
         return jsonify({'success': True, 'message': 'Usuario creado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'create_usuario')
 
 
 @app.route('/api/usuarios/<int:usu_id>', methods=['PUT'])
@@ -3637,7 +3653,7 @@ def update_usuario(usu_id):
             )
         return jsonify({'success': True, 'message': 'Usuario actualizado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_usuario')
 
 
 @app.route('/api/usuarios/<int:usu_id>/unlock', methods=['POST'])
@@ -3652,7 +3668,7 @@ def unlock_usuario(usu_id):
         )
         return jsonify({'success': True, 'message': 'Cuenta desbloqueada'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'unlock_usuario')
 
 
 @app.route('/api/usuarios/lock-status', methods=['GET'])
@@ -3669,7 +3685,7 @@ def lock_status():
         )
         return jsonify({'success': True, 'data': rows})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'get_lock_status')
 
 
 # ========================================
@@ -3782,7 +3798,7 @@ def update_whitelabel():
                  data['custom_js'], data['features']])
         return jsonify({'success': True, 'message': 'Whitelabel actualizado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'update_whitelabel')
 
 
 # ========================================
@@ -3867,7 +3883,7 @@ def export_custom():
     try:
         result_data = query(sql_template, [emp_id])
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+        return safe_error(e, 'export_custom')
 
     if fmt == 'pdf':
         result = export_service.to_pdf(result_data, columns, title=title)
@@ -4243,7 +4259,7 @@ def save_saas_config():
         return jsonify({'success': True, 'message': 'Configuracion guardada'})
     except Exception as e:
         print(f'[SAAS] Config save error: {e}')
-        return jsonify({'error': str(e)}), 500
+        return safe_error(e, 'save_saas_config')
 
 
 # ========================================
@@ -4427,7 +4443,7 @@ def delete_pedido(ped_id):
         log_audit('pedido_soft_deleted', f'ped_id={ped_id}')
         return jsonify({'success': True, 'message': 'Pedido eliminado'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return safe_error(e, 'delete_pedido')
 
 
 # ========================================

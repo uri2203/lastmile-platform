@@ -37,14 +37,14 @@ class MexicoProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoicing', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'uuid': dd.get('uuid')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
             import requests
             r = requests.delete(f'{self.base_url}/invoicing/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, json={'motivo': reason}, timeout=30)
             return {'success': r.status_code in (200, 204)}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
@@ -52,7 +52,7 @@ class MexicoProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoicing/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class BrazilProvider(FiscalProvider):
@@ -68,14 +68,14 @@ class BrazilProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/nfe', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'chave': dd.get('chave')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
             import requests
             r = requests.delete(f'{self.base_url}/nfe/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=30)
             return {'success': r.status_code in (200, 204)}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
@@ -83,7 +83,7 @@ class BrazilProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/nfe/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class ColombiaProvider(FiscalProvider):
@@ -99,14 +99,14 @@ class ColombiaProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoices', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'cufe': dd.get('cufe')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
             import requests
             r = requests.post(f'{self.base_url}/invoices/{did}/void', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json={'motivo': reason}, timeout=30)
             return {'success': r.status_code in (200, 204)}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
@@ -114,7 +114,7 @@ class ColombiaProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoices/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class ArgentinaProvider(FiscalProvider):
@@ -130,7 +130,7 @@ class ArgentinaProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoices', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'cae': dd.get('cae')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason): return {'success': False, 'error': 'Not supported'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
@@ -139,7 +139,7 @@ class ArgentinaProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoices/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class ChileProvider(FiscalProvider):
@@ -155,14 +155,14 @@ class ChileProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoices', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'tracking_id': dd.get('tracking_id')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
             import requests
             r = requests.post(f'{self.base_url}/invoices/{did}/cancel', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json={'motivo': reason}, timeout=30)
             return {'success': r.status_code in (200, 204)}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
         try:
@@ -170,7 +170,7 @@ class ChileProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoices/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class PeruProvider(FiscalProvider):
@@ -186,7 +186,7 @@ class PeruProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoices', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'hash': dd.get('hash')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason): return {'success': False, 'error': 'Not supported'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
@@ -195,7 +195,7 @@ class PeruProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoices/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class UruguayProvider(FiscalProvider):
@@ -211,7 +211,7 @@ class UruguayProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoices', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'cae': dd.get('cae')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason): return {'success': False, 'error': 'Not supported'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
@@ -220,7 +220,7 @@ class UruguayProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoices/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class EcuadorProvider(FiscalProvider):
@@ -236,7 +236,7 @@ class EcuadorProvider(FiscalProvider):
             r = requests.post(f'{self.base_url}/invoices', headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}, json=d, timeout=30)
             if r.status_code in (200, 201): dd = r.json(); return {'success': True, 'document_id': dd.get('id'), 'clave_acceso': dd.get('clave_acceso')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
     def cancel_invoice(self, did, reason): return {'success': False, 'error': 'Not supported'}
     def get_document_status(self, did):
         if not self.enabled: return {'success': False, 'error': 'Not configured'}
@@ -245,7 +245,7 @@ class EcuadorProvider(FiscalProvider):
             r = requests.get(f'{self.base_url}/invoices/{did}', headers={'Authorization': f'Bearer {self.api_key}'}, timeout=15)
             if r.status_code == 200: return {'success': True, 'status': r.json().get('status')}
             return {'success': False, 'error': f'HTTP {r.status_code}'}
-        except Exception as e: return {'success': False, 'error': str(e)}
+        except Exception as e: return {'success': False, 'error': 'Error de proveedor fiscal'}
 
 
 class FiscalProviderRegistry:
