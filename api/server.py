@@ -745,7 +745,7 @@ def before_request():
         if g.emp_id:
             from db import set_tenant_context
             set_tenant_context(int(g.emp_id))
-    except (ValueError, TypeError):
+    except Exception:
         pass
 
 
