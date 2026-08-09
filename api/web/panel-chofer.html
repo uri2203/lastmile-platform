@@ -410,10 +410,21 @@
 
     /* ---- Load Entregas ---- */
     async function loadMisEntregas() {
-      const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}`);
-      if (result.success) {
+      const container = document.getElementById('entregas-list');
+      try {
+        const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}`);
+        if (!result.success) {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error cargando entregas</p></div>';
+          return;
+        }
+        if (!result.data || result.data.length === 0) {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No tienes entregas asignadas hoy</p></div>';
+          document.getElementById('kpi-total').textContent = 0;
+          document.getElementById('kpi-entregados').textContent = 0;
+          document.getElementById('kpi-pendientes').textContent = 0;
+          return;
+        }
         let pendientes = 0, entregados = 0;
-        const container = document.getElementById('entregas-list');
         container.innerHTML = '';
 
         result.data.forEach(e => {
@@ -460,6 +471,8 @@
         document.getElementById('kpi-total').textContent = result.data.length;
         document.getElementById('kpi-entregados').textContent = entregados;
         document.getElementById('kpi-pendientes').textContent = pendientes;
+      } catch(e) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-wifi"></i><p>Sin conexion. Verifica tu red.</p></div>';
       }
     }
 
