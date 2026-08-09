@@ -5740,8 +5740,11 @@ def create_ticket():
             [emp_id, ticket_num, asunto, desc, prioridad, categoria, user_id]
         )
     except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
         print(f'[TICKETS] INSERT error: {e}')
-        return jsonify({'success': False, 'error': 'Error creating ticket', 'debug': str(e)[:300]}), 500
+        print(f'[TICKETS] traceback: {tb}')
+        return jsonify({'success': False, 'error': 'Error creating ticket', 'debug': str(e)[:300], 'tb': tb[:500]}), 500
     return jsonify({'success': True, 'ticket_num': ticket_num, 'message': 'Ticket creado'})
 
 @app.route('/api/tickets/<int:ticket_id>', methods=['GET'])
