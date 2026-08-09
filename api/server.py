@@ -1448,7 +1448,7 @@ def verify_legal_acceptance(usr_id):
 # ========================================
 @app.route('/api/health', methods=['GET'])
 def health():
-    checks = {'database': 'UNKNOWN', 'stripe': 'NOT_CONFIGURED', 'mp': 'NOT_CONFIGURED'}
+    checks = {'database': 'UNKNOWN', 'stripe': 'NOT_CONFIGURED', 'mp': 'NOT_CONFIGURED', 'redis': 'NOT_CONFIGURED', 'websocket': 'UNKNOWN'}
 
     # DB check
     try:
@@ -1469,9 +1469,29 @@ def health():
     if os.environ.get('MP_ACCESS_TOKEN'):
         checks['mp'] = 'CONFIGURED'
 
+    # Redis check
+    redis_url = os.environ.get('REDIS_URL', '')
+    if redis_url:
+        try:
+            import redis as redis_lib
+            r = redis_lib.from_url(redis_url, socket_connect_timeout=3)
+            r.ping()
+            checks['redis'] = 'CONNECTED'
+        except Exception:
+            checks['redis'] = 'ERROR'
+    else:
+        checks['redis'] = 'IN_MEMORY'
+
+    # WebSocket check
+    try:
+        checks['websocket'] = 'ACTIVE' if socketio else 'UNAVAILABLE'
+    except Exception:
+        checks['websocket'] = 'UNKNOWN'
+
     # DB info
     db_info = get_db_info()
 
+    redis_mode = checks['redis']
     overall = 'OK' if checks['database'] == 'OK' else 'DEGRADED'
     return jsonify({
         'status': overall,
@@ -1485,6 +1505,8 @@ def health():
         'services': {
             'stripe': checks['stripe'],
             'mercadopago': checks['mp'],
+            'redis': checks['redis'],
+            'websocket': checks['websocket'],
             'rate_limit': '300/min',
         }
     })

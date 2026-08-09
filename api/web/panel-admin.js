@@ -1422,8 +1422,20 @@ async function loadTickets() {
     const data = await r.json();
     if (!data.success) return;
     const tbody = document.getElementById('ticketsTableBody');
-    if (!tbody) return;
     const tickets = data.tickets || [];
+
+    // Update KPIs
+    const abiertos = tickets.filter(t => t.TICKET_ESTADO === 'ABIERTO').length;
+    const proceso = tickets.filter(t => t.TICKET_ESTADO === 'EN_PROCESO').length;
+    const resueltos = tickets.filter(t => t.TICKET_ESTADO === 'RESUELTO' || t.TICKET_ESTADO === 'CERRADO').length;
+    const kpiAbiertos = document.getElementById('tickets-abiertos');
+    const kpiProceso = document.getElementById('tickets-proceso');
+    const kpiResueltos = document.getElementById('tickets-resueltos');
+    if (kpiAbiertos) kpiAbiertos.textContent = abiertos;
+    if (kpiProceso) kpiProceso.textContent = proceso;
+    if (kpiResueltos) kpiResueltos.textContent = resueltos;
+
+    if (!tbody) return;
     if (tickets.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">No hay tickets</td></tr>';
       return;

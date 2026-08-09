@@ -579,9 +579,14 @@
     // ========================================
     async function loadDashboard() {
       let data = null;
+      let recentPedidos = null;
       try {
-        const result = await api(`/api/dashboard/${currentEmpId}`);
-        if (result.success && result.data) data = result.data;
+        const [dashResult, pedidosResult] = await Promise.all([
+          api(`/api/dashboard/${currentEmpId}`),
+          api(`/api/pedidos?emp_id=${currentEmpId}&limit=5`)
+        ]);
+        if (dashResult.success && dashResult.data) data = dashResult.data;
+        if (pedidosResult.success && pedidosResult.pedidos) recentPedidos = pedidosResult.pedidos;
       } catch(e) {}
 
       if (!data) {
@@ -590,12 +595,8 @@
         const enRuta = DEMO_PEDIDOS.filter(p => p.PED_ESTADO === 'EN_RUTA').length;
         const pendientes = DEMO_PEDIDOS.filter(p => ['PENDIENTE','ASIGNADO'].includes(p.PED_ESTADO)).length;
         data = {
-          TOTAL_PEDIDOS: total,
-          EN_RUTA: enRuta,
-          ENTREGADOS: entregados,
-          PENDIENTES: pendientes,
-          CHOFERES_ACTIVOS: DEMO_DRIVERS.length,
-          TIEMPO_PROM_GENERAL: '28 min'
+          TOTAL_PEDIDOS: total, EN_RUTA: enRuta, ENTREGADOS: entregados,
+          PENDIENTES: pendientes, CHOFERES_ACTIVOS: DEMO_DRIVERS.length, TIEMPO_PROM_GENERAL: '28 min'
         };
       }
 
@@ -606,22 +607,28 @@
       document.getElementById('kpi-choferes').textContent = data.CHOFERES_ACTIVOS || 0;
       document.getElementById('kpi-tiempo-prom').textContent = data.TIEMPO_PROM_GENERAL || '--';
 
-      loadDashboardPedidos();
+      loadDashboardPedidos(recentPedidos);
       initDashboardMap();
     }
 
-    function loadDashboardPedidos() {
+    function loadDashboardPedidos(realPedidos) {
       const tbody = document.getElementById('dashboard-pedidos-tbody');
-      const recent = DEMO_PEDIDOS.slice(0, 5);
-      tbody.innerHTML = recent.map(p => `
+      const pedidos = (realPedidos && realPedidos.length > 0) ? realPedidos.slice(0, 5) : DEMO_PEDIDOS.slice(0, 5);
+      tbody.innerHTML = pedidos.map(p => {
+        const num = p.PED_NUMERO || `PED-${p.PED_ID}`;
+        const cliente = p.PED_CLIENTE_NOMBRE || p.cliente_nombre || '-';
+        const estado = p.PED_ESTADO || p.estado || 'PENDIENTE';
+        const chofer = p.CHOFER_ASIGNADO || p.chofer_asignado || '-';
+        const fecha = p.PED_FECHA_PEDIDO || p.fecha_pedido || '';
+        return `
         <tr style="cursor:pointer" onclick="verPedido(${p.PED_ID})">
-          <td><strong>${p.PED_NUMERO}</strong></td>
-          <td class="truncate" style="max-width:120px">${p.PED_CLIENTE_NOMBRE}</td>
-          <td>${Utils.badge(p.PED_ESTADO)}</td>
-          <td class="text-muted">${p.CHOFER_ASIGNADO || '-'}</td>
-          <td class="text-muted text-xs">${Utils.relative(p.PED_FECHA_PEDIDO)}</td>
-        </tr>
-      `).join('');
+          <td><strong>${num}</strong></td>
+          <td class="truncate" style="max-width:120px">${cliente}</td>
+          <td>${Utils.badge(estado)}</td>
+          <td class="text-muted">${chofer}</td>
+          <td class="text-muted text-xs">${fecha ? Utils.relative(fecha) : '-'}</td>
+        </tr>`;
+      }).join('');
     }
 
     // ========================================
@@ -867,8 +874,44 @@
       pendingPedidoId = null;
     }
 
-    function asignarPedido(pedId) {
-      Utils.toast(window.i18n.t('operacion.toast_asignacion_info'), 'info');
+    async function asignarPedido(pedId) {
+      // Load available choferes for selection
+      let choferes = [];
+      try {
+        const result = await api('/api/choferes');
+        if (result.success && result.choferes) choferes = result.choferes;
+      } catch(e) {}
+      if (choferes.length === 0) {
+        Utils.toast('No hay choferes disponibles', 'warning');
+        return;
+      }
+      const choferList = choferes.filter(c => (c.CHO_ESTATUS || c.estatus) === 'ACTIVO');
+      if (choferList.length === 0) {
+        Utils.toast('No hay choferes activos', 'warning');
+        return;
+      }
+      const names = choferList.map((c, i) => `${i+1}. ${c.CHO_NOMBRE || ''} ${c.CHO_APELLIDO || ''}`.trim()).join('\n');
+      const choice = prompt(`Selecciona chofer (1-${choferList.length}):\n${names}`);
+      if (!choice) return;
+      const idx = parseInt(choice) - 1;
+      if (idx < 0 || idx >= choferList.length) { Utils.toast('Opcion invalida', 'error'); return; }
+      const selected = choferList[idx];
+      try {
+        const result = await api(`/api/pedidos/${pedId}/asignar`, {
+          method: 'POST',
+          body: JSON.stringify({ cho_id: selected.CHO_ID, usuario: localStorage.getItem('user') || 'operator' })
+        });
+        if (result.success) {
+          Utils.toast(`Pedido asignado a ${selected.CHO_NOMBRE} ${selected.CHO_APELLIDO}`, 'success');
+          closeModal('modal-pedido');
+          loadDashboard();
+          loadPedidos();
+        } else {
+          Utils.toast('Error al asignar', 'error');
+        }
+      } catch(e) {
+        Utils.toast('Error de conexion', 'error');
+      }
     }
 
     // ========================================
