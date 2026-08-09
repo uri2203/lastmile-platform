@@ -544,6 +544,70 @@ function refreshAll(){
 }
 
 /* ==========================================
+   SUPPORT TICKETS
+   ========================================== */
+async function loadSaasTickets() {
+  try {
+    const r = await fetch(API_BASE + '/api/tickets', { headers: HEADERS });
+    const data = await r.json();
+    if (!data.success) return;
+    const tickets = data.tickets || [];
+    // Update KPIs
+    const abiertos = tickets.filter(t => t.TICKET_ESTADO === 'ABIERTO').length;
+    const progreso = tickets.filter(t => t.TICKET_ESTADO === 'EN_PROCESO').length;
+    const cerrados = tickets.filter(t => ['RESUELTO','CERRADO'].includes(t.TICKET_ESTADO)).length;
+    const el1 = document.getElementById('sp-abiertos'); if(el1) el1.textContent = abiertos;
+    const el2 = document.getElementById('sp-progreso'); if(el2) el2.textContent = progreso;
+    const el3 = document.getElementById('sp-cerrados'); if(el3) el3.textContent = cerrados;
+    // Render table
+    const tbody = document.getElementById('saasTicketsTableBody');
+    if (!tbody) return;
+    if (tickets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">No hay tickets</td></tr>';
+      return;
+    }
+    const prioridadColors = { ALTA: 'var(--danger)', MEDIA: 'var(--warning)', BAJA: 'var(--success)' };
+    const estadoColors = { ABIERTO: 'var(--danger)', EN_PROCESO: 'var(--warning)', RESUELTO: 'var(--success)', CERRADO: 'var(--text-muted)' };
+    tbody.innerHTML = tickets.slice(0, 50).map(t => `
+      <tr>
+        <td style="font-size:11px;font-weight:600;">${t.TICKET_NUM || t.TICKET_ID}</td>
+        <td style="font-size:11px;">${t.TICKET_ASUNTO || ''}</td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${prioridadColors[t.TICKET_PRIORIDAD] || 'var(--text-muted)'}22;color:${prioridadColors[t.TICKET_PRIORIDAD] || 'var(--text-muted)'};">${t.TICKET_PRIORIDAD || ''}</span></td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${estadoColors[t.TICKET_ESTADO] || 'var(--text-muted)'}22;color:${estadoColors[t.TICKET_ESTADO] || 'var(--text-muted)'};">${t.TICKET_ESTADO || ''}</span></td>
+        <td style="font-size:11px;">${t.TICKET_CATEGORIA || ''}</td>
+        <td style="font-size:10px;color:var(--text-muted);">${t.TICKET_FECHA_CREACION ? new Date(t.TICKET_FECHA_CREACION).toLocaleDateString() : ''}</td>
+      </tr>
+    `).join('');
+  } catch(e) { console.warn('SaaS tickets error:', e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => { setTimeout(loadSaasTickets, 500); });
+
+/* ==========================================
+   SaaS CONFIG
+   ========================================== */
+async function saveSaasConfig() {
+  try {
+    const maintenanceToggle = document.querySelector('#section-config .toggle');
+    const isMaintenance = maintenanceToggle ? maintenanceToggle.classList.contains('active') : false;
+    const inputs = document.querySelectorAll('#section-config input[type="number"]');
+    const config = {
+      maintenance_mode: isMaintenance,
+      max_free_tenants: inputs[0] ? parseInt(inputs[0].value) : 3,
+      rate_limit: inputs[1] ? parseInt(inputs[1].value) : 200,
+    };
+    const r = await fetch(API_BASE + '/api/saas/config', {
+      method: 'POST', headers: HEADERS,
+      body: JSON.stringify(config)
+    });
+    const data = await r.json();
+    if (data.success) {
+      if (typeof showToast === 'function') showToast('Configuracion guardada', 'success');
+    }
+  } catch(e) { console.warn('Save config error:', e); }
+}
+
+/* ==========================================
    INIT
    ========================================== */
 window.addEventListener('load',()=>{

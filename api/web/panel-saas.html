@@ -255,13 +255,14 @@ html[data-theme="light"] .toast-info{background:rgba(37,99,235,0.9)}
   <div class="section" id="section-soporte">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
       <h2 style="font-size:18px;font-weight:600;" data-i18n="saas.soporte_titulo">Soporte / Tickets</h2>
+      <button class="btn btn-primary" onclick="openModal('modalNuevoTicketSaas')" data-i18n="settings.newTicket"><i class="fas fa-plus" style="font-size:10px;"></i> Nuevo Ticket</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
       <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--warning);" id="sp-abiertos">0</div><div style="font-size:11px;color:var(--text-muted);" data-i18n="saas.kpi_abiertos">Abiertos</div></div>
       <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--accent);" id="sp-progreso">0</div><div style="font-size:11px;color:var(--text-muted);" data-i18n="saas.kpi_en_progreso">En Progreso</div></div>
       <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--success);" id="sp-cerrados">0</div><div style="font-size:11px;color:var(--text-muted);" data-i18n="saas.kpi_cerrados">Cerrados</div></div>
     </div>
-    <div class="card"><div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-headset" style="font-size:32px;margin-bottom:12px;display:block;"></i><span data-i18n="saas.soporte_placeholder">Modulo de tickets - Proximamente</span><br><span style="font-size:11px;" data-i18n="saas.soporte_desc">Integracion con sistema de soporte por crear</span></div></div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>#</th><th data-i18n="settings.subject">Asunto</th><th data-i18n="common.priority">Prioridad</th><th data-i18n="common.status">Estado</th><th>Categoria</th><th data-i18n="common.created">Creado</th></tr></thead><tbody id="saasTicketsTableBody"></tbody></table></div>
   </div>
 
   <!-- ============ AUDITORIA ============ -->
@@ -311,7 +312,7 @@ html[data-theme="light"] .toast-info{background:rgba(37,99,235,0.9)}
         </div>
       </div>
     </div>
-    <div style="margin-top:16px;display:flex;justify-content:flex-end;"><button class="btn btn-primary" onclick="showToast('Configuracion guardada','success')"><i class="fas fa-save" style="font-size:10px;"></i> <span data-i18n="saas.btn_guardar_config">Guardar Config</span></button></div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;"><button class="btn btn-primary" onclick="saveSaasConfig()"><i class="fas fa-save" style="font-size:10px;"></i> <span data-i18n="saas.btn_guardar_config">Guardar Config</span></button></div>
   </div>
 </div>
 

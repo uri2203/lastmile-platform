@@ -1412,4 +1412,67 @@ function connectAdminWS() {
 }
 
 setTimeout(() => { connectAdminWS(); }, 1000);
-});
+
+/* ==========================================
+   SUPPORT TICKETS
+   ========================================== */
+async function loadTickets() {
+  try {
+    const r = await fetch(API_BASE + '/api/tickets', { headers: HEADERS });
+    const data = await r.json();
+    if (!data.success) return;
+    const tbody = document.getElementById('ticketsTableBody');
+    if (!tbody) return;
+    const tickets = data.tickets || [];
+    if (tickets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">No hay tickets</td></tr>';
+      return;
+    }
+    const prioridadColors = { ALTA: 'var(--danger)', MEDIA: 'var(--warning)', BAJA: 'var(--success)' };
+    const estadoColors = { ABIERTO: 'var(--danger)', EN_PROCESO: 'var(--warning)', RESUELTO: 'var(--success)', CERRADO: 'var(--text-muted)' };
+    tbody.innerHTML = tickets.map(t => `
+      <tr>
+        <td style="font-size:11px;font-weight:600;">${t.TICKET_NUM || t.TICKET_ID}</td>
+        <td style="font-size:11px;">${t.TICKET_ASUNTO || ''}</td>
+        <td style="font-size:11px;">${t.TICKET_CATEGORIA || ''}</td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${prioridadColors[t.TICKET_PRIORIDAD] || 'var(--text-muted)'}22;color:${prioridadColors[t.TICKET_PRIORIDAD] || 'var(--text-muted)'};">${t.TICKET_PRIORIDAD || ''}</span></td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${estadoColors[t.TICKET_ESTADO] || 'var(--text-muted)'}22;color:${estadoColors[t.TICKET_ESTADO] || 'var(--text-muted)'};">${t.TICKET_ESTADO || ''}</span></td>
+        <td style="font-size:11px;">${t.TICKET_ASIGNADO_A || '-'}</td>
+        <td style="font-size:10px;color:var(--text-muted);">${t.TICKET_FECHA_CREACION ? new Date(t.TICKET_FECHA_CREACION).toLocaleDateString() : ''}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="viewTicket(${t.TICKET_ID})" style="font-size:10px;"><i class="fas fa-eye"></i></button></td>
+      </tr>
+    `).join('');
+  } catch(e) { console.warn('Tickets load error:', e); }
+}
+
+async function viewTicket(id) {
+  try {
+    const r = await fetch(API_BASE + '/api/tickets/' + id, { headers: HEADERS });
+    const data = await r.json();
+    if (!data.success) return;
+    const t = data.ticket;
+    alert(`Ticket ${t.TICKET_NUM}\nAsunto: ${t.TICKET_ASUNTO}\nEstado: ${t.TICKET_ESTADO}\nPrioridad: ${t.TICKET_PRIORIDAD}\nDescripcion: ${t.TICKET_DESCRIPCION || '-'}\nRespuesta: ${t.TICKET_RESPUESTA || '-'}`);
+  } catch(e) { console.warn('Ticket detail error:', e); }
+}
+
+async function createTicket() {
+  const asunto = document.getElementById('ticket-asunto')?.value;
+  const desc = document.getElementById('ticket-descripcion')?.value || '';
+  const prioridad = document.getElementById('ticket-prioridad')?.value || 'MEDIA';
+  const categoria = document.getElementById('ticket-categoria')?.value || 'GENERAL';
+  if (!asunto) return alert('Asunto requerido');
+  try {
+    const r = await fetch(API_BASE + '/api/tickets', {
+      method: 'POST', headers: HEADERS,
+      body: JSON.stringify({ asunto, descripcion: desc, prioridad, categoria })
+    });
+    const data = await r.json();
+    if (data.success) {
+      if (typeof showToast === 'function') showToast('Ticket ' + data.ticket_num + ' creado', 'success');
+      loadTickets();
+      if (typeof closeModal === 'function') closeModal('modalNuevoTicket');
+    }
+  } catch(e) { console.warn('Create ticket error:', e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => { setTimeout(loadTickets, 500); });

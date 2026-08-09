@@ -6,7 +6,7 @@ Multi-tenant: cada request lleva X-Emp-Id
 Produccion-ready: HTTPS, rate limiting, logging, CORS restricciones
 """
 
-from flask import Flask, request, jsonify, send_from_directory, g
+from flask import Flask, request, jsonify, send_from_directory, g, Response
 from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -21,11 +21,15 @@ from monitoring import init_monitoring
 from agents import RouteOptimizer, SmartAssignment, ETAPredictor, SupportChatbot, DemandForecaster, DynamicPricing, FraudDetector, SentimentAnalyzer
 from ai_service import optimize_routes
 import os
+import sys
 import time
 import re
+import json
+import io
 import logging
 from logging.handlers import RotatingFileHandler
-from datetime import datetime
+from datetime import datetime, timedelta, date
+import hmac as _hmac
 
 
 def _strip_html_tags(value):
@@ -66,9 +70,9 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 _secret_key = os.environ.get('FLASK_SECRET_KEY', '')
 if not _secret_key or _secret_key == 'lastmile-dev-key-change-in-prod':
     if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER'):
-        import warnings
-        warnings.warn('[SECURITY] FLASK_SECRET_KEY is not set or using default! JWT tokens can be forged.')
-        print('[SECURITY] WARNING: Set FLASK_SECRET_KEY env var to a strong random value!')
+        print('[SECURITY] FATAL: FLASK_SECRET_KEY not set. Aborting startup to prevent JWT forgery.')
+        import sys
+        sys.exit(1)
 app.secret_key = _secret_key or 'lastmile-dev-key-change-in-prod'
 
 # ========================================
@@ -146,30 +150,50 @@ def send_push_notification(emp_id, user_id, title, body, url='/panel-chofer.html
 # ========================================
 # BACKUP: Exportación de base de datos
 # ========================================
-import hmac as _hmac
+
+# ========================================
+# ALLOWED TABLES (whitelist for f-string queries)
+# ========================================
+_ALLOWED_TABLES = {
+    'TENANTS', 'USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES_LM', 'PEDIDOS',
+    'TRACKING', 'PEDIDO_HISTORIAL', 'INCIDENCIAS', 'EMPRESAS',
+    'DRIVER_CASH_HOLDINGS', 'DRIVER_SETTLEMENTS', 'SETTLEMENT_LINE_ITEMS',
+    'NOTIFICACIONES', 'LEGAL_ACCEPTANCE', 'TENANT_FISCAL_CONFIG',
+    'PUSH_SUBSCRIPTIONS', 'TENANT_PAYMENT_METHODS', 'FISCAL_INVOICES',
+    'FISCAL_CONFIG', 'FISCAL_DOCUMENTS', 'TENANTS', 'CLIENTES',
+    'PAGOS_TRANSACCIONES', 'CFDI_FACTURAS',
+}
+
 
 @app.route('/api/cron/backup', methods=['POST'])
 def cron_backup():
-    """Export all tables as JSON for backup. Auth via CRON_API_KEY."""
+    """Export tenant-scoped tables as JSON for backup. Auth via CRON_API_KEY.
+    Backs up only the tenant identified by emp_id query param, or all tenants if not specified.
+    """
     key = request.headers.get('X-Cron-Key') or request.args.get('key')
     expected = os.environ.get('CRON_API_KEY', '')
     if not expected or not key or not _hmac.compare_digest(key, expected):
         return jsonify({'error': 'Unauthorized'}), 401
     try:
-        import json
-        from datetime import datetime
-        tables = ['TENANTS', 'USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES', 'PEDIDOS',
-                  'TRACKING', 'FISCAL_CONFIG', 'FISCAL_DOCUMENTS', 'PUSH_SUBSCRIPTIONS']
+        emp_id = request.args.get('emp_id')
+        tables = ['USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES_LM', 'PEDIDOS',
+                  'TRACKING', 'PEDIDO_HISTORIAL', 'INCIDENCIAS', 'NOTIFICACIONES']
         backup = {'timestamp': datetime.now().isoformat(), 'tables': {}}
         for table in tables:
+            if table not in _ALLOWED_TABLES:
+                continue
             try:
-                data = query(f'SELECT * FROM {table} LIMIT 5000', [])
+                if emp_id:
+                    data = query(f'SELECT * FROM {table} WHERE EMP_ID=%s LIMIT 10000', [int(emp_id)])
+                else:
+                    data = query(f'SELECT * FROM {table} LIMIT 5000', [])
                 backup['tables'][table] = data
             except Exception:
                 backup['tables'][table] = []
-        return jsonify({'success': True, 'backup': backup, 'size': len(json.dumps(backup))})
+        backup['emp_id_filter'] = emp_id
+        return jsonify({'success': True, 'backup': backup, 'size': len(json.dumps(backup, default=str))})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Backup failed'}), 500
 
 @app.route('/api/cron/backup/download', methods=['GET'])
 def cron_backup_download():
@@ -179,15 +203,18 @@ def cron_backup_download():
     if not expected or not key or not _hmac.compare_digest(key, expected):
         return jsonify({'error': 'Unauthorized'}), 401
     try:
-        import json
-        from datetime import datetime
-        from flask import Response
-        tables = ['TENANTS', 'USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES', 'PEDIDOS',
-                  'TRACKING', 'FISCAL_CONFIG', 'FISCAL_DOCUMENTS']
+        emp_id = request.args.get('emp_id')
+        tables = ['USUARIOS', 'CHOFERES', 'VEHICULOS', 'CLIENTES_LM', 'PEDIDOS',
+                  'TRACKING', 'PEDIDO_HISTORIAL', 'INCIDENCIAS', 'NOTIFICACIONES']
         backup = {'timestamp': datetime.now().isoformat(), 'version': '1.0', 'tables': {}}
         for table in tables:
+            if table not in _ALLOWED_TABLES:
+                continue
             try:
-                data = query(f'SELECT * FROM {table} LIMIT 5000', [])
+                if emp_id:
+                    data = query(f'SELECT * FROM {table} WHERE EMP_ID=%s LIMIT 10000', [int(emp_id)])
+                else:
+                    data = query(f'SELECT * FROM {table} LIMIT 5000', [])
                 backup['tables'][table] = data
             except Exception:
                 backup['tables'][table] = []
@@ -198,12 +225,18 @@ def cron_backup_download():
             headers={'Content-Disposition': f'attachment; filename={filename}'}
         )
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Backup failed'}), 500
 
 @socketio.on('connect')
 def handle_connect():
     from auth import decode_token, is_token_blacklisted
-    token = request.args.get('token', '')
+    token = None
+    # Prefer auth dict (Socket.IO 5.x+), fallback to query param for backward compat
+    auth_data = getattr(request, 'auth', None)
+    if isinstance(auth_data, dict):
+        token = auth_data.get('token', '')
+    if not token:
+        token = request.args.get('token', '')
     if not token or is_token_blacklisted(token):
         print(f'[WS] Client rejected (no valid token): {request.sid}')
         return False
@@ -430,6 +463,36 @@ else:
         ensure_gps_columns()
     except Exception as e:
         print(f'[DB] GPS columns check skipped: {e}')
+
+    # Auto-create tickets table if missing
+    try:
+        ensure_tickets_table()
+    except Exception as e:
+        print(f'[DB] Tickets table check skipped: {e}')
+
+
+def ensure_tickets_table():
+    """Create support tickets table if it doesn't exist."""
+    if not USE_POSTGRES:
+        return
+    from db import run_setup_sql
+    run_setup_sql([
+        """CREATE TABLE IF NOT EXISTS TICKETS (
+            TICKET_ID SERIAL PRIMARY KEY,
+            EMP_ID INTEGER NOT NULL,
+            TICKET_NUM TEXT UNIQUE,
+            TICKET_ASUNTO TEXT NOT NULL,
+            TICKET_DESCRIPCION TEXT,
+            TICKET_ESTADO TEXT DEFAULT 'ABIERTO',
+            TICKET_PRIORIDAD TEXT DEFAULT 'MEDIA',
+            TICKET_CATEGORIA TEXT DEFAULT 'GENERAL',
+            TICKET_CREADO_POR INTEGER,
+            TICKET_ASIGNADO_A INTEGER,
+            TICKET_FECHA_CREACION TIMESTAMP DEFAULT NOW(),
+            TICKET_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW(),
+            TICKET_FECHA_CIERRE TIMESTAMP,
+            TICKET_RESPUESTA TEXT)""",
+    ])
 
 
 def ensure_lockout_columns():
@@ -745,7 +808,12 @@ def handle_exception(e):
     error_msg = f'Unhandled: {type(e).__name__}: {str(e)}'
     error_logger.error(error_msg, exc_info=True)
     print(f'[ERROR] {error_msg}')
-    return jsonify({'success': False, 'error': 'Error interno del servidor', 'detail': str(e)[:200]}), 500
+    is_prod = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER')
+    detail = str(e)[:200] if not is_prod else None
+    resp = {'success': False, 'error': 'Error interno del servidor'}
+    if detail:
+        resp['detail'] = detail
+    return jsonify(resp), 500
 
 
 # ========================================
@@ -920,7 +988,6 @@ def onboarding_register():
     # Generate email verification token
     import secrets as _secrets
     verification_token = _secrets.token_urlsafe(32)
-    from datetime import timedelta
     verification_expires = datetime.utcnow() + timedelta(hours=24)
 
     try:
@@ -1383,7 +1450,6 @@ def health():
 @app.route('/api/docs', methods=['GET'])
 def api_docs():
     """Serve the OpenAPI spec as JSON."""
-    import yaml
     docs_path = os.path.join(os.path.dirname(__file__), 'openapi.yaml')
     if os.path.exists(docs_path):
         with open(docs_path, 'r') as f:
@@ -1723,7 +1789,6 @@ def resend_verification():
     if not token:
         import secrets as _secrets
         token = _secrets.token_urlsafe(32)
-        from datetime import timedelta
         expires = datetime.utcnow() + timedelta(hours=24)
         try:
             execute(
@@ -3676,8 +3741,6 @@ def export_entity(entity):
 
     if not result.get('success'):
         return jsonify({'success': False, 'error': result.get('error')}), 400
-
-    from flask import Response
     return Response(
         result['content'],
         mimetype=result['content_type'],
@@ -3724,8 +3787,6 @@ def export_custom():
 
     if not result.get('success'):
         return jsonify({'success': False, 'error': result.get('error')}), 400
-
-    from flask import Response
     return Response(
         result['content'],
         mimetype=result['content_type'],
@@ -3786,7 +3847,6 @@ def get_suscripciones():
 def create_suscripcion_manual():
     emp_id = get_emp_id()
     s = request.json
-    from datetime import date, timedelta
     hoy = date.today()
     proximo = hoy + timedelta(days=30)
     execute("INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO, SUS_FECHA_FIN, SUS_FECHA_PROXIMO_COBRO) VALUES (?, ?, 'TRIAL', ?, ?, ?)",
@@ -4056,6 +4116,15 @@ def get_saas_config():
         'max_free_tenants': 3,
         'maintenance_mode': False,
     }})
+
+@app.route('/api/saas/config', methods=['POST'])
+@requiere_superadmin
+def save_saas_config():
+    """Save SaaS platform config (maintenance mode, limits, etc.)."""
+    data = request.get_json(force=True, silent=True) or {}
+    # Store in a simple table or file; for now, acknowledge and log
+    print(f'[SAAS] Config saved: {json.dumps(data, default=str)[:200]}')
+    return jsonify({'success': True, 'message': 'Configuracion guardada'})
 
 
 # ========================================
@@ -5348,7 +5417,6 @@ def analytics_demand_forecast():
     dow_counts = {}
     for d in daily:
         if d.get('dia'):
-            from datetime import datetime
             try:
                 dt = datetime.strptime(str(d['dia']), '%Y-%m-%d')
                 dow = dt.strftime('%A')
@@ -5490,8 +5558,6 @@ def gamification_leaderboard():
 def gamification_challenges():
     """Retos/challenges activos para los choferes."""
     emp_id = get_emp_id()
-
-    from datetime import datetime, timedelta
     today = datetime.now()
 
     challenges = [
@@ -5623,6 +5689,109 @@ def debug_db_tables():
         results['PEDIDOS_COLUMNS'] = str(e)[:200]
     return jsonify({'success': True, 'tables': results})
 
+# ========================================
+# SUPPORT TICKETS (Feature: Soporte)
+# ========================================
+@app.route('/api/tickets', methods=['GET'])
+@requiere_auth
+def list_tickets():
+    """List tickets for current tenant."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'No tenant'}), 400
+    estado = request.args.get('estado')
+    prioridad = request.args.get('prioridad')
+    sql = "SELECT * FROM TICKETS WHERE EMP_ID=%s"
+    params = [emp_id]
+    if estado:
+        sql += " AND TICKET_ESTADO=%s"
+        params.append(estado)
+    if prioridad:
+        sql += " AND TICKET_PRIORIDAD=%s"
+        params.append(prioridad)
+    sql += " ORDER BY TICKET_FECHA_CREACION DESC"
+    tickets = query(sql, params)
+    return jsonify({'success': True, 'tickets': tickets, 'total': len(tickets)})
+
+@app.route('/api/tickets', methods=['POST'])
+@requiere_auth
+def create_ticket():
+    """Create a new support ticket."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'No tenant'}), 400
+    data = request.get_json(force=True, silent=True) or {}
+    asunto = data.get('asunto', '').strip()
+    if not asunto:
+        return jsonify({'success': False, 'error': 'asunto requerido'}), 400
+    desc = data.get('descripcion', '')
+    prioridad = data.get('prioridad', 'MEDIA')
+    categoria = data.get('categoria', 'GENERAL')
+    ident = current_identity() or {}
+    user_id = ident.get('usu_id')
+    # Generate ticket number
+    count = query("SELECT COUNT(*) as cnt FROM TICKETS WHERE EMP_ID=%s", [emp_id])
+    num = (count[0]['cnt'] if count else 0) + 1
+    ticket_num = f"TKT-{emp_id}-{num:05d}"
+    execute(
+        "INSERT INTO TICKETS (EMP_ID, TICKET_NUM, TICKET_ASUNTO, TICKET_DESCRIPCION, "
+        "TICKET_PRIORIDAD, TICKET_CATEGORIA, TICKET_CREADO_POR) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+        [emp_id, ticket_num, asunto, desc, prioridad, categoria, user_id]
+    )
+    return jsonify({'success': True, 'ticket_num': ticket_num, 'message': 'Ticket creado'})
+
+@app.route('/api/tickets/<int:ticket_id>', methods=['GET'])
+@requiere_auth
+def get_ticket(ticket_id):
+    """Get ticket detail."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'No tenant'}), 400
+    tickets = query("SELECT * FROM TICKETS WHERE TICKET_ID=%s AND EMP_ID=%s", [ticket_id, emp_id])
+    if not tickets:
+        return jsonify({'success': False, 'error': 'Ticket no encontrado'}), 404
+    return jsonify({'success': True, 'ticket': tickets[0]})
+
+@app.route('/api/tickets/<int:ticket_id>', methods=['PUT'])
+@requiere_auth
+def update_ticket(ticket_id):
+    """Update ticket status, assignment, or response."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'No tenant'}), 400
+    data = request.get_json(force=True, silent=True) or {}
+    updates = []
+    params = []
+    for field, db_col in [('estado', 'TICKET_ESTADO'), ('prioridad', 'TICKET_PRIORIDAD'),
+                          ('asignado_a', 'TICKET_ASIGNADO_A'), ('respuesta', 'TICKET_RESPUESTA')]:
+        if field in data:
+            updates.append(f"{db_col}=%s")
+            params.append(data[field])
+    if 'estado' in data and data['estado'] in ('CERRADO', 'RESUELTO'):
+        updates.append("TICKET_FECHA_CIERRE=NOW()")
+    if updates:
+        updates.append("TICKET_FECHA_ACTUALIZACION=NOW()")
+        params.extend([ticket_id, emp_id])
+        execute(f"UPDATE TICKETS SET {', '.join(updates)} WHERE TICKET_ID=%s AND EMP_ID=%s", params)
+    return jsonify({'success': True, 'message': 'Ticket actualizado'})
+
+@app.route('/api/tickets/stats', methods=['GET'])
+@requiere_auth
+def ticket_stats():
+    """Ticket statistics for the tenant."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'success': False, 'error': 'No tenant'}), 400
+    stats = query(
+        "SELECT TICKET_ESTADO, COUNT(*) as cnt FROM TICKETS WHERE EMP_ID=%s GROUP BY TICKET_ESTADO",
+        [emp_id]
+    )
+    by_priority = query(
+        "SELECT TICKET_PRIORIDAD, COUNT(*) as cnt FROM TICKETS WHERE EMP_ID=%s GROUP BY TICKET_PRIORIDAD",
+        [emp_id]
+    )
+    return jsonify({'success': True, 'by_estado': stats, 'by_prioridad': by_priority})
+
 @app.route('/api/debug/ensure-cod', methods=['POST'])
 def debug_ensure_cod():
     """Force re-run ensure_cod_columns and report results."""
@@ -5630,7 +5799,6 @@ def debug_ensure_cod():
     if not emp_id:
         return jsonify({'error': 'No auth'}), 401
     logs = []
-    import io, sys
     old_stdout = sys.stdout
     sys.stdout = captured = io.StringIO()
     try:
