@@ -240,7 +240,9 @@ def query(sql, params=None):
         cursor.close()
         return result
     finally:
-        if not USE_POSTGRES:
+        if USE_POSTGRES:
+            _release_conn()
+        else:
             conn.close()
 
 
@@ -256,7 +258,9 @@ def execute(sql, params=None):
         cursor.close()
         return affected
     finally:
-        if not USE_POSTGRES:
+        if USE_POSTGRES:
+            _release_conn()
+        else:
             conn.close()
 
 
@@ -276,7 +280,7 @@ def execute_returning(sql, params=None):
         cursor.close()
         return result[0] if result else None
     finally:
-        pass  # Connection kept for request lifecycle
+        _release_conn()
 
 
 def init_schema():
