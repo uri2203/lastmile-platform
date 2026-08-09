@@ -723,6 +723,9 @@ PUBLIC_API_PATHS = {
     '/api/whatsapp/webhook',
     '/api/vapid-public-key',
     '/api/push/subscribe',
+    '/api/legal/documents',
+    '/api/legal/consent',
+    '/api/legal/age-verify',
 }
 # Prefijos publicos: tracking del cliente final por token opaco en la URL.
 PUBLIC_API_PREFIXES = ('/api/cliente-final/', '/api/saas/planes', '/api/webhooks/')
@@ -1466,6 +1469,62 @@ def verify_legal_acceptance(usr_id):
         return jsonify({'success': True, 'accepted': False, 'details': None})
     except Exception as e:
         return safe_error(e, 'verify_legal_acceptance')
+
+
+@app.route('/api/legal/documents', methods=['GET'])
+def legal_documents():
+    """List all available legal documents."""
+    docs = [
+        {'id': 'terminos-condiciones', 'title': 'Terminos y Condiciones', 'url': '/legal/terminos-condiciones.html', 'version': '1.0', 'updated': '2026-08-09'},
+        {'id': 'aviso-privacidad', 'title': 'Aviso de Privacidad', 'url': '/legal/aviso-privacidad.html', 'version': '1.0', 'updated': '2026-08-09'},
+        {'id': 'politica-cookies', 'title': 'Politica de Cookies', 'url': '/legal/politica-cookies.html', 'version': '1.0', 'updated': '2026-08-09'},
+        {'id': 'politica-cobros', 'title': 'Politica de Cobros y Reembolsos', 'url': '/legal/politica-cobros-reembolsos.html', 'version': '1.0', 'updated': '2026-08-09'},
+        {'id': 'deslinde', 'title': 'Deslinde de Responsabilidades', 'url': '/legal/deslinde-responsabilidades.html', 'version': '1.0', 'updated': '2026-08-09'},
+        {'id': 'politica-ia', 'title': 'Politica de Regulaciones de IA', 'url': '/legal/politica-ia.html', 'version': '1.0', 'updated': '2026-08-09'},
+    ]
+    return jsonify({'documents': docs, 'success': True})
+
+
+@app.route('/api/legal/accept', methods=['POST'])
+@requiere_auth
+def accept_legal():
+    """Record user acceptance of legal terms."""
+    data = request.get_json() or {}
+    doc_id = data.get('document_id')
+    accepted = data.get('accepted', False)
+    if not doc_id:
+        return jsonify({'error': 'document_id required'}), 400
+    try:
+        log_audit('LEGAL_ACCEPT', f'Document: {doc_id}, Accepted: {accepted}')
+    except Exception:
+        pass
+    return jsonify({'success': True, 'document_id': doc_id, 'accepted': accepted})
+
+
+@app.route('/api/legal/consent', methods=['POST'])
+def record_cookie_consent():
+    """Record cookie consent (no auth required)."""
+    data = request.get_json() or {}
+    consent = data.get('consent', {})
+    return jsonify({'success': True, 'consent': consent})
+
+
+@app.route('/api/legal/age-verify', methods=['POST'])
+def verify_age():
+    """Verify user is 18+ years old."""
+    data = request.get_json() or {}
+    dob = data.get('date_of_birth')
+    if not dob:
+        return jsonify({'error': 'date_of_birth required (YYYY-MM-DD)'}), 400
+    try:
+        birth = datetime.strptime(dob, '%Y-%m-%d').date()
+        today = date.today()
+        age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+        if age < 18:
+            return jsonify({'success': False, 'error': 'Debes ser mayor de 18 anos', 'age': age}), 403
+        return jsonify({'success': True, 'age': age})
+    except ValueError:
+        return jsonify({'error': 'Formato invalido. Usa YYYY-MM-DD'}), 400
 
 
 # ========================================

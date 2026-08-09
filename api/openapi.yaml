@@ -51,6 +51,20 @@ tags:
     description: Tracking publico para clientes finales
   - name: Referidos
     description: Sistema de referidos
+  - name: Tickets
+    description: Sistema de soporte/tickets
+  - name: Debug
+    description: Herramientas de debug (solo superadmin)
+  - name: Gamification
+    description: Gamificacion y leaderboard de choferes
+  - name: ReverseLogistics
+    description: Logistica inversa y devoluciones
+  - name: COD
+    description: Contra entrega y conciliacion
+  - name: Settlements
+    description: Conciliacion de cobros y depositos de choferes
+  - name: Analytics
+    description: Analiticas predictivas y rendimiento
 
 paths:
   /api/health:
@@ -164,6 +178,37 @@ paths:
           description: Pedido creado
 
   /api/pedidos/{ped_id}:
+    get:
+      tags: [Pedidos]
+      summary: Obtener pedido por ID
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ped_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Pedido encontrado
+    put:
+      tags: [Pedidos]
+      summary: Actualizar pedido
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ped_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Pedido actualizado
     delete:
       tags: [Pedidos]
       summary: Eliminar un pedido
@@ -263,6 +308,24 @@ paths:
           description: Chofer creado
 
   /api/choferes/{cho_id}:
+    put:
+      tags: [Choferes]
+      summary: Actualizar chofer
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChoferCreate'
+      responses:
+        '200':
+          description: Chofer actualizado
     delete:
       tags: [Choferes]
       summary: Eliminar chofer
@@ -303,6 +366,24 @@ paths:
           description: Vehiculo creado
 
   /api/vehiculos/{veh_id}:
+    put:
+      tags: [Vehiculos]
+      summary: Actualizar vehiculo
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: veh_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculoCreate'
+      responses:
+        '200':
+          description: Vehiculo actualizado
     delete:
       tags: [Vehiculos]
       summary: Eliminar vehiculo
@@ -343,6 +424,24 @@ paths:
           description: Cliente creado
 
   /api/clientes/{cli_id}:
+    put:
+      tags: [Clientes]
+      summary: Actualizar cliente
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cli_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteCreate'
+      responses:
+        '200':
+          description: Cliente actualizado
     delete:
       tags: [Clientes]
       summary: Eliminar cliente
@@ -367,8 +466,67 @@ paths:
       responses:
         '200':
           description: Lista de usuarios
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [usuario, nombre, password]
+              properties:
+                usuario:
+                  type: string
+                nombre:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+                telefono:
+                  type: string
+                rol:
+                  type: string
+                  enum: [admin, operacion, chofer, cliente]
+      responses:
+        '200':
+          description: Usuario creado
 
   /api/usuarios/{usu_id}:
+    get:
+      tags: [Usuarios]
+      summary: Obtener usuario por ID
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: usu_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario encontrado
+    put:
+      tags: [Usuarios]
+      summary: Actualizar usuario
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: usu_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioUpdate'
+      responses:
+        '200':
+          description: Usuario actualizado
     delete:
       tags: [Usuarios]
       summary: Eliminar usuario
@@ -440,6 +598,36 @@ paths:
       responses:
         '200':
           description: Lista de facturas
+    post:
+      tags: [CFDI]
+      summary: Crear factura CFDI
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                formaPago:
+                  type: string
+                metodoPago:
+                  type: string
+                subtotal:
+                  type: number
+                iva:
+                  type: number
+                total:
+                  type: number
+                receptorRfc:
+                  type: string
+                receptorRazon:
+                  type: string
+                pedId:
+                  type: integer
+      responses:
+        '200':
+          description: Factura creada
 
   /api/cfdi/facturas/{fac_id}/cancelar:
     post:
@@ -474,6 +662,34 @@ paths:
       responses:
         '200':
           description: Lista de transacciones
+    post:
+      tags: [Pagos]
+      summary: Crear transaccion de pago
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pedId:
+                  type: integer
+                facId:
+                  type: integer
+                numReferencia:
+                  type: string
+                monto:
+                  type: number
+                moneda:
+                  type: string
+                metodo:
+                  type: string
+                estatus:
+                  type: string
+      responses:
+        '200':
+          description: Transaccion creada
 
   /api/pagos/transacciones/{pag_id}:
     delete:
@@ -525,6 +741,34 @@ paths:
       responses:
         '200':
           description: Lista de tenants
+    post:
+      tags: [SuperAdmin]
+      summary: Crear nuevo tenant (solo superadmin)
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                rfc:
+                  type: string
+                email:
+                  type: string
+                telefono:
+                  type: string
+                plan:
+                  type: string
+                admin_user:
+                  type: string
+                admin_pass:
+                  type: string
+      responses:
+        '200':
+          description: Tenant creado
 
   /api/saas/tenants/{emp_id}/suspend:
     post:
@@ -1020,6 +1264,22 @@ paths:
       responses:
         '200':
           description: Lista de suscripciones
+    post:
+      tags: [SuperAdmin]
+      summary: Crear suscripcion manual (solo superadmin)
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                planId:
+                  type: integer
+      responses:
+        '200':
+          description: Suscripcion creada
 
   /api/saas/audit:
     get:
@@ -1029,6 +1289,29 @@ paths:
       responses:
         '200':
           description: Log de auditoria
+    post:
+      tags: [SuperAdmin]
+      summary: Registrar entrada de auditoria
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                usuario:
+                  type: string
+                accion:
+                  type: string
+                tabla:
+                  type: string
+                registro_id:
+                  type: integer
+                detalle:
+                  type: string
+      responses:
+        '200':
+          description: Auditoria registrada
 
   /api/saas/config:
     get:
@@ -1236,40 +1519,6 @@ paths:
         '200':
           description: Lista de top clientes
 
-  # ===== USUARIOS DETALLE =====
-  /api/usuarios/{usu_id}:
-    get:
-      tags: [Usuarios]
-      summary: Obtener usuario por ID
-      security: [{bearerAuth: []}]
-      parameters:
-        - name: usu_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Usuario encontrado
-    put:
-      tags: [Usuarios]
-      summary: Actualizar usuario
-      security: [{bearerAuth: []}]
-      parameters:
-        - name: usu_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UsuarioUpdate'
-      responses:
-        '200':
-          description: Usuario actualizado
-
   # ===== RUTAS / ENTREGAS =====
   /api/rutas:
     get:
@@ -1407,21 +1656,6 @@ paths:
       responses:
         '200':
           description: Historial de ruta
-
-  /api/tracking/{token}:
-    get:
-      tags: [Tracking]
-      summary: Tracking publico del cliente final por token
-      security: []
-      parameters:
-        - name: token
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Estado del pedido
 
   # ===== AUDITORIA =====
   /api/audit:
@@ -2237,14 +2471,627 @@ paths:
         '200':
           description: Uso de tenants
 
-  /api/admin/legal-acceptance:
-    get:
-      tags: [SuperAdmin]
-      summary: Registros de aceptacion legal global
+  # ===== AUTH DETALLE =====
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar sesion
       security: [{bearerAuth: []}]
       responses:
         '200':
-          description: Aceptaciones
+          description: Sesion cerrada
+
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Cambiar contrasena
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        '200':
+          description: Contrasena cambiada
+
+  /api/auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verificar email con token
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verificado
+
+  /api/auth/resend-verification:
+    post:
+      tags: [Auth]
+      summary: Reenviar email de verificacion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email reenviado
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicitar recuperacion de contrasena
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Codigo de recuperacion enviado
+
+  /api/auth/verify-reset-code:
+    post:
+      tags: [Auth]
+      summary: Verificar codigo de recuperacion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Codigo verificado
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Restablecer contrasena con codigo
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, new_password]
+              properties:
+                email:
+                  type: string
+                code:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        '200':
+          description: Contrasena restablecida
+
+  # ===== SETUP =====
+  /api/setup/usuarios:
+    post:
+      tags: [Usuarios]
+      summary: Setup inicial de usuarios
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Usuarios configurados
+
+  /api/setup/zonas:
+    post:
+      tags: [Zonas]
+      summary: Setup inicial de zonas
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Zonas configuradas
+
+  # ===== PEDIDOS DETALLE 2 =====
+
+  /api/pedidos/{ped_id}/collect-cash:
+    post:
+      tags: [COD]
+      summary: Confirmar cobro en efectivo (COD)
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ped_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                monto:
+                  type: number
+                notas:
+                  type: string
+      responses:
+        '200':
+          description: Cobro registrado
+
+  # ===== CHOFERES DETALLE 2 =====
+
+  /api/choferes/{cho_id}/cash-summary:
+    get:
+      tags: [COD]
+      summary: Resumen de efectivo en mano del chofer
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Resumen de efectivo
+
+  # ===== SETTLEMENTS =====
+  /api/settlements:
+    get:
+      tags: [Settlements]
+      summary: Listar conciliaciones de cobros
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de conciliaciones
+
+  /api/settlements/generate:
+    post:
+      tags: [Settlements]
+      summary: Generar conciliacion para un chofer
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cho_id]
+              properties:
+                cho_id:
+                  type: integer
+                fecha_inicio:
+                  type: string
+                  format: date
+                fecha_fin:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Conciliacion generada
+
+  /api/settlements/{settle_id}/deposit:
+    post:
+      tags: [Settlements]
+      summary: Registrar deposito de chofer
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: settle_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                monto:
+                  type: number
+                referencia:
+                  type: string
+      responses:
+        '200':
+          description: Deposito registrado
+
+  # ===== COD DASHBOARD =====
+  /api/cod/dashboard:
+    get:
+      tags: [COD]
+      summary: Dashboard de contra entrega
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Datos del dashboard COD
+
+  # ===== VEHICULOS DETALLE 2 =====
+
+  # ===== CLIENTES DETALLE 2 =====
+
+  # ===== USUARIOS DETALLE 2 =====
+
+  /api/usuarios/{usu_id}/unlock:
+    post:
+      tags: [Usuarios]
+      summary: Desbloquear cuenta de usuario
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: usu_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cuenta desbloqueada
+
+  /api/usuarios/lock-status:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios bloqueados del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de usuarios bloqueados
+
+  # ===== PAGOS DETALLE 2 =====
+
+  /api/pagos/mercado-pago/webhook:
+    post:
+      tags: [Webhooks]
+      summary: Webhook de MercadoPago (pagos de suscripcion)
+      security: []
+      responses:
+        '200':
+          description: Evento procesado
+
+  # ===== CFDI DETALLE 2 =====
+
+  # ===== SAASTAANTS DETALLE 2 =====
+
+  /api/saas/planes/{plan_id}:
+    get:
+      tags: [SuperAdmin]
+      summary: Detalle de un plan SaaS
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalle del plan
+
+  # ===== SAAS CONFIG =====
+
+  # ===== TRACKING DETALLE 2 =====
+  /api/tracking/{cho_id}:
+    get:
+      tags: [Tracking]
+      summary: Obtener tracking de un chofer por ID
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos de tracking del chofer
+
+  /api/cliente-final/{token}:
+    get:
+      tags: [Tracking]
+      summary: Informacion de pedido para cliente final por token
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Informacion del pedido
+
+  # ===== DEBUG =====
+  /api/debug/db-tables:
+    get:
+      tags: [Debug]
+      summary: Verificar estado de tablas en la BD
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estado de tablas
+
+  /api/debug/ensure-cod:
+    post:
+      tags: [Debug]
+      summary: Forzar ejecucion de columnas COD
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Resultado de la ejecucion
+
+  /api/debug/force-gps:
+    post:
+      tags: [Debug]
+      summary: Forzar adicion de columnas GPS
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Resultado de la ejecucion
+
+  # ===== GAMIFICATION =====
+  /api/gamification/leaderboard:
+    get:
+      tags: [Gamification]
+      summary: Leaderboard de choferes con puntos y badges
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Leaderboard
+
+  /api/gamification/challenges:
+    get:
+      tags: [Gamification]
+      summary: Retos/challenges activos para choferes
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Lista de challenges
+
+  /api/gamification/achievements/{cho_id}:
+    get:
+      tags: [Gamification]
+      summary: Logros de un chofer
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: cho_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Logros del chofer
+
+  # ===== REVERSE LOGISTICS =====
+  /api/reverse-logistics:
+    get:
+      tags: [ReverseLogistics]
+      summary: Listar devoluciones y logistica inversa
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: estado
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de devoluciones
+
+  /api/reverse-logistics/create:
+    post:
+      tags: [ReverseLogistics]
+      summary: Crear solicitud de devolucion
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ped_id_original]
+              properties:
+                ped_id_original:
+                  type: integer
+                motivo:
+                  type: string
+                notas:
+                  type: string
+      responses:
+        '200':
+          description: Devolucion creada
+
+  /api/reverse-logistics/{return_id}/resolve:
+    post:
+      tags: [ReverseLogistics]
+      summary: Resolver una devolucion
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: return_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resolucion:
+                  type: string
+                  enum: [REEMBOLSADO, REPOSICION, CERRADO]
+      responses:
+        '200':
+          description: Devolucion resuelta
+
+  # ===== ANALYTICS =====
+  /api/analytics/demand-forecast:
+    get:
+      tags: [Analytics]
+      summary: Pronostico de demanda basado en datos historicos
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Pronostico de demanda
+
+  /api/analytics/performance:
+    get:
+      tags: [Analytics]
+      summary: Metricas de rendimiento del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Metricas de rendimiento
+
+  /api/analytics/heatmap:
+    get:
+      tags: [Analytics]
+      summary: Datos de mapa de calor de entregas
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Puntos de mapa de calor
+
+  # ===== TICKETS =====
+  /api/tickets:
+    get:
+      tags: [Tickets]
+      summary: Listar tickets de soporte
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: estado
+          in: query
+          schema:
+            type: string
+        - name: prioridad
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de tickets
+    post:
+      tags: [Tickets]
+      summary: Crear ticket de soporte
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [asunto]
+              properties:
+                asunto:
+                  type: string
+                descripcion:
+                  type: string
+                prioridad:
+                  type: string
+                  enum: [BAJA, MEDIA, ALTA, CRITICA]
+                categoria:
+                  type: string
+      responses:
+        '200':
+          description: Ticket creado
+
+  /api/tickets/{ticket_id}:
+    get:
+      tags: [Tickets]
+      summary: Obtener detalle de un ticket
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ticket encontrado
+    put:
+      tags: [Tickets]
+      summary: Actualizar ticket (estado, asignacion, respuesta)
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  enum: [ABIERTO, EN_PROGRESO, RESUELTO, CERRADO]
+                prioridad:
+                  type: string
+                asignado_a:
+                  type: integer
+                respuesta:
+                  type: string
+      responses:
+        '200':
+          description: Ticket actualizado
+
+  /api/tickets/stats:
+    get:
+      tags: [Tickets]
+      summary: Estadisticas de tickets del tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: Estadisticas de tickets
 
 components:
   securitySchemes:

@@ -292,6 +292,22 @@
                         </span>
                     </label>
                 </div>
+                <div style="margin: 20px 0; padding: 20px; background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); border-radius: 14px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                        <i class="fas fa-calendar-check" style="color: var(--danger); font-size: 18px;"></i>
+                        <span style="font-weight: 700; font-size: 14px; color: var(--text);">Verificación de edad</span>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-secondary);">Fecha de nacimiento</label>
+                        <input type="date" id="usrFechaNacimiento" style="width: 100%; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit;">
+                    </div>
+                    <label class="legal-check" style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border); transition: all 0.2s;">
+                        <input type="checkbox" id="ageAccept" style="margin-top: 2px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0;">
+                        <span style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                            Declaro que tengo 18 años o más de edad y acepto los <a href="/legal/terminos-condiciones.html" target="_blank" style="color: var(--accent);">Términos y Condiciones</a> y el <a href="/legal/aviso-privacidad.html" target="_blank" style="color: var(--accent);">Aviso de Privacidad</a>.
+                        </span>
+                    </label>
+                </div>
                 <button class="btn btn-primary" onclick="submitRegistration()">
                     <i class="fas fa-check" style="margin-right: 8px;"></i> <span data-i18n="register.createAccount">Crear cuenta</span>
                 </button>
@@ -428,6 +444,27 @@
                 showError('Debes aceptar los Términos y Condiciones, Política de Privacidad, Política de Pagos y Deslinde de Responsabilidades para continuar.');
                 return;
             }
+
+            const dob = document.getElementById('usrFechaNacimiento').value;
+            if (!dob) {
+                showError('Debes ingresar tu fecha de nacimiento.');
+                return;
+            }
+            const today = new Date();
+            const birthDate = new Date(dob);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            if (age < 18) {
+                showError('Debes ser mayor de 18 años para usar esta plataforma.');
+                return;
+            }
+            if (!document.getElementById('ageAccept').checked) {
+                showError('Debes confirmar que tienes 18 años o más y aceptar los Términos y Condiciones y el Aviso de Privacidad.');
+                return;
+            }
             const btn = document.querySelector('#step3 .btn-primary');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
@@ -446,7 +483,8 @@
                     email: document.getElementById('usrEmail').value.trim(),
                     telefono: document.getElementById('usrTelefono').value.trim(),
                     usuario: document.getElementById('usrUsuario').value.trim() || 'admin',
-                    password: document.getElementById('usrPass').value
+                    password: document.getElementById('usrPass').value,
+                    fecha_nacimiento: document.getElementById('usrFechaNacimiento').value
                 },
                 plan: selectedPlan,
                 legal: {
@@ -489,7 +527,7 @@
         }
     </script>
     <div style="text-align:center; padding:16px 0; font-size:12px; color:var(--text-secondary);">
-        <a href="/terminos" style="color:var(--accent);">Términos</a> · <a href="/privacidad" style="color:var(--accent);">Privacidad</a> · <a href="/pagos" style="color:var(--accent);">Pagos</a> · <a href="/privacidad-eeuu" style="color:var(--accent);">Privacidad EE.UU.</a> · <a href="/deslinde" style="color:var(--accent);">Deslinde</a> · <a href="/sla" style="color:var(--accent);">SLA</a> · <a href="/cookies" style="color:var(--accent);">Cookies</a> · <a href="/regulaciones-ia" style="color:var(--accent);">IA</a> · <a href="/proteccion-datos" style="color:var(--accent);">Proteccion de Datos</a>
+        <a href="/legal/terminos-condiciones.html" style="color:var(--accent);" target="_blank">Términos y Condiciones</a> · <a href="/legal/aviso-privacidad.html" style="color:var(--accent);" target="_blank">Aviso de Privacidad</a> · <a href="/legal/politica-cookies.html" style="color:var(--accent);" target="_blank">Política de Cookies</a> · <a href="/legal/politica-cobros-reembolsos.html" style="color:var(--accent);" target="_blank">Política de Cobros y Reembolsos</a> · <a href="/legal/politica-ia.html" style="color:var(--accent);" target="_blank">Política de IA</a>
     </div>
     <script src="js/cookie-consent.js"></script>
     <script>

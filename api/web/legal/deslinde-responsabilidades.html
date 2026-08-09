@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deslinde de Responsabilidades - Last Mile Delivery SaaS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #1a1a2e; background: #f8f9fa; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; color: #007bff; text-decoration: none; font-weight: 500; margin-bottom: 2rem; }
+        .back-btn:hover { text-decoration: underline; }
+        h1 { font-size: 2rem; color: #0d1b2a; margin-bottom: 0.5rem; }
+        .meta { color: #6c757d; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #dee2e6; }
+        h2 { font-size: 1.4rem; color: #16213e; margin: 2rem 0 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef; }
+        h3 { font-size: 1.1rem; color: #0d1b2a; margin: 1.5rem 0 0.5rem; }
+        p, li { color: #2d3436; }
+        ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+        li { margin: 0.3rem 0; }
+        .toc { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .toc h3 { margin-top: 0; border: none; }
+        .toc ol { columns: 2; column-gap: 2rem; }
+        .toc a { color: #007bff; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .highlight { background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0; }
+        .contact-box { background: #e8f4f8; border: 1px solid #bee5eb; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        @media (max-width: 768px) { .container { padding: 1rem; } .toc ol { columns: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-btn">← Volver</a>
+        <h1>Deslinde de Responsabilidades</h1>
+        <div class="meta">Última actualización: 9 de agosto de 2026 | Versión 1.0</div>
+
+        <div class="toc">
+            <h3>Tabla de Contenidos</h3>
+            <ol>
+                <li><a href="#garantia">Servicio "Tal Cual" y "Según Disponibilidad"</a></li>
+                <li><a href="#disponibilidad">Disponibilidad del Servicio</a></li>
+                <li><a href="#terceros">Servicios de Terceros</a></li>
+                <li><a href="#datos-usuario">Responsabilidad sobre Datos del Usuario</a></li>
+                <li><a href="#entregas">Resultados de Entregas</a></li>
+                <li><a href="#limitacion-responsabilidad">Limitación de Responsabilidad</a></li>
+                <li><a href="#fuerza-mayor">Fuerza Mayor</a></li>
+                <li><a href="#indemnizacion">Obligación de Indemnización</a></li>
+                <li><a href="#ia-advertencias">Inteligencia Artificial — Advertencias</a></li>
+                <li><a href="#gps">Precisiones del GPS</a></li>
+                <li><a href="#uso-plataforma">Uso de la Plataforma por Inquilinos</a></li>
+                <li><a href="#cumplimiento-legal">Cumplimiento Legal de Inquilinos</a></li>
+                <li><a href="#enlaces-externos">Enlaces Externos</a></li>
+                <li><a href="#exactitud-contenido">Exactitud del Contenido</a></li>
+                <li><a href="#modificaciones-servicio">Modificaciones del Servicio</a></li>
+            </ol>
+        </div>
+
+        <h2 id="garantia">1. Servicio "Tal Cual" y "Según Disponibilidad"</h2>
+        <div class="highlight">
+            <strong>IMPORTANTE:</strong> El servicio de Last Mile Delivery SaaS se proporciona "TAL CUAL" (AS IS) y "SEGÚN DISPONIBILIDAD" (AS AVAILABLE), sin garantías de ningún tipo, ya sea expresas o implícitas.
+        </div>
+        <p>En la máxima medida permitida por la legislación aplicable, la Empresa declina expresamente todas las garantías, incluyendo, pero no limitándose a, garantías implícitas de comerciabilidad, aptitud para un propósito particular y no violación.</p>
+
+        <h2 id="disponibilidad">2. Disponibilidad del Servicio</h2>
+        <p>La Empresa no garantiza que el servicio estará disponible de forma ininterrumpida, oportuna, segura o libre de errores. El servicio puede verse afectado por:</p>
+        <ul>
+            <li>Mantenimiento programado o no programado</li>
+            <li>Problemas técnicos o de infraestructura</li>
+            <li>Interrupciones en servicios de terceros (proveedores de nube, internet)</li>
+            <li>Causas de fuerza mayor</li>
+        </ul>
+
+        <h2 id="terceros">3. Servicios de Terceros</h2>
+        <p>La Plataforma puede integrarse o depender de servicios proporcionados por terceros, incluyendo:</p>
+        <ul>
+            <li><strong>Procesadores de pago:</strong> Stripe, MercadoPago — la Empresa no es responsable de errores, retrasos o fallos en el procesamiento de pagos</li>
+            <li><strong>Proveedores de servicios en la nube:</strong> La disponibilidad del servicio depende de la infraestructura de terceros</li>
+            <li><strong>Servicios de mensajería:</strong> Para notificaciones por SMS o correo electrónico</li>
+            <li><strong>Servicios de mapas y geolocalización:</strong> Google Maps, proveedores de datos de tráfico</li>
+        </ul>
+        <p>La Empresa no tiene control sobre los servicios de terceros y no será responsable por fallos, interrupciones o cambios en dichos servicios.</p>
+
+        <h2 id="datos-usuario">4. Responsabilidad sobre Datos del Usuario</h2>
+        <p>El usuario es el único responsable de:</p>
+        <ul>
+            <li>La exactitud y vigencia de los datos personales y comerciales que proporciona</li>
+            <li>La legalidad del contenido y datos que carga en la Plataforma</li>
+            <li>Mantener respaldos de su información</li>
+            <li>El cumplimiento de las leyes de protección de datos aplicables en relación con los datos de sus clientes y repartidores</li>
+        </ul>
+
+        <h2 id="entregas">5. Resultados de Entregas</h2>
+        <div class="highlight">
+            <strong>ADVERTENCIA:</strong> La Empresa no es responsable por el resultado de las entregas realizadas a través de la Plataforma.
+        </div>
+        <p>Específicamente, la Empresa no se hace responsable por:</p>
+        <ul>
+            <li>Daños a los productos durante el transporte</li>
+            <li>Robo o pérdida de paquetes</li>
+            <li>Retrasos en las entregas</li>
+            <li>Daños a la propiedad del destinatario o terceros durante la entrega</li>
+            <li>Lesiones a repartidores o terceros</li>
+            <li>Disputas entre comercios, repartidores y destinatarios</li>
+            <li>Cualquier reclamación derivada de la calidad del producto entregado</li>
+        </ul>
+        <p>La relación comercial es exclusivamente entre el comercio (tenant) y sus clientes. La Empresa actúa únicamente como proveedor de tecnología.</p>
+
+        <h2 id="limitacion-responsabilidad">6. Limitación de Responsabilidad</h2>
+        <p>En la máxima medida permitida por la legislación aplicable, la responsabilidad total de Last Mile Delivery SaaS por cualquier reclamación derivada del uso de la Plataforma se limita al monto total pagado por el usuario durante los doce (12) meses anteriores al evento que dio lugar a la reclamación.</p>
+        <p>En ningún caso la Empresa será responsable por:</p>
+        <ul>
+            <li>Daños indirectos, incidentales, especiales o consecuentes</li>
+            <li>Pérdida de beneficios, datos, uso, reputation o goodwill</li>
+            <li>Costos de adquisición de productos o servicios sustitutos</li>
+            <li>Daños punitivos o ejemplares</li>
+        </ul>
+
+        <h2 id="fuerza-mayor">7. Fuerza Mayor</h2>
+        <p>La Empresa no será responsable por fallos o retrasos en el cumplimiento de sus obligaciones derivados de circunstancias fuera de su control razonable, incluyendo pero no limitándose a:</p>
+        <ul>
+            <li>Desastres naturales (terremotos, inundaciones, huracanes)</li>
+            <li>Pandemias o epidemias</li>
+            <li>Acciones gubernamentales o regulatorias</li>
+            <li>Interrupciones de servicio de internet a escala regional</li>
+            <li>Ciberataques o incidentes de seguridad</li>
+            <li>Conflictos sociales o huelgas</li>
+            <li>Fallas en infraestructura de telecomunicaciones</li>
+        </ul>
+
+        <h2 id="indemnizacion">8. Obligación de Indemnización</h2>
+        <p>El usuario acepta indemnizar, defender y mantener indemne a Last Mile Delivery SaaS, sus afiliadas, directores, funcionarios, empleados y agentes de cualquier reclamación, demanda, daño, pérdida, responsabilidad, costo o gasto que surja de:</p>
+        <ul>
+            <li>El uso de la Plataforma por parte del usuario</li>
+            <li>El incumplimiento de los Términos y Condiciones</li>
+            <li>La violación de derechos de terceros</li>
+            <li>La infracción de leyes o regulaciones aplicables</li>
+            <li>Cualquier negocio o operación gestionada a través de la Plataforma</li>
+        </ul>
+
+        <h2 id="ia-advertencias">9. Inteligencia Artificial — Advertencias</h2>
+        <p>La Plataforma utiliza tecnología de inteligencia artificial para ciertas funcionalidades. El usuario debe ser consciente de las siguientes limitaciones:</p>
+        <ul>
+            <li><strong>Predicciones de IA:</strong> Son estimaciones basadas en datos históricos y no constituyen garantías de resultados</li>
+            <li><strong>Optimización de rutas:</strong> Los tiempos y rutas sugeridos son estimados y pueden verse afectados por condiciones reales del tráfico, clima y otros factores</li>
+            <li><strong>Asignación de pedidos:</strong> Las sugerencias de asignación son recomendaciones que requieren revisión humana</li>
+        </ul>
+        <p>Para más información, consulte nuestra <a href="politica-ia.html">Política de Regulaciones de Inteligencia Artificial</a>.</p>
+
+        <h2 id="gps">10. Precisiones del GPS</h2>
+        <p>El sistema de seguimiento GPS tiene limitaciones técnicas que el usuario debe considerar:</p>
+        <ul>
+            <li>La precisión puede variar entre 3 y 15 metros dependiendo de las condiciones</li>
+            <li>En interiores, la señal puede ser inexacta o no estar disponible</li>
+            <li>Condiciones meteorológicas adversas pueden afectar la precisión</li>
+            <li>El seguimiento en tiempo real puede tener un retraso de hasta 30 segundos</li>
+        </ul>
+
+        <h2 id="uso-plataforma">11. Uso de la Plataforma por Inquilinos</h2>
+        <p>Los inquilinos (comercios que utilizan la Plataforma para gestionar sus entregas) son responsables de:</p>
+        <ul>
+            <li>El uso adecuado de la Plataforma conforme a los Términos y Condiciones</li>
+            <li>La capacitación de su personal en el uso de la herramienta</li>
+            <li>La configuración correcta de sus operaciones dentro de la Plataforma</li>
+            <li>Cualquier uso indebido o fraudulento de la Plataforma por parte de sus empleados o representantes</li>
+        </ul>
+
+        <h2 id="cumplimiento-legal">12. Cumplimiento Legal de Inquilinos</h2>
+        <div class="highlight">
+            <strong>IMPORTANTE:</strong> Cada inquilino es el único responsable de cumplir con todas las leyes y regulaciones aplicables a su negocio.
+        </div>
+        <p>Last Mile Delivery SaaS no asume responsabilidad por el cumplimiento legal de los inquilinos, incluyendo pero no limitándose a:</p>
+        <ul>
+            <li>Leyes laborales y obligaciones hacia repartidores</li>
+            <li>Regulaciones de transporte y entrega</li>
+            <li>Leyes de protección al consumidor</li>
+            <li>Obligaciones fiscales</li>
+            <li>Seguros y responsabilidad civil</li>
+            <li>Leyes de protección de datos personales de clientes</li>
+        </ul>
+
+        <h2 id="enlaces-externos">13. Enlaces Externos</h2>
+        <p>La Plataforma puede contener enlaces a sitios web de terceros. Estos enlaces se proporcionan únicamente para conveniencia del usuario. La Empresa no controla, respalda ni se hace responsable por el contenido, políticas de privacidad o prácticas de sitios web de terceros.</p>
+
+        <h2 id="exactitud-contenido">14. Exactitud del Contenido</h2>
+        <p>Aunque la Empresa se esfuerza por mantener la información en la Plataforma precisa y actualizada, no garantiza la exactitud, integridad o actualidad del contenido. La información puede contener errores tipográficos o técnicos que serán corregidos tan pronto como se detecten.</p>
+
+        <h2 id="modificaciones-servicio">15. Modificaciones del Servicio</h2>
+        <p>La Empresa se reserva el derecho de modificar, suspender o discontinuar cualquier parte de la Plataforma en cualquier momento, con o sin previo aviso. No será responsable por cualquier modificación, suspensión o discontinuación del servicio.</p>
+
+        <h2>Contacto</h2>
+        <div class="contact-box">
+            <h3>Contacto</h3>
+            <p>Para preguntas sobre este Deslinde de Responsabilidades:</p>
+            <p>Correo electrónico: <a href="mailto:legal@lastmile-platform.com">legal@lastmile-platform.com</a></p>
+            <p>Sitio web: <a href="https://lastmile-platform.onrender.com">https://lastmile-platform.onrender.com</a></p>
+            <p>Last Mile Delivery SaaS | Ciudad de México, México</p>
+        </div>
+    </div>
+</body>
+</html>
