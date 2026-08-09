@@ -420,7 +420,7 @@
     function connectTrackingWS(pedidoId) {
       try {
         const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
-        wsTracking = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true });
+        wsTracking = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true, query: { client: '1' } });
         wsTracking.on('connect', () => {
           wsTracking.emit('client_subscribe_order', { pedido_id: pedidoId });
         });

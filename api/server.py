@@ -237,17 +237,18 @@ def handle_connect():
         token = auth_data.get('token', '')
     if not token:
         token = request.args.get('token', '')
-    if not token or is_token_blacklisted(token):
+    # Allow unauthenticated connections for public client tracking
+    is_client_tracking = request.args.get('client', '') == '1'
+    if (not token or is_token_blacklisted(token)) and not is_client_tracking:
         print(f'[WS] Client rejected (no valid token): {request.sid}')
         return False
-    ident = decode_token(token)
-    if not ident:
-        print(f'[WS] Client rejected (invalid token): {request.sid}')
-        return False
-    request.user_id = ident.get('usu_id')
-    request.emp_id_ws = ident.get('emp_id')
-    request.rol_ws = ident.get('rol')
-    print(f'[WS] Client connected: {request.sid} user={ident.get("usuario")} emp={ident.get("emp_id")}')
+    if token and not is_token_blacklisted(token):
+        ident = decode_token(token)
+        if ident:
+            request.user_id = ident.get('usu_id')
+            request.emp_id_ws = ident.get('emp_id')
+            request.rol_ws = ident.get('rol')
+    print(f'[WS] Client connected: {request.sid} user={getattr(request, "user_id", "anonymous")} emp={getattr(request, "emp_id_ws", "N/A")}')
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -338,10 +339,21 @@ if _redis_url:
 else:
     storage_uri = "memory://"
     print('[RATELIMIT] Using in-memory (single-worker only). Set REDIS_URL for multi-worker.')
+
+def _rate_limit_key():
+    """Per-tenant rate limit key when authenticated, falls back to IP."""
+    try:
+        emp = getattr(g, 'emp_id', None)
+        if emp:
+            return f'tenant:{emp}'
+    except Exception:
+        pass
+    return get_remote_address()
+
 limiter = Limiter(
-    get_remote_address,
+    _rate_limit_key,
     app=app,
-    default_limits=["200 per minute"],
+    default_limits=["300 per minute"],
     storage_uri=storage_uri,
 )
 
@@ -3190,25 +3202,40 @@ def get_tracking(cho_id):
 
 
 @app.route('/api/tracking', methods=['POST'])
+@limiter.limit("600 per minute")
 def post_tracking():
     emp_id = get_emp_id()
     t = request.json
+    if not t:
+        return jsonify({'error': 'Request body required'}), 400
+    cho_id = t.get('choId')
+    lat = t.get('latitud')
+    lng = t.get('longitud')
+    if not cho_id or lat is None or lng is None:
+        return jsonify({'error': 'choId, latitud, longitud required'}), 400
+    # Validate lat/lng are numeric and within bounds
+    try:
+        lat = float(lat)
+        lng = float(lng)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'latitud/longitud must be numeric'}), 400
+    if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+        return jsonify({'error': 'latitud (-90..90) or longitud (-180..180) out of bounds'}), 400
+    velocidad = max(0, min(300, float(t.get('velocidad', 0) or 0)))
+    rumbo = float(t.get('rumbo', 0) or 0) % 360
+    bateria = max(0, min(100, float(t.get('bateria', 100) or 100)))
     execute(
         '''INSERT INTO TRACKING (EMP_ID, CHO_ID, VEH_ID, TRK_LATITUD, TRK_LONGITUD, TRK_VELOCIDAD, TRK_RUMBO, TRK_BATERIA)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-        [emp_id, t.get('choId'), t.get('vehId'), t.get('latitud'), t.get('longitud'),
-         t.get('velocidad', 0), t.get('rumbo', 0), t.get('bateria', 100)]
+        [emp_id, cho_id, t.get('vehId'), lat, lng, velocidad, rumbo, bateria]
     )
     room = f'emp_{emp_id}'
     socketio.emit('driver_location', {
-        'choId': t.get('choId'),
+        'choId': cho_id,
         'nombre': t.get('nombre', ''),
         'apellido': t.get('apellido', ''),
-        'lat': t.get('latitud'),
-        'lng': t.get('longitud'),
-        'speed': t.get('velocidad', 0),
-        'heading': t.get('rumbo', 0),
-        'battery': t.get('bateria', 100),
+        'lat': lat, 'lng': lng,
+        'speed': velocidad, 'heading': rumbo, 'battery': bateria,
         'timestamp': datetime.now().isoformat()
     }, room=room)
     return jsonify({'success': True, 'message': 'Tracking registrado'})

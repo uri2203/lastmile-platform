@@ -210,8 +210,8 @@
         navigator.serviceWorker.controller.postMessage({
           type: 'ADD_PENDING_DELIVERY',
           delivery: {
-            url: '/api/pedidos/' + data.ped_id + '/entrega',
-            token: 'Bearer ' + (localStorage.getItem('token') || ''),
+            url: '/api/entregas/' + data.entId,
+            token: 'Bearer ' + (LMAuth.getToken ? LMAuth.getToken() : ''),
             data: data
           }
         });
@@ -223,7 +223,7 @@
           type: 'ADD_PENDING_LOCATION',
           location: {
             url: '/api/tracking',
-            token: 'Bearer ' + (localStorage.getItem('token') || ''),
+            token: 'Bearer ' + (LMAuth.getToken ? LMAuth.getToken() : ''),
             data: data
           }
         });

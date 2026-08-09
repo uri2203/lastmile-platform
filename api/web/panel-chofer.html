@@ -509,26 +509,46 @@
     /* ---- Acciones ---- */
     async function markDelivered(entId) {
       if (!confirm(window.i18n.t('chofer.confirmar_entrega'))) return;
-      const result = await Utils.api(`/api/entregas/${entId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ estado: 'ENTREGADO', hora: new Date().toISOString(), evidencia: 'EVID_' + Date.now() })
-      });
-      if (result.success) {
+      const payload = { estado: 'ENTREGADO', hora: new Date().toISOString(), evidencia: 'EVID_' + Date.now() };
+      if (!navigator.onLine) {
+        if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
         loadMisEntregas();
-        Utils.toast(window.i18n.t('chofer.entrega_registrada'), 'success');
+        Utils.toast('Entrega guardada offline. Se sincronizará al reconectar.', 'info');
+        return;
+      }
+      try {
+        const result = await Utils.api(`/api/entregas/${entId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        if (result.success) {
+          loadMisEntregas();
+          Utils.toast(window.i18n.t('chofer.entrega_registrada'), 'success');
+        }
+      } catch (e) {
+        if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
+        loadMisEntregas();
+        Utils.toast('Entrega guardada offline. Se sincronizará al reconectar.', 'info');
       }
     }
 
     async function markFailed(entId) {
       const motivo = prompt(window.i18n.t('chofer.motivo_falla'));
       if (!motivo) return;
-      const result = await Utils.api(`/api/entregas/${entId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ estado: 'NO_ENTREGADO', motivo })
-      });
-      if (result.success) {
+      const payload = { estado: 'NO_ENTREGADO', motivo };
+      if (!navigator.onLine) {
+        if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
         loadMisEntregas();
-        Utils.toast(window.i18n.t('chofer.incidencia_registrada'), 'warning');
+        Utils.toast('Incidencia guardada offline. Se sincronizará al reconectar.', 'info');
+        return;
+      }
+      try {
+        const result = await Utils.api(`/api/entregas/${entId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        if (result.success) {
+          loadMisEntregas();
+          Utils.toast(window.i18n.t('chofer.incidencia_registrada'), 'warning');
+        }
+      } catch (e) {
+        if (window.PWAQueue) PWAQueue.addPendingDelivery({ entId, ...payload });
+        loadMisEntregas();
+        Utils.toast('Incidencia guardada offline. Se sincronizará al reconectar.', 'info');
       }
     }
 
@@ -623,6 +643,7 @@
     let lastGpsSend = 0;
     const GPS_SEND_INTERVAL = 30000;
     const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
+    let lastBatteryLevel = null;
 
     // WebSocket connection
     let ws = null;
@@ -630,7 +651,10 @@
 
     function connectWS() {
       try {
-        ws = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true, reconnectionDelay: 3000 });
+        const wsToken = (window.LMAuth && LMAuth.getToken) ? LMAuth.getToken() : '';
+        const opts = { transports: ['websocket', 'polling'], reconnection: true, reconnectionDelay: 3000 };
+        if (wsToken) opts.auth = { token: wsToken };
+        ws = io(API_BASE, opts);
         ws.on('connect', () => {
           wsConnected = true;
           const empId = localStorage.getItem('empId') || '1';
@@ -649,6 +673,14 @@
         return;
       }
       connectWS();
+      // Battery API for real device battery level
+      if (navigator.getBattery) {
+        navigator.getBattery().then(battery => {
+          lastBatteryLevel = battery.level;
+          battery.addEventListener('levelchange', () => { lastBatteryLevel = battery.level; });
+          battery.addEventListener('chargingchange', () => { lastBatteryLevel = battery.level; });
+        }).catch(() => {});
+      }
       gpsWatchId = navigator.geolocation.watchPosition(
         pos => {
           const lat = pos.coords.latitude;
@@ -689,25 +721,29 @@
       const empId = localStorage.getItem('empId') || '1';
       const nombre = localStorage.getItem('nombre') || '';
       const apellido = localStorage.getItem('apellido') || '';
+      const batteryLevel = lastBatteryLevel !== null ? Math.round(lastBatteryLevel * 100) : 100;
       const payload = {
         choId: user, vehId: user, emp_id: parseInt(empId),
         nombre, apellido,
         latitud: lat, longitud: lng,
         velocidad: Math.round(speed * 3.6),
-        rumbo: Math.round(heading), bateria: 100
+        rumbo: Math.round(heading), bateria: batteryLevel
       };
 
       if (wsConnected && ws) {
         ws.emit('gps_update', payload);
         console.log('[GPS-WS] Enviado:', lat.toFixed(5), lng.toFixed(5));
-      } else {
+      } else if (navigator.onLine) {
         fetch(API_BASE + '/api/tracking', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Emp-Id': empId },
+          headers: { 'Content-Type': 'application/json', 'X-Emp-Id': empId, 'Authorization': 'Bearer ' + (LMAuth.getToken ? LMAuth.getToken() : '') },
           body: JSON.stringify(payload)
         }).then(r => r.json())
           .then(d => { if (d.success) console.log('[GPS-HTTP] Enviado:', lat.toFixed(5), lng.toFixed(5)); })
           .catch(() => console.warn('[GPS] Error al enviar'));
+      } else if (window.PWAQueue) {
+        PWAQueue.addPendingLocation(payload);
+        console.log('[GPS-OFFLINE] Guardado:', lat.toFixed(5), lng.toFixed(5));
       }
     }
 

@@ -1384,7 +1384,7 @@ let adminWsMarkers = {};
 function connectAdminWS() {
   try {
     const API_BASE = window.location.origin;
-    adminWs = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true });
+    adminWs = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true, auth: { token: LMAuth.getToken() || '' } });
     adminWs.on('connect', () => {
       adminWs.emit('subscribe', { emp_id: 1 });
       console.log('[WS-ADMIN] Connected');

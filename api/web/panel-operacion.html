@@ -446,7 +446,10 @@
 
     function connectOperacionWS() {
       try {
-        ws = io(API_BASE, { transports: ['websocket', 'polling'], reconnection: true, reconnectionDelay: 3000 });
+        const wsToken = (window.LMAuth && LMAuth.getToken) ? LMAuth.getToken() : '';
+        const opts = { transports: ['websocket', 'polling'], reconnection: true, reconnectionDelay: 3000 };
+        if (wsToken) opts.auth = { token: wsToken };
+        ws = io(API_BASE, opts);
         ws.on('connect', () => {
           wsConnected = true;
           const user = JSON.parse(localStorage.getItem('user') || '{}');

@@ -273,6 +273,20 @@ self.addEventListener('message', event => {
     case 'SKIP_WAITING':
       self.skipWaiting();
       break;
+
+    case 'SYNC_NOW':
+      event.waitUntil(
+        Promise.all([syncPendingDeliveries(), syncPendingLocations()]).then(() => {
+          notifyClients({ type: 'SYNC_COMPLETE' });
+        })
+      );
+      break;
+
+    case 'CHECK_ONLINE':
+      if (event.source) {
+        event.source.postMessage({ type: 'ONLINE_STATUS', online: navigator.onLine });
+      }
+      break;
   }
 });
 
