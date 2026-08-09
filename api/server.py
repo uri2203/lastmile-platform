@@ -4868,14 +4868,13 @@ def ai_batch_optimize():
         choferes = query(
             "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, "
             "COALESCE(CHO_LAT_ACTUAL, 0) as CHO_LAT_ACTUAL, COALESCE(CHO_LNG_ACTUAL, 0) as CHO_LNG_ACTUAL "
-            "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+            "FROM CHOFERES WHERE EMP_ID=? AND CHO_ESTATUS='ACTIVO'",
             [emp_id]
         )
     except Exception:
         choferes = query(
-            "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, "
-            "0 as CHO_LAT_ACTUAL, 0 as CHO_LNG_ACTUAL "
-            "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+            "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, 0 as CHO_LAT_ACTUAL, 0 as CHO_LNG_ACTUAL "
+            "FROM CHOFERES WHERE EMP_ID=?",
             [emp_id]
         )
     drivers = []
@@ -4905,10 +4904,9 @@ def ai_batch_optimize():
             if 'id' in stop:
                 try:
                     execute(
-                        "INSERT INTO PEDIDO_HISTORIAL (PED_ID, PH_ESTADO, PH_NOTAS, PH_LAT, PH_LNG) "
-                        "VALUES (?, 'RUTA_OPTIMIZADA', ?, ?, ?)",
-                        [stop['id'], f"Posición #{idx+1} en ruta optimizada del chofer {driver_id}",
-                         stop.get('lat'), stop.get('lng')]
+                        "INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO, HIS_OBSERVACIONES) "
+                        "VALUES (?, 'RUTA_OPTIMIZADA', 'AI', ?)",
+                        [stop['id'], f"Posición #{idx+1} en ruta optimizada del chofer {driver_id}"]
                     )
                 except Exception:
                     pass
@@ -4923,7 +4921,7 @@ def ai_route_stats():
     try:
         today_routes = query(
             "SELECT COUNT(*) as cnt FROM PEDIDO_HISTORIAL "
-            "WHERE PH_ESTADO='RUTA_OPTIMIZADA' AND DATE(PH_CREATED) = CURRENT_DATE",
+            "WHERE HIS_ESTADO='RUTA_OPTIMIZADA' AND DATE(HIS_FECHA) = CURRENT_DATE",
             []
         )
         total_optimized = today_routes[0].get('CNT', 0) if today_routes else 0
@@ -4935,7 +4933,7 @@ def ai_route_stats():
         [emp_id]
     )
     active_drivers = query(
-        "SELECT COUNT(*) as cnt FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+        "SELECT COUNT(*) as cnt FROM CHOFERES WHERE EMP_ID=? AND CHO_ESTATUS='ACTIVO'",
         [emp_id]
     )
     return jsonify({
@@ -5046,13 +5044,13 @@ def marketplace_list_drivers():
     tipo = request.args.get('tipo', 'all')
 
     sql = "SELECT c.CHO_ID, c.CHO_NOMBRE, c.CHO_APELLIDO, c.CHO_TELEFONO, " \
-          "c.CHO_STATUS, " \
-          "v.VEH_PLACAS, v.VEH_TIPO " \
-          "FROM CHOFERES c LEFT JOIN VEHICULOS v ON c.VEH_ID = v.VEH_ID " \
+          "c.CHO_ESTATUS, " \
+          "c.CHO_TIPO " \
+          "FROM CHOFERES c " \
           "WHERE c.EMP_ID=?"
     params = [emp_id]
     if tipo == 'disponible':
-        sql += " AND c.CHO_STATUS='ACTIVO'"
+        sql += " AND c.CHO_ESTATUS='ACTIVO'"
     sql += " ORDER BY c.CHO_NOMBRE"
 
     drivers = query(sql, params)
@@ -5081,8 +5079,9 @@ def marketplace_assign():
 
     # Auto-assign: find best available driver
     drivers = query(
-        "SELECT CHO_ID, CHO_NOMBRE, CHO_LAT_ACTUAL, CHO_LNG_ACTUAL "
-        "FROM CHOFERES WHERE EMP_ID=? AND CHO_STATUS='ACTIVO'",
+        "SELECT CHO_ID, CHO_NOMBRE, CHO_APELLIDO, "
+        "COALESCE(CHO_LAT_ACTUAL, 0) as CHO_LAT_ACTUAL, COALESCE(CHO_LNG_ACTUAL, 0) as CHO_LNG_ACTUAL "
+        "FROM CHOFERES WHERE EMP_ID=? AND CHO_ESTATUS='ACTIVO'",
         [emp_id]
     )
     if not drivers:
@@ -5210,8 +5209,8 @@ def cliente_tracking(token):
     tracking_history = []
     try:
         tracking_history = query(
-            "SELECT PH_ESTADO, PH_FECHA, PH_LAT, PH_LNG, PH_NOTAS "
-            "FROM PEDIDO_HISTORIAL WHERE PED_ID=? ORDER BY PH_FECHA DESC LIMIT 20",
+            "SELECT HIS_ESTADO, HIS_FECHA, HIS_OBSERVACIONES "
+            "FROM PEDIDO_HISTORIAL WHERE PED_ID=? ORDER BY HIS_FECHA DESC LIMIT 20",
             [p['PED_ID']]
         )
     except Exception:
