@@ -5733,11 +5733,15 @@ def create_ticket():
     count = query("SELECT COUNT(*) as cnt FROM TICKETS WHERE EMP_ID=%s", [emp_id])
     num = (count[0]['cnt'] if count else 0) + 1
     ticket_num = f"TKT-{emp_id}-{num:05d}"
-    execute(
-        "INSERT INTO TICKETS (EMP_ID, TICKET_NUM, TICKET_ASUNTO, TICKET_DESCRIPCION, "
-        "TICKET_PRIORIDAD, TICKET_CATEGORIA, TICKET_CREADO_POR) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-        [emp_id, ticket_num, asunto, desc, prioridad, categoria, user_id]
-    )
+    try:
+        execute(
+            "INSERT INTO TICKETS (EMP_ID, TICKET_NUM, TICKET_ASUNTO, TICKET_DESCRIPCION, "
+            "TICKET_PRIORIDAD, TICKET_CATEGORIA, TICKET_CREADO_POR) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            [emp_id, ticket_num, asunto, desc, prioridad, categoria, user_id]
+        )
+    except Exception as e:
+        print(f'[TICKETS] INSERT error: {e}')
+        return jsonify({'success': False, 'error': 'Error creating ticket', 'debug': str(e)[:300]}), 500
     return jsonify({'success': True, 'ticket_num': ticket_num, 'message': 'Ticket creado'})
 
 @app.route('/api/tickets/<int:ticket_id>', methods=['GET'])

@@ -102,6 +102,24 @@ def get_db():
 
         conn.autocommit = False
         _thread_local.pg_conn = conn
+        # Re-apply tenant context on new connections if emp_id was previously set
+        saved_emp = getattr(_thread_local, 'pg_emp_id', None)
+        if saved_emp is not None:
+            try:
+                cur = conn.cursor()
+                try:
+                    cur.execute("SELECT set_current_tenant(%s)", [int(saved_emp)])
+                except Exception:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    cur = conn.cursor()
+                    cur.execute("SET app.current_emp_id = %s", [str(saved_emp)])
+                conn.commit()
+                cur.close()
+            except Exception:
+                pass
         return conn
     else:
         conn = sqlite3.connect(DB_PATH)
@@ -120,6 +138,8 @@ def set_tenant_context(emp_id):
     """
     if not USE_POSTGRES or emp_id is None:
         return
+    # Save for re-application on new connections
+    _thread_local.pg_emp_id = emp_id
     conn = None
     try:
         conn = get_db()
