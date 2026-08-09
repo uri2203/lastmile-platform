@@ -5729,10 +5729,7 @@ def create_ticket():
     categoria = data.get('categoria', 'GENERAL')
     ident = current_identity() or {}
     user_id = ident.get('usu_id')
-    # Generate ticket number
-    count = query("SELECT COUNT(*) as cnt FROM TICKETS WHERE EMP_ID=%s", [emp_id])
-    num = (count[0]['cnt'] if count else 0) + 1
-    ticket_num = f"TKT-{emp_id}-{num:05d}"
+    # Generate ticket number and INSERT - all with dedicated connection
     try:
         import psycopg2
         url = os.environ.get('DATABASE_URL', '')
@@ -5741,6 +5738,9 @@ def create_ticket():
         conn = psycopg2.connect(url, connect_timeout=10)
         conn.autocommit = True
         cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM TICKETS WHERE EMP_ID=%s", [emp_id])
+        num = (cur.fetchone()[0] or 0) + 1
+        ticket_num = f"TKT-{emp_id}-{num:05d}"
         cur.execute(
             "INSERT INTO TICKETS (EMP_ID, TICKET_NUM, TICKET_ASUNTO, TICKET_DESCRIPCION, "
             "TICKET_PRIORIDAD, TICKET_CATEGORIA, TICKET_CREADO_POR) VALUES (%s,%s,%s,%s,%s,%s,%s)",
