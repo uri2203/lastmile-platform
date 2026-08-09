@@ -43,8 +43,8 @@
       '@keyframes cc-fadeOut{from{opacity:1}to{opacity:0}}',
       '@keyframes cc-scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}',
 
-      '.cc-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;animation:cc-fadeIn .3s ease-out;padding:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}',
-      '.cc-modal{background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.35);animation:cc-scaleIn .35s ease-out;}',
+      '.cc-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;animation:cc-fadeIn .3s ease-out;padding:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
+      '.cc-modal{background:#fff;border-radius:16px;width:100%;max-width:520px;margin:auto;box-shadow:0 25px 80px rgba(0,0,0,0.35);animation:cc-scaleIn .35s ease-out;}',
       '.cc-header{padding:28px 28px 0;text-align:center;}',
       '.cc-icon{font-size:40px;margin-bottom:12px;}',
       '.cc-title{font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;}',
@@ -85,6 +85,8 @@
 
     // Bloquear scroll del body
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
     document.documentElement.style.overflow = 'hidden';
 
     var overlay = document.createElement('div');
@@ -176,8 +178,10 @@
     var overlay = document.getElementById('cc-overlay');
     if (!overlay) return;
     overlay.style.animation = 'cc-fadeOut .25s ease-in forwards';
-    // Restaurar scroll
+    // Restaurar scroll del body
     document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
     document.documentElement.style.overflow = '';
     setTimeout(function () { overlay.remove(); }, 250);
   }
