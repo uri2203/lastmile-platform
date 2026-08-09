@@ -142,16 +142,19 @@
 
     document.body.appendChild(overlay);
 
-    // Prevenir cierre con Escape o click afuera (es obligatorio elegir)
+    // Prevenir cierre con click afuera del modal (en el overlay oscuro)
     overlay.addEventListener('click', function (e) {
-      e.stopPropagation();
-    });
-    document.addEventListener('keydown', function handler(e) {
-      if (e.key === 'Escape') {
+      if (e.target === overlay) {
         e.preventDefault();
         e.stopPropagation();
       }
     });
+    // Prevenir cierre con Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+      }
+    }, true);
 
     document.getElementById('cc-accept').addEventListener('click', function () {
       saveConsent({ necessary: true, analytics: true, marketing: true });
