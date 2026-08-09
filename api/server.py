@@ -5642,6 +5642,53 @@ def debug_ensure_cod():
     return jsonify({'success': True, 'logs': [l for l in logs if l.strip()]})
 
 
+@app.route('/api/debug/force-gps', methods=['POST'])
+def debug_force_gps():
+    """Force add GPS columns and report results."""
+    emp_id = get_emp_id()
+    if not emp_id:
+        return jsonify({'error': 'No auth'}), 401
+    if not USE_POSTGRES:
+        return jsonify({'error': 'Not PostgreSQL'}), 400
+    import psycopg2
+    url = os.environ.get('DATABASE_URL', '')
+    if 'sslmode' not in url:
+        url += '&sslmode=require' if '?' in url else '?sslmode=require'
+    results = {}
+    ddl_list = [
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_LATITUD REAL",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_LONGITUD REAL",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_TOKEN TEXT",
+        "ALTER TABLE PEDIDOS ADD COLUMN IF NOT EXISTS PED_MONEDA TEXT DEFAULT 'MXN'",
+        "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LAT_ACTUAL REAL",
+        "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LNG_ACTUAL REAL",
+    ]
+    conn = None
+    try:
+        conn = psycopg2.connect(url, connect_timeout=10)
+        conn.autocommit = True
+        cur = conn.cursor()
+        for ddl in ddl_list:
+            try:
+                cur.execute(ddl)
+                tbl = ddl.split('IF NOT EXISTS')[1].split()[0].strip()
+                results[tbl] = 'OK'
+            except Exception as e:
+                tbl = ddl.split('IF NOT EXISTS')[1].split()[0].strip()
+                results[tbl] = f'ERROR: {e}'
+        # Check existing columns
+        cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='pedidos' AND column_name IN ('ped_latitud','ped_longitud','ped_token','ped_moneda') ORDER BY column_name")
+        results['pedidos_has_cols'] = [r[0] for r in cur.fetchall()]
+        cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='choferes' AND column_name IN ('cho_lat_actual','cho_lng_actual') ORDER BY column_name")
+        results['choferes_has_cols'] = [r[0] for r in cur.fetchall()]
+    except Exception as e:
+        results['_connection'] = str(e)
+    finally:
+        if conn and not conn.closed:
+            conn.close()
+    return jsonify({'success': True, 'ddl_results': results})
+
+
 # ========================================
 # INICIAR SERVIDOR
 # ========================================
