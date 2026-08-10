@@ -901,5 +901,22 @@
     "cookie_reject_all": "Solo Esenciales",
     "cookie_manage": "Preferencias",
     "cookie_save": "Guardar"
+  },
+  "cookie": {
+    "cookie_title": "Politica de Cookies",
+    "cookie_description": "Este sitio web utiliza cookies propias y de terceros para garantizar el funcionamiento correcto, analizar el trafico del sitio y personalizar el contenido. El uso de cookies no esenciales requiere su consentimiento previo.",
+    "cookie_legal_ref": "Conforme a la LFPDPPP y Lineamientos del Aviso de Privacidad",
+    "cookie_necessary": "Estrictamente necesarias",
+    "cookie_necessary_desc": "Funcionamiento basico del sitio. No se pueden desactivar.",
+    "cookie_necessary_badge": "Activas",
+    "cookie_analytics": "Analiticas",
+    "cookie_analytics_desc": "Recopilacion anonima de datos de uso del sitio.",
+    "cookie_marketing": "Marketing y publicidad",
+    "cookie_marketing_desc": "Cookies de terceros para campanas publicitarias.",
+    "cookie_accept_all": "Aceptar todas las cookies",
+    "cookie_essential_only": "Solo necesarias",
+    "cookie_reject": "Rechazar no esenciales",
+    "cookie_disabled_msg": "Habilite al menos una opcion para aceptar",
+    "cookie_more_info": "Para mayor informacion, consulte nuestra Politica de Cookies y nuestro Aviso de Privacidad."
   }
 }

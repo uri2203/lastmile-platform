@@ -898,5 +898,22 @@
     "regulaciones_ia": "AI 法规",
     "sla": "服务级别协议",
     "terminos": "条款与条件"
+  },
+  "cookie": {
+    "cookie_title": "Cookie 政策",
+    "cookie_description": "本网站使用自有和第三方Cookie以确保正常运行、分析网站流量并个性化内容。使用非必要Cookie需要您的事先同意。",
+    "cookie_legal_ref": "根据 PIPL 和隐私声明指南",
+    "cookie_necessary": "严格必要",
+    "cookie_necessary_desc": "网站基本功能。无法禁用。",
+    "cookie_necessary_badge": "已启用",
+    "cookie_analytics": "分析",
+    "cookie_analytics_desc": "匿名收集网站使用数据。",
+    "cookie_marketing": "营销和广告",
+    "cookie_marketing_desc": "用于广告活动的第三方Cookie。",
+    "cookie_accept_all": "接受所有Cookie",
+    "cookie_essential_only": "仅必要",
+    "cookie_reject": "拒绝非必要",
+    "cookie_disabled_msg": "请至少启用一个选项以接受",
+    "cookie_more_info": "如需更多信息，请参阅我们的Cookie政策和隐私声明。"
   }
 }

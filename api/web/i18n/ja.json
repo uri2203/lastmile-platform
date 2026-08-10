@@ -898,5 +898,22 @@
     "regulaciones_ia": "AI規制",
     "sla": "サービスレベル協議",
     "terminos": "利用規約と条件"
+  },
+  "cookie": {
+    "cookie_title": "クッキーポリシー",
+    "cookie_description": "このウェブサイトは、適切な機能の確保、サイトトラフィックの分析、コンテンツのパーソナライズのために、自社およびサードパーティのクッキーを使用しています。必須ではないクッキーの使用には事前の同意が必要です。",
+    "cookie_legal_ref": "APPI およびプライバシー通知ガイドラインに準拠",
+    "cookie_necessary": "必須",
+    "cookie_necessary_desc": "サイトの基本機能。無効にできません。",
+    "cookie_necessary_badge": "有効",
+    "cookie_analytics": "分析",
+    "cookie_analytics_desc": "サイトの使用データの匿名収集。",
+    "cookie_marketing": "マーケティングと広告",
+    "cookie_marketing_desc": "広告キャンペーン用のサードパーティクッキー。",
+    "cookie_accept_all": "すべてのクッキーを受け入れる",
+    "cookie_essential_only": "必須のみ",
+    "cookie_reject": "必須以外を拒否",
+    "cookie_disabled_msg": "受け入れるには少なくとも1つのオプションを有効にしてください",
+    "cookie_more_info": "詳細については、クッキーポリシーとプライバシー通知をご確認ください。"
   }
 }

@@ -898,5 +898,22 @@
     "regulaciones_ia": "AI 규제",
     "sla": "서비스 수준 협의",
     "terminos": "약관 및 조건"
+  },
+  "cookie": {
+    "cookie_title": "쿠키 정책",
+    "cookie_description": "이 웹사이트는 올바른 기능 보장, 사이트 트래픽 분석 및 콘텐츠 개인화를 위해 자체 및 타사 쿠키를 사용합니다. 필수 아닌 쿠키 사용에는 사전 동의가 필요합니다.",
+    "cookie_legal_ref": "PIPA 및 개인정보 처리방침 지침에 따름",
+    "cookie_necessary": "반드시 필요한",
+    "cookie_necessary_desc": "사이트 기본 기능. 비활성화할 수 없습니다.",
+    "cookie_necessary_badge": "활성",
+    "cookie_analytics": "분석",
+    "cookie_analytics_desc": "사이트 사용 데이터의 익명 수집.",
+    "cookie_marketing": "마케팅 및 광고",
+    "cookie_marketing_desc": "광고 캠페인을 위한 타사 쿠키.",
+    "cookie_accept_all": "모든 쿠키 수락",
+    "cookie_essential_only": "필수 항목만",
+    "cookie_reject": "비필수 거부",
+    "cookie_disabled_msg": "수락하려면 적어도 하나의 옵션을 활성화하세요",
+    "cookie_more_info": "자세한 내용은 쿠키 정책 및 개인정보 처리방침을 참조하세요."
   }
 }

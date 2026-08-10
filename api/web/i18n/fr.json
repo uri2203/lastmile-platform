@@ -898,5 +898,22 @@
     "regulaciones_ia": "Réglementation IA",
     "sla": "Accord de Niveau de Service",
     "terminos": "Conditions Générales"
+  },
+  "cookie": {
+    "cookie_title": "Politique de Cookies",
+    "cookie_description": "Ce site utilise des cookies proprietaires et tiers pour garantir le bon fonctionnement, analyser le trafic du site et personnaliser le contenu. L'utilisation de cookies non essentiels necessite votre consentement prealable.",
+    "cookie_legal_ref": "Conformement au RGPD et aux Lignes Directrices de l'Avis de Confidentialite",
+    "cookie_necessary": "Strictement necessaires",
+    "cookie_necessary_desc": "Fonctionnement de base du site. Ne peuvent pas etre desactivees.",
+    "cookie_necessary_badge": "Actives",
+    "cookie_analytics": "Analytiques",
+    "cookie_analytics_desc": "Collecte anonyme des donnees d'utilisation du site.",
+    "cookie_marketing": "Marketing et publicite",
+    "cookie_marketing_desc": "Cookies tiers pour les campagnes publicitaires.",
+    "cookie_accept_all": "Accepter tous les cookies",
+    "cookie_essential_only": "Essentiels uniquement",
+    "cookie_reject": "Rejeter les non essentiels",
+    "cookie_disabled_msg": "Activez au moins une option pour accepter",
+    "cookie_more_info": "Pour plus d'informations, consultez notre Politique de Cookies et notre Avis de Confidentialite."
   }
 }

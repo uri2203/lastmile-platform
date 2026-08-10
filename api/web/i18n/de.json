@@ -898,5 +898,22 @@
     "regulaciones_ia": "KI-Verordnung",
     "sla": "Service-Level-Vereinbarung",
     "terminos": "Allgemeine Geschaftsbedingungen"
+  },
+  "cookie": {
+    "cookie_title": "Cookie-Richtlinie",
+    "cookie_description": "Diese Website verwendet eigene und Drittanbieter-Cookies, um die ordnungsgemässe Funktionalitaet zu gewaehrleisten, den Website-Verkehr zu analysieren und den Inhalt zu personalisieren. Die Verwendung nicht notwendiger Cookies erfordert Ihre vorherige Zustimmung.",
+    "cookie_legal_ref": "Gemaess der DSGVO und den Richtlinien des Datenschutzhinweises",
+    "cookie_necessary": "Unbedingt erforderlich",
+    "cookie_necessary_desc": "Grundlegende Website-Funktionalitaet. Kann nicht deaktiviert werden.",
+    "cookie_necessary_badge": "Aktiv",
+    "cookie_analytics": "Analytik",
+    "cookie_analytics_desc": "Anonyme Erfassung von Website-Nutzungsdaten.",
+    "cookie_marketing": "Marketing und Werbung",
+    "cookie_marketing_desc": "Drittanbieter-Cookies fuer Werbekampagnen.",
+    "cookie_accept_all": "Alle Cookies akzeptieren",
+    "cookie_essential_only": "Nur erforderliche",
+    "cookie_reject": "Nicht erforderliche ablehnen",
+    "cookie_disabled_msg": "Aktivieren Sie mindestens eine Option zum Akzeptieren",
+    "cookie_more_info": "Fuer weitere Informationen lesen Sie bitte unsere Cookie-Richtlinie und unseren Datenschutzhinweis."
   }
 }

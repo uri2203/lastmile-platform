@@ -898,5 +898,22 @@
     "regulacoes_ia": "Regulacoes de IA",
     "sla": "Acordo de Nivel de Servico",
     "terminos": "Termos e Condicoes"
+  },
+  "cookie": {
+    "cookie_title": "Politica de Cookies",
+    "cookie_description": "Este site utiliza cookies proprias e de terceiros para garantir o funcionamento correto, analisar o trafego do site e personalizar o conteudo. O uso de cookies nao essenciais requer seu consentimento previo.",
+    "cookie_legal_ref": "Conforme a LGPD e Diretrizes do Aviso de Privacidade",
+    "cookie_necessary": "Estritamente necessarias",
+    "cookie_necessary_desc": "Funcionamento basico do site. Nao podem ser desativadas.",
+    "cookie_necessary_badge": "Ativas",
+    "cookie_analytics": "Analiticas",
+    "cookie_analytics_desc": "Coleta anonima de dados de uso do site.",
+    "cookie_marketing": "Marketing e publicidade",
+    "cookie_marketing_desc": "Cookies de terceiros para campanhas publicitarias.",
+    "cookie_accept_all": "Aceitar todas as cookies",
+    "cookie_essential_only": "Apenas necessarias",
+    "cookie_reject": "Rejeitar nao essenciais",
+    "cookie_disabled_msg": "Habilite pelo menos uma opcao para aceitar",
+    "cookie_more_info": "Para mais informacoes, consulte nossa Politica de Cookies e nosso Aviso de Privacidade."
   }
 }

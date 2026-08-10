@@ -901,5 +901,22 @@
     "regulaciones_ia": "AI Regulations",
     "sla": "Service Level Agreement",
     "terminos": "Terms and Conditions"
+  },
+  "cookie": {
+    "cookie_title": "Cookie Policy",
+    "cookie_description": "This website uses first-party and third-party cookies to ensure proper functionality, analyze site traffic, and personalize content. The use of non-essential cookies requires your prior consent.",
+    "cookie_legal_ref": "In accordance with applicable privacy laws and Privacy Notice Guidelines",
+    "cookie_necessary": "Strictly Necessary",
+    "cookie_necessary_desc": "Basic site functionality. Cannot be disabled.",
+    "cookie_necessary_badge": "Active",
+    "cookie_analytics": "Analytics",
+    "cookie_analytics_desc": "Anonymous collection of site usage data.",
+    "cookie_marketing": "Marketing and Advertising",
+    "cookie_marketing_desc": "Third-party cookies for advertising campaigns.",
+    "cookie_accept_all": "Accept All Cookies",
+    "cookie_essential_only": "Essential Only",
+    "cookie_reject": "Reject Non-essential",
+    "cookie_disabled_msg": "Enable at least one option to accept",
+    "cookie_more_info": "For more information, please see our Cookie Policy and Privacy Notice."
   }
 }

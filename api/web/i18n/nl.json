@@ -898,5 +898,22 @@
     "regulaciones_ia": "AI-Regelgeving",
     "sla": "Service Level Overeenkomst",
     "terminos": "Algemene Voorwaarden"
+  },
+  "cookie": {
+    "cookie_title": "Cookiebeleid",
+    "cookie_description": "Deze website gebruikt first-party en third-party cookies om de juiste werking te garanderen, siteverkeer te analyseren en content te personaliseren. Het gebruik van niet-essentiele cookies vereist jouw voorafgaande toestemming.",
+    "cookie_legal_ref": "Overeenkomstig de AVG/GDPR en richtlijnen van het Privacybericht",
+    "cookie_necessary": "Strikt noodzakelijk",
+    "cookie_necessary_desc": "Basisfunctionaliteit van de site. Kan niet worden uitgeschakeld.",
+    "cookie_necessary_badge": "Actief",
+    "cookie_analytics": "Analytisch",
+    "cookie_analytics_desc": "Anonieme verzameling van sitegebruiksgegevens.",
+    "cookie_marketing": "Marketing en reclame",
+    "cookie_marketing_desc": "Third-party cookies voor reclamecampagnes.",
+    "cookie_accept_all": "Alle cookies accepteren",
+    "cookie_essential_only": "Alleen essentieel",
+    "cookie_reject": "Niet-essentieel weigeren",
+    "cookie_disabled_msg": "Schakel ten minste een optie in om te accepteren",
+    "cookie_more_info": "Voor meer informatie raadpleeg ons Cookiebeleid en Privacybericht."
   }
 }
