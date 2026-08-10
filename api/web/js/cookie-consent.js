@@ -117,7 +117,7 @@
         '</div>'+
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">'+
-        '<button id="cc-accept" style="width:100%;padding:12px 20px;background:#111827;color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;letter-spacing:0.01em">Aceptar todas las cookies</button>'+
+        '<button id="cc-accept" disabled style="width:100%;padding:12px 20px;background:#9ca3af;color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:600;cursor:not-allowed;letter-spacing:0.01em;opacity:.6">Habilite al menos una opcion para aceptar</button>'+
         '<button id="cc-nec" style="width:100%;padding:12px 20px;background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer">Solo necesarias</button>'+
       '</div>'+
       '<div style="text-align:center">'+
@@ -156,6 +156,23 @@
         e.preventDefault();
         var cb=lbl.querySelector('input');
         cb.checked=!cb.checked;
+        // Habilitar/deshabilitar boton "Aceptar todas"
+        var togA=document.getElementById('cc-tog-a');
+        var togM=document.getElementById('cc-tog-m');
+        var btn=document.getElementById('cc-accept');
+        if(togA.checked||togM.checked){
+          btn.disabled=false;
+          btn.style.background='#111827';
+          btn.style.cursor='pointer';
+          btn.style.opacity='1';
+          btn.textContent='Aceptar todas las cookies';
+        }else{
+          btn.disabled=true;
+          btn.style.background='#9ca3af';
+          btn.style.cursor='not-allowed';
+          btn.style.opacity='.6';
+          btn.textContent='Habilite al menos una opcion para aceptar';
+        }
       });
     });
 
