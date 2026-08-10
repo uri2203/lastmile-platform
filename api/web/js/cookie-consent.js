@@ -176,8 +176,8 @@
   }
 
   function init(){
-    var c=get();
-    if(c){window.dispatchEvent(new CustomEvent('cookieConsentChange',{detail:c}));return;}
+    // MODO PRUEBA: siempre mostrar el banner
+    localStorage.removeItem(KEY);
     if(document.readyState==='loading'){
       document.addEventListener('DOMContentLoaded',show);
     }else{
