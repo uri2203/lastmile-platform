@@ -2306,7 +2306,12 @@ def setup_usuarios():
 @limiter.limit("2 per hour")
 @requiere_superadmin
 def setup_zonas():
-    """Crea las tablas de zonas y tarifas."""
+    """Crea las tablas de zonas y tarifas (solo SQLite -- en PostgreSQL ya
+    las crea schema_postgres.sql/init_schema() con el schema real; este
+    setup usa sintaxis SQLite y DROPea las tablas antes de recrearlas, asi
+    que correrlo contra Postgres perderia datos reales sin poder restaurarlos."""
+    if USE_POSTGRES:
+        return jsonify({'success': False, 'error': 'No aplica en PostgreSQL: ZONAS/ZONA_TARIFAS ya se crean via schema_postgres.sql'}), 400
     try:
         try: execute("DROP TABLE ZONA_TARIFAS")
         except: pass

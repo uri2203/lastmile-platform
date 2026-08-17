@@ -1308,6 +1308,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         overlay.classList.remove('show');
         if(overlay.id==='modalNuevaZona')resetModalZona();
       }
+    });
   });
 });
 
