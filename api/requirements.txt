@@ -4,7 +4,7 @@ flask-limiter==4.1.1
 flask-socketio==5.5.1
 eventlet==0.37.0
 python-dotenv==1.0.1
-PyJWT==2.10.1
+PyJWT==2.13.0
 bcrypt==5.0.0
 requests==2.32.3
 gunicorn==23.0.0
