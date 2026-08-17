@@ -152,7 +152,7 @@ class TestBillingPlanes:
 
     def test_get_mis_limits(self, client):
         token = login(client)[0]
-        r = client.get('/api/billing/mis-limites', headers=auth_headers(token))
+        r = client.get('/api/billing/limits', headers=auth_headers(token))
         assert r.status_code == 200
         j = r.get_json()
         assert j.get('success') is True
@@ -160,7 +160,7 @@ class TestBillingPlanes:
 
     def test_get_billing_stats(self, client):
         token = login(client)[0]
-        r = client.get('/api/billing/stats', headers=auth_headers(token))
+        r = client.get('/api/billing/dashboard', headers=auth_headers(token))
         assert r.status_code == 200
         j = r.get_json()
         assert j.get('success') is True
@@ -246,7 +246,7 @@ class TestAuditLogging:
             if os.path.exists(log_path):
                 with open(log_path, 'r') as f:
                     content = f.read()
-                    assert 'pedido_deleted' in content
+                    assert 'pedido_soft_deleted' in content
 
 
 # ========================================

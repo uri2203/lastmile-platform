@@ -11,7 +11,7 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from server import app
+from server import app, limiter
 from db import init_schema, check_empty
 from seed import seed
 
@@ -19,8 +19,8 @@ from seed import seed
 def client():
     """Create test client and initialize DB."""
     app.config['TESTING'] = True
-    app.config['DATABASE_URL'] = ''  # Force SQLite for tests
-    
+    limiter.enabled = False  # Este archivo hace muchos logins; el limite real de auth es 10/min
+
     with app.test_client() as client:
         # Initialize schema if needed
         try:
@@ -65,7 +65,7 @@ class TestAuth:
         assert r.status_code == 200
         j = r.get_json()
         assert 'token' in j
-        assert j['rol'] == 'admin'
+        assert j['data']['rol'] == 'admin'
 
     def test_login_bad_credentials(self, client):
         r = client.post('/api/auth/login', json={'user': 'admin', 'pass': 'wrong'})

@@ -63,16 +63,11 @@ jobs:
         run: |
           cd api
           pip install -r requirements.txt
-
-      - name: Run migration
-        env:
-          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
-        run: |
-          psql $DATABASE_URL -f sql/migrate.sql || true
+          pip install -r requirements-test.txt
 
       - name: Test server starts
         env:
-          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test?sslmode=disable
           FLASK_ENV: testing
         run: |
           cd api
@@ -82,4 +77,15 @@ jobs:
           from server import app
           print('Server imports OK')
           print('Endpoints:', len(app.url_map._rules))
-          " || true
+          "
+
+      - name: Run pytest
+        env:
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test?sslmode=disable
+          FLASK_ENV: testing
+        run: |
+          cd api
+          # test_e2e.py es un smoke test contra una instancia YA DESPLEGADA
+          # (pega directo a lastmile-platform.onrender.com), no contra este
+          # branch. Se corre a mano post-deploy, no en cada PR.
+          pytest tests/ -v --ignore=tests/test_e2e.py

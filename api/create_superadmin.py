@@ -31,8 +31,8 @@ def _platform_emp_id():
     if rows:
         return rows[0]['EMP_ID']
     execute(
-        "INSERT INTO EMPRESAS (EMP_NOMBRE, EMP_RFC, EMP_EMAIL, EMP_TELEFONO, EMP_ESTATUS, EMP_PLAN) "
-        "VALUES (?, '', '', '', 'ACTIVA', 'PLATAFORMA')",
+        "INSERT INTO EMPRESAS (EMP_NOMBRE, EMP_RFC, EMP_EMAIL, EMP_TELEFONO, EMP_ESTATUS, EMP_PLAN, EMP_EMAIL_VERIFIED) "
+        "VALUES (?, '', '', '', 'ACTIVA', 'PLATAFORMA', 'S')",
         [PLATFORM_NAME]
     )
     rows = query(

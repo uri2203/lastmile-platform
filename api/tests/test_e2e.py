@@ -1,6 +1,13 @@
 """
-LAST MILE DELIVERY - End-to-End Tests
+LAST MILE DELIVERY - End-to-End Smoke Tests (produccion desplegada)
 Flujo completo: Login → Crear Pedido → Asignar Chofer → GPS → Entrega → Facturación
+
+Este archivo pega directo contra una instancia YA DESPLEGADA (ver BASE), no
+contra el codigo del PR/branch actual. Por eso NO corre en el pipeline de CI
+(ver .github/workflows/ci.yml, que lo excluye explicitamente) -- correrlo ahi
+no valida el codigo en revision y, peor, crea pedidos de prueba reales en la
+base de esa instancia. Ejecutar a mano despues de un deploy:
+    cd api && pytest tests/test_e2e.py -v
 """
 import pytest
 import requests
@@ -12,7 +19,7 @@ BASE = 'https://lastmile-platform.onrender.com'
 HEADERS = {'Content-Type': 'application/json'}
 
 def get_token(user='admin', password='admin123'):
-    r = requests.post(f'{BASE}/api/auth/login', json={'usuario': user, 'password': password}, headers=HEADERS)
+    r = requests.post(f'{BASE}/api/auth/login', json={'user': user, 'pass': password}, headers=HEADERS)
     if r.status_code == 200:
         return r.json().get('token')
     return None
@@ -97,8 +104,11 @@ class TestAuthFlow:
         assert token is not None
 
     def test_login_invalid(self):
-        r = requests.post(f'{BASE}/api/auth/login', json={'usuario': 'wrong', 'password': 'wrong'})
-        assert r.status_code in [401, 400]
+        r = requests.post(f'{BASE}/api/auth/login', json={'user': 'wrong', 'pass': 'wrong'})
+        # El endpoint siempre responde 200 con success=False en el body
+        # (no usa codigos 401/400 para credenciales invalidas).
+        assert r.status_code == 200
+        assert r.json().get('success') is False
 
     def test_token_refresh(self):
         token = get_token('admin', 'admin123')
