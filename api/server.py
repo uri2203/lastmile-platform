@@ -30,6 +30,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta, date
 import hmac as _hmac
+import yaml
 
 
 def _strip_html_tags(value):

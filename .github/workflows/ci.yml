@@ -63,12 +63,13 @@ jobs:
         run: |
           cd api
           pip install -r requirements.txt
+          pip install -r requirements-test.txt
 
       - name: Run migration
         env:
           DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
         run: |
-          psql $DATABASE_URL -f sql/migrate.sql || true
+          psql $DATABASE_URL -f sql/migrate.sql
 
       - name: Test server starts
         env:
@@ -82,4 +83,12 @@ jobs:
           from server import app
           print('Server imports OK')
           print('Endpoints:', len(app.url_map._rules))
-          " || true
+          "
+
+      - name: Run pytest
+        env:
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
+          FLASK_ENV: testing
+        run: |
+          cd api
+          pytest tests/ -v
