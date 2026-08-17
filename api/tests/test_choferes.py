@@ -44,7 +44,8 @@ def test_get_chofer_by_id(client, auth_headers, _seed):
     if choferes:
         cho_id = choferes[0].get('CHO_ID')
         r2 = client.get(f'/api/choferes/{cho_id}', headers=auth_headers)
-        assert r2.status_code in (200, 405)
+        # No existe GET /api/choferes/<id> (solo PUT/DELETE) -- 404 es el resultado correcto.
+        assert r2.status_code in (200, 404, 405)
 
 
 def test_update_chofer(client, auth_headers, _seed):

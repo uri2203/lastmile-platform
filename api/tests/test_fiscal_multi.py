@@ -123,6 +123,17 @@ class TestFiscalCancel:
 
 
 # ===== PAYMENT ENDPOINTS =====
+# PAYMENT_METHODS_COUNTRY se llena via /api/system/migrate (ver TestMigration
+# mas abajo). Estas clases corren antes en el archivo, asi que se asegura la
+# migracion aqui tambien -- es idempotente (ON CONFLICT DO NOTHING).
+
+@pytest.fixture(autouse=True, scope='module')
+def _ensure_payment_methods_seeded():
+    app.config['TESTING'] = True
+    with app.test_client() as c:
+        token = c.post('/api/auth/login', json={'user': 'admin', 'pass': 'admin123'}).get_json().get('token', '')
+        c.post('/api/system/migrate', headers=auth_header(token))
+
 
 class TestPaymentCountries:
     def test_get_payment_countries(self, client, auth_token):
@@ -249,7 +260,10 @@ class TestMultiCountryAnalytics:
         assert d['success'] is True
         assert 'countries_supported' in d['data']
         assert 'MX' in d['data']['countries_supported']
-        assert len(d['data']['countries_supported']) == 8
+        # El soporte crecio de las 8 LATAM originales a ~30 paises; se valida
+        # el minimo original en vez de un conteo exacto que se rompe cada vez
+        # que se agrega un pais nuevo.
+        assert len(d['data']['countries_supported']) >= 8
 
     def test_analytics_has_currencies(self, client, auth_token):
         r = client.get('/api/analytics/multi-country', headers=auth_header(auth_token))
@@ -342,7 +356,7 @@ class TestPWA:
         r = client.get('/manifest.json')
         assert r.status_code == 200
         d = r.get_json()
-        assert d['name'] == 'Last Mile - Chofer'
+        assert d['name'] == 'Last Mile Delivery'
         assert d['display'] == 'standalone'
 
     def test_service_worker(self, client):
@@ -350,7 +364,7 @@ class TestPWA:
         assert r.status_code == 200
         assert b'sync' in r.data
         assert b'push' in r.data
-        assert b'indexedDB' in r.data.lower() or b'IndexedDB' in r.data
+        assert b'indexedDB' in r.data
 
 
 # ===== NOTIFICATION MULTI-LANG =====

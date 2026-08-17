@@ -14,10 +14,10 @@ def test_get_whitelabel_config(client, auth_headers, _seed):
 
 
 def test_get_whitelabel_config_nonexistent(client, auth_headers, _seed):
+    # 99999 no es el emp_id del usuario autenticado: la proteccion anti-IDOR
+    # (server.py, before_request) bloquea con 403 antes de llegar al handler.
     r = client.get('/api/whitelabel/99999', headers=auth_headers)
-    assert r.status_code == 200
-    body = r.get_json()
-    assert body['success'] is True
+    assert r.status_code == 403
 
 
 def test_update_whitelabel_config(client, auth_headers, _seed):

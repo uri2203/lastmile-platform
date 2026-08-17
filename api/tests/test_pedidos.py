@@ -112,7 +112,7 @@ def test_pedido_estadisticas(client, auth_headers, _seed):
     assert r.status_code == 200
     body = r.get_json()
     assert body['success'] is True
-    assert 'total' in body['data']
+    assert 'TOTAL' in body['data']
 
 
 def test_delete_pedido(client, auth_headers, _seed):

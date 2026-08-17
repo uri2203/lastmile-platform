@@ -85,4 +85,7 @@ jobs:
           FLASK_ENV: testing
         run: |
           cd api
-          pytest tests/ -v
+          # test_e2e.py es un smoke test contra una instancia YA DESPLEGADA
+          # (pega directo a lastmile-platform.onrender.com), no contra este
+          # branch. Se corre a mano post-deploy, no en cada PR.
+          pytest tests/ -v --ignore=tests/test_e2e.py
