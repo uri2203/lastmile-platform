@@ -3820,28 +3820,47 @@ def update_whitelabel():
         if not emp_id:
             return jsonify({'success': False, 'error': 'No autenticado'}), 401
         data = _sanitize_whitelabel(request.json or {})
-        execute('''CREATE TABLE IF NOT EXISTS TENANT_CONFIG (
-            TC_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            EMP_ID INTEGER NOT NULL UNIQUE,
-            TC_NOMBRE TEXT DEFAULT '',
-            TC_LOGO_URL TEXT DEFAULT '',
-            TC_COLOR_PRIMARY TEXT DEFAULT '#4F46E5',
-            TC_COLOR_SECONDARY TEXT DEFAULT '#7C3AED',
-            TC_COLOR_BG TEXT DEFAULT '#F9FAFB',
-            TC_DOMINIO TEXT DEFAULT '',
-            TC_FOOTER_TEXT TEXT DEFAULT '',
-            TC_CUSTOM_CSS TEXT DEFAULT '',
-            TC_CUSTOM_JS TEXT DEFAULT '',
-            TC_FEATURES TEXT DEFAULT '{}',
-            TC_FECHA_REGISTRO TEXT DEFAULT (datetime('now')),
-            TC_FECHA_ACTUALIZACION TEXT DEFAULT (datetime('now'))
-        )''')
+        if USE_POSTGRES:
+            execute('''CREATE TABLE IF NOT EXISTS TENANT_CONFIG (
+                TC_ID SERIAL PRIMARY KEY,
+                EMP_ID INTEGER NOT NULL UNIQUE,
+                TC_NOMBRE TEXT DEFAULT '',
+                TC_LOGO_URL TEXT DEFAULT '',
+                TC_COLOR_PRIMARY TEXT DEFAULT '#4F46E5',
+                TC_COLOR_SECONDARY TEXT DEFAULT '#7C3AED',
+                TC_COLOR_BG TEXT DEFAULT '#F9FAFB',
+                TC_DOMINIO TEXT DEFAULT '',
+                TC_FOOTER_TEXT TEXT DEFAULT '',
+                TC_CUSTOM_CSS TEXT DEFAULT '',
+                TC_CUSTOM_JS TEXT DEFAULT '',
+                TC_FEATURES TEXT DEFAULT '{}',
+                TC_FECHA_REGISTRO TIMESTAMP DEFAULT NOW(),
+                TC_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW()
+            )''')
+        else:
+            execute('''CREATE TABLE IF NOT EXISTS TENANT_CONFIG (
+                TC_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                EMP_ID INTEGER NOT NULL UNIQUE,
+                TC_NOMBRE TEXT DEFAULT '',
+                TC_LOGO_URL TEXT DEFAULT '',
+                TC_COLOR_PRIMARY TEXT DEFAULT '#4F46E5',
+                TC_COLOR_SECONDARY TEXT DEFAULT '#7C3AED',
+                TC_COLOR_BG TEXT DEFAULT '#F9FAFB',
+                TC_DOMINIO TEXT DEFAULT '',
+                TC_FOOTER_TEXT TEXT DEFAULT '',
+                TC_CUSTOM_CSS TEXT DEFAULT '',
+                TC_CUSTOM_JS TEXT DEFAULT '',
+                TC_FEATURES TEXT DEFAULT '{}',
+                TC_FECHA_REGISTRO TEXT DEFAULT (datetime('now')),
+                TC_FECHA_ACTUALIZACION TEXT DEFAULT (datetime('now'))
+            )''')
         existing = query('SELECT TC_ID FROM TENANT_CONFIG WHERE EMP_ID = ?', [emp_id])
+        fecha_actualizacion_sql = 'NOW()' if USE_POSTGRES else "datetime('now')"
         if existing:
-            execute('''UPDATE TENANT_CONFIG SET
+            execute(f'''UPDATE TENANT_CONFIG SET
                 TC_NOMBRE=?, TC_LOGO_URL=?, TC_COLOR_PRIMARY=?, TC_COLOR_SECONDARY=?,
                 TC_COLOR_BG=?, TC_DOMINIO=?, TC_FOOTER_TEXT=?, TC_CUSTOM_CSS=?,
-                TC_CUSTOM_JS=?, TC_FEATURES=?, TC_FECHA_ACTUALIZACION=datetime('now')
+                TC_CUSTOM_JS=?, TC_FEATURES=?, TC_FECHA_ACTUALIZACION={fecha_actualizacion_sql}
                 WHERE EMP_ID=?''',
                 [data['nombre'], data['logo_url'],
                  data['color_primary'], data['color_secondary'],
