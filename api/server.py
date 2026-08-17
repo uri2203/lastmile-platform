@@ -552,6 +552,7 @@ def ensure_tickets_table():
             TICKET_FECHA_ACTUALIZACION TIMESTAMP DEFAULT NOW(),
             TICKET_FECHA_CIERRE TIMESTAMP,
             TICKET_RESPUESTA TEXT)""",
+        "CREATE INDEX IF NOT EXISTS idx_tickets_emp ON TICKETS(EMP_ID)",
     ])
 
 
