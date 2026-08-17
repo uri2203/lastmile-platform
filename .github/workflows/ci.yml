@@ -67,13 +67,13 @@ jobs:
 
       - name: Run migration
         env:
-          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test?sslmode=disable
         run: |
           psql $DATABASE_URL -f sql/migrate.sql
 
       - name: Test server starts
         env:
-          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test?sslmode=disable
           FLASK_ENV: testing
         run: |
           cd api
@@ -87,7 +87,7 @@ jobs:
 
       - name: Run pytest
         env:
-          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test?sslmode=disable
           FLASK_ENV: testing
         run: |
           cd api
