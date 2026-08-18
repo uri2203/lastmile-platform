@@ -3644,6 +3644,7 @@ def get_usuario(usu_id):
 
 
 @app.route('/api/usuarios/<int:usu_id>', methods=['DELETE'])
+@requiere_rol('admin', 'superadmin')
 def delete_usuario(usu_id):
     emp_id = get_emp_id()
     try:
@@ -3655,6 +3656,7 @@ def delete_usuario(usu_id):
 
 
 @app.route('/api/usuarios', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def create_usuario():
     emp_id = get_emp_id()
     u = request.json
@@ -3683,6 +3685,7 @@ def create_usuario():
 
 
 @app.route('/api/usuarios/<int:usu_id>', methods=['PUT'])
+@requiere_rol('admin', 'superadmin')
 def update_usuario(usu_id):
     emp_id = get_emp_id()
     u = request.json
