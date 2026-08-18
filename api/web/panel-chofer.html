@@ -391,7 +391,20 @@
   <script src="js/app.js"></script>
   <script>if(window.LMAuth)LMAuth.requireAuth();</script>
   <script>
-    const CHOFER_ACTUAL_ID = 1;
+    let CHOFER_ACTUAL_ID = null;
+
+    async function resolveChoferId() {
+      try {
+        const result = await Utils.api('/api/choferes/me');
+        if (result.success && result.data) {
+          CHOFER_ACTUAL_ID = result.data.CHO_ID;
+        } else {
+          console.error('No se pudo resolver el perfil de chofer del usuario logueado:', result.error);
+        }
+      } catch (e) {
+        console.error('Error resolviendo perfil de chofer:', e);
+      }
+    }
     let map = null;
     let currentDeliveryId = null;
     let cameraStream = null;
@@ -411,6 +424,10 @@
     /* ---- Load Entregas ---- */
     async function loadMisEntregas() {
       const container = document.getElementById('entregas-list');
+      if (!CHOFER_ACTUAL_ID) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Tu usuario no tiene un perfil de chofer vinculado. Contacta a tu administrador.</p></div>';
+        return;
+      }
       try {
         const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}`);
         if (!result.success) {
@@ -492,8 +509,9 @@
 
     /* ---- Historial ---- */
     async function loadHistorial() {
-      const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}?estado=ENTREGADO`);
       const container = document.getElementById('historial-list');
+      if (!CHOFER_ACTUAL_ID) return;
+      const result = await Utils.api(`/api/entregas/chofer/${CHOFER_ACTUAL_ID}?estado=ENTREGADO`);
       container.innerHTML = '';
       if (result.success && result.data.length > 0) {
         result.data.forEach(e => {
@@ -855,9 +873,10 @@
     if (!navigator.onLine) showOfflineIndicator();
 
     /* ---- i18n ---- */
-    window.i18n.init().then(() => {
+    window.i18n.init().then(async () => {
       const sel = document.getElementById('lang-select');
       if (sel) sel.value = window.i18n.lang;
+      await resolveChoferId();
       loadMisEntregas();
       loadRendimiento();
       loadHistorial();
