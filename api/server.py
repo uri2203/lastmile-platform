@@ -2729,12 +2729,12 @@ def update_estado_pedido(ped_id):
     # Send notification based on status change
     try:
         # Get chofer and client info
-        pedido = query("SELECT CHO_ID, CLI_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=?", [ped_id])
+        pedido = query("SELECT CHO_ID, CLI_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
         chofer_id = pedido[0].get('CHO_ID') if pedido else None
         cli_id = pedido[0].get('CLI_ID') if pedido else None
 
         if estado == 'EN_RUTA':
-            ch = query("SELECT CHO_NOMBRE FROM CHOFERES WHERE CHO_ID=?", [chofer_id]) if chofer_id else None
+            ch = query("SELECT CHO_NOMBRE FROM CHOFERES WHERE CHO_ID=? AND EMP_ID=?", [chofer_id, emp_id]) if chofer_id else None
             chofer_name = ch[0].get('CHO_NOMBRE', 'Chofer') if ch else 'Chofer'
             # Notify client that order is on the way
             if notification_service:
