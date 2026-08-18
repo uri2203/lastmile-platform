@@ -69,6 +69,9 @@ class I18n {
         document.querySelectorAll('[data-i18n-title]').forEach(el => {
             el.title = this.t(el.getAttribute('data-i18n-title'));
         });
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            el.placeholder = this.t(el.getAttribute('data-i18n-ph'));
+        });
         document.documentElement.lang = this.lang;
         document.documentElement.dir = this.isRTL() ? 'rtl' : 'ltr';
     }

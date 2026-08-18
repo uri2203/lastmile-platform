@@ -146,7 +146,7 @@
           <a href="index.html" onclick="localStorage.clear()" style="color:var(--text-muted);font-size:var(--font-xs);text-decoration:none;display:flex;align-items:center;gap:6px;">
             <i class="fas fa-sign-out-alt"></i> <span data-i18n="cliente.nav_logout">Cerrar sesion</span>
           </a>
-          <button class="theme-toggle" title="Cambiar tema" data-i18n="cliente.cambiar_tema_title"><i class="fas fa-sun"></i></button>
+          <button class="theme-toggle" title="Cambiar tema" data-i18n-title="cliente.cambiar_tema"><i class="fas fa-sun"></i></button>
         </div>
         <select id="lang-select" onchange="window.i18n.setLanguage(this.value);location.reload()" style="background-color:#1a1a24;color:#e8e8ed;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;width:100%;">
           <option value="es">🇲🇽 ES</option>
@@ -174,7 +174,7 @@
           <span class="topbar-title" id="topbar-title">Dashboard</span>
         </div>
         <div class="topbar-right">
-          <button class="theme-toggle" title="Cambiar tema" data-i18n="cliente.cambiar_tema_title"><i class="fas fa-sun"></i></button>
+          <button class="theme-toggle" title="Cambiar tema" data-i18n-title="cliente.cambiar_tema"><i class="fas fa-sun"></i></button>
           <div class="avatar lg">MC</div>
         </div>
       </div>
@@ -276,8 +276,8 @@
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label" data-i18n="cliente.form_indicaciones">Indicaciones especiales</label>
-                <textarea id="nuevo-indicaciones" rows="2" data-i18n-ph="cliente.form_indicaciones_ph" placeholder="Horario preferido, instrucciones especiales..."></textarea>
+                <label class="form-label" data-i18n="cliente.form_instrucciones">Indicaciones especiales</label>
+                <textarea id="nuevo-indicaciones" rows="2" data-i18n-ph="cliente.form_instrucciones_ph" placeholder="Horario preferido, instrucciones especiales..."></textarea>
               </div>
               <button class="btn btn-primary btn-lg w-full" onclick="crearPedido()">
                 <i class="fas fa-paper-plane"></i> <span data-i18n="cliente.btn_crear_envio">Crear Envio</span>
