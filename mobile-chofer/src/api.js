@@ -28,20 +28,30 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch (e) {
-    throw new Error('Sin conexion. Revisa tu internet e intenta de nuevo.');
+    const err = new Error('network');
+    err.code = 'NETWORK';
+    throw err;
   }
   let json;
   try {
     json = await res.json();
   } catch (e) {
-    throw new Error(`Error del servidor (${res.status})`);
+    const err = new Error(`server (${res.status})`);
+    err.code = 'SERVER';
+    throw err;
   }
   if (res.status === 401) {
     await setToken(null);
-    throw new Error('Sesion expirada. Inicia sesion de nuevo.');
+    const err = new Error('session expired');
+    err.code = 'SESSION_EXPIRED';
+    throw err;
   }
   if (!res.ok && !json.success) {
-    throw new Error(json.error || `Error del servidor (${res.status})`);
+    // json.error viene del backend en texto plano (no i18n); se muestra tal
+    // cual cuando existe, ya que traducirlo requeriria mapear cada mensaje.
+    const err = new Error(json.error || `server (${res.status})`);
+    err.code = json.error ? 'BACKEND' : 'SERVER';
+    throw err;
   }
   return json;
 }

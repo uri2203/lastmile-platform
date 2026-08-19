@@ -8,7 +8,9 @@
     "splash": {
       "backgroundColor": "#0d0d12"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.lastmiledelivery.chofer",
@@ -17,7 +19,9 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Se usa tu ubicacion en segundo plano para que operaciones vea tu ruta mientras entregas pedidos.",
         "NSCameraUsageDescription": "Se usa la camara para tomar la foto de comprobante al entregar un pedido."
       },
-      "backgroundModes": ["location"]
+      "backgroundModes": [
+        "location"
+      ]
     },
     "android": {
       "package": "com.lastmiledelivery.chofer",
@@ -25,7 +29,11 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "CAMERA",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#0d0d12"
@@ -42,7 +50,11 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "https://lastmile-platform.onrender.com"
-    }
+      "apiBaseUrl": "https://lastmile-platform.onrender.com",
+      "eas": {
+        "projectId": "4df972fa-2afa-4c48-887e-7e7245d2c379"
+      }
+    },
+    "owner": "uri2203"
   }
 }

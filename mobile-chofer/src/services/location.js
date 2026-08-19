@@ -33,10 +33,15 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
   }
 });
 
-export async function startTracking(choId) {
+// notificationTitle/Body son textos para la notificacion persistente de Android
+// (foreground service) -- se pasan ya traducidos desde la pantalla que llama,
+// porque este modulo no es un componente React y no puede usar useI18n().
+export async function startTracking(choId, notificationTitle = 'Last Mile Chofer', notificationBody = 'Reportando tu ubicacion mientras entregas pedidos') {
   const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
   if (fgStatus !== 'granted') {
-    throw new Error('Se necesita permiso de ubicacion para reportar tu posicion durante las entregas.');
+    const err = new Error('location permission denied');
+    err.code = 'LOCATION_PERMISSION';
+    throw err;
   }
   await Location.requestBackgroundPermissionsAsync(); // best-effort; en foreground igual funciona
 
@@ -51,8 +56,8 @@ export async function startTracking(choId) {
     distanceInterval: 50, // o cada 50m
     showsBackgroundLocationIndicator: true,
     foregroundService: {
-      notificationTitle: 'Last Mile Chofer',
-      notificationBody: 'Reportando tu ubicacion mientras entregas pedidos',
+      notificationTitle,
+      notificationBody,
     },
   });
 }

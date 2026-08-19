@@ -4,9 +4,11 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 import { api } from '../api';
+import { useI18n, translateError } from '../i18n';
 
 export default function DeliveryDetailScreen({ route, navigation }) {
   const { entrega } = route.params;
+  const { t } = useI18n();
   const [photo, setPhoto] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
@@ -23,7 +25,7 @@ export default function DeliveryDetailScreen({ route, navigation }) {
     if (!permission?.granted) {
       const res = await requestPermission();
       if (!res.granted) {
-        Alert.alert('Permiso requerido', 'Se necesita acceso a la camara para la foto de comprobante.');
+        Alert.alert(t('chofer_app.permiso_camara_titulo'), t('chofer_app.permiso_camara_msg'));
         return;
       }
     }
@@ -39,7 +41,7 @@ export default function DeliveryDetailScreen({ route, navigation }) {
 
   async function handleMarkDelivered() {
     if (!photo) {
-      Alert.alert('Falta la foto', 'Toma una foto de comprobante antes de marcar la entrega.');
+      Alert.alert(t('chofer_app.falta_foto_titulo'), t('chofer_app.falta_foto_desc'));
       return;
     }
     setSaving(true);
@@ -47,11 +49,11 @@ export default function DeliveryDetailScreen({ route, navigation }) {
       // La foto se guarda como evidencia local por ahora (uri del dispositivo);
       // subir el archivo a un storage es un paso aparte no cubierto en v1.
       await api.markDelivered(entrega.ENT_ID, `foto_local:${photo}`);
-      Alert.alert('Listo', 'Entrega registrada correctamente.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+      Alert.alert(t('chofer_app.listo_titulo'), t('chofer_app.entrega_registrada_msg'), [
+        { text: t('chofer_app.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
     } finally {
       setSaving(false);
     }
@@ -59,31 +61,31 @@ export default function DeliveryDetailScreen({ route, navigation }) {
 
   async function handleMarkFailed() {
     Alert.prompt
-      ? Alert.prompt('Motivo', 'Explica por que no se pudo entregar', async (motivo) => {
+      ? Alert.prompt(t('chofer_app.motivo_titulo'), t('chofer_app.motivo_desc'), async (motivo) => {
           if (!motivo) return;
           try {
             await api.markFailed(entrega.ENT_ID, motivo);
             navigation.goBack();
           } catch (e) {
-            Alert.alert('Error', e.message);
+            Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
           }
         })
-      : Alert.alert('No disponible', 'Reportar entrega fallida no esta disponible en este dispositivo.');
+      : Alert.alert(t('chofer_app.no_disponible_titulo'), t('chofer_app.no_disponible_desc'));
   }
 
   async function handleCollectCash() {
     const montoNum = parseFloat(monto);
     if (!montoNum || montoNum <= 0) {
-      Alert.alert('Monto invalido', 'Ingresa un monto valido.');
+      Alert.alert(t('chofer_app.monto_invalido_titulo'), t('chofer_app.monto_invalido_desc'));
       return;
     }
     setSavingCod(true);
     try {
       await api.collectCash(entrega.PED_ID, montoNum, notas);
       setShowCodModal(false);
-      Alert.alert('Listo', 'Cobro registrado correctamente.');
+      Alert.alert(t('chofer_app.listo_titulo'), t('chofer_app.cobro_registrado_msg'));
     } catch (e) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
     } finally {
       setSavingCod(false);
     }
@@ -108,29 +110,29 @@ export default function DeliveryDetailScreen({ route, navigation }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.md }}>
       <View style={styles.card}>
-        <Text style={styles.pedNum}>{entrega.PED_NUMERO || `Pedido #${entrega.PED_ID}`}</Text>
-        <Row icon="person-outline" label="Cliente" value={entrega.PED_CLIENTE_NOMBRE} />
-        <Row icon="location-outline" label="Destino" value={entrega.PED_DESTINO_DIR} />
-        {isCod && <Row icon="cash-outline" label="Forma de pago" value="Efectivo (cobrar al entregar)" />}
+        <Text style={styles.pedNum}>{entrega.PED_NUMERO || `${t('chofer_app.pedido_prefix')}${entrega.PED_ID}`}</Text>
+        <Row icon="person-outline" label={t('chofer_app.cliente_label')} value={entrega.PED_CLIENTE_NOMBRE} />
+        <Row icon="location-outline" label={t('chofer_app.destino_label')} value={entrega.PED_DESTINO_DIR} />
+        {isCod && <Row icon="cash-outline" label={t('chofer_app.forma_pago_label')} value={t('chofer_app.efectivo_cobrar')} />}
       </View>
 
       {isCod && (
         <TouchableOpacity style={styles.secondaryButton} onPress={() => setShowCodModal(true)}>
           <Ionicons name="cash-outline" size={18} color={colors.accent} />
-          <Text style={styles.secondaryButtonText}>Registrar cobro en efectivo</Text>
+          <Text style={styles.secondaryButtonText}>{t('chofer_app.registrar_cobro')}</Text>
         </TouchableOpacity>
       )}
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Comprobante de entrega</Text>
+        <Text style={styles.sectionTitle}>{t('chofer_app.comprobante_titulo')}</Text>
         {photo ? (
           <Image source={{ uri: photo }} style={styles.photoPreview} />
         ) : (
-          <Text style={styles.helperText}>Toma una foto del paquete entregado como comprobante.</Text>
+          <Text style={styles.helperText}>{t('chofer_app.foto_comprobante_desc')}</Text>
         )}
         <TouchableOpacity style={styles.secondaryButton} onPress={openCamera}>
           <Ionicons name="camera-outline" size={18} color={colors.accent} />
-          <Text style={styles.secondaryButtonText}>{photo ? 'Tomar otra foto' : 'Tomar foto'}</Text>
+          <Text style={styles.secondaryButtonText}>{photo ? t('chofer_app.tomar_otra_foto') : t('chofer_app.tomar_foto')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -138,23 +140,23 @@ export default function DeliveryDetailScreen({ route, navigation }) {
         {saving ? <ActivityIndicator color="#fff" /> : (
           <>
             <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-            <Text style={styles.deliverButtonText}>Marcar como entregado</Text>
+            <Text style={styles.deliverButtonText}>{t('chofer_app.marcar_entregado')}</Text>
           </>
         )}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.failButton} onPress={handleMarkFailed}>
         <Ionicons name="close-circle-outline" size={18} color={colors.danger} />
-        <Text style={styles.failButtonText}>No se pudo entregar</Text>
+        <Text style={styles.failButtonText}>{t('chofer_app.no_pudo_entregar')}</Text>
       </TouchableOpacity>
 
       <Modal visible={showCodModal} transparent animationType="slide" onRequestClose={() => setShowCodModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.sectionTitle}>Cobro en efectivo</Text>
+            <Text style={styles.sectionTitle}>{t('chofer_app.cobro_efectivo_titulo')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Monto cobrado ($)"
+              placeholder={t('chofer_app.monto_ph')}
               placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={monto}
@@ -162,17 +164,17 @@ export default function DeliveryDetailScreen({ route, navigation }) {
             />
             <TextInput
               style={styles.input}
-              placeholder="Notas (opcional)"
+              placeholder={t('chofer_app.notas_ph')}
               placeholderTextColor={colors.textMuted}
               value={notas}
               onChangeText={setNotas}
             />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: spacing.sm }}>
               <TouchableOpacity style={[styles.secondaryButton, { flex: 1 }]} onPress={() => setShowCodModal(false)}>
-                <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                <Text style={styles.secondaryButtonText}>{t('chofer_app.cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.deliverButton, { flex: 1 }]} onPress={handleCollectCash} disabled={savingCod}>
-                {savingCod ? <ActivityIndicator color="#fff" /> : <Text style={styles.deliverButtonText}>Guardar</Text>}
+                {savingCod ? <ActivityIndicator color="#fff" /> : <Text style={styles.deliverButtonText}>{t('chofer_app.guardar')}</Text>}
               </TouchableOpacity>
             </View>
           </View>

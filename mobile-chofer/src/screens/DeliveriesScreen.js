@@ -3,27 +3,29 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Act
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../i18n';
 import { api } from '../api';
-
-const ESTADO_LABEL = {
-  PENDIENTE: 'Pendiente',
-  EN_RUTA: 'En ruta',
-  ENTREGADO: 'Entregado',
-  NO_ENTREGADO: 'No entregado',
-};
-
-const ESTADO_COLOR = {
-  PENDIENTE: colors.warning,
-  EN_RUTA: colors.info,
-  ENTREGADO: colors.success,
-  NO_ENTREGADO: colors.danger,
-};
 
 export default function DeliveriesScreen({ navigation }) {
   const { choferProfile, profileError, reloadProfile } = useAuth();
+  const { t } = useI18n();
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const ESTADO_LABEL = {
+    PENDIENTE: t('chofer_app.estado_pendiente'),
+    EN_RUTA: t('chofer_app.estado_en_ruta'),
+    ENTREGADO: t('chofer_app.estado_entregado'),
+    NO_ENTREGADO: t('chofer_app.estado_no_entregado'),
+  };
+
+  const ESTADO_COLOR = {
+    PENDIENTE: colors.warning,
+    EN_RUTA: colors.info,
+    ENTREGADO: colors.success,
+    NO_ENTREGADO: colors.danger,
+  };
 
   const load = useCallback(async () => {
     if (!choferProfile) return;
@@ -53,11 +55,8 @@ export default function DeliveriesScreen({ navigation }) {
     return (
       <View style={styles.center}>
         <Ionicons name="alert-circle-outline" size={48} color={colors.warning} />
-        <Text style={styles.emptyTitle}>Sin perfil de chofer vinculado</Text>
-        <Text style={styles.emptyText}>
-          Tu cuenta no tiene un perfil de chofer asociado todavia. Pedile a tu administrador que te vincule
-          desde el panel de choferes.
-        </Text>
+        <Text style={styles.emptyTitle}>{t('chofer_app.sin_perfil_titulo')}</Text>
+        <Text style={styles.emptyText}>{t('chofer_app.sin_perfil_desc')}</Text>
       </View>
     );
   }
@@ -80,8 +79,8 @@ export default function DeliveriesScreen({ navigation }) {
         ListEmptyComponent={
           <View style={styles.center}>
             <Ionicons name="cube-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyTitle}>No tienes entregas asignadas</Text>
-            <Text style={styles.emptyText}>Cuando te asignen un pedido, va a aparecer aca.</Text>
+            <Text style={styles.emptyTitle}>{t('chofer_app.sin_entregas_titulo')}</Text>
+            <Text style={styles.emptyText}>{t('chofer_app.sin_entregas_desc')}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -90,7 +89,7 @@ export default function DeliveriesScreen({ navigation }) {
             onPress={() => navigation.navigate('DeliveryDetail', { entrega: item })}
           >
             <View style={styles.cardHeader}>
-              <Text style={styles.cardNumber}>{item.PED_NUMERO || `Pedido #${item.PED_ID}`}</Text>
+              <Text style={styles.cardNumber}>{item.PED_NUMERO || `${t('chofer_app.pedido_prefix')}${item.PED_ID}`}</Text>
               <View style={[styles.badge, { backgroundColor: `${ESTADO_COLOR[item.ENT_ESTADO] || colors.textMuted}22` }]}>
                 <Text style={[styles.badgeText, { color: ESTADO_COLOR[item.ENT_ESTADO] || colors.textMuted }]}>
                   {ESTADO_LABEL[item.ENT_ESTADO] || item.ENT_ESTADO}

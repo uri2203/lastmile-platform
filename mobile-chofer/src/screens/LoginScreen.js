@@ -3,9 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import { StatusBar } from 'expo-status-bar';
 import { colors, radius, spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { useI18n, translateError } from '../i18n';
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const { t } = useI18n();
   const [usuario, setUsuario] = useState('');
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
@@ -13,7 +15,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!usuario.trim() || !pass) {
-      setError('Ingresa usuario y contrasena');
+      setError(t('login.error_vacios'));
       return;
     }
     setError('');
@@ -21,7 +23,7 @@ export default function LoginScreen() {
     try {
       await login(usuario.trim(), pass);
     } catch (e) {
-      setError(e.message);
+      setError(translateError(t, e));
     } finally {
       setLoading(false);
     }
@@ -34,34 +36,34 @@ export default function LoginScreen() {
         <View style={styles.logoBox}>
           <Text style={styles.logoText}>LM</Text>
         </View>
-        <Text style={styles.title}>Last Mile Chofer</Text>
-        <Text style={styles.subtitle}>Inicia sesion con tu cuenta de chofer</Text>
+        <Text style={styles.title}>{t('chofer_app.app_title')}</Text>
+        <Text style={styles.subtitle}>{t('chofer_app.login_subtitle')}</Text>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Text style={styles.label}>USUARIO</Text>
+        <Text style={styles.label}>{t('login.usuario').toUpperCase()}</Text>
         <TextInput
           style={styles.input}
           value={usuario}
           onChangeText={setUsuario}
-          placeholder="Tu usuario"
+          placeholder={t('login.usuario_ph')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
         />
 
-        <Text style={styles.label}>CONTRASENA</Text>
+        <Text style={styles.label}>{t('login.contrasena').toUpperCase()}</Text>
         <TextInput
           style={styles.input}
           value={pass}
           onChangeText={setPass}
-          placeholder="Tu contrasena"
+          placeholder={t('login.contrasena_ph')}
           placeholderTextColor={colors.textMuted}
           secureTextEntry
         />
 
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Iniciar Sesion</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('login.btn_entrar')}</Text>}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

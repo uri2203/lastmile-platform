@@ -40,10 +40,14 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (usuario, pass) => {
     const res = await api.login(usuario, pass);
     if (!res.success || !res.token) {
-      throw new Error(res.error || 'Usuario o contrasena incorrectos');
+      const err = new Error(res.error || 'invalid credentials');
+      err.code = res.error ? 'BACKEND' : 'INVALID_CREDENTIALS';
+      throw err;
     }
     if (res.data?.rol !== 'chofer') {
-      throw new Error('Esta app es solo para choferes. Tu cuenta tiene otro rol.');
+      const err = new Error('wrong role');
+      err.code = 'WRONG_ROLE';
+      throw err;
     }
     await setToken(res.token);
     setUser(res.data);

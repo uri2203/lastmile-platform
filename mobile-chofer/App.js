@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/theme';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { I18nProvider } from './src/i18n';
 import LoginScreen from './src/screens/LoginScreen';
 import RootNavigator from './src/navigation';
 
@@ -23,9 +24,11 @@ function Root() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <Root />
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <Root />
+        </AuthProvider>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

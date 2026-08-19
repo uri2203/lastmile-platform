@@ -3,10 +3,12 @@ import { View, Text, FlatList, StyleSheet, RefreshControl, ActivityIndicator } f
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../i18n';
 import { api } from '../api';
 
 export default function HistoryScreen() {
   const { choferProfile } = useAuth();
+  const { t } = useI18n();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,7 +47,7 @@ export default function HistoryScreen() {
         ListEmptyComponent={
           <View style={styles.center}>
             <Ionicons name="time-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyTitle}>Sin historial todavia</Text>
+            <Text style={styles.emptyTitle}>{t('chofer_app.sin_historial_todavia')}</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -56,7 +58,7 @@ export default function HistoryScreen() {
                 <Ionicons name={ok ? 'checkmark' : 'close'} size={16} color={ok ? colors.success : colors.danger} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>{item.PED_NUMERO || `Pedido #${item.PED_ID}`}</Text>
+                <Text style={styles.rowTitle}>{item.PED_NUMERO || `${t('chofer_app.pedido_prefix')}${item.PED_ID}`}</Text>
                 <Text style={styles.rowSub} numberOfLines={1}>{item.PED_DESTINO_DIR}</Text>
               </View>
             </View>
