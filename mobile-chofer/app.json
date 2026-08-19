@@ -49,6 +49,12 @@
         }
       ]
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4df972fa-2afa-4c48-887e-7e7245d2c379"
+    },
     "extra": {
       "apiBaseUrl": "https://lastmile-platform.onrender.com",
       "eas": {
