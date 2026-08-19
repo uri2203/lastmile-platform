@@ -3402,6 +3402,65 @@ def get_entregas_chofer(cho_id):
         [cho_id, emp_id])})
 
 
+@app.route('/api/entregas/<int:ent_id>', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'chofer', 'superadmin')
+def update_entrega(ent_id):
+    """Marca una entrega como ENTREGADO o NO_ENTREGADO. Usado por el panel/app del
+    chofer (Utils.api(`/api/entregas/${entId}`, {method:'PUT', ...})) -- este
+    endpoint no existia, por lo que 'marcar entregado/fallido' nunca funcionaba."""
+    emp_id = get_emp_id()
+    entrega = query("SELECT * FROM ENTREGAS WHERE ENT_ID=? AND EMP_ID=?", [ent_id, emp_id])
+    if not entrega:
+        return jsonify({'success': False, 'error': 'Entrega no encontrada'}), 404
+    entrega = entrega[0]
+
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        if not own_cho_id or entrega.get('CHO_ID') != own_cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado: esta entrega no esta asignada a tu perfil de chofer'}), 403
+
+    data = request.json or {}
+    estado = data.get('estado')
+    if estado not in ('ENTREGADO', 'NO_ENTREGADO'):
+        return jsonify({'success': False, 'error': "estado debe ser 'ENTREGADO' o 'NO_ENTREGADO'"}), 400
+
+    ped_id = entrega.get('PED_ID')
+    _now_sql = 'NOW()' if USE_POSTGRES else "datetime('now')"
+
+    if estado == 'ENTREGADO':
+        evidencia = data.get('evidencia', '')
+        execute(f"UPDATE ENTREGAS SET ENT_ESTADO='ENTREGADO', ENT_FECHA_LLEGADA={_now_sql}, ENT_EVIDENCIA=? WHERE ENT_ID=?",
+                [evidencia, ent_id])
+        if ped_id:
+            execute("UPDATE PEDIDOS SET PED_ESTADO='ENTREGADO' WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
+            execute("INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO) VALUES (?, 'ENTREGADO', ?)",
+                    [ped_id, g.usuario or 'CHOFER'])
+            try:
+                if notification_service:
+                    ped = query("SELECT CLI_ID, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=?", [ped_id])
+                    notification_service.send('pedido_entregado', ped_id, emp_id,
+                                             cli_id=ped[0].get('CLI_ID') if ped else None,
+                                             extra={'fecha_entrega': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                                                    'destino': ped[0].get('PED_DESTINO_DIR', '') if ped else ''})
+            except Exception as e:
+                app.logger.warning(f'Notification error: {str(e)}')
+        return jsonify({'success': True, 'message': 'Entrega registrada'})
+
+    # NO_ENTREGADO
+    motivo = data.get('motivo', 'Sin especificar')
+    execute("UPDATE ENTREGAS SET ENT_ESTADO='NO_ENTREGADO', ENT_NOTAS=? WHERE ENT_ID=?", [motivo, ent_id])
+    if ped_id:
+        execute("INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO, HIS_OBSERVACIONES) VALUES (?, 'NO_ENTREGADO', ?, ?)",
+                [ped_id, g.usuario or 'CHOFER', motivo])
+        try:
+            execute("INSERT INTO INCIDENCIAS (EMP_ID, PED_ID, CHO_ID, INC_TIPO, INC_DESCRIPCION, INC_USUARIO_REPORTA) VALUES (?, ?, ?, 'ENTREGA_FALLIDA', ?, ?)",
+                    [emp_id, ped_id, entrega.get('CHO_ID'), motivo, g.usuario or 'CHOFER'])
+        except Exception as e:
+            app.logger.warning(f'Incidencia insert error: {str(e)}')
+    return jsonify({'success': True, 'message': 'Incidencia registrada'})
+
+
 # ========================================
 # MODULO: KPIs
 # ========================================
@@ -5449,6 +5508,7 @@ def marketplace_assign():
     if cho_id:
         # Direct assignment
         execute("UPDATE PEDIDOS SET CHO_ID=?, PED_ESTADO='ASIGNADO' WHERE PED_ID=?", [cho_id, ped_id])
+        _ensure_entrega_row(ped_id, emp_id, cho_id)
         return jsonify({'success': True, 'message': f'Pedido {ped_id} asignado al chofer {cho_id}'})
 
     # Auto-assign: find best available driver
@@ -5478,6 +5538,7 @@ def marketplace_assign():
 
     best = min(drivers, key=dist)
     execute("UPDATE PEDIDOS SET CHO_ID=?, PED_ESTADO='ASIGNADO' WHERE PED_ID=?", [best['CHO_ID'], ped_id])
+    _ensure_entrega_row(ped_id, emp_id, best['CHO_ID'])
     return jsonify({
         'success': True,
         'assigned_to': best['CHO_ID'],
