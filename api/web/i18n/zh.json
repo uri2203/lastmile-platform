@@ -976,6 +976,11 @@
     "salir": "退出",
     "idioma_titulo": "语言",
     "gps_notif_body": "配送订单期间正在报告您的位置",
-    "location_permission_denied": "需要位置权限才能在配送期间报告您的位置。"
+    "location_permission_denied": "需要位置权限才能在配送期间报告您的位置。",
+    "buscar_actualizaciones": "检查更新",
+    "update_al_dia": "您已经是最新版本。",
+    "update_disabled": "此版本不支持自动更新。",
+    "version_instalada": "通过 OTA 更新的版本",
+    "version_embebida": "安装包原始版本"
   }
 }

@@ -976,6 +976,11 @@
     "salir": "خروج",
     "idioma_titulo": "اللغة",
     "gps_notif_body": "يتم الإبلاغ عن موقعك أثناء توصيل الطلبات",
-    "location_permission_denied": "يلزم إذن الموقع للإبلاغ عن موقعك أثناء عمليات التسليم."
+    "location_permission_denied": "يلزم إذن الموقع للإبلاغ عن موقعك أثناء عمليات التسليم.",
+    "buscar_actualizaciones": "التحقق من التحديثات",
+    "update_al_dia": "لديك بالفعل أحدث إصدار.",
+    "update_disabled": "التحديثات التلقائية غير متوفرة في هذا الإصدار.",
+    "version_instalada": "تم تحديث الإصدار عبر OTA",
+    "version_embebida": "الإصدار الأصلي للمثبت"
   }
 }

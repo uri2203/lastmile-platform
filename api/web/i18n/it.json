@@ -976,6 +976,11 @@
     "salir": "Esci",
     "idioma_titulo": "Lingua",
     "gps_notif_body": "Segnalazione della tua posizione durante le consegne",
-    "location_permission_denied": "E necessaria l'autorizzazione alla posizione per segnalare la tua posizione durante le consegne."
+    "location_permission_denied": "E necessaria l'autorizzazione alla posizione per segnalare la tua posizione durante le consegne.",
+    "buscar_actualizaciones": "Cerca aggiornamenti",
+    "update_al_dia": "Hai gia l'ultima versione.",
+    "update_disabled": "Gli aggiornamenti automatici non sono disponibili in questa versione.",
+    "version_instalada": "Versione aggiornata via OTA",
+    "version_embebida": "Versione originale dell'installer"
   }
 }

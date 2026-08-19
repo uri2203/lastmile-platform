@@ -976,6 +976,11 @@
     "salir": "나가기",
     "idioma_titulo": "언어",
     "gps_notif_body": "주문 배송 중 위치를 보고하고 있습니다",
-    "location_permission_denied": "배송 중 위치를 보고하려면 위치 권한이 필요합니다."
+    "location_permission_denied": "배송 중 위치를 보고하려면 위치 권한이 필요합니다.",
+    "buscar_actualizaciones": "업데이트 확인",
+    "update_al_dia": "이미 최신 버전입니다.",
+    "update_disabled": "이 버전에서는 자동 업데이트를 사용할 수 없습니다.",
+    "version_instalada": "OTA로 업데이트된 버전",
+    "version_embebida": "원본 설치 버전"
   }
 }

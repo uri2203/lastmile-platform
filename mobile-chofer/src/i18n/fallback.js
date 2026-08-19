@@ -104,5 +104,10 @@ export default {
     idioma_titulo: 'Idioma',
     gps_notif_body: 'Reportando tu ubicacion mientras entregas pedidos',
     location_permission_denied: 'Se necesita permiso de ubicacion para reportar tu posicion durante las entregas.',
+    buscar_actualizaciones: 'Buscar actualizaciones',
+    update_al_dia: 'Ya tenes la ultima version.',
+    update_disabled: 'Las actualizaciones automaticas no estan disponibles en esta version.',
+    version_instalada: 'Version actualizada por OTA',
+    version_embebida: 'Version original del instalador',
   },
 };

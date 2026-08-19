@@ -976,6 +976,11 @@
     "salir": "Verlaten",
     "idioma_titulo": "Taal",
     "gps_notif_body": "Meldt je locatie tijdens het bezorgen",
-    "location_permission_denied": "Locatietoestemming is nodig om je positie tijdens leveringen te melden."
+    "location_permission_denied": "Locatietoestemming is nodig om je positie tijdens leveringen te melden.",
+    "buscar_actualizaciones": "Controleren op updates",
+    "update_al_dia": "Je hebt al de nieuwste versie.",
+    "update_disabled": "Automatische updates zijn niet beschikbaar in deze versie.",
+    "version_instalada": "Versie bijgewerkt via OTA",
+    "version_embebida": "Oorspronkelijke installatieversie"
   }
 }

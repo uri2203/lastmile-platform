@@ -976,6 +976,11 @@
     "salir": "Sair",
     "idioma_titulo": "Idioma",
     "gps_notif_body": "Reportando sua localizacao enquanto entrega pedidos",
-    "location_permission_denied": "E necessaria permissao de localizacao para reportar sua posicao durante as entregas."
+    "location_permission_denied": "E necessaria permissao de localizacao para reportar sua posicao durante as entregas.",
+    "buscar_actualizaciones": "Buscar atualizacoes",
+    "update_al_dia": "Voce ja tem a ultima versao.",
+    "update_disabled": "As atualizacoes automaticas nao estao disponiveis nesta versao.",
+    "version_instalada": "Versao atualizada via OTA",
+    "version_embebida": "Versao original do instalador"
   }
 }

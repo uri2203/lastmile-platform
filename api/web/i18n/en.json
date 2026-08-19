@@ -979,6 +979,11 @@
     "salir": "Log out",
     "idioma_titulo": "Language",
     "gps_notif_body": "Reporting your location while delivering orders",
-    "location_permission_denied": "Location permission is needed to report your position during deliveries."
+    "location_permission_denied": "Location permission is needed to report your position during deliveries.",
+    "buscar_actualizaciones": "Check for updates",
+    "update_al_dia": "You already have the latest version.",
+    "update_disabled": "Automatic updates are not available in this build.",
+    "version_instalada": "Version updated via OTA",
+    "version_embebida": "Original installer version"
   }
 }

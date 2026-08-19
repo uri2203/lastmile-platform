@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Modal, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Modal, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { useI18n, translateError } from '../i18n';
 import { startTracking, stopTracking, isTracking } from '../services/location';
 import { registerForPushNotifications } from '../services/notifications';
+import { checkForUpdateManual, getCurrentUpdateInfo } from '../services/updates';
 
 export default function ProfileScreen() {
   const { user, choferProfile, logout } = useAuth();
@@ -13,6 +14,22 @@ export default function ProfileScreen() {
   const [tracking, setTracking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const updateInfo = getCurrentUpdateInfo();
+
+  async function handleCheckUpdate() {
+    setCheckingUpdate(true);
+    const result = await checkForUpdateManual();
+    setCheckingUpdate(false);
+    if (result.status === 'up-to-date') {
+      Alert.alert(t('chofer_app.listo_titulo'), t('chofer_app.update_al_dia'));
+    } else if (result.status === 'disabled') {
+      Alert.alert(t('chofer_app.no_disponible_titulo'), t('chofer_app.update_disabled'));
+    } else if (result.status === 'error') {
+      Alert.alert(t('chofer_app.error_titulo'), t('chofer_app.network_error'));
+    }
+    // status === 'updated': reloadAsync() ya reinicio la app, no llega aca.
+  }
 
   useEffect(() => {
     isTracking().then(setTracking);
@@ -77,6 +94,18 @@ export default function ProfileScreen() {
             <Text style={styles.settingSub}>{currentLang ? `${currentLang.flag} ${currentLang.name}` : lang}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.card} onPress={handleCheckUpdate} disabled={checkingUpdate}>
+        <View style={styles.rowBetween}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.settingTitle}>{t('chofer_app.buscar_actualizaciones')}</Text>
+            <Text style={styles.settingSub}>
+              {updateInfo.updateId ? t('chofer_app.version_instalada') : t('chofer_app.version_embebida')}
+            </Text>
+          </View>
+          {checkingUpdate ? <ActivityIndicator color={colors.accent} /> : <Ionicons name="refresh" size={18} color={colors.accent} />}
         </View>
       </TouchableOpacity>
 
