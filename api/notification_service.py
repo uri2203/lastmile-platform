@@ -721,5 +721,33 @@ class NotificationService:
         return results
 
 
+def send_push_to_chofer(cho_id, emp_id, title, body, data=None):
+    """Envia una notificacion push (Expo Push API) a todos los dispositivos
+    Expo registrados de un chofer (NOTIF_DISPOSITIVOS, DISP_PLATAFORMA='EXPO').
+    No falla el flujo que la llama si el envio no funciona -- es best-effort,
+    igual que el resto de las notificaciones de la plataforma."""
+    if not cho_id:
+        return
+    try:
+        from db import query
+        rows = query(
+            "SELECT DISP_TOKEN FROM NOTIF_DISPOSITIVOS WHERE CHO_ID=? AND EMP_ID=? AND DISP_PLATAFORMA='EXPO' AND DISP_ACTIVO='S'",
+            [cho_id, emp_id]
+        )
+        tokens = [r['DISP_TOKEN'] for r in rows if r.get('DISP_TOKEN')]
+        if not tokens:
+            return
+        import requests
+        messages = [{'to': t, 'title': title, 'body': body, 'data': data or {}, 'sound': 'default'} for t in tokens]
+        requests.post(
+            'https://exp.host/--/api/v2/push/send',
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+            json=messages,
+            timeout=10
+        )
+    except Exception as e:
+        logger.warning(f'[EXPO PUSH] Error enviando a chofer {cho_id}: {str(e)}')
+
+
 # Singleton
 notification_service = NotificationService()

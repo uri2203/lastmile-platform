@@ -2711,9 +2711,38 @@ def asignar_pedido(ped_id):
         execute(f"UPDATE PEDIDOS SET {', '.join(updates)} WHERE PED_ID=? AND EMP_ID=?", params)
         execute("INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO, HIS_OBSERVACIONES) VALUES (?, 'ASIGNADO', ?, ?)",
                 [ped_id, data.get('usuario', 'SYSTEM'), notas])
+        if cho_id:
+            _ensure_entrega_row(ped_id, emp_id, cho_id, veh_id)
         return jsonify({'success': True, 'message': 'Chofer asignado al pedido'})
     except Exception as e:
         return safe_error(e, 'asignar_pedido')
+
+
+def _ensure_entrega_row(ped_id, emp_id, cho_id, veh_id=None):
+    """Crea (o actualiza el chofer/vehiculo de) la fila ENTREGAS ligada a un pedido.
+    Se llama siempre que un pedido se asigna a un chofer, para que el panel/app del
+    chofer tenga un registro real de la entrega que debe ejecutar. Tambien avisa
+    por push (app nativa) al chofer asignado, si tiene un dispositivo registrado."""
+    try:
+        existing = query("SELECT ENT_ID FROM ENTREGAS WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
+        if existing:
+            execute("UPDATE ENTREGAS SET CHO_ID=?, VEH_ID=?, ENT_ESTADO='PENDIENTE' WHERE ENT_ID=?",
+                    [cho_id, veh_id, existing[0]['ENT_ID']])
+        else:
+            execute("INSERT INTO ENTREGAS (EMP_ID, PED_ID, CHO_ID, VEH_ID, ENT_ESTADO) VALUES (?, ?, ?, ?, 'PENDIENTE')",
+                    [emp_id, ped_id, cho_id, veh_id])
+    except Exception as e:
+        app.logger.warning(f'_ensure_entrega_row error: {str(e)}')
+
+    try:
+        from notification_service import send_push_to_chofer
+        ped = query("SELECT PED_NUMERO, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=?", [ped_id])
+        numero = ped[0].get('PED_NUMERO', f'#{ped_id}') if ped else f'#{ped_id}'
+        destino = ped[0].get('PED_DESTINO_DIR', '') if ped else ''
+        send_push_to_chofer(cho_id, emp_id, 'Nuevo pedido asignado',
+                             f'{numero} - {destino}', {'ped_id': ped_id})
+    except Exception as e:
+        app.logger.warning(f'send_push_to_chofer error: {str(e)}')
 
 
 @app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT', 'POST'])
