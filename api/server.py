@@ -478,47 +478,10 @@ else:
     except Exception as e:
         print(f'[DB] Billing columns check skipped: {e}')
 
-    # Auto-add lockout columns if missing
-    try:
-        ensure_lockout_columns()
-    except Exception as e:
-        print(f'[DB] Lockout columns check skipped: {e}')
-
-    # Auto-add COD columns and tables if missing
-    try:
-        ensure_cod_columns()
-    except Exception as e:
-        print(f'[DB] COD columns check skipped: {e}')
-
-    # Auto-create critical views if missing (views are at end of schema, easily lost in failed init)
-    try:
-        ensure_views()
-    except Exception as e:
-        print(f'[DB] Views check skipped: {e}')
-
-    # Auto-add GPS columns if missing (needed for route optimization)
-    try:
-        ensure_gps_columns()
-    except Exception as e:
-        print(f'[DB] GPS columns check skipped: {e}')
-
-    # Auto-create tickets table if missing
-    try:
-        ensure_tickets_table()
-    except Exception as e:
-        print(f'[DB] Tickets table check skipped: {e}')
-
-    # Auto-create SaaS config table if missing
-    try:
-        ensure_saas_config_table()
-    except Exception as e:
-        print(f'[DB] SaaS config table check skipped: {e}')
-
-    # Auto-add CHO_USU_ID link column if missing (links a chofer profile to its login account)
-    try:
-        ensure_chofer_usu_id_column()
-    except Exception as e:
-        print(f'[DB] CHO_USU_ID column check skipped: {e}')
+    # El resto de las migraciones ensure_*() se definen mas abajo en este mismo
+    # archivo -- llamarlas aca (antes de que Python llegue a esas lineas `def`)
+    # da NameError. Se disparan en _run_deferred_postgres_migrations(), invocada
+    # al final del archivo una vez que todas las funciones ya existen.
 
 
 def ensure_chofer_usu_id_column():
@@ -707,6 +670,35 @@ def ensure_gps_columns():
         "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LAT_ACTUAL REAL",
         "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_LNG_ACTUAL REAL",
     ])
+
+
+def _run_deferred_postgres_migrations():
+    """Corre las migraciones ensure_*() de PostgreSQL que dependen de columnas
+    dinamicas. Se invoca aca (justo despues de que todas quedan definidas)
+    en vez de en el bloque de inicializacion de mas arriba en el archivo,
+    porque ese bloque corre a nivel de modulo ANTES de llegar a estas
+    definiciones `def` -- llamarlas ahi da NameError y la migracion se salta
+    en silencio (asi paso con CHO_USU_ID, lockout, COD, views, GPS, tickets
+    y SaaS config, todas fallando con "is not defined" en produccion)."""
+    if not USE_POSTGRES:
+        return
+    migrations = [
+        ('Lockout columns', ensure_lockout_columns),
+        ('COD columns', ensure_cod_columns),
+        ('Views', ensure_views),
+        ('GPS columns', ensure_gps_columns),
+        ('Tickets table', ensure_tickets_table),
+        ('SaaS config table', ensure_saas_config_table),
+        ('CHO_USU_ID column', ensure_chofer_usu_id_column),
+    ]
+    for label, fn in migrations:
+        try:
+            fn()
+        except Exception as e:
+            print(f'[DB] {label} check skipped: {e}')
+
+
+_run_deferred_postgres_migrations()
 
 
 def get_emp_id():
