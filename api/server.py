@@ -514,6 +514,23 @@ else:
     except Exception as e:
         print(f'[DB] SaaS config table check skipped: {e}')
 
+    # Auto-add CHO_USU_ID link column if missing (links a chofer profile to its login account)
+    try:
+        ensure_chofer_usu_id_column()
+    except Exception as e:
+        print(f'[DB] CHO_USU_ID column check skipped: {e}')
+
+
+def ensure_chofer_usu_id_column():
+    """Add CHO_USU_ID (link to USUARIOS) to CHOFERES if it doesn't exist."""
+    if not USE_POSTGRES:
+        return
+    from db import run_setup_sql
+    run_setup_sql([
+        "ALTER TABLE CHOFERES ADD COLUMN IF NOT EXISTS CHO_USU_ID INTEGER REFERENCES USUARIOS(USU_ID)",
+        "CREATE INDEX IF NOT EXISTS idx_choferes_usu_id ON CHOFERES(CHO_USU_ID)",
+    ])
+
 
 def ensure_saas_config_table():
     """Create SaaS configuration table if it doesn't exist."""
@@ -2399,6 +2416,7 @@ def get_zonas():
 
 
 @app.route('/api/zonas', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def create_zona():
     emp_id = get_emp_id()
     data = request.get_json() or {}
@@ -2438,11 +2456,13 @@ def get_zona(zon_id):
 
 
 @app.route('/api/zonas/<int:zon_id>', methods=['PUT'])
+@requiere_rol('admin', 'superadmin')
 def update_zona(zon_id):
     emp_id = get_emp_id()
     data = request.get_json() or {}
+    _now_sql = 'NOW()' if USE_POSTGRES else "datetime('now')"
     try:
-        execute("UPDATE ZONAS SET ZON_NOMBRE=?, ZON_DESCRIPCION=?, ZON_COLOR=?, ZON_RADIO_KM=?, ZON_CENTRO_LAT=?, ZON_CENTRO_LNG=?, ZON_UPDATED=datetime('now') WHERE ZON_ID=? AND ZON_EMP_ID=?",
+        execute(f"UPDATE ZONAS SET ZON_NOMBRE=?, ZON_DESCRIPCION=?, ZON_COLOR=?, ZON_RADIO_KM=?, ZON_CENTRO_LAT=?, ZON_CENTRO_LNG=?, ZON_UPDATED={_now_sql} WHERE ZON_ID=? AND ZON_EMP_ID=?",
                 [data.get('nombre', ''), data.get('descripcion', ''), data.get('color', '#6366f1'),
                  data.get('radio_km', 5.0), data.get('centro_lat', 19.4326), data.get('centro_lng', -99.1332),
                  zon_id, emp_id])
@@ -2468,10 +2488,12 @@ def update_zona(zon_id):
 
 
 @app.route('/api/zonas/<int:zon_id>', methods=['DELETE'])
+@requiere_rol('admin', 'superadmin')
 def delete_zona(zon_id):
     emp_id = get_emp_id()
+    _now_sql = 'NOW()' if USE_POSTGRES else "datetime('now')"
     try:
-        execute("UPDATE ZONAS SET ZON_ACTIVO='N', ZON_UPDATED=datetime('now') WHERE ZON_ID=? AND ZON_EMP_ID=?", [zon_id, emp_id])
+        execute(f"UPDATE ZONAS SET ZON_ACTIVO='N', ZON_UPDATED={_now_sql} WHERE ZON_ID=? AND ZON_EMP_ID=?", [zon_id, emp_id])
         execute("UPDATE ZONA_TARIFAS SET ZTA_ACTIVO='N' WHERE ZTA_ZON_ID=? AND ZTA_EMP_ID=?", [zon_id, emp_id])
         log_audit('zona_deleted', f'zon_id={zon_id}')
         return jsonify({'success': True, 'message': 'Zona eliminada'})
@@ -2652,6 +2674,7 @@ def get_pedido(ped_id):
 
 
 @app.route('/api/pedidos', methods=['POST'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def create_pedido():
     emp_id = get_emp_id()
     p = request.json
@@ -2689,6 +2712,7 @@ def create_pedido():
 
 
 @app.route('/api/pedidos/<int:ped_id>/asignar', methods=['POST'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def asignar_pedido(ped_id):
     emp_id = get_emp_id()
     data = request.json or {}
@@ -2746,11 +2770,20 @@ def _ensure_entrega_row(ped_id, emp_id, cho_id, veh_id=None):
 
 
 @app.route('/api/pedidos/<int:ped_id>/estado', methods=['PUT', 'POST'])
+@requiere_rol('admin', 'operacion', 'chofer', 'superadmin')
 def update_estado_pedido(ped_id):
     emp_id = get_emp_id()
     data = request.json or {}
     estado = data.get('estado')
     usuario = data.get('usuario', 'SYSTEM')
+
+    if g.rol == 'chofer':
+        # Un chofer solo puede cambiar el estado de pedidos que tiene asignados.
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        pedido_check = query("SELECT CHO_ID FROM PEDIDOS WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
+        if not pedido_check or not own_cho_id or pedido_check[0].get('CHO_ID') != own_cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado: este pedido no esta asignado a tu perfil de chofer'}), 403
 
     execute('UPDATE PEDIDOS SET PED_ESTADO = ? WHERE PED_ID = ? AND EMP_ID = ?', [estado, ped_id, emp_id])
     execute('INSERT INTO PEDIDO_HISTORIAL (PED_ID, HIS_ESTADO, HIS_USUARIO) VALUES (?, ?, ?)', [ped_id, estado, usuario])
@@ -2758,12 +2791,12 @@ def update_estado_pedido(ped_id):
     # Send notification based on status change
     try:
         # Get chofer and client info
-        pedido = query("SELECT CHO_ID, CLI_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=?", [ped_id])
+        pedido = query("SELECT CHO_ID, CLI_ID, PED_CLIENTE_NOMBRE, PED_DESTINO_DIR FROM PEDIDOS WHERE PED_ID=? AND EMP_ID=?", [ped_id, emp_id])
         chofer_id = pedido[0].get('CHO_ID') if pedido else None
         cli_id = pedido[0].get('CLI_ID') if pedido else None
 
         if estado == 'EN_RUTA':
-            ch = query("SELECT CHO_NOMBRE FROM CHOFERES WHERE CHO_ID=?", [chofer_id]) if chofer_id else None
+            ch = query("SELECT CHO_NOMBRE FROM CHOFERES WHERE CHO_ID=? AND EMP_ID=?", [chofer_id, emp_id]) if chofer_id else None
             chofer_name = ch[0].get('CHO_NOMBRE', 'Chofer') if ch else 'Chofer'
             # Notify client that order is on the way
             if notification_service:
@@ -2797,6 +2830,7 @@ def update_estado_pedido(ped_id):
 
 
 @app.route('/api/pedidos/<int:ped_id>', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def update_pedido(ped_id):
     emp_id = get_emp_id()
     p = request.json
@@ -3102,6 +3136,7 @@ def get_rendimiento_choferes():
 
 
 @app.route('/api/choferes/<int:cho_id>', methods=['DELETE'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def delete_chofer(cho_id):
     emp_id = get_emp_id()
     try:
@@ -3113,6 +3148,7 @@ def delete_chofer(cho_id):
 
 
 @app.route('/api/choferes', methods=['POST'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def create_chofer():
     emp_id = get_emp_id()
     c = request.json
@@ -3135,6 +3171,7 @@ def create_chofer():
 
 
 @app.route('/api/choferes/<int:cho_id>', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def update_chofer(cho_id):
     emp_id = get_emp_id()
     c = request.json
@@ -3153,6 +3190,35 @@ def update_chofer(cho_id):
         return safe_error(e, 'update_chofer')
 
 
+@app.route('/api/choferes/me', methods=['GET'])
+@requiere_rol('chofer', 'admin', 'superadmin')
+def get_chofer_me():
+    """Devuelve el perfil de chofer (CHOFERES) vinculado al usuario logueado."""
+    emp_id = get_emp_id()
+    rows = query("SELECT * FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+    if not rows:
+        return jsonify({'success': False, 'error': 'Este usuario no tiene un perfil de chofer vinculado'}), 404
+    return jsonify({'success': True, 'data': rows[0]})
+
+
+@app.route('/api/choferes/<int:cho_id>/link-usuario', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'superadmin')
+def link_chofer_usuario(cho_id):
+    """Vincula un perfil de chofer (CHOFERES) con una cuenta de login (USUARIOS, rol=chofer)."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    usu_id = data.get('usu_id')
+    if not usu_id:
+        return jsonify({'success': False, 'error': 'usu_id requerido'}), 400
+    usuario = query("SELECT USU_ID, USU_ROL FROM USUARIOS WHERE USU_ID=? AND USU_EMP_ID=?", [usu_id, emp_id])
+    if not usuario:
+        return jsonify({'success': False, 'error': 'Usuario no encontrado en este tenant'}), 404
+    if usuario[0].get('USU_ROL') != 'chofer':
+        return jsonify({'success': False, 'error': 'El usuario debe tener rol chofer'}), 400
+    result = execute("UPDATE CHOFERES SET CHO_USU_ID=? WHERE CHO_ID=? AND EMP_ID=?", [usu_id, cho_id, emp_id])
+    return jsonify({'success': True, 'message': 'Chofer vinculado a su cuenta de acceso'})
+
+
 # ========================================
 # MODULO: VEHICULOS
 # ========================================
@@ -3169,6 +3235,7 @@ def get_flota():
 
 
 @app.route('/api/vehiculos/<int:veh_id>', methods=['DELETE'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def delete_vehiculo(veh_id):
     emp_id = get_emp_id()
     try:
@@ -3180,6 +3247,7 @@ def delete_vehiculo(veh_id):
 
 
 @app.route('/api/vehiculos', methods=['POST'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def create_vehiculo():
     emp_id = get_emp_id()
     v = request.json
@@ -3203,6 +3271,7 @@ def create_vehiculo():
 
 
 @app.route('/api/vehiculos/<int:veh_id>', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def update_vehiculo(veh_id):
     emp_id = get_emp_id()
     v = request.json
@@ -3238,6 +3307,7 @@ def get_top_clientes():
 
 
 @app.route('/api/clientes/<int:cli_id>', methods=['DELETE'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def delete_cliente(cli_id):
     emp_id = get_emp_id()
     try:
@@ -3249,6 +3319,7 @@ def delete_cliente(cli_id):
 
 
 @app.route('/api/clientes', methods=['POST'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def create_cliente():
     emp_id = get_emp_id()
     c = request.json
@@ -3272,6 +3343,7 @@ def create_cliente():
 
 
 @app.route('/api/clientes/<int:cli_id>', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def update_cliente(cli_id):
     emp_id = get_emp_id()
     c = request.json
@@ -3461,12 +3533,14 @@ def get_audit():
 # MODULO: CFDI 4.0 (Facturacion)
 # ========================================
 @app.route('/api/cfdi/facturas', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def get_cfdi_facturas():
     emp_id = get_emp_id()
     return jsonify({'success': True, 'data': query('SELECT * FROM CFDI_FACTURAS WHERE EMP_ID = ? ORDER BY FAC_FECHA_EMISION DESC LIMIT 50', [emp_id])})
 
 
 @app.route('/api/cfdi/facturas', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def create_cfdi_factura():
     emp_id = get_emp_id()
     f = request.json
@@ -3492,6 +3566,7 @@ def create_cfdi_factura():
 
 
 @app.route('/api/cfdi/facturas/<int:fac_id>/timbrar', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def timbrar_factura(fac_id):
     emp_id = get_emp_id()
     from cfdi_service import cfdi_service
@@ -3511,6 +3586,7 @@ def timbrar_factura(fac_id):
 
 
 @app.route('/api/cfdi/facturas/<int:fac_id>/cancelar', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def cancelar_factura(fac_id):
     emp_id = get_emp_id()
     motivo = request.json.get('motivo', 'Error en factura')
@@ -3535,12 +3611,14 @@ def get_cfdi_catalogo():
 
 
 @app.route('/api/cfdi/empresa-fiscal', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def get_empresa_fiscal():
     data = query('SELECT * FROM CFDI_EMPRESA_FISCAL WHERE EMP_ID = ?', [get_emp_id()])
     return jsonify({'success': True, 'data': data[0] if data else None})
 
 
 @app.route('/api/cfdi/empresa-fiscal', methods=['PUT'])
+@requiere_rol('admin', 'superadmin')
 def update_empresa_fiscal():
     emp_id = get_emp_id()
     f = request.json
@@ -3568,11 +3646,13 @@ def update_empresa_fiscal():
 
 
 @app.route('/api/cfdi/folios', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def get_folios():
     return jsonify({'success': True, 'data': query('SELECT * FROM CFDI_FOLIOS WHERE EMP_ID = ?', [get_emp_id()])})
 
 
 @app.route('/api/cfdi/timbrado-log', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def get_timbrado_log():
     return jsonify({'success': True, 'data': query(
         "SELECT T.*, F.FAC_SERIE, F.FAC_FOLIO FROM CFDI_TIMBRADO_LOG T JOIN CFDI_FACTURAS F ON T.FAC_ID = F.FAC_ID WHERE F.EMP_ID = ? ORDER BY T.TIM_FECHA DESC LIMIT 20",
@@ -3673,6 +3753,7 @@ def get_usuario(usu_id):
 
 
 @app.route('/api/usuarios/<int:usu_id>', methods=['DELETE'])
+@requiere_rol('admin', 'superadmin')
 def delete_usuario(usu_id):
     emp_id = get_emp_id()
     try:
@@ -3684,6 +3765,7 @@ def delete_usuario(usu_id):
 
 
 @app.route('/api/usuarios', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def create_usuario():
     emp_id = get_emp_id()
     u = request.json
@@ -3712,6 +3794,7 @@ def create_usuario():
 
 
 @app.route('/api/usuarios/<int:usu_id>', methods=['PUT'])
+@requiere_rol('admin', 'superadmin')
 def update_usuario(usu_id):
     emp_id = get_emp_id()
     u = request.json
@@ -3843,6 +3926,7 @@ def _sanitize_whitelabel(data):
 
 
 @app.route('/api/whitelabel/config', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def update_whitelabel():
     try:
         emp_id = get_emp_id()
@@ -4463,11 +4547,13 @@ def get_sms_stats():
 # MODULO: REPORTES
 # ========================================
 @app.route('/api/reportes', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def get_reportes():
     return jsonify({'success': True, 'data': query('SELECT * FROM REPORTES_GENERADOS WHERE EMP_ID = ? ORDER BY RPT_FECHA_GENERACION DESC LIMIT 20', [get_emp_id()])})
 
 
 @app.route('/api/reportes/generar', methods=['POST'])
+@requiere_rol('admin', 'superadmin')
 def generar_reporte():
     emp_id = get_emp_id()
     r = request.json
@@ -4478,6 +4564,7 @@ def generar_reporte():
 
 
 @app.route('/api/reportes/entregas', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def reporte_entregas():
     return jsonify({'success': True, 'data': query('''SELECT P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR, P.PED_DESTINO_COL,
         P.PED_BULTOS, P.PED_COSTO_TOTAL, P.PED_ESTADO, P.PED_FECHA_PEDIDO,
@@ -4487,11 +4574,13 @@ def reporte_entregas():
 
 
 @app.route('/api/reportes/rendimiento-choferes', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def reporte_rendimiento():
     return jsonify({'success': True, 'data': query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC', [get_emp_id()])})
 
 
 @app.route('/api/reportes/costos-rutas', methods=['GET'])
+@requiere_rol('admin', 'superadmin')
 def reporte_costos():
     return jsonify({'success': True, 'data': query('SELECT * FROM V_COSTOS_RUTA WHERE EMP_ID = ? ORDER BY PED_COSTO_TOTAL DESC', [get_emp_id()])})
 
@@ -4545,6 +4634,7 @@ def create_cliente_final():
 # PEDIDOS DELETE
 # ========================================
 @app.route('/api/pedidos/<int:ped_id>', methods=['DELETE'])
+@requiere_rol('admin', 'operacion', 'superadmin')
 def delete_pedido(ped_id):
     try:
         emp_id = get_emp_id()
@@ -5941,7 +6031,8 @@ def debug_db_tables():
 @app.route('/api/tickets', methods=['GET'])
 @requiere_auth
 def list_tickets():
-    """List tickets for current tenant."""
+    """List tickets for current tenant. Admin/superadmin ven todos los tickets del
+    tenant; el resto de roles solo ven los tickets que ellos mismos crearon."""
     emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'success': False, 'error': 'No tenant'}), 400
@@ -5949,6 +6040,9 @@ def list_tickets():
     prioridad = request.args.get('prioridad')
     sql = "SELECT * FROM TICKETS WHERE EMP_ID=%s"
     params = [emp_id]
+    if g.rol not in ('admin', 'superadmin'):
+        sql += " AND TICKET_CREADO_POR=%s"
+        params.append(g.usu_id)
     if estado:
         sql += " AND TICKET_ESTADO=%s"
         params.append(estado)
@@ -6002,17 +6096,20 @@ def create_ticket():
 @app.route('/api/tickets/<int:ticket_id>', methods=['GET'])
 @requiere_auth
 def get_ticket(ticket_id):
-    """Get ticket detail."""
+    """Get ticket detail. Admin/superadmin ven cualquier ticket del tenant;
+    el resto de roles solo el suyo propio."""
     emp_id = get_emp_id()
     if not emp_id:
         return jsonify({'success': False, 'error': 'No tenant'}), 400
     tickets = query("SELECT * FROM TICKETS WHERE TICKET_ID=%s AND EMP_ID=%s", [ticket_id, emp_id])
     if not tickets:
         return jsonify({'success': False, 'error': 'Ticket no encontrado'}), 404
+    if g.rol not in ('admin', 'superadmin') and tickets[0].get('TICKET_CREADO_POR') != g.usu_id:
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
     return jsonify({'success': True, 'ticket': tickets[0]})
 
 @app.route('/api/tickets/<int:ticket_id>', methods=['PUT'])
-@requiere_auth
+@requiere_rol('admin', 'superadmin')
 def update_ticket(ticket_id):
     """Update ticket status, assignment, or response."""
     emp_id = get_emp_id()
@@ -6035,7 +6132,7 @@ def update_ticket(ticket_id):
     return jsonify({'success': True, 'message': 'Ticket actualizado'})
 
 @app.route('/api/tickets/stats', methods=['GET'])
-@requiere_auth
+@requiere_rol('admin', 'superadmin')
 def ticket_stats():
     """Ticket statistics for the tenant."""
     emp_id = get_emp_id()
