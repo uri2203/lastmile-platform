@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Last Mile Chofer",
+    "slug": "lastmile-chofer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0d0d12"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.lastmiledelivery.chofer",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Se usa tu ubicacion para reportar tu posicion en tiempo real durante tus entregas.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Se usa tu ubicacion en segundo plano para que operaciones vea tu ruta mientras entregas pedidos.",
+        "NSCameraUsageDescription": "Se usa la camara para tomar la foto de comprobante al entregar un pedido."
+      },
+      "backgroundModes": ["location"]
+    },
+    "android": {
+      "package": "com.lastmiledelivery.chofer",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "POST_NOTIFICATIONS"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#0d0d12"
+      }
+    },
+    "plugins": [
+      "expo-location",
+      "expo-camera",
+      [
+        "expo-notifications",
+        {
+          "color": "#6366f1"
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "https://lastmile-platform.onrender.com"
+    }
+  }
+}
