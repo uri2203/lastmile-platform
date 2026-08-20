@@ -2836,7 +2836,10 @@ def update_pedido(ped_id):
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     try:
         execute(
-            "UPDATE PEDIDOS SET PED_CLIENTE_NOMBRE=?, PED_CLIENTE_TELEFONO=?, PED_DESTINO_DIR=?, PED_DESTINO_COL=?, PED_DESTINO_CIUDAD=?, PED_PESO_KG=?, PED_BULTOS=?, PED_COSTO_TOTAL=?, PED_FORMA_PAGO=?, PED_ESTADO=?, PED_PRIORIDAD=? WHERE PED_ID=? AND EMP_ID=?",
+            # COALESCE en las coordenadas: si el caller no manda destinoLat/destinoLon
+            # (la mayoria de los editores no geocodifican), se conserva lo que ya
+            # habia en vez de borrarlo con NULL en cada edicion del pedido.
+            "UPDATE PEDIDOS SET PED_CLIENTE_NOMBRE=?, PED_CLIENTE_TELEFONO=?, PED_DESTINO_DIR=?, PED_DESTINO_COL=?, PED_DESTINO_CIUDAD=?, PED_PESO_KG=?, PED_BULTOS=?, PED_COSTO_TOTAL=?, PED_FORMA_PAGO=?, PED_ESTADO=?, PED_PRIORIDAD=?, PED_DESTINO_LAT=COALESCE(?, PED_DESTINO_LAT), PED_DESTINO_LON=COALESCE(?, PED_DESTINO_LON), PED_LATITUD=COALESCE(?, PED_LATITUD), PED_LONGITUD=COALESCE(?, PED_LONGITUD) WHERE PED_ID=? AND EMP_ID=?",
             [p.get('clienteNombre', p.get('PED_CLIENTE_NOMBRE', '')),
              p.get('clienteTelefono', p.get('PED_CLIENTE_TELEFONO', '')),
              p.get('destinoDir', p.get('PED_DESTINO_DIR', '')),
@@ -2848,6 +2851,7 @@ def update_pedido(ped_id):
              p.get('formaPago', p.get('PED_FORMA_PAGO', 'EFECTIVO')),
              p.get('estado', p.get('PED_ESTADO', 'PENDIENTE')),
              p.get('prioridad', p.get('PED_PRIORIDAD', 'NORMAL')),
+             p.get('destinoLat'), p.get('destinoLon'), p.get('destinoLat'), p.get('destinoLon'),
              ped_id, emp_id]
         )
         return jsonify({'success': True, 'message': 'Pedido actualizado'})
