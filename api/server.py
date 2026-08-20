@@ -2676,15 +2676,21 @@ def create_pedido():
         '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, CLI_ID, PED_CLIENTE_NOMBRE,
            PED_CLIENTE_TELEFONO, PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD,
            PED_PESO_KG, PED_BULTOS, PED_COSTO_TOTAL, PED_FORMA_PAGO, PED_MONEDA,
-           PED_TIPO_ENVIO, PED_PAGO_ESTATUS, PED_ESTADO, PED_PRIORIDAD)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)''',
+           PED_TIPO_ENVIO, PED_PAGO_ESTATUS, PED_ESTADO, PED_PRIORIDAD,
+           PED_DESTINO_LAT, PED_DESTINO_LON, PED_LATITUD, PED_LONGITUD)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?, ?, ?, ?, ?)''',
         [emp_id, p.get('pedNumero'), p.get('cliId'), p.get('clienteNombre'),
          p.get('clienteTelefono'), p.get('destinoDir'), p.get('destinoCol'),
          p.get('destinoCiudad'), p.get('pesoKg', 0), p.get('bultos', 1),
          p.get('costoTotal', 0), p.get('formaPago', 'EFECTIVO'),
          p.get('moneda', 'MXN'), p.get('tipoEnvio', 'ESTANDAR'),
          'PAGADO' if p.get('formaPago') != 'EFECTIVO' else 'PENDIENTE',
-         p.get('prioridad', 'NORMAL')]
+         p.get('prioridad', 'NORMAL'),
+         # Coordenadas del destino: opcionales, si el creador ya las geocodifico
+         # (p.ej. un mapa en el panel web). Se guardan duplicadas en
+         # PED_LATITUD/PED_LONGITUD porque el optimizador de rutas (RouteOptimizer,
+         # /api/ai/route) y las columnas historicas del schema usan nombres distintos.
+         p.get('destinoLat'), p.get('destinoLon'), p.get('destinoLat'), p.get('destinoLon')]
     )
     # Get the new pedido ID
     try:
@@ -2830,7 +2836,10 @@ def update_pedido(ped_id):
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
     try:
         execute(
-            "UPDATE PEDIDOS SET PED_CLIENTE_NOMBRE=?, PED_CLIENTE_TELEFONO=?, PED_DESTINO_DIR=?, PED_DESTINO_COL=?, PED_DESTINO_CIUDAD=?, PED_PESO_KG=?, PED_BULTOS=?, PED_COSTO_TOTAL=?, PED_FORMA_PAGO=?, PED_ESTADO=?, PED_PRIORIDAD=? WHERE PED_ID=? AND EMP_ID=?",
+            # COALESCE en las coordenadas: si el caller no manda destinoLat/destinoLon
+            # (la mayoria de los editores no geocodifican), se conserva lo que ya
+            # habia en vez de borrarlo con NULL en cada edicion del pedido.
+            "UPDATE PEDIDOS SET PED_CLIENTE_NOMBRE=?, PED_CLIENTE_TELEFONO=?, PED_DESTINO_DIR=?, PED_DESTINO_COL=?, PED_DESTINO_CIUDAD=?, PED_PESO_KG=?, PED_BULTOS=?, PED_COSTO_TOTAL=?, PED_FORMA_PAGO=?, PED_ESTADO=?, PED_PRIORIDAD=?, PED_DESTINO_LAT=COALESCE(?, PED_DESTINO_LAT), PED_DESTINO_LON=COALESCE(?, PED_DESTINO_LON), PED_LATITUD=COALESCE(?, PED_LATITUD), PED_LONGITUD=COALESCE(?, PED_LONGITUD) WHERE PED_ID=? AND EMP_ID=?",
             [p.get('clienteNombre', p.get('PED_CLIENTE_NOMBRE', '')),
              p.get('clienteTelefono', p.get('PED_CLIENTE_TELEFONO', '')),
              p.get('destinoDir', p.get('PED_DESTINO_DIR', '')),
@@ -2842,6 +2851,7 @@ def update_pedido(ped_id):
              p.get('formaPago', p.get('PED_FORMA_PAGO', 'EFECTIVO')),
              p.get('estado', p.get('PED_ESTADO', 'PENDIENTE')),
              p.get('prioridad', p.get('PED_PRIORIDAD', 'NORMAL')),
+             p.get('destinoLat'), p.get('destinoLon'), p.get('destinoLat'), p.get('destinoLon'),
              ped_id, emp_id]
         )
         return jsonify({'success': True, 'message': 'Pedido actualizado'})
@@ -3385,10 +3395,17 @@ def get_entregas():
 
 
 @app.route('/api/entregas/chofer/<int:cho_id>', methods=['GET'])
+@requiere_rol('admin', 'operacion', 'chofer', 'superadmin')
 def get_entregas_chofer(cho_id):
     emp_id = get_emp_id()
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        if own_cho_id != cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
     return jsonify({'success': True, 'data': query(
-        '''SELECT E.*, P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR
+        '''SELECT E.*, P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR, P.PED_FORMA_PAGO,
+           P.PED_LATITUD, P.PED_LONGITUD, P.PED_PRIORIDAD
            FROM ENTREGAS E JOIN PEDIDOS P ON E.PED_ID = P.PED_ID
            WHERE E.CHO_ID = ? AND E.EMP_ID = ? ORDER BY E.ENT_FECHA_LLEGADA DESC''',
         [cho_id, emp_id])})
