@@ -2,7 +2,7 @@
   "expo": {
     "name": "Last Mile Chofer",
     "slug": "lastmile-chofer",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
@@ -40,7 +40,14 @@
       }
     },
     "plugins": [
-      "expo-location",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Se usa tu ubicacion para reportar tu posicion en tiempo real durante tus entregas.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
       "expo-camera",
       [
         "expo-notifications",
