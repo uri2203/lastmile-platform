@@ -14,6 +14,8 @@ export async function setToken(token) {
   else await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
+const REQUEST_TIMEOUT_MS = 15000;
+
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (auth) {
@@ -21,16 +23,25 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     if (token) headers.Authorization = `Bearer ${token}`;
   }
   let res;
+  // Sin esto, un backend lento (p.ej. Render "despertando" de cold start) o
+  // una red que nunca falla del todo pero tampoco responde deja el fetch
+  // colgado sin limite -- eso es lo que se vio como "pantalla en blanco
+  // 10 minutos" al arrancar (login/perfil sin timeout).
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
   } catch (e) {
     const err = new Error('network');
     err.code = 'NETWORK';
     throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
   let json;
   try {

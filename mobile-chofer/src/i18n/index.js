@@ -52,8 +52,10 @@ export function I18nProvider({ children }) {
   const [ready, setReady] = useState(false);
 
   const loadLanguage = useCallback(async (code) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch(`${BASE_URL}/i18n/${code}.json`);
+      const res = await fetch(`${BASE_URL}/i18n/${code}.json`, { signal: controller.signal });
       if (!res.ok) throw new Error('fetch failed');
       const json = await res.json();
       setTranslations(json);
@@ -61,6 +63,8 @@ export function I18nProvider({ children }) {
       // Sin conexion: se sigue usando lo que ya estaba cargado (fallback o
       // el ultimo idioma descargado con exito).
       console.warn('[i18n] no se pudo descargar', code, e.message);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }, []);
 
