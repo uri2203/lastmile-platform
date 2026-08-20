@@ -96,6 +96,17 @@ export const api = {
 
   // Rendimiento del chofer (para la pantalla de estadisticas).
   getRendimiento: () => request('/api/choferes/rendimiento'),
+
+  // Optimiza el orden de entrega de varias paradas desde la posicion actual
+  // del chofer (agente RouteOptimizer del backend: nearest-neighbor + 2-opt,
+  // ETA ajustado por trafico segun la hora). deliveries: [{id, lat, lng, priority}].
+  optimizeRoute: (origin, deliveries) =>
+    request('/api/ai/route', { method: 'POST', body: { origin, deliveries } }),
+
+  // Cambia el estado del pedido (no de la entrega) -- usarlo para EN_RUTA
+  // dispara la notificacion automatica al cliente de "tu pedido va en camino".
+  updatePedidoEstado: (pedId, estado) =>
+    request(`/api/pedidos/${pedId}/estado`, { method: 'PUT', body: { estado } }),
 };
 
 export { BASE_URL };

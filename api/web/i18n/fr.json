@@ -981,6 +981,12 @@
     "update_al_dia": "Vous avez deja la derniere version.",
     "update_disabled": "Les mises a jour automatiques ne sont pas disponibles dans cette version.",
     "version_instalada": "Version mise a jour via OTA",
-    "version_embebida": "Version originale de l'installateur"
+    "version_embebida": "Version originale de l'installateur",
+    "iniciar_ruta": "Demarrer l'itineraire",
+    "optimizando_ruta": "Optimisation de l'itineraire...",
+    "ruta_iniciada": "Itineraire demarre",
+    "sin_coordenadas_titulo": "Coordonnees manquantes",
+    "sin_coordenadas_desc": "Impossible d'optimiser l'itineraire : aucune livraison en attente n'a de coordonnees de destination.",
+    "eta_min": "min"
   }
 }

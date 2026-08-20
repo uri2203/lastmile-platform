@@ -981,6 +981,12 @@
     "update_al_dia": "Du hast bereits die neueste Version.",
     "update_disabled": "Automatische Updates sind in dieser Version nicht verfuegbar.",
     "version_instalada": "Version per OTA aktualisiert",
-    "version_embebida": "Urspruengliche Installationsversion"
+    "version_embebida": "Urspruengliche Installationsversion",
+    "iniciar_ruta": "Route starten",
+    "optimizando_ruta": "Route wird optimiert...",
+    "ruta_iniciada": "Route gestartet",
+    "sin_coordenadas_titulo": "Koordinaten fehlen",
+    "sin_coordenadas_desc": "Route kann nicht optimiert werden: keine ausstehende Lieferung hat Zielkoordinaten.",
+    "eta_min": "Min"
   }
 }

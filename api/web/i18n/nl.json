@@ -981,6 +981,12 @@
     "update_al_dia": "Je hebt al de nieuwste versie.",
     "update_disabled": "Automatische updates zijn niet beschikbaar in deze versie.",
     "version_instalada": "Versie bijgewerkt via OTA",
-    "version_embebida": "Oorspronkelijke installatieversie"
+    "version_embebida": "Oorspronkelijke installatieversie",
+    "iniciar_ruta": "Route starten",
+    "optimizando_ruta": "Route optimaliseren...",
+    "ruta_iniciada": "Route gestart",
+    "sin_coordenadas_titulo": "Coordinaten ontbreken",
+    "sin_coordenadas_desc": "Kan de route niet optimaliseren: geen enkele openstaande levering heeft bestemmingscoordinaten.",
+    "eta_min": "min"
   }
 }

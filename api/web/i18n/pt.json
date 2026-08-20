@@ -981,6 +981,12 @@
     "update_al_dia": "Voce ja tem a ultima versao.",
     "update_disabled": "As atualizacoes automaticas nao estao disponiveis nesta versao.",
     "version_instalada": "Versao atualizada via OTA",
-    "version_embebida": "Versao original do instalador"
+    "version_embebida": "Versao original do instalador",
+    "iniciar_ruta": "Iniciar Rota",
+    "optimizando_ruta": "Otimizando rota...",
+    "ruta_iniciada": "Rota iniciada",
+    "sin_coordenadas_titulo": "Faltam coordenadas",
+    "sin_coordenadas_desc": "Nao e possivel otimizar a rota: nenhuma entrega pendente tem coordenadas de destino.",
+    "eta_min": "min"
   }
 }

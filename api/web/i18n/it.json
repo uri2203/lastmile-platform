@@ -981,6 +981,12 @@
     "update_al_dia": "Hai gia l'ultima versione.",
     "update_disabled": "Gli aggiornamenti automatici non sono disponibili in questa versione.",
     "version_instalada": "Versione aggiornata via OTA",
-    "version_embebida": "Versione originale dell'installer"
+    "version_embebida": "Versione originale dell'installer",
+    "iniciar_ruta": "Avvia percorso",
+    "optimizando_ruta": "Ottimizzazione del percorso...",
+    "ruta_iniciada": "Percorso avviato",
+    "sin_coordenadas_titulo": "Coordinate mancanti",
+    "sin_coordenadas_desc": "Impossibile ottimizzare il percorso: nessuna consegna in sospeso ha coordinate di destinazione.",
+    "eta_min": "min"
   }
 }

@@ -984,6 +984,12 @@
     "update_al_dia": "You already have the latest version.",
     "update_disabled": "Automatic updates are not available in this build.",
     "version_instalada": "Version updated via OTA",
-    "version_embebida": "Original installer version"
+    "version_embebida": "Original installer version",
+    "iniciar_ruta": "Start Route",
+    "optimizando_ruta": "Optimizing route...",
+    "ruta_iniciada": "Route started",
+    "sin_coordenadas_titulo": "Missing coordinates",
+    "sin_coordenadas_desc": "Can't optimize the route: no pending delivery has destination coordinates.",
+    "eta_min": "min"
   }
 }

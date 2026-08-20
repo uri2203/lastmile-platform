@@ -109,5 +109,11 @@ export default {
     update_disabled: 'Las actualizaciones automaticas no estan disponibles en esta version.',
     version_instalada: 'Version actualizada por OTA',
     version_embebida: 'Version original del instalador',
+    iniciar_ruta: 'Iniciar Ruta',
+    optimizando_ruta: 'Optimizando ruta...',
+    ruta_iniciada: 'Ruta iniciada',
+    sin_coordenadas_titulo: 'Faltan coordenadas',
+    sin_coordenadas_desc: 'No se puede optimizar la ruta: ninguna entrega pendiente tiene coordenadas de destino.',
+    eta_min: 'min',
   },
 };

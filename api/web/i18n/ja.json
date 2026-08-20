@@ -981,6 +981,12 @@
     "update_al_dia": "すでに最新バージョンです。",
     "update_disabled": "このバージョンでは自動更新は利用できません。",
     "version_instalada": "OTA で更新されたバージョン",
-    "version_embebida": "インストーラーの元のバージョン"
+    "version_embebida": "インストーラーの元のバージョン",
+    "iniciar_ruta": "ルート開始",
+    "optimizando_ruta": "ルートを最適化中...",
+    "ruta_iniciada": "ルート開始済み",
+    "sin_coordenadas_titulo": "座標がありません",
+    "sin_coordenadas_desc": "ルートを最適化できません：保留中の配達に目的地座標がありません。",
+    "eta_min": "分"
   }
 }

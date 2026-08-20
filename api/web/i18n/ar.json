@@ -981,6 +981,12 @@
     "update_al_dia": "لديك بالفعل أحدث إصدار.",
     "update_disabled": "التحديثات التلقائية غير متوفرة في هذا الإصدار.",
     "version_instalada": "تم تحديث الإصدار عبر OTA",
-    "version_embebida": "الإصدار الأصلي للمثبت"
+    "version_embebida": "الإصدار الأصلي للمثبت",
+    "iniciar_ruta": "بدء المسار",
+    "optimizando_ruta": "جارٍ تحسين المسار...",
+    "ruta_iniciada": "تم بدء المسار",
+    "sin_coordenadas_titulo": "الإحداثيات مفقودة",
+    "sin_coordenadas_desc": "لا يمكن تحسين المسار: لا يوجد تسليم معلق يحتوي على إحداثيات الوجهة.",
+    "eta_min": "دقيقة"
   }
 }

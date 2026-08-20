@@ -981,6 +981,12 @@
     "update_al_dia": "이미 최신 버전입니다.",
     "update_disabled": "이 버전에서는 자동 업데이트를 사용할 수 없습니다.",
     "version_instalada": "OTA로 업데이트된 버전",
-    "version_embebida": "원본 설치 버전"
+    "version_embebida": "원본 설치 버전",
+    "iniciar_ruta": "경로 시작",
+    "optimizando_ruta": "경로 최적화 중...",
+    "ruta_iniciada": "경로 시작됨",
+    "sin_coordenadas_titulo": "좌표 없음",
+    "sin_coordenadas_desc": "경로를 최적화할 수 없습니다: 대기 중인 배송에 목적지 좌표가 없습니다.",
+    "eta_min": "분"
   }
 }

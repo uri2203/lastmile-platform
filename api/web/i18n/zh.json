@@ -981,6 +981,12 @@
     "update_al_dia": "您已经是最新版本。",
     "update_disabled": "此版本不支持自动更新。",
     "version_instalada": "通过 OTA 更新的版本",
-    "version_embebida": "安装包原始版本"
+    "version_embebida": "安装包原始版本",
+    "iniciar_ruta": "开始路线",
+    "optimizando_ruta": "正在优化路线…",
+    "ruta_iniciada": "路线已开始",
+    "sin_coordenadas_titulo": "缺少坐标",
+    "sin_coordenadas_desc": "无法优化路线：没有待处理的配送有目的地坐标。",
+    "eta_min": "分钟"
   }
 }
