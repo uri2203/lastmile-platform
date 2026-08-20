@@ -2,18 +2,17 @@
   "expo": {
     "name": "Last Mile Chofer",
     "slug": "lastmile-chofer",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#0d0d12"
-    },
+    "icon": "./assets/icon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.lastmiledelivery.chofer",
+      "icon": "./assets/icon.png",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Se usa tu ubicacion para reportar tu posicion en tiempo real durante tus entregas.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Se usa tu ubicacion en segundo plano para que operaciones vea tu ruta mientras entregas pedidos.",
@@ -36,6 +35,7 @@
         "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0d0d12"
       }
     },
@@ -47,13 +47,24 @@
         {
           "color": "#6366f1"
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "backgroundColor": "#0d0d12"
+        }
       ]
     ],
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/4df972fa-2afa-4c48-887e-7e7245d2c379"
+      "url": "https://u.expo.dev/4df972fa-2afa-4c48-887e-7e7245d2c379",
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
     },
     "extra": {
       "apiBaseUrl": "https://lastmile-platform.onrender.com",
