@@ -3385,10 +3385,16 @@ def get_entregas():
 
 
 @app.route('/api/entregas/chofer/<int:cho_id>', methods=['GET'])
+@requiere_rol('admin', 'operacion', 'chofer', 'superadmin')
 def get_entregas_chofer(cho_id):
     emp_id = get_emp_id()
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        if own_cho_id != cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
     return jsonify({'success': True, 'data': query(
-        '''SELECT E.*, P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR
+        '''SELECT E.*, P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR, P.PED_FORMA_PAGO
            FROM ENTREGAS E JOIN PEDIDOS P ON E.PED_ID = P.PED_ID
            WHERE E.CHO_ID = ? AND E.EMP_ID = ? ORDER BY E.ENT_FECHA_LLEGADA DESC''',
         [cho_id, emp_id])})
