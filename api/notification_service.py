@@ -749,5 +749,42 @@ def send_push_to_chofer(cho_id, emp_id, title, body, data=None):
         logger.warning(f'[EXPO PUSH] Error enviando a chofer {cho_id}: {str(e)}')
 
 
+def send_push_to_admins(emp_id, title, body, data=None):
+    """Envia una notificacion push a todos los usuarios admin/operacion del
+    tenant que tengan un dispositivo Expo registrado (NOTIF_DISPOSITIVOS via
+    USR_ID). Usado para avisos operativos como un percance de un chofer que
+    necesita reasignacion manual desde el panel. Best-effort, igual que
+    send_push_to_chofer."""
+    if not emp_id:
+        return
+    try:
+        from db import query
+        usuarios = query(
+            "SELECT USU_ID FROM USUARIOS WHERE USU_EMP_ID=? AND USU_ROL IN ('admin','operacion') AND USU_ACTIVO='S'",
+            [emp_id]
+        )
+        usu_ids = [u['USU_ID'] for u in usuarios if u.get('USU_ID')]
+        if not usu_ids:
+            return
+        placeholders = ','.join('?' * len(usu_ids))
+        rows = query(
+            f"SELECT DISP_TOKEN FROM NOTIF_DISPOSITIVOS WHERE USR_ID IN ({placeholders}) AND EMP_ID=? AND DISP_PLATAFORMA='EXPO' AND DISP_ACTIVO='S'",
+            usu_ids + [emp_id]
+        )
+        tokens = [r['DISP_TOKEN'] for r in rows if r.get('DISP_TOKEN')]
+        if not tokens:
+            return
+        import requests
+        messages = [{'to': t, 'title': title, 'body': body, 'data': data or {}, 'sound': 'default'} for t in tokens]
+        requests.post(
+            'https://exp.host/--/api/v2/push/send',
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+            json=messages,
+            timeout=10
+        )
+    except Exception as e:
+        logger.warning(f'[EXPO PUSH] Error enviando a admins de emp {emp_id}: {str(e)}')
+
+
 # Singleton
 notification_service = NotificationService()

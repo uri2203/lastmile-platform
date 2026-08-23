@@ -3221,6 +3221,51 @@ def link_chofer_usuario(cho_id):
     return jsonify({'success': True, 'message': 'Chofer vinculado a su cuenta de acceso'})
 
 
+@app.route('/api/choferes/<int:cho_id>/percance', methods=['POST'])
+@requiere_rol('chofer', 'admin', 'operacion', 'superadmin')
+def reportar_percance(cho_id):
+    """El chofer no puede continuar con su ruta (choque, descompostura, etc.).
+    No reasigna nada automaticamente -- crea una incidencia por cada entrega
+    pendiente y avisa a admin/operacion para que reasignen desde el panel,
+    manteniendo el control de reasignacion centralizado en operaciones."""
+    emp_id = get_emp_id()
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        if own_cho_id != cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+
+    data = request.json or {}
+    motivo = (data.get('motivo') or '').strip() or 'Percance reportado por el chofer'
+
+    pendientes = query(
+        "SELECT ENT_ID, PED_ID FROM ENTREGAS WHERE CHO_ID=? AND EMP_ID=? AND ENT_ESTADO='PENDIENTE'",
+        [cho_id, emp_id]
+    )
+    for row in pendientes:
+        try:
+            execute(
+                "INSERT INTO INCIDENCIAS (EMP_ID, PED_ID, CHO_ID, INC_TIPO, INC_DESCRIPCION, INC_USUARIO_REPORTA) VALUES (?, ?, ?, 'PERCANCE_CHOFER', ?, ?)",
+                [emp_id, row['PED_ID'], cho_id, motivo, g.usuario or 'CHOFER']
+            )
+        except Exception as e:
+            app.logger.warning(f'reportar_percance incidencia error: {str(e)}')
+
+    ch = query("SELECT CHO_NOMBRE, CHO_APELLIDO FROM CHOFERES WHERE CHO_ID=? AND EMP_ID=?", [cho_id, emp_id])
+    chofer_nombre = f"{ch[0]['CHO_NOMBRE']} {ch[0].get('CHO_APELLIDO', '')}".strip() if ch else f'Chofer #{cho_id}'
+    try:
+        from notification_service import send_push_to_admins
+        send_push_to_admins(
+            emp_id, 'Percance reportado',
+            f'{chofer_nombre}: {motivo}. Tiene {len(pendientes)} pedido(s) pendientes de reasignar.',
+            {'cho_id': cho_id, 'tipo': 'percance', 'pedidos_afectados': len(pendientes)}
+        )
+    except Exception as e:
+        app.logger.warning(f'send_push_to_admins error: {str(e)}')
+
+    return jsonify({'success': True, 'message': 'Percance reportado, operacion fue notificada', 'pedidos_afectados': len(pendientes)})
+
+
 # ========================================
 # MODULO: VEHICULOS
 # ========================================
@@ -3405,7 +3450,7 @@ def get_entregas_chofer(cho_id):
             return jsonify({'success': False, 'error': 'No autorizado'}), 403
     return jsonify({'success': True, 'data': query(
         '''SELECT E.*, P.PED_NUMERO, P.PED_CLIENTE_NOMBRE, P.PED_DESTINO_DIR, P.PED_FORMA_PAGO,
-           P.PED_LATITUD, P.PED_LONGITUD, P.PED_PRIORIDAD
+           P.PED_LATITUD, P.PED_LONGITUD, P.PED_PRIORIDAD, P.PED_CLIENTE_TELEFONO
            FROM ENTREGAS E JOIN PEDIDOS P ON E.PED_ID = P.PED_ID
            WHERE E.CHO_ID = ? AND E.EMP_ID = ? ORDER BY E.ENT_FECHA_LLEGADA DESC''',
         [cho_id, emp_id])})
