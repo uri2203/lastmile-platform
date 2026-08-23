@@ -987,6 +987,15 @@
     "ruta_iniciada": "Route gestartet",
     "sin_coordenadas_titulo": "Koordinaten fehlen",
     "sin_coordenadas_desc": "Route kann nicht optimiert werden: keine ausstehende Lieferung hat Zielkoordinaten.",
-    "eta_min": "Min"
+    "eta_min": "Min",
+    "navegar": "Navigieren",
+    "llamar": "Anrufen",
+    "telefono_label": "Telefon",
+    "reportar_percance": "Vorfall melden",
+    "percance_confirm_titulo": "Vorfall melden",
+    "percance_confirm_desc": "Damit wird der Einsatzleitung mitgeteilt, dass du deine ausstehenden Lieferungen nicht fortsetzen kannst, damit sie einem anderen Fahrer zugewiesen werden. Fortfahren?",
+    "percance_motivo_titulo": "Grund fur den Vorfall",
+    "percance_motivo_desc": "Z.B.: Unfall, Fahrzeugpanne, medizinischer Notfall",
+    "percance_enviado_msg": "Die Einsatzleitung wurde informiert. Betroffene ausstehende Bestellungen:"
   }
 }

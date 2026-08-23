@@ -990,6 +990,15 @@
     "ruta_iniciada": "Route started",
     "sin_coordenadas_titulo": "Missing coordinates",
     "sin_coordenadas_desc": "Can't optimize the route: no pending delivery has destination coordinates.",
-    "eta_min": "min"
+    "eta_min": "min",
+    "navegar": "Navigate",
+    "llamar": "Call",
+    "telefono_label": "Phone",
+    "reportar_percance": "Report an incident",
+    "percance_confirm_titulo": "Report an incident",
+    "percance_confirm_desc": "This tells dispatch you can't continue with your pending deliveries so they can be reassigned to another driver. Continue?",
+    "percance_motivo_titulo": "Reason for the incident",
+    "percance_motivo_desc": "E.g: accident, vehicle breakdown, medical emergency",
+    "percance_enviado_msg": "Dispatch was notified. Affected pending orders:"
   }
 }

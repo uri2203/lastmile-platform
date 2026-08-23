@@ -987,6 +987,15 @@
     "ruta_iniciada": "Itineraire demarre",
     "sin_coordenadas_titulo": "Coordonnees manquantes",
     "sin_coordenadas_desc": "Impossible d'optimiser l'itineraire : aucune livraison en attente n'a de coordonnees de destination.",
-    "eta_min": "min"
+    "eta_min": "min",
+    "navegar": "Naviguer",
+    "llamar": "Appeler",
+    "telefono_label": "Telephone",
+    "reportar_percance": "Signaler un incident",
+    "percance_confirm_titulo": "Signaler un incident",
+    "percance_confirm_desc": "Cela informe l'exploitation que vous ne pouvez pas continuer vos livraisons en attente afin qu'elles soient reassignees a un autre chauffeur. Continuer ?",
+    "percance_motivo_titulo": "Motif de l'incident",
+    "percance_motivo_desc": "Ex : accident, panne du vehicule, urgence medicale",
+    "percance_enviado_msg": "L'exploitation a ete informee. Commandes en attente affectees :"
   }
 }

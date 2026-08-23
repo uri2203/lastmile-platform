@@ -107,6 +107,12 @@ export const api = {
   // dispara la notificacion automatica al cliente de "tu pedido va en camino".
   updatePedidoEstado: (pedId, estado) =>
     request(`/api/pedidos/${pedId}/estado`, { method: 'PUT', body: { estado } }),
+
+  // El chofer no puede seguir con su ruta (choque, descompostura, etc.).
+  // Crea una incidencia por cada entrega pendiente y avisa a operacion para
+  // que reasigne manualmente -- no reasigna nada por si solo.
+  reportarPercance: (choId, motivo) =>
+    request(`/api/choferes/${choId}/percance`, { method: 'POST', body: { motivo } }),
 };
 
 export { BASE_URL };

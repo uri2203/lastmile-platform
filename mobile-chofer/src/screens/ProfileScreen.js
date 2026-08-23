@@ -65,6 +65,39 @@ export default function ProfileScreen() {
     ]);
   }
 
+  async function enviarPercance(motivo) {
+    if (!choferProfile) return;
+    try {
+      const res = await api.reportarPercance(choferProfile.CHO_ID, motivo);
+      // t() no soporta interpolacion de variables -- se arma el mensaje
+      // concatenando la cantidad con el texto traducido.
+      Alert.alert(t('chofer_app.listo_titulo'), `${t('chofer_app.percance_enviado_msg')} (${res.pedidos_afectados})`);
+    } catch (e) {
+      Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
+    }
+  }
+
+  function handleReportarPercance() {
+    if (!choferProfile) return;
+    const confirmarYPedirMotivo = () => {
+      if (Alert.prompt) {
+        Alert.prompt(t('chofer_app.percance_motivo_titulo'), t('chofer_app.percance_motivo_desc'), (motivo) => {
+          enviarPercance((motivo || '').trim());
+        });
+      } else {
+        enviarPercance('');
+      }
+    };
+    Alert.alert(
+      t('chofer_app.percance_confirm_titulo'),
+      t('chofer_app.percance_confirm_desc'),
+      [
+        { text: t('chofer_app.cancelar'), style: 'cancel' },
+        { text: t('chofer_app.reportar_percance'), style: 'destructive', onPress: confirmarYPedirMotivo },
+      ]
+    );
+  }
+
   const currentLang = availableLanguages.find(l => l.code === lang);
 
   return (
@@ -109,6 +142,13 @@ export default function ProfileScreen() {
         </View>
       </TouchableOpacity>
 
+      {!!choferProfile && (
+        <TouchableOpacity style={styles.percanceButton} onPress={handleReportarPercance}>
+          <Ionicons name="warning-outline" size={18} color={colors.warning} />
+          <Text style={styles.percanceButtonText}>{t('chofer_app.reportar_percance')}</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.logoutButton} onPress={confirmLogout}>
         <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={styles.logoutText}>{t('chofer.cerrar_sesion')}</Text>
@@ -148,6 +188,8 @@ const styles = StyleSheet.create({
   settingSub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 14, marginTop: spacing.md },
   logoutText: { color: colors.danger, fontWeight: '600', fontSize: 14 },
+  percanceButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: colors.warning, borderRadius: radius.md, padding: 12, marginTop: spacing.md },
+  percanceButtonText: { color: colors.warning, fontWeight: '600', fontSize: 14 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: colors.bgCard, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg, maxHeight: '70%' },
   langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.borderPrimary },

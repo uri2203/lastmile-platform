@@ -990,6 +990,15 @@
     "ruta_iniciada": "Ruta iniciada",
     "sin_coordenadas_titulo": "Faltan coordenadas",
     "sin_coordenadas_desc": "No se puede optimizar la ruta: ninguna entrega pendiente tiene coordenadas de destino.",
-    "eta_min": "min"
+    "eta_min": "min",
+    "navegar": "Navegar",
+    "llamar": "Llamar",
+    "telefono_label": "Telefono",
+    "reportar_percance": "Reportar percance",
+    "percance_confirm_titulo": "Reportar percance",
+    "percance_confirm_desc": "Esto avisa a operacion que no podes continuar con tus entregas pendientes para que las reasignen a otro chofer. Continuar?",
+    "percance_motivo_titulo": "Motivo del percance",
+    "percance_motivo_desc": "Ej: choque, descompostura del vehiculo, emergencia medica",
+    "percance_enviado_msg": "Se avisó a operación. Pedidos pendientes afectados:"
   }
 }

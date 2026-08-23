@@ -987,6 +987,15 @@
     "ruta_iniciada": "تم بدء المسار",
     "sin_coordenadas_titulo": "الإحداثيات مفقودة",
     "sin_coordenadas_desc": "لا يمكن تحسين المسار: لا يوجد تسليم معلق يحتوي على إحداثيات الوجهة.",
-    "eta_min": "دقيقة"
+    "eta_min": "دقيقة",
+    "navegar": "التنقل",
+    "llamar": "اتصال",
+    "telefono_label": "الهاتف",
+    "reportar_percance": "الإبلاغ عن حادث",
+    "percance_confirm_titulo": "الإبلاغ عن حادث",
+    "percance_confirm_desc": "سيخبر هذا التشغيل أنك لا تستطيع متابعة عمليات التسليم المعلقة حتى يتم إعادة تعيينها لسائق آخر. هل تريد المتابعة؟",
+    "percance_motivo_titulo": "سبب الحادث",
+    "percance_motivo_desc": "مثال: حادث، عطل في المركبة، حالة طبية طارئة",
+    "percance_enviado_msg": "تم إبلاغ التشغيل. الطلبات المعلقة المتأثرة:"
   }
 }

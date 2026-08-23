@@ -987,6 +987,15 @@
     "ruta_iniciada": "Route gestart",
     "sin_coordenadas_titulo": "Coordinaten ontbreken",
     "sin_coordenadas_desc": "Kan de route niet optimaliseren: geen enkele openstaande levering heeft bestemmingscoordinaten.",
-    "eta_min": "min"
+    "eta_min": "min",
+    "navegar": "Navigeren",
+    "llamar": "Bellen",
+    "telefono_label": "Telefoon",
+    "reportar_percance": "Incident melden",
+    "percance_confirm_titulo": "Incident melden",
+    "percance_confirm_desc": "Dit laat de operations weten dat je je openstaande leveringen niet kunt voortzetten, zodat ze aan een andere chauffeur kunnen worden toegewezen. Doorgaan?",
+    "percance_motivo_titulo": "Reden voor het incident",
+    "percance_motivo_desc": "Bijv: ongeluk, voertuigpech, medisch noodgeval",
+    "percance_enviado_msg": "Operations is op de hoogte gesteld. Betrokken openstaande bestellingen:"
   }
 }

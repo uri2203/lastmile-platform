@@ -987,6 +987,15 @@
     "ruta_iniciada": "Percorso avviato",
     "sin_coordenadas_titulo": "Coordinate mancanti",
     "sin_coordenadas_desc": "Impossibile ottimizzare il percorso: nessuna consegna in sospeso ha coordinate di destinazione.",
-    "eta_min": "min"
+    "eta_min": "min",
+    "navegar": "Naviga",
+    "llamar": "Chiama",
+    "telefono_label": "Telefono",
+    "reportar_percance": "Segnala un incidente",
+    "percance_confirm_titulo": "Segnala un incidente",
+    "percance_confirm_desc": "Questo avvisa l'operativo che non puoi continuare le tue consegne in sospeso, cosi possono essere riassegnate a un altro autista. Continuare?",
+    "percance_motivo_titulo": "Motivo dell'incidente",
+    "percance_motivo_desc": "Es: incidente, guasto del veicolo, emergenza medica",
+    "percance_enviado_msg": "L'operativo e stato avvisato. Ordini in sospeso interessati:"
   }
 }

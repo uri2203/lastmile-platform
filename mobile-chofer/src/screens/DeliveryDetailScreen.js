@@ -1,10 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Image, Modal, Linking } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 import { api } from '../api';
 import { useI18n, translateError } from '../i18n';
+
+function hasCoords(entrega) {
+  return typeof entrega.PED_LATITUD === 'number' && typeof entrega.PED_LONGITUD === 'number'
+    && entrega.PED_LATITUD !== 0 && entrega.PED_LONGITUD !== 0;
+}
 
 export default function DeliveryDetailScreen({ route, navigation }) {
   const { entrega } = route.params;
@@ -20,6 +25,23 @@ export default function DeliveryDetailScreen({ route, navigation }) {
   const [notas, setNotas] = useState('');
   const [savingCod, setSavingCod] = useState(false);
   const isCod = (entrega.PED_FORMA_PAGO || '').toUpperCase() === 'EFECTIVO';
+
+  function handleNavigate() {
+    const destination = hasCoords(entrega)
+      ? `${entrega.PED_LATITUD},${entrega.PED_LONGITUD}`
+      : encodeURIComponent(entrega.PED_DESTINO_DIR || '');
+    if (!destination) return;
+    // URL universal de Google Maps: si esta instalada la app la abre ahi,
+    // si no cae al navegador. No se intenta armar navegacion propia dentro
+    // de la app -- eso ya lo resuelve mejor Maps/Waze.
+    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${destination}`).catch(() => {});
+  }
+
+  function handleCall() {
+    const phone = (entrega.PED_CLIENTE_TELEFONO || '').replace(/[^0-9+]/g, '');
+    if (!phone) return;
+    Linking.openURL(`tel:${phone}`).catch(() => {});
+  }
 
   async function openCamera() {
     if (!permission?.granted) {
@@ -113,7 +135,23 @@ export default function DeliveryDetailScreen({ route, navigation }) {
         <Text style={styles.pedNum}>{entrega.PED_NUMERO || `${t('chofer_app.pedido_prefix')}${entrega.PED_ID}`}</Text>
         <Row icon="person-outline" label={t('chofer_app.cliente_label')} value={entrega.PED_CLIENTE_NOMBRE} />
         <Row icon="location-outline" label={t('chofer_app.destino_label')} value={entrega.PED_DESTINO_DIR} />
+        {!!entrega.PED_CLIENTE_TELEFONO && (
+          <Row icon="call-outline" label={t('chofer_app.telefono_label')} value={entrega.PED_CLIENTE_TELEFONO} />
+        )}
         {isCod && <Row icon="cash-outline" label={t('chofer_app.forma_pago_label')} value={t('chofer_app.efectivo_cobrar')} />}
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: spacing.md }}>
+        <TouchableOpacity style={[styles.secondaryButton, { flex: 1, marginBottom: 0 }]} onPress={handleNavigate}>
+          <Ionicons name="navigate-outline" size={18} color={colors.accent} />
+          <Text style={styles.secondaryButtonText}>{t('chofer_app.navegar')}</Text>
+        </TouchableOpacity>
+        {!!entrega.PED_CLIENTE_TELEFONO && (
+          <TouchableOpacity style={[styles.secondaryButton, { flex: 1, marginBottom: 0 }]} onPress={handleCall}>
+            <Ionicons name="call-outline" size={18} color={colors.accent} />
+            <Text style={styles.secondaryButtonText}>{t('chofer_app.llamar')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {isCod && (

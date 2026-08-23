@@ -987,6 +987,15 @@
     "ruta_iniciada": "路线已开始",
     "sin_coordenadas_titulo": "缺少坐标",
     "sin_coordenadas_desc": "无法优化路线：没有待处理的配送有目的地坐标。",
-    "eta_min": "分钟"
+    "eta_min": "分钟",
+    "navegar": "导航",
+    "llamar": "拨打电话",
+    "telefono_label": "电话",
+    "reportar_percance": "报告事故",
+    "percance_confirm_titulo": "报告事故",
+    "percance_confirm_desc": "这会通知调度中心你无法继续完成待处理的配送，以便重新分配给其他司机。是否继续？",
+    "percance_motivo_titulo": "事故原因",
+    "percance_motivo_desc": "例如：事故、车辆故障、医疗紧急情况",
+    "percance_enviado_msg": "调度中心已收到通知。受影响的待处理订单："
   }
 }

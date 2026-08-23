@@ -987,6 +987,15 @@
     "ruta_iniciada": "ルート開始済み",
     "sin_coordenadas_titulo": "座標がありません",
     "sin_coordenadas_desc": "ルートを最適化できません：保留中の配達に目的地座標がありません。",
-    "eta_min": "分"
+    "eta_min": "分",
+    "navegar": "ナビ",
+    "llamar": "電話する",
+    "telefono_label": "電話番号",
+    "reportar_percance": "トラブルを報告",
+    "percance_confirm_titulo": "トラブルを報告",
+    "percance_confirm_desc": "保留中の配達を続行できないことを運行管理に通知し、他のドライバーに再割り当てできるようにします。続行しますか？",
+    "percance_motivo_titulo": "トラブルの理由",
+    "percance_motivo_desc": "例：事故、車両故障、医療緊急事態",
+    "percance_enviado_msg": "運行管理に通知しました。影響を受ける保留中の注文："
   }
 }
