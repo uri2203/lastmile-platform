@@ -1,6 +1,12 @@
 import * as Updates from 'expo-updates';
 
-const STARTUP_TIMEOUT_MS = 8000;
+// El CHECK contra el CDN de Expo es rapido -- si la red esta muerta, no
+// queremos colgar el arranque mas de esto. La DESCARGA en cambio puede tardar
+// mas (los assets de fuentes pesan >1.5MB) y NO se le pone un timeout corto:
+// abortarla a los 8s era justo lo que hacia que la actualizacion no se
+// aplicara al primer arranque y quedara pendiente para el segundo.
+const CHECK_TIMEOUT_MS = 8000;
+const FETCH_TIMEOUT_MS = 60000;
 
 function withTimeout(promise, ms) {
   return Promise.race([
@@ -10,20 +16,19 @@ function withTimeout(promise, ms) {
 }
 
 // Revisa si hay una actualizacion de JS publicada (via `eas update`), la
-// descarga y reinicia la app para aplicarla. Se llama una vez al arrancar,
-// asi el chofer siempre ve la ultima version sin tener que reinstalar el
-// APK -- el APK solo hace falta reinstalarlo cuando cambia codigo nativo
-// (nueva libreria, permisos nuevos, etc.), no para cambios normales de JS.
-//
-// Con timeout: si la red anda lenta o no hay conexion, no bloquea el arranque
-// de la app mas de STARTUP_TIMEOUT_MS -- se sigue con la version ya instalada
-// y se puede reintentar mas tarde a mano desde Perfil (checkForUpdateManual).
+// descarga completa y reinicia la app para aplicarla EN ESTE arranque -- asi
+// el chofer siempre ve la ultima version sin tener que reinstalar el APK ni
+// arrancar dos veces. El APK solo hace falta reinstalarlo cuando cambia
+// codigo nativo (nueva libreria, permisos), no para cambios de JS.
 export async function checkAndApplyUpdate() {
   if (!Updates.isEnabled || __DEV__) return false;
   try {
-    const result = await withTimeout(Updates.checkForUpdateAsync(), STARTUP_TIMEOUT_MS);
+    const result = await withTimeout(Updates.checkForUpdateAsync(), CHECK_TIMEOUT_MS);
     if (!result.isAvailable) return false;
-    await withTimeout(Updates.fetchUpdateAsync(), STARTUP_TIMEOUT_MS);
+    // Timeout largo en la descarga: si se corta a la mitad se cae al catch y
+    // la app sigue con la version actual, pero cuando hay red decente termina
+    // y reloadAsync aplica la nueva version sin necesidad de un segundo arranque.
+    await withTimeout(Updates.fetchUpdateAsync(), FETCH_TIMEOUT_MS);
     await Updates.reloadAsync();
     return true; // no deberia llegar aca (reloadAsync reinicia la app)
   } catch (e) {
