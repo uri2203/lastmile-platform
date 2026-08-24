@@ -159,7 +159,9 @@ export default function ProfileScreen() {
           iconColor={colors.accent}
           iconBg={colors.accentDeep + '33'}
           title={t('chofer_app.buscar_actualizaciones')}
-          subtitle={updateInfo.updateId ? t('chofer_app.version_instalada') : t('chofer_app.version_embebida')}
+          subtitle={updateInfo.updateId
+            ? `${t('chofer_app.version_instalada')} · ${updateInfo.createdAt ? new Date(updateInfo.createdAt).toLocaleString() : updateInfo.updateId.slice(0, 8)}`
+            : t('chofer_app.version_embebida')}
           onPress={handleCheckUpdate}
           disabled={checkingUpdate}
           right={checkingUpdate ? <ActivityIndicator color={colors.accent} /> : <Ionicons name="refresh" size={18} color={colors.accent} />}
