@@ -3527,6 +3527,18 @@ def update_entrega(ent_id):
 
     if estado == 'ENTREGADO':
         evidencia = data.get('evidencia', '')
+        # Si la app mando la foto/firma en base64 (evidenciaBase64), se sube
+        # a Supabase Storage y se guarda la URL publica en vez de una
+        # referencia local que solo existe en el celular del chofer.
+        evidencia_b64 = data.get('evidenciaBase64')
+        if evidencia_b64:
+            try:
+                from storage_service import upload_evidencia
+                url = upload_evidencia(evidencia_b64, data.get('evidenciaTipo', 'image/jpeg'), emp_id, ent_id)
+                if url:
+                    evidencia = url
+            except Exception as e:
+                app.logger.warning(f'Evidencia upload error: {str(e)}')
         execute(f"UPDATE ENTREGAS SET ENT_ESTADO='ENTREGADO', ENT_FECHA_LLEGADA={_now_sql}, ENT_EVIDENCIA=? WHERE ENT_ID=?",
                 [evidencia, ent_id])
         if ped_id:
