@@ -12,6 +12,11 @@ import uuid
 logger = logging.getLogger('lastmile.storage')
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
+# Puede ser una service_role key clasica (JWT, "eyJ...") o una API key nueva
+# de Supabase ("sb_secret_..."). Para el endpoint de Storage, ambas se mandan
+# solo en el header `apikey` -- mandar tambien `Authorization: Bearer` rompe
+# la subida con las keys nuevas ("Invalid Compact JWS", porque Storage intenta
+# decodificarla como JWT para RLS y el formato sb_secret_ no lo es).
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 BUCKET = os.environ.get('SUPABASE_EVIDENCIA_BUCKET', 'entregas-evidencia')
 
@@ -44,7 +49,7 @@ def upload_evidencia(file_b64, content_type, emp_id, ent_id):
         resp = requests.post(
             f'{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}',
             headers={
-                'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}',
+                'apikey': SUPABASE_SERVICE_KEY,
                 'Content-Type': content_type or 'image/jpeg',
                 'x-upsert': 'true',
             },
