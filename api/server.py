@@ -3153,13 +3153,27 @@ def get_choferes():
 
 
 @app.route('/api/choferes/rendimiento', methods=['GET'])
+@requiere_rol('admin', 'operacion', 'chofer', 'superadmin')
 def get_rendimiento_choferes():
     emp_id = get_emp_id()
     limit = min(int(request.args.get('limit', 50)), 200)
     offset = max(int(request.args.get('offset', 0)), 0)
-    total = query('SELECT COUNT(*) as cnt FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ?', [emp_id])
-    total_count = total[0].get('cnt', 0) if total else 0
-    data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC LIMIT ? OFFSET ?', [emp_id, limit, offset])
+    # Un chofer solo ve su propio rendimiento, no el de sus compañeros --
+    # antes no habia ningun filtro de rol aca y cualquier chofer autenticado
+    # podia leer el rendimiento de toda la flota del tenant.
+    own_cho_id = None
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        if not own_cho_id:
+            return jsonify({'success': True, 'data': [], 'total': 0})
+    if own_cho_id:
+        total_count = 1
+        data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? AND CHO_ID = ?', [emp_id, own_cho_id])
+    else:
+        total = query('SELECT COUNT(*) as cnt FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ?', [emp_id])
+        total_count = total[0].get('cnt', 0) if total else 0
+        data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC LIMIT ? OFFSET ?', [emp_id, limit, offset])
     resp = jsonify({'success': True, 'data': data, 'total': total_count})
     resp.headers['X-Total-Count'] = str(total_count)
     resp.headers['Link'] = f'</api/choferes/rendimiento?limit={limit}&offset={offset}>; rel="self"'
