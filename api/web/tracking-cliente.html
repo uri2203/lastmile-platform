@@ -438,7 +438,7 @@
       setInterval(async () => {
         if (!trackingData) return;
         try {
-          const res = await fetch(`/api/cliente-final?pedido=${trackingData.PED_NUMERO || pedidoId}`);
+          const res = await fetch(`/api/cliente-final/buscar?pedido=${trackingData.PED_NUMERO || pedidoId}`);
           const d = await res.json();
           if (d.success && d.data && d.data.UBICACION_ACTUAL && driverMarker && map) {
             const coords = d.data.UBICACION_ACTUAL.split(',');
@@ -479,7 +479,7 @@
       Utils.toast(window.i18n.t('tracking.searching_order') + ped, 'info');
       try {
         const API = window.location.origin;
-        const r = await fetch(`${API}/api/cliente-final?pedido=${encodeURIComponent(ped)}`);
+        const r = await fetch(`${API}/api/cliente-final/buscar?pedido=${encodeURIComponent(ped)}`);
         const d = await r.json();
         if (d.success && d.data) {
           trackingData = d.data;

@@ -2665,6 +2665,31 @@ def get_pedido(ped_id):
     return jsonify({'success': True, 'data': data[0] if data else None})
 
 
+def _geocode_address(direccion, colonia=None, ciudad=None):
+    """Geocodifica una direccion a lat/lng via Nominatim (OpenStreetMap,
+    gratis, sin API key). Best-effort: si falla o tarda, se sigue sin
+    coordenadas en vez de bloquear la creacion del pedido -- sin esto, los
+    pedidos nuevos nunca tenian coordenadas y el optimizador de rutas
+    (POST /api/ai/route) no tenia nada que optimizar."""
+    if not direccion:
+        return None, None
+    query_str = ', '.join(filter(None, [direccion, colonia, ciudad, 'Mexico']))
+    try:
+        import requests
+        resp = requests.get(
+            'https://nominatim.openstreetmap.org/search',
+            params={'q': query_str, 'format': 'json', 'limit': 1},
+            headers={'User-Agent': 'LastMileDelivery/1.0'},
+            timeout=5
+        )
+        results = resp.json()
+        if results:
+            return float(results[0]['lat']), float(results[0]['lon'])
+    except Exception as e:
+        app.logger.warning(f'Geocoding error: {str(e)}')
+    return None, None
+
+
 @app.route('/api/pedidos', methods=['POST'])
 @requiere_rol('admin', 'operacion', 'superadmin')
 def create_pedido():
@@ -2672,6 +2697,9 @@ def create_pedido():
     p = request.json
     if not p:
         return jsonify({'success': False, 'error': 'Datos requeridos'}), 400
+    destino_lat, destino_lon = p.get('destinoLat'), p.get('destinoLon')
+    if destino_lat is None and destino_lon is None:
+        destino_lat, destino_lon = _geocode_address(p.get('destinoDir'), p.get('destinoCol'), p.get('destinoCiudad'))
     execute(
         '''INSERT INTO PEDIDOS (EMP_ID, PED_NUMERO, CLI_ID, PED_CLIENTE_NOMBRE,
            PED_CLIENTE_TELEFONO, PED_DESTINO_DIR, PED_DESTINO_COL, PED_DESTINO_CIUDAD,
@@ -2686,11 +2714,12 @@ def create_pedido():
          p.get('moneda', 'MXN'), p.get('tipoEnvio', 'ESTANDAR'),
          'PAGADO' if p.get('formaPago') != 'EFECTIVO' else 'PENDIENTE',
          p.get('prioridad', 'NORMAL'),
-         # Coordenadas del destino: opcionales, si el creador ya las geocodifico
-         # (p.ej. un mapa en el panel web). Se guardan duplicadas en
+         # Coordenadas del destino: si el creador ya las mando (p.ej. un mapa
+         # en el panel web) se usan tal cual; si no, se geocodificaron arriba
+         # a partir de la direccion. Se guardan duplicadas en
          # PED_LATITUD/PED_LONGITUD porque el optimizador de rutas (RouteOptimizer,
          # /api/ai/route) y las columnas historicas del schema usan nombres distintos.
-         p.get('destinoLat'), p.get('destinoLon'), p.get('destinoLat'), p.get('destinoLon')]
+         destino_lat, destino_lon, destino_lat, destino_lon]
     )
     # Get the new pedido ID
     try:
@@ -3124,13 +3153,27 @@ def get_choferes():
 
 
 @app.route('/api/choferes/rendimiento', methods=['GET'])
+@requiere_rol('admin', 'operacion', 'chofer', 'superadmin')
 def get_rendimiento_choferes():
     emp_id = get_emp_id()
     limit = min(int(request.args.get('limit', 50)), 200)
     offset = max(int(request.args.get('offset', 0)), 0)
-    total = query('SELECT COUNT(*) as cnt FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ?', [emp_id])
-    total_count = total[0].get('cnt', 0) if total else 0
-    data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC LIMIT ? OFFSET ?', [emp_id, limit, offset])
+    # Un chofer solo ve su propio rendimiento, no el de sus compañeros --
+    # antes no habia ningun filtro de rol aca y cualquier chofer autenticado
+    # podia leer el rendimiento de toda la flota del tenant.
+    own_cho_id = None
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        own_cho_id = own[0]['CHO_ID'] if own else None
+        if not own_cho_id:
+            return jsonify({'success': True, 'data': [], 'total': 0})
+    if own_cho_id:
+        total_count = 1
+        data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? AND CHO_ID = ?', [emp_id, own_cho_id])
+    else:
+        total = query('SELECT COUNT(*) as cnt FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ?', [emp_id])
+        total_count = total[0].get('cnt', 0) if total else 0
+        data = query('SELECT * FROM V_RENDIMIENTO_CHOFERES WHERE EMP_ID = ? ORDER BY TASA_EXITO DESC LIMIT ? OFFSET ?', [emp_id, limit, offset])
     resp = jsonify({'success': True, 'data': data, 'total': total_count})
     resp.headers['X-Total-Count'] = str(total_count)
     resp.headers['Link'] = f'</api/choferes/rendimiento?limit={limit}&offset={offset}>; rel="self"'
@@ -3546,6 +3589,39 @@ def get_incidencias_resumen():
     return jsonify({'success': True, 'data': query('SELECT * FROM V_INCIDENCIAS_RESUMEN WHERE EMP_ID = ?', [emp_id])})
 
 
+@app.route('/api/incidencias/<int:inc_id>', methods=['PUT'])
+@requiere_rol('admin', 'operacion', 'superadmin')
+def resolver_incidencia(inc_id):
+    """Marca una incidencia como resuelta (o la reabre). No existia ningun
+    endpoint para gestionar incidencias despues de creadas -- solo se
+    podian listar."""
+    emp_id = get_emp_id()
+    data = request.json or {}
+    resuelta = 'S' if data.get('resuelta', True) else 'N'
+    _now_sql = 'NOW()' if USE_POSTGRES else "datetime('now')"
+    existing = query("SELECT INC_ID FROM INCIDENCIAS WHERE INC_ID=? AND EMP_ID=?", [inc_id, emp_id])
+    if not existing:
+        return jsonify({'success': False, 'error': 'Incidencia no encontrada'}), 404
+    if resuelta == 'S':
+        execute(f"UPDATE INCIDENCIAS SET INC_RESUELTA='S', INC_FECHA_RESOLUCION={_now_sql}, INC_USUARIO_RESUELVE=? WHERE INC_ID=? AND EMP_ID=?",
+                [g.usuario or 'ADMIN', inc_id, emp_id])
+    else:
+        execute("UPDATE INCIDENCIAS SET INC_RESUELTA='N', INC_FECHA_RESOLUCION=NULL, INC_USUARIO_RESUELVE=NULL WHERE INC_ID=? AND EMP_ID=?",
+                [inc_id, emp_id])
+    return jsonify({'success': True, 'message': 'Incidencia actualizada'})
+
+
+@app.route('/api/incidencias/<int:inc_id>', methods=['DELETE'])
+@requiere_rol('admin', 'superadmin')
+def eliminar_incidencia(inc_id):
+    emp_id = get_emp_id()
+    existing = query("SELECT INC_ID FROM INCIDENCIAS WHERE INC_ID=? AND EMP_ID=?", [inc_id, emp_id])
+    if not existing:
+        return jsonify({'success': False, 'error': 'Incidencia no encontrada'}), 404
+    execute("DELETE FROM INCIDENCIAS WHERE INC_ID=? AND EMP_ID=?", [inc_id, emp_id])
+    return jsonify({'success': True, 'message': 'Incidencia eliminada'})
+
+
 # ========================================
 # MODULO: TRACKING GPS
 # ========================================
@@ -3583,6 +3659,15 @@ def post_tracking():
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [emp_id, cho_id, t.get('vehId'), lat, lng, velocidad, rumbo, bateria]
     )
+    # Sin esto, CHOFERES.CHO_LAT_ACTUAL/CHO_LNG_ACTUAL nunca se actualizaba --
+    # el mapa en vivo del cliente (tracking-cliente.html) y el optimizador de
+    # rutas por lote (/api/ai/batch-optimize) leen la posicion desde ahi, no
+    # de la tabla TRACKING (que es solo historial).
+    try:
+        execute("UPDATE CHOFERES SET CHO_LAT_ACTUAL=?, CHO_LNG_ACTUAL=? WHERE CHO_ID=? AND EMP_ID=?",
+                [lat, lng, cho_id, emp_id])
+    except Exception as e:
+        app.logger.warning(f'CHO_LAT_ACTUAL update error: {str(e)}')
     room = f'emp_{emp_id}'
     socketio.emit('driver_location', {
         'choId': cho_id,
@@ -4701,17 +4786,63 @@ def reporte_costos():
 # ========================================
 # MODULO: APP CLIENTE (Tracking)
 # ========================================
+def _cliente_final_tracking_data(cliente_final_row):
+    """Arma la respuesta rica que espera tracking-cliente.html: posicion en
+    vivo del chofer (UBICACION_ACTUAL, leida de CHOFERES.CHO_LAT_ACTUAL/LNG,
+    la que ahora si actualiza POST /api/tracking) y coordenadas del destino.
+    Antes de este fix el endpoint solo devolvia texto/estado -- el mapa
+    Leaflet de la pagina de tracking siempre quedaba con el pin por defecto
+    porque estos campos nunca llegaban."""
+    ped_id = cliente_final_row['PED_ID']
+    emp_id = cliente_final_row['EMP_ID']
+    rows = query('''SELECT P.PED_NUMERO, P.PED_ESTADO, P.PED_DESTINO_DIR, P.PED_DESTINO_COL,
+        P.PED_BULTOS, P.PED_PESO_KG, P.PED_FECHA_PEDIDO, P.CHOFER_ASIGNADO, P.UNIDAD_ASIGNADA,
+        P.PED_DESTINO_LAT, P.PED_DESTINO_LON,
+        C.CHO_NOMBRE, C.CHO_APELLIDO, C.CHO_LAT_ACTUAL, C.CHO_LNG_ACTUAL
+        FROM PEDIDOS P LEFT JOIN CHOFERES C ON P.CHO_ID = C.CHO_ID AND C.EMP_ID = P.EMP_ID
+        WHERE P.PED_ID = ? AND P.EMP_ID = ?''', [ped_id, emp_id])
+    if not rows:
+        return None
+    data = dict(rows[0])
+    data['PED_ID'] = ped_id
+    data['CLIF_NOMBRE'] = cliente_final_row.get('CLIF_NOMBRE')
+    data['CLIF_TELEFONO'] = cliente_final_row.get('CLIF_TELEFONO')
+    data['CLIF_EMAIL'] = cliente_final_row.get('CLIF_EMAIL')
+    lat, lng = data.pop('CHO_LAT_ACTUAL', None), data.pop('CHO_LNG_ACTUAL', None)
+    if lat and lng:
+        data['UBICACION_ACTUAL'] = f'{lat},{lng}'
+    data['PED_DESTINO_LNG'] = data.get('PED_DESTINO_LON')
+    return data
+
+
 @app.route('/api/cliente-final/<token>', methods=['GET'])
 def get_cliente_tracking(token):
-    data = query('''SELECT CF.CLIF_NOMBRE, CF.CLIF_TELEFONO, CF.CLIF_EMAIL, CF.PED_ID,
-        P.PED_NUMERO, P.PED_ESTADO, P.PED_DESTINO_DIR, P.PED_DESTINO_COL,
-        P.PED_BULTOS, P.PED_FECHA_PEDIDO, P.CHOFER_ASIGNADO, P.UNIDAD_ASIGNADA
-        FROM CLIENTE_FINAL CF
-        JOIN V_PEDIDOS_COMPLETO P ON CF.PED_ID = P.PED_ID AND P.EMP_ID = CF.EMP_ID
-        WHERE CF.CLIF_TOKEN_TRACKING = ?''', [token])
-    if not data:
+    cf = query('SELECT * FROM CLIENTE_FINAL WHERE CLIF_TOKEN_TRACKING = ?', [token])
+    if not cf:
         return jsonify({'success': False, 'error': 'Token no encontrado'}), 404
-    return jsonify({'success': True, 'data': data[0]})
+    data = _cliente_final_tracking_data(cf[0])
+    if not data:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+    return jsonify({'success': True, 'data': data})
+
+
+@app.route('/api/cliente-final/buscar', methods=['GET'])
+def get_cliente_tracking_por_pedido():
+    """Busqueda publica por numero de pedido (tracking-cliente.html). Solo
+    encuentra pedidos que YA tienen un link de tracking generado
+    (CLIENTE_FINAL) -- evita exponer cualquier PED_NUMERO del sistema por
+    fuerza bruta a alguien que no recibio ese numero del negocio."""
+    numero = (request.args.get('pedido') or '').strip()
+    if not numero:
+        return jsonify({'success': False, 'error': 'pedido requerido'}), 400
+    cf = query('''SELECT CF.* FROM CLIENTE_FINAL CF JOIN PEDIDOS P ON CF.PED_ID = P.PED_ID AND CF.EMP_ID = P.EMP_ID
+                  WHERE P.PED_NUMERO = ? ORDER BY CF.CLIF_ID DESC LIMIT 1''', [numero])
+    if not cf:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+    data = _cliente_final_tracking_data(cf[0])
+    if not data:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+    return jsonify({'success': True, 'data': data})
 
 
 @app.route('/api/cliente-final/<token>/timeline', methods=['GET'])
