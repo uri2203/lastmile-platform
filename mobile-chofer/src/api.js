@@ -78,10 +78,13 @@ export const api = {
   getMyDeliveries: (choId) => request(`/api/entregas/chofer/${choId}`),
 
   // Marcar entrega completada o fallida (PUT /api/entregas/<id>).
-  markDelivered: (entId, evidencia) =>
+  // evidenciaBase64/evidenciaTipo son opcionales: si vienen, el backend los
+  // sube a Supabase Storage y guarda la URL publica en vez de solo la
+  // referencia local en evidencia.
+  markDelivered: (entId, evidencia, evidenciaBase64, evidenciaTipo) =>
     request(`/api/entregas/${entId}`, {
       method: 'PUT',
-      body: { estado: 'ENTREGADO', hora: new Date().toISOString(), evidencia },
+      body: { estado: 'ENTREGADO', hora: new Date().toISOString(), evidencia, evidenciaBase64, evidenciaTipo },
     }),
   markFailed: (entId, motivo) =>
     request(`/api/entregas/${entId}`, { method: 'PUT', body: { estado: 'NO_ENTREGADO', motivo } }),

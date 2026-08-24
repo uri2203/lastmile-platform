@@ -60,13 +60,14 @@ export default function DeliveryDetailScreen({ route, navigation }) {
 
   async function takePhoto() {
     if (!cameraRef.current) return;
-    const result = await cameraRef.current.takePictureAsync({ quality: 0.5, base64: false });
-    setPhoto(result.uri);
+    const result = await cameraRef.current.takePictureAsync({ quality: 0.5, base64: true });
+    setPhoto({ uri: result.uri, base64: result.base64 });
     setShowCamera(false);
   }
 
-  function handleSignatureOK(base64Png) {
-    setSignature(base64Png);
+  function handleSignatureOK(dataUri) {
+    // react-native-signature-canvas devuelve "data:image/png;base64,XXXX"
+    setSignature(dataUri);
     setShowSignature(false);
   }
 
@@ -78,16 +79,23 @@ export default function DeliveryDetailScreen({ route, navigation }) {
       return;
     }
     setSaving(true);
-    const evidencia = signature ? `firma_local:${signature.slice(0, 40)}...` : `foto_local:${photo}`;
+    const evidencia = signature ? 'firma_local' : `foto_local:${photo?.uri}`;
+    const evidenciaBase64 = signature ? signature.replace(/^data:image\/\w+;base64,/, '') : photo?.base64;
+    const evidenciaTipo = signature ? 'image/png' : 'image/jpeg';
     try {
-      // La foto/firma se guarda como referencia local por ahora (no se sube
-      // a un storage en la nube); eso es un paso aparte no cubierto en v1.
-      await api.markDelivered(entrega.ENT_ID, evidencia);
+      // Se manda el base64 al backend, que lo sube a Supabase Storage y
+      // guarda la URL publica; si el storage no esta configurado, sigue
+      // funcionando con la referencia local como antes.
+      await api.markDelivered(entrega.ENT_ID, evidencia, evidenciaBase64, evidenciaTipo);
       Alert.alert(t('chofer_app.listo_titulo'), t('chofer_app.entrega_registrada_msg'), [
         { text: t('chofer_app.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
       if (e.code === 'NETWORK') {
+        // Offline: se guarda solo la referencia local, sin base64 (podria
+        // ser pesado para guardar en AsyncStorage por mucho tiempo) -- al
+        // reconectar se sincroniza el estado de la entrega igual, aunque la
+        // foto/firma no se suba a Storage en ese caso particular.
         await enqueue({ type: 'markDelivered', entId: entrega.ENT_ID, evidencia });
         Alert.alert(t('chofer_app.listo_titulo'), t('chofer.entrega_offline'), [
           { text: t('chofer_app.ok'), onPress: () => navigation.goBack() },
@@ -207,7 +215,7 @@ export default function DeliveryDetailScreen({ route, navigation }) {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>{t('chofer_app.comprobante_titulo')}</Text>
         {photo ? (
-          <Image source={{ uri: photo }} style={styles.photoPreview} />
+          <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
         ) : signature ? (
           <Image source={{ uri: signature }} style={[styles.photoPreview, { backgroundColor: '#fff' }]} resizeMode="contain" />
         ) : (
