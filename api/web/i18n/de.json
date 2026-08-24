@@ -1004,6 +1004,12 @@
     "promedio_horas": "Durchschnittliche Stunden",
     "velocidad_promedio": "Durchschnittsgeschwindigkeit",
     "sin_rendimiento_titulo": "Noch keine Daten",
-    "sin_rendimiento_desc": "Deine Leistung wird hier nach deiner ersten Lieferung angezeigt."
+    "sin_rendimiento_desc": "Deine Leistung wird hier nach deiner ersten Lieferung angezeigt.",
+    "falta_comprobante_desc": "Mache ein Foto oder lass den Kunden unterschreiben, bevor du die Lieferung markierst.",
+    "firma_capturar": "Unterschrift erfassen",
+    "firma_repetir": "Unterschrift wiederholen",
+    "firma_instruccion": "Bitte den Kunden, unten zu unterschreiben",
+    "firma_limpiar": "Loeschen",
+    "firma_vacia_desc": "Zeichne die Unterschrift, bevor du speicherst."
   }
 }

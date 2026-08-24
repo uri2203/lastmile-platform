@@ -6,6 +6,7 @@ import { colors, radius, spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { useI18n, translateError } from '../i18n';
 import { api } from '../api';
+import { flushQueue } from '../services/offlineQueue';
 
 function hasCoords(item) {
   return typeof item.PED_LATITUD === 'number' && typeof item.PED_LONGITUD === 'number'
@@ -39,6 +40,10 @@ export default function DeliveriesScreen({ navigation }) {
   const load = useCallback(async () => {
     if (!choferProfile) return;
     try {
+      // Reintenta primero lo que haya quedado pendiente por falta de red
+      // (marcar entregado/fallido offline) antes de traer la lista fresca,
+      // asi el chofer ve el resultado ya aplicado si el reintento funciono.
+      await flushQueue().catch(() => {});
       const res = await api.getMyDeliveries(choferProfile.CHO_ID);
       const pendientes = (res.data || []).filter(e => e.ENT_ESTADO !== 'ENTREGADO' && e.ENT_ESTADO !== 'NO_ENTREGADO');
       setDeliveries(pendientes);

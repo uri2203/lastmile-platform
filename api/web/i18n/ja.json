@@ -1004,6 +1004,12 @@
     "promedio_horas": "平均時間",
     "velocidad_promedio": "平均速度",
     "sin_rendimiento_titulo": "まだデータがありません",
-    "sin_rendimiento_desc": "最初の配達後にここに実績が表示されます。"
+    "sin_rendimiento_desc": "最初の配達後にここに実績が表示されます。",
+    "falta_comprobante_desc": "配達をマークする前に写真を撮るか、お客様に署名してもらってください。",
+    "firma_capturar": "署名を取得",
+    "firma_repetir": "署名をやり直す",
+    "firma_instruccion": "お客様に以下に署名してもらってください",
+    "firma_limpiar": "クリア",
+    "firma_vacia_desc": "保存する前に署名を描いてください。"
   }
 }

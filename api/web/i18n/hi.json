@@ -1004,6 +1004,12 @@
     "promedio_horas": "औसत घंटे",
     "velocidad_promedio": "औसत गति",
     "sin_rendimiento_titulo": "अभी तक कोई डेटा नहीं",
-    "sin_rendimiento_desc": "आपकी पहली डिलीवरी के बाद आपका प्रदर्शन यहां दिखाई देगा।"
+    "sin_rendimiento_desc": "आपकी पहली डिलीवरी के बाद आपका प्रदर्शन यहां दिखाई देगा।",
+    "falta_comprobante_desc": "डिलीवरी को चिह्नित करने से पहले फोटो लें या ग्राहक से हस्ताक्षर करवाएं।",
+    "firma_capturar": "हस्ताक्षर कैप्चर करें",
+    "firma_repetir": "हस्ताक्षर दोहराएं",
+    "firma_instruccion": "ग्राहक से नीचे हस्ताक्षर करने के लिए कहें",
+    "firma_limpiar": "साफ़ करें",
+    "firma_vacia_desc": "सहेजने से पहले हस्ताक्षर बनाएं।"
   }
 }

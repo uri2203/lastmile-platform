@@ -1,10 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Image, Modal, Linking } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import SignatureScreen from 'react-native-signature-canvas';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 import { api } from '../api';
 import { useI18n, translateError } from '../i18n';
+import { enqueue } from '../services/offlineQueue';
 
 function hasCoords(entrega) {
   return typeof entrega.PED_LATITUD === 'number' && typeof entrega.PED_LONGITUD === 'number'
@@ -15,7 +17,9 @@ export default function DeliveryDetailScreen({ route, navigation }) {
   const { entrega } = route.params;
   const { t } = useI18n();
   const [photo, setPhoto] = useState(null);
+  const [signature, setSignature] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [showSignature, setShowSignature] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
   const [saving, setSaving] = useState(false);
@@ -61,21 +65,36 @@ export default function DeliveryDetailScreen({ route, navigation }) {
     setShowCamera(false);
   }
 
+  function handleSignatureOK(base64Png) {
+    setSignature(base64Png);
+    setShowSignature(false);
+  }
+
   async function handleMarkDelivered() {
-    if (!photo) {
-      Alert.alert(t('chofer_app.falta_foto_titulo'), t('chofer_app.falta_foto_desc'));
+    // Comprobante: foto O firma, cualquiera de las dos alcanza (algunos
+    // clientes prefieren firmar en vez de que les fotografien el paquete).
+    if (!photo && !signature) {
+      Alert.alert(t('chofer_app.falta_foto_titulo'), t('chofer_app.falta_comprobante_desc'));
       return;
     }
     setSaving(true);
+    const evidencia = signature ? `firma_local:${signature.slice(0, 40)}...` : `foto_local:${photo}`;
     try {
-      // La foto se guarda como evidencia local por ahora (uri del dispositivo);
-      // subir el archivo a un storage es un paso aparte no cubierto en v1.
-      await api.markDelivered(entrega.ENT_ID, `foto_local:${photo}`);
+      // La foto/firma se guarda como referencia local por ahora (no se sube
+      // a un storage en la nube); eso es un paso aparte no cubierto en v1.
+      await api.markDelivered(entrega.ENT_ID, evidencia);
       Alert.alert(t('chofer_app.listo_titulo'), t('chofer_app.entrega_registrada_msg'), [
         { text: t('chofer_app.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
-      Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
+      if (e.code === 'NETWORK') {
+        await enqueue({ type: 'markDelivered', entId: entrega.ENT_ID, evidencia });
+        Alert.alert(t('chofer_app.listo_titulo'), t('chofer.entrega_offline'), [
+          { text: t('chofer_app.ok'), onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
+      }
     } finally {
       setSaving(false);
     }
@@ -89,7 +108,13 @@ export default function DeliveryDetailScreen({ route, navigation }) {
             await api.markFailed(entrega.ENT_ID, motivo);
             navigation.goBack();
           } catch (e) {
-            Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
+            if (e.code === 'NETWORK') {
+              await enqueue({ type: 'markFailed', entId: entrega.ENT_ID, motivo });
+              Alert.alert(t('chofer_app.listo_titulo'), t('chofer.incidencia_offline'));
+              navigation.goBack();
+            } else {
+              Alert.alert(t('chofer_app.error_titulo'), translateError(t, e));
+            }
           }
         })
       : Alert.alert(t('chofer_app.no_disponible_titulo'), t('chofer_app.no_disponible_desc'));
@@ -125,6 +150,24 @@ export default function DeliveryDetailScreen({ route, navigation }) {
             <View style={{ width: 46 }} />
           </View>
         </CameraView>
+      </View>
+    );
+  }
+
+  if (showSignature) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <SignatureScreen
+          onOK={handleSignatureOK}
+          onEmpty={() => Alert.alert(t('chofer_app.error_titulo'), t('chofer_app.firma_vacia_desc'))}
+          descriptionText={t('chofer_app.firma_instruccion')}
+          confirmText={t('chofer_app.guardar')}
+          clearText={t('chofer_app.firma_limpiar')}
+          webStyle="body,html{background:#fff;} .m-signature-pad{box-shadow:none;border:none;}"
+        />
+        <TouchableOpacity style={styles.signatureCancelBtn} onPress={() => setShowSignature(false)}>
+          <Text style={styles.secondaryButtonText}>{t('chofer_app.cancelar')}</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -165,13 +208,21 @@ export default function DeliveryDetailScreen({ route, navigation }) {
         <Text style={styles.sectionTitle}>{t('chofer_app.comprobante_titulo')}</Text>
         {photo ? (
           <Image source={{ uri: photo }} style={styles.photoPreview} />
+        ) : signature ? (
+          <Image source={{ uri: signature }} style={[styles.photoPreview, { backgroundColor: '#fff' }]} resizeMode="contain" />
         ) : (
           <Text style={styles.helperText}>{t('chofer_app.foto_comprobante_desc')}</Text>
         )}
-        <TouchableOpacity style={styles.secondaryButton} onPress={openCamera}>
-          <Ionicons name="camera-outline" size={18} color={colors.accent} />
-          <Text style={styles.secondaryButtonText}>{photo ? t('chofer_app.tomar_otra_foto') : t('chofer_app.tomar_foto')}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity style={[styles.secondaryButton, { flex: 1 }]} onPress={openCamera}>
+            <Ionicons name="camera-outline" size={18} color={colors.accent} />
+            <Text style={styles.secondaryButtonText}>{photo ? t('chofer_app.tomar_otra_foto') : t('chofer_app.tomar_foto')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.secondaryButton, { flex: 1 }]} onPress={() => setShowSignature(true)}>
+            <Ionicons name="create-outline" size={18} color={colors.accent} />
+            <Text style={styles.secondaryButtonText}>{signature ? t('chofer_app.firma_repetir') : t('chofer_app.firma_capturar')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TouchableOpacity style={styles.deliverButton} onPress={handleMarkDelivered} disabled={saving}>
@@ -253,6 +304,7 @@ const styles = StyleSheet.create({
   cameraControls: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', flexDirection: 'row', paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
   cameraCancelBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
   shutterBtn: { flex: 1, marginHorizontal: spacing.lg, width: 70, height: 70, borderRadius: 35, backgroundColor: '#fff', borderWidth: 4, borderColor: 'rgba(255,255,255,0.4)', alignSelf: 'center' },
+  signatureCancelBtn: { position: 'absolute', top: 40, right: 16, padding: 10 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: colors.bgCard, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
   input: { backgroundColor: colors.bgPrimary, borderWidth: 1, borderColor: colors.borderPrimary, borderRadius: radius.md, padding: 12, color: colors.textPrimary, fontSize: 15, marginBottom: spacing.sm },

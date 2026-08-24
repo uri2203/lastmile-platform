@@ -1004,6 +1004,12 @@
     "promedio_horas": "متوسط الساعات",
     "velocidad_promedio": "متوسط السرعة",
     "sin_rendimiento_titulo": "لا توجد بيانات بعد",
-    "sin_rendimiento_desc": "سيظهر أداؤك هنا بعد أول عملية تسليم."
+    "sin_rendimiento_desc": "سيظهر أداؤك هنا بعد أول عملية تسليم.",
+    "falta_comprobante_desc": "التقط صورة أو اطلب من العميل التوقيع قبل وضع علامة على التسليم.",
+    "firma_capturar": "التقاط التوقيع",
+    "firma_repetir": "إعادة التوقيع",
+    "firma_instruccion": "اطلب من العميل التوقيع أدناه",
+    "firma_limpiar": "مسح",
+    "firma_vacia_desc": "ارسم التوقيع قبل الحفظ."
   }
 }

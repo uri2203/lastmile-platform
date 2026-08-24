@@ -1004,6 +1004,12 @@
     "promedio_horas": "Media de horas",
     "velocidad_promedio": "Velocidade media",
     "sin_rendimiento_titulo": "Ainda sem dados",
-    "sin_rendimiento_desc": "Seu desempenho vai aparecer aqui depois da primeira entrega."
+    "sin_rendimiento_desc": "Seu desempenho vai aparecer aqui depois da primeira entrega.",
+    "falta_comprobante_desc": "Tire uma foto ou peca para o cliente assinar antes de marcar a entrega.",
+    "firma_capturar": "Capturar assinatura",
+    "firma_repetir": "Repetir assinatura",
+    "firma_instruccion": "Peca ao cliente para assinar abaixo",
+    "firma_limpiar": "Limpar",
+    "firma_vacia_desc": "Desenhe a assinatura antes de salvar."
   }
 }

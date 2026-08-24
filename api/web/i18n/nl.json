@@ -1004,6 +1004,12 @@
     "promedio_horas": "Gemiddelde uren",
     "velocidad_promedio": "Gemiddelde snelheid",
     "sin_rendimiento_titulo": "Nog geen gegevens",
-    "sin_rendimiento_desc": "Je prestaties verschijnen hier na je eerste levering."
+    "sin_rendimiento_desc": "Je prestaties verschijnen hier na je eerste levering.",
+    "falta_comprobante_desc": "Maak een foto of laat de klant tekenen voordat je de levering markeert.",
+    "firma_capturar": "Handtekening vastleggen",
+    "firma_repetir": "Handtekening opnieuw",
+    "firma_instruccion": "Vraag de klant om hieronder te tekenen",
+    "firma_limpiar": "Wissen",
+    "firma_vacia_desc": "Teken de handtekening voordat je opslaat."
   }
 }

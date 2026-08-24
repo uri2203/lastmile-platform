@@ -1004,6 +1004,12 @@
     "promedio_horas": "Media ore",
     "velocidad_promedio": "Velocita media",
     "sin_rendimiento_titulo": "Ancora nessun dato",
-    "sin_rendimiento_desc": "Il tuo rendimento apparira qui dopo la tua prima consegna."
+    "sin_rendimiento_desc": "Il tuo rendimento apparira qui dopo la tua prima consegna.",
+    "falta_comprobante_desc": "Scatta una foto o fai firmare il cliente prima di segnare la consegna.",
+    "firma_capturar": "Cattura firma",
+    "firma_repetir": "Rifai la firma",
+    "firma_instruccion": "Chiedi al cliente di firmare qui sotto",
+    "firma_limpiar": "Cancella",
+    "firma_vacia_desc": "Disegna la firma prima di salvare."
   }
 }

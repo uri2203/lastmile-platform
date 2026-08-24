@@ -1004,6 +1004,12 @@
     "promedio_horas": "Moyenne d'heures",
     "velocidad_promedio": "Vitesse moyenne",
     "sin_rendimiento_titulo": "Pas encore de donnees",
-    "sin_rendimiento_desc": "Vos performances apparaitront ici apres votre premiere livraison."
+    "sin_rendimiento_desc": "Vos performances apparaitront ici apres votre premiere livraison.",
+    "falta_comprobante_desc": "Prenez une photo ou faites signer le client avant de marquer la livraison.",
+    "firma_capturar": "Capturer la signature",
+    "firma_repetir": "Refaire la signature",
+    "firma_instruccion": "Demandez au client de signer ci-dessous",
+    "firma_limpiar": "Effacer",
+    "firma_vacia_desc": "Dessinez la signature avant d'enregistrer."
   }
 }

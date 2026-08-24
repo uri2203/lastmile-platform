@@ -1004,6 +1004,12 @@
     "promedio_horas": "平均小时数",
     "velocidad_promedio": "平均速度",
     "sin_rendimiento_titulo": "暂无数据",
-    "sin_rendimiento_desc": "完成第一次配送后，您的业绩会显示在这里。"
+    "sin_rendimiento_desc": "完成第一次配送后，您的业绩会显示在这里。",
+    "falta_comprobante_desc": "标记送达前请拍照或请客户签名。",
+    "firma_capturar": "采集签名",
+    "firma_repetir": "重新签名",
+    "firma_instruccion": "请客户在下方签名",
+    "firma_limpiar": "清除",
+    "firma_vacia_desc": "保存前请先签名。"
   }
 }

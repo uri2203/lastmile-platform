@@ -1007,6 +1007,12 @@
     "promedio_horas": "Average hours",
     "velocidad_promedio": "Average speed",
     "sin_rendimiento_titulo": "No data yet",
-    "sin_rendimiento_desc": "Your performance will show up here after your first delivery."
+    "sin_rendimiento_desc": "Your performance will show up here after your first delivery.",
+    "falta_comprobante_desc": "Take a photo or have the customer sign before marking the delivery.",
+    "firma_capturar": "Capture signature",
+    "firma_repetir": "Redo signature",
+    "firma_instruccion": "Ask the customer to sign below",
+    "firma_limpiar": "Clear",
+    "firma_vacia_desc": "Draw the signature before saving."
   }
 }

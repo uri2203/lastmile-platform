@@ -132,5 +132,11 @@ export default {
     velocidad_promedio: 'Velocidad promedio',
     sin_rendimiento_titulo: 'Sin datos todavia',
     sin_rendimiento_desc: 'Tu rendimiento va a aparecer aca despues de tu primera entrega.',
+    falta_comprobante_desc: 'Toma una foto o pedile al cliente que firme antes de marcar la entrega.',
+    firma_capturar: 'Capturar firma',
+    firma_repetir: 'Repetir firma',
+    firma_instruccion: 'Pedile al cliente que firme aca abajo',
+    firma_limpiar: 'Limpiar',
+    firma_vacia_desc: 'Dibuja la firma antes de guardar.',
   },
 };
