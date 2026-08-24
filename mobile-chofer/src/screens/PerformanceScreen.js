@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing } from '../theme';
+import { colors, radius, spacing, shadow } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n';
 import { api } from '../api';
@@ -70,6 +70,10 @@ export default function PerformanceScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); }} tintColor={colors.accent} />}
     >
       <View style={styles.heroCard}>
+        <View style={styles.heroBlob} />
+        <View style={styles.heroIconCircle}>
+          <Ionicons name="trophy" size={22} color={colors.accent} />
+        </View>
         <Text style={styles.heroValue}>{tasaExito}%</Text>
         <Text style={styles.heroLabel}>{t('chofer_app.tasa_exito')}</Text>
       </View>
@@ -109,11 +113,13 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, backgroundColor: colors.bgPrimary },
   emptyTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: spacing.md, textAlign: 'center' },
   emptyText: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs, textAlign: 'center' },
-  heroCard: { backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderPrimary, padding: spacing.xl, alignItems: 'center', marginBottom: spacing.md },
+  heroCard: { backgroundColor: colors.bgCard, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.borderPrimary, padding: spacing.xl, alignItems: 'center', marginBottom: spacing.md, overflow: 'hidden', ...shadow.card },
+  heroBlob: { position: 'absolute', top: -70, right: -70, width: 180, height: 180, borderRadius: 90, backgroundColor: colors.accent, opacity: 0.12 },
+  heroIconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentDeep + '33', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   heroValue: { color: colors.accent, fontSize: 42, fontWeight: '800' },
   heroLabel: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'space-between' },
-  statCard: { width: '48%', backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderPrimary, padding: spacing.md, marginBottom: spacing.sm },
+  statCard: { width: '48%', backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderPrimary, padding: spacing.md, marginBottom: spacing.sm, ...shadow.soft },
   statIcon: { width: 36, height: 36, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   statValue: { color: colors.textPrimary, fontSize: 20, fontWeight: '700' },
   statLabel: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
