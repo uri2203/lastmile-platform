@@ -996,6 +996,14 @@
     "percance_confirm_desc": "这会通知调度中心你无法继续完成待处理的配送，以便重新分配给其他司机。是否继续？",
     "percance_motivo_titulo": "事故原因",
     "percance_motivo_desc": "例如：事故、车辆故障、医疗紧急情况",
-    "percance_enviado_msg": "调度中心已收到通知。受影响的待处理订单："
+    "percance_enviado_msg": "调度中心已收到通知。受影响的待处理订单：",
+    "nav_rendimiento": "业绩",
+    "tasa_exito": "成功率",
+    "entregas_realizadas": "已完成配送",
+    "total_asignaciones": "总分配数",
+    "promedio_horas": "平均小时数",
+    "velocidad_promedio": "平均速度",
+    "sin_rendimiento_titulo": "暂无数据",
+    "sin_rendimiento_desc": "完成第一次配送后，您的业绩会显示在这里。"
   }
 }

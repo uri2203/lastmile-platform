@@ -996,6 +996,14 @@
     "percance_confirm_desc": "Damit wird der Einsatzleitung mitgeteilt, dass du deine ausstehenden Lieferungen nicht fortsetzen kannst, damit sie einem anderen Fahrer zugewiesen werden. Fortfahren?",
     "percance_motivo_titulo": "Grund fur den Vorfall",
     "percance_motivo_desc": "Z.B.: Unfall, Fahrzeugpanne, medizinischer Notfall",
-    "percance_enviado_msg": "Die Einsatzleitung wurde informiert. Betroffene ausstehende Bestellungen:"
+    "percance_enviado_msg": "Die Einsatzleitung wurde informiert. Betroffene ausstehende Bestellungen:",
+    "nav_rendimiento": "Leistung",
+    "tasa_exito": "Erfolgsquote",
+    "entregas_realizadas": "Abgeschlossene Lieferungen",
+    "total_asignaciones": "Insgesamt zugewiesen",
+    "promedio_horas": "Durchschnittliche Stunden",
+    "velocidad_promedio": "Durchschnittsgeschwindigkeit",
+    "sin_rendimiento_titulo": "Noch keine Daten",
+    "sin_rendimiento_desc": "Deine Leistung wird hier nach deiner ersten Lieferung angezeigt."
   }
 }

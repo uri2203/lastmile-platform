@@ -9,6 +9,7 @@ import { useI18n } from '../i18n';
 import DeliveriesScreen from '../screens/DeliveriesScreen';
 import DeliveryDetailScreen from '../screens/DeliveryDetailScreen';
 import HistoryScreen from '../screens/HistoryScreen';
+import PerformanceScreen from '../screens/PerformanceScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -47,6 +48,7 @@ export default function RootNavigator() {
   const TAB_LABELS = {
     Entregas: t('chofer_app.nav_entregas'),
     Historial: t('chofer_app.nav_historial'),
+    Rendimiento: t('chofer_app.nav_rendimiento'),
     Perfil: t('chofer_app.nav_perfil'),
   };
   return (
@@ -59,13 +61,14 @@ export default function RootNavigator() {
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarIcon: ({ color, size }) => {
-            const icons = { Entregas: 'cube', Historial: 'time', Perfil: 'person' };
+            const icons = { Entregas: 'cube', Historial: 'time', Rendimiento: 'stats-chart', Perfil: 'person' };
             return <Ionicons name={icons[route.name] || 'ellipse'} size={size} color={color} />;
           },
         })}
       >
         <Tab.Screen name="Entregas" component={DeliveriesStackScreen} />
         <Tab.Screen name="Historial" component={HistoryScreen} />
+        <Tab.Screen name="Rendimiento" component={PerformanceScreen} />
         <Tab.Screen name="Perfil" component={ProfileScreen} />
       </Tab.Navigator>
     </NavigationContainer>

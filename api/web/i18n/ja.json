@@ -996,6 +996,14 @@
     "percance_confirm_desc": "保留中の配達を続行できないことを運行管理に通知し、他のドライバーに再割り当てできるようにします。続行しますか？",
     "percance_motivo_titulo": "トラブルの理由",
     "percance_motivo_desc": "例：事故、車両故障、医療緊急事態",
-    "percance_enviado_msg": "運行管理に通知しました。影響を受ける保留中の注文："
+    "percance_enviado_msg": "運行管理に通知しました。影響を受ける保留中の注文：",
+    "nav_rendimiento": "実績",
+    "tasa_exito": "成功率",
+    "entregas_realizadas": "完了した配達",
+    "total_asignaciones": "割り当て合計",
+    "promedio_horas": "平均時間",
+    "velocidad_promedio": "平均速度",
+    "sin_rendimiento_titulo": "まだデータがありません",
+    "sin_rendimiento_desc": "最初の配達後にここに実績が表示されます。"
   }
 }

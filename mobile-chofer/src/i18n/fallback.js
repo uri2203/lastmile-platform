@@ -124,5 +124,13 @@ export default {
     percance_motivo_titulo: 'Motivo del percance',
     percance_motivo_desc: 'Ej: choque, descompostura del vehiculo, emergencia medica',
     percance_enviado_msg: 'Se aviso a operacion. Pedidos pendientes afectados:',
+    nav_rendimiento: 'Rendimiento',
+    tasa_exito: 'Tasa de exito',
+    entregas_realizadas: 'Entregas realizadas',
+    total_asignaciones: 'Total asignados',
+    promedio_horas: 'Promedio de horas',
+    velocidad_promedio: 'Velocidad promedio',
+    sin_rendimiento_titulo: 'Sin datos todavia',
+    sin_rendimiento_desc: 'Tu rendimiento va a aparecer aca despues de tu primera entrega.',
   },
 };

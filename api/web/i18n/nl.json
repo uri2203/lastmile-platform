@@ -996,6 +996,14 @@
     "percance_confirm_desc": "Dit laat de operations weten dat je je openstaande leveringen niet kunt voortzetten, zodat ze aan een andere chauffeur kunnen worden toegewezen. Doorgaan?",
     "percance_motivo_titulo": "Reden voor het incident",
     "percance_motivo_desc": "Bijv: ongeluk, voertuigpech, medisch noodgeval",
-    "percance_enviado_msg": "Operations is op de hoogte gesteld. Betrokken openstaande bestellingen:"
+    "percance_enviado_msg": "Operations is op de hoogte gesteld. Betrokken openstaande bestellingen:",
+    "nav_rendimiento": "Prestaties",
+    "tasa_exito": "Slagingspercentage",
+    "entregas_realizadas": "Voltooide leveringen",
+    "total_asignaciones": "Totaal toegewezen",
+    "promedio_horas": "Gemiddelde uren",
+    "velocidad_promedio": "Gemiddelde snelheid",
+    "sin_rendimiento_titulo": "Nog geen gegevens",
+    "sin_rendimiento_desc": "Je prestaties verschijnen hier na je eerste levering."
   }
 }

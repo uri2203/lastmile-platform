@@ -996,6 +996,14 @@
     "percance_confirm_desc": "यह ऑपरेशन को बताता है कि आप अपनी लंबित डिलीवरी जारी नहीं रख सकते ताकि उन्हें किसी अन्य ड्राइवर को फिर से सौंपा जा सके। जारी रखें?",
     "percance_motivo_titulo": "घटना का कारण",
     "percance_motivo_desc": "उदा: दुर्घटना, वाहन खराबी, चिकित्सा आपातकाल",
-    "percance_enviado_msg": "ऑपरेशन को सूचित किया गया। प्रभावित लंबित ऑर्डर:"
+    "percance_enviado_msg": "ऑपरेशन को सूचित किया गया। प्रभावित लंबित ऑर्डर:",
+    "nav_rendimiento": "प्रदर्शन",
+    "tasa_exito": "सफलता दर",
+    "entregas_realizadas": "पूर्ण डिलीवरी",
+    "total_asignaciones": "कुल सौंपे गए",
+    "promedio_horas": "औसत घंटे",
+    "velocidad_promedio": "औसत गति",
+    "sin_rendimiento_titulo": "अभी तक कोई डेटा नहीं",
+    "sin_rendimiento_desc": "आपकी पहली डिलीवरी के बाद आपका प्रदर्शन यहां दिखाई देगा।"
   }
 }

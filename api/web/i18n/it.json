@@ -996,6 +996,14 @@
     "percance_confirm_desc": "Questo avvisa l'operativo che non puoi continuare le tue consegne in sospeso, cosi possono essere riassegnate a un altro autista. Continuare?",
     "percance_motivo_titulo": "Motivo dell'incidente",
     "percance_motivo_desc": "Es: incidente, guasto del veicolo, emergenza medica",
-    "percance_enviado_msg": "L'operativo e stato avvisato. Ordini in sospeso interessati:"
+    "percance_enviado_msg": "L'operativo e stato avvisato. Ordini in sospeso interessati:",
+    "nav_rendimiento": "Rendimento",
+    "tasa_exito": "Tasso di successo",
+    "entregas_realizadas": "Consegne effettuate",
+    "total_asignaciones": "Totale assegnato",
+    "promedio_horas": "Media ore",
+    "velocidad_promedio": "Velocita media",
+    "sin_rendimiento_titulo": "Ancora nessun dato",
+    "sin_rendimiento_desc": "Il tuo rendimento apparira qui dopo la tua prima consegna."
   }
 }

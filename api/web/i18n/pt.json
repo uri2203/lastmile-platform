@@ -996,6 +996,14 @@
     "percance_confirm_desc": "Isso avisa a operacao que voce nao pode continuar com suas entregas pendentes para que sejam reatribuidas a outro motorista. Continuar?",
     "percance_motivo_titulo": "Motivo do incidente",
     "percance_motivo_desc": "Ex: acidente, quebra do veiculo, emergencia medica",
-    "percance_enviado_msg": "A operacao foi avisada. Pedidos pendentes afetados:"
+    "percance_enviado_msg": "A operacao foi avisada. Pedidos pendentes afetados:",
+    "nav_rendimiento": "Desempenho",
+    "tasa_exito": "Taxa de sucesso",
+    "entregas_realizadas": "Entregas realizadas",
+    "total_asignaciones": "Total atribuido",
+    "promedio_horas": "Media de horas",
+    "velocidad_promedio": "Velocidade media",
+    "sin_rendimiento_titulo": "Ainda sem dados",
+    "sin_rendimiento_desc": "Seu desempenho vai aparecer aqui depois da primeira entrega."
   }
 }

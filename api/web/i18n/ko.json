@@ -996,6 +996,14 @@
     "percance_confirm_desc": "보류 중인 배송을 계속할 수 없음을 운영팀에 알려 다른 기사에게 재배정할 수 있도록 합니다. 계속하시겠습니까?",
     "percance_motivo_titulo": "사고 사유",
     "percance_motivo_desc": "예: 사고, 차량 고장, 의료 응급 상황",
-    "percance_enviado_msg": "운영팀에 알림이 전송되었습니다. 영향받은 대기 주문:"
+    "percance_enviado_msg": "운영팀에 알림이 전송되었습니다. 영향받은 대기 주문:",
+    "nav_rendimiento": "실적",
+    "tasa_exito": "성공률",
+    "entregas_realizadas": "완료된 배송",
+    "total_asignaciones": "총 배정",
+    "promedio_horas": "평균 시간",
+    "velocidad_promedio": "평균 속도",
+    "sin_rendimiento_titulo": "아직 데이터 없음",
+    "sin_rendimiento_desc": "첫 배송 후 여기에 실적이 표시됩니다."
   }
 }

@@ -999,6 +999,14 @@
     "percance_confirm_desc": "This tells dispatch you can't continue with your pending deliveries so they can be reassigned to another driver. Continue?",
     "percance_motivo_titulo": "Reason for the incident",
     "percance_motivo_desc": "E.g: accident, vehicle breakdown, medical emergency",
-    "percance_enviado_msg": "Dispatch was notified. Affected pending orders:"
+    "percance_enviado_msg": "Dispatch was notified. Affected pending orders:",
+    "nav_rendimiento": "Performance",
+    "tasa_exito": "Success rate",
+    "entregas_realizadas": "Deliveries completed",
+    "total_asignaciones": "Total assigned",
+    "promedio_horas": "Average hours",
+    "velocidad_promedio": "Average speed",
+    "sin_rendimiento_titulo": "No data yet",
+    "sin_rendimiento_desc": "Your performance will show up here after your first delivery."
   }
 }

@@ -999,6 +999,14 @@
     "percance_confirm_desc": "Esto avisa a operacion que no podes continuar con tus entregas pendientes para que las reasignen a otro chofer. Continuar?",
     "percance_motivo_titulo": "Motivo del percance",
     "percance_motivo_desc": "Ej: choque, descompostura del vehiculo, emergencia medica",
-    "percance_enviado_msg": "Se avisó a operación. Pedidos pendientes afectados:"
+    "percance_enviado_msg": "Se avisó a operación. Pedidos pendientes afectados:",
+    "nav_rendimiento": "Rendimiento",
+    "tasa_exito": "Tasa de exito",
+    "entregas_realizadas": "Entregas realizadas",
+    "total_asignaciones": "Total asignados",
+    "promedio_horas": "Promedio de horas",
+    "velocidad_promedio": "Velocidad promedio",
+    "sin_rendimiento_titulo": "Sin datos todavia",
+    "sin_rendimiento_desc": "Tu rendimiento va a aparecer aca despues de tu primera entrega."
   }
 }

@@ -996,6 +996,14 @@
     "percance_confirm_desc": "سيخبر هذا التشغيل أنك لا تستطيع متابعة عمليات التسليم المعلقة حتى يتم إعادة تعيينها لسائق آخر. هل تريد المتابعة؟",
     "percance_motivo_titulo": "سبب الحادث",
     "percance_motivo_desc": "مثال: حادث، عطل في المركبة، حالة طبية طارئة",
-    "percance_enviado_msg": "تم إبلاغ التشغيل. الطلبات المعلقة المتأثرة:"
+    "percance_enviado_msg": "تم إبلاغ التشغيل. الطلبات المعلقة المتأثرة:",
+    "nav_rendimiento": "الأداء",
+    "tasa_exito": "معدل النجاح",
+    "entregas_realizadas": "عمليات التسليم المنجزة",
+    "total_asignaciones": "إجمالي المعين",
+    "promedio_horas": "متوسط الساعات",
+    "velocidad_promedio": "متوسط السرعة",
+    "sin_rendimiento_titulo": "لا توجد بيانات بعد",
+    "sin_rendimiento_desc": "سيظهر أداؤك هنا بعد أول عملية تسليم."
   }
 }
