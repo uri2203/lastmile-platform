@@ -1010,6 +1010,14 @@
     "firma_repetir": "Repetir assinatura",
     "firma_instruccion": "Peca ao cliente para assinar abaixo",
     "firma_limpiar": "Limpar",
-    "firma_vacia_desc": "Desenhe a assinatura antes de salvar."
+    "firma_vacia_desc": "Desenhe a assinatura antes de salvar.",
+    "nav_caja": "Caixa",
+    "efectivo_en_mano": "Dinheiro em maos",
+    "por_depositar": "Pendente de deposito",
+    "cobros_cod": "Cobrancas COD",
+    "sin_depositar": "Nao depositado",
+    "detalle_cobros": "Detalhe das cobrancas",
+    "sin_cobros_titulo": "Sem cobrancas pendentes",
+    "sin_cobros_desc": "Quando voce cobrar um pedido em dinheiro, aparecera aqui."
   }
 }

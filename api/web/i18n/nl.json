@@ -1010,6 +1010,14 @@
     "firma_repetir": "Handtekening opnieuw",
     "firma_instruccion": "Vraag de klant om hieronder te tekenen",
     "firma_limpiar": "Wissen",
-    "firma_vacia_desc": "Teken de handtekening voordat je opslaat."
+    "firma_vacia_desc": "Teken de handtekening voordat je opslaat.",
+    "nav_caja": "Kas",
+    "efectivo_en_mano": "Contant geld in bezit",
+    "por_depositar": "Te storten",
+    "cobros_cod": "Rembours-inningen",
+    "sin_depositar": "Niet gestort",
+    "detalle_cobros": "Inningsdetails",
+    "sin_cobros_titulo": "Geen openstaande inningen",
+    "sin_cobros_desc": "Wanneer je contant int voor een bestelling, verschijnt het hier."
   }
 }

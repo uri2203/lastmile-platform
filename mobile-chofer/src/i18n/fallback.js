@@ -138,5 +138,13 @@ export default {
     firma_instruccion: 'Pedile al cliente que firme aca abajo',
     firma_limpiar: 'Limpiar',
     firma_vacia_desc: 'Dibuja la firma antes de guardar.',
+    nav_caja: 'Caja',
+    efectivo_en_mano: 'Efectivo en mano',
+    por_depositar: 'Pendiente de depositar',
+    cobros_cod: 'Cobros COD',
+    sin_depositar: 'Sin depositar',
+    detalle_cobros: 'Detalle de cobros',
+    sin_cobros_titulo: 'Sin cobros pendientes',
+    sin_cobros_desc: 'Cuando cobres un pedido en efectivo, va a aparecer aca.',
   },
 };

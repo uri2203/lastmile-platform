@@ -120,6 +120,10 @@ export const api = {
   collectCash: (pedId, monto, notas) =>
     request(`/api/pedidos/${pedId}/collect-cash`, { method: 'POST', body: { monto, notas } }),
 
+  // Resumen de caja del chofer: cuanto efectivo lleva en mano (COD sin
+  // liquidar) + detalle por pedido. GET /api/choferes/<id>/cash-summary.
+  getCashSummary: (choId) => request(`/api/choferes/${choId}/cash-summary`),
+
   // Rendimiento del chofer (para la pantalla de estadisticas).
   getRendimiento: () => request('/api/choferes/rendimiento'),
 

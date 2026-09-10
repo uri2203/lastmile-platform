@@ -1010,6 +1010,14 @@
     "firma_repetir": "署名をやり直す",
     "firma_instruccion": "お客様に以下に署名してもらってください",
     "firma_limpiar": "クリア",
-    "firma_vacia_desc": "保存する前に署名を描いてください。"
+    "firma_vacia_desc": "保存する前に署名を描いてください。",
+    "nav_caja": "現金",
+    "efectivo_en_mano": "手持ち現金",
+    "por_depositar": "入金待ち",
+    "cobros_cod": "代引き回収",
+    "sin_depositar": "未入金",
+    "detalle_cobros": "回収の詳細",
+    "sin_cobros_titulo": "保留中の回収はありません",
+    "sin_cobros_desc": "注文の現金を回収するとここに表示されます。"
   }
 }

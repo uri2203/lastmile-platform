@@ -1013,6 +1013,14 @@
     "firma_repetir": "Redo signature",
     "firma_instruccion": "Ask the customer to sign below",
     "firma_limpiar": "Clear",
-    "firma_vacia_desc": "Draw the signature before saving."
+    "firma_vacia_desc": "Draw the signature before saving.",
+    "nav_caja": "Cash",
+    "efectivo_en_mano": "Cash on hand",
+    "por_depositar": "Pending deposit",
+    "cobros_cod": "COD collections",
+    "sin_depositar": "Not deposited",
+    "detalle_cobros": "Collection details",
+    "sin_cobros_titulo": "No pending collections",
+    "sin_cobros_desc": "When you collect cash for an order, it'll show up here."
   }
 }

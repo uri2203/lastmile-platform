@@ -1010,6 +1010,14 @@
     "firma_repetir": "Refaire la signature",
     "firma_instruccion": "Demandez au client de signer ci-dessous",
     "firma_limpiar": "Effacer",
-    "firma_vacia_desc": "Dessinez la signature avant d'enregistrer."
+    "firma_vacia_desc": "Dessinez la signature avant d'enregistrer.",
+    "nav_caja": "Caisse",
+    "efectivo_en_mano": "Especes en main",
+    "por_depositar": "En attente de depot",
+    "cobros_cod": "Encaissements COD",
+    "sin_depositar": "Non depose",
+    "detalle_cobros": "Detail des encaissements",
+    "sin_cobros_titulo": "Aucun encaissement en attente",
+    "sin_cobros_desc": "Quand vous encaissez une commande en especes, elle apparaitra ici."
   }
 }

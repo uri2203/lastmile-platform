@@ -1010,6 +1010,14 @@
     "firma_repetir": "Unterschrift wiederholen",
     "firma_instruccion": "Bitte den Kunden, unten zu unterschreiben",
     "firma_limpiar": "Loeschen",
-    "firma_vacia_desc": "Zeichne die Unterschrift, bevor du speicherst."
+    "firma_vacia_desc": "Zeichne die Unterschrift, bevor du speicherst.",
+    "nav_caja": "Kasse",
+    "efectivo_en_mano": "Bargeld in der Hand",
+    "por_depositar": "Einzahlung ausstehend",
+    "cobros_cod": "Nachnahme-Inkasso",
+    "sin_depositar": "Nicht eingezahlt",
+    "detalle_cobros": "Inkasso-Details",
+    "sin_cobros_titulo": "Keine ausstehenden Inkassi",
+    "sin_cobros_desc": "Wenn du eine Bestellung bar kassierst, erscheint sie hier."
   }
 }

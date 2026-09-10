@@ -1010,6 +1010,14 @@
     "firma_repetir": "重新签名",
     "firma_instruccion": "请客户在下方签名",
     "firma_limpiar": "清除",
-    "firma_vacia_desc": "保存前请先签名。"
+    "firma_vacia_desc": "保存前请先签名。",
+    "nav_caja": "现金",
+    "efectivo_en_mano": "手头现金",
+    "por_depositar": "待存款",
+    "cobros_cod": "货到付款收款",
+    "sin_depositar": "未存款",
+    "detalle_cobros": "收款明细",
+    "sin_cobros_titulo": "无待收款项",
+    "sin_cobros_desc": "当您现金收取订单款项后会显示在这里。"
   }
 }

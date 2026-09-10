@@ -1010,6 +1010,14 @@
     "firma_repetir": "서명 다시하기",
     "firma_instruccion": "아래에 고객 서명을 요청하세요",
     "firma_limpiar": "지우기",
-    "firma_vacia_desc": "저장하기 전에 서명을 그리세요."
+    "firma_vacia_desc": "저장하기 전에 서명을 그리세요.",
+    "nav_caja": "현금",
+    "efectivo_en_mano": "보유 현금",
+    "por_depositar": "입금 대기",
+    "cobros_cod": "착불 수금",
+    "sin_depositar": "미입금",
+    "detalle_cobros": "수금 내역",
+    "sin_cobros_titulo": "대기 중인 수금 없음",
+    "sin_cobros_desc": "주문 현금을 수금하면 여기에 표시됩니다."
   }
 }

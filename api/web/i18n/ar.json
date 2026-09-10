@@ -1010,6 +1010,14 @@
     "firma_repetir": "إعادة التوقيع",
     "firma_instruccion": "اطلب من العميل التوقيع أدناه",
     "firma_limpiar": "مسح",
-    "firma_vacia_desc": "ارسم التوقيع قبل الحفظ."
+    "firma_vacia_desc": "ارسم التوقيع قبل الحفظ.",
+    "nav_caja": "النقد",
+    "efectivo_en_mano": "النقد المتوفر",
+    "por_depositar": "في انتظار الإيداع",
+    "cobros_cod": "تحصيلات الدفع عند الاستلام",
+    "sin_depositar": "غير مودع",
+    "detalle_cobros": "تفاصيل التحصيل",
+    "sin_cobros_titulo": "لا توجد تحصيلات معلقة",
+    "sin_cobros_desc": "عندما تحصّل نقدًا لطلب ما، سيظهر هنا."
   }
 }

@@ -1010,6 +1010,14 @@
     "firma_repetir": "Rifai la firma",
     "firma_instruccion": "Chiedi al cliente di firmare qui sotto",
     "firma_limpiar": "Cancella",
-    "firma_vacia_desc": "Disegna la firma prima di salvare."
+    "firma_vacia_desc": "Disegna la firma prima di salvare.",
+    "nav_caja": "Cassa",
+    "efectivo_en_mano": "Contanti in mano",
+    "por_depositar": "In attesa di deposito",
+    "cobros_cod": "Incassi COD",
+    "sin_depositar": "Non depositato",
+    "detalle_cobros": "Dettaglio incassi",
+    "sin_cobros_titulo": "Nessun incasso in sospeso",
+    "sin_cobros_desc": "Quando incassi un ordine in contanti, apparira qui."
   }
 }

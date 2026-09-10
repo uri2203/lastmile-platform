@@ -1010,6 +1010,14 @@
     "firma_repetir": "हस्ताक्षर दोहराएं",
     "firma_instruccion": "ग्राहक से नीचे हस्ताक्षर करने के लिए कहें",
     "firma_limpiar": "साफ़ करें",
-    "firma_vacia_desc": "सहेजने से पहले हस्ताक्षर बनाएं।"
+    "firma_vacia_desc": "सहेजने से पहले हस्ताक्षर बनाएं।",
+    "nav_caja": "नकद",
+    "efectivo_en_mano": "हाथ में नकद",
+    "por_depositar": "जमा लंबित",
+    "cobros_cod": "सीओडी संग्रह",
+    "sin_depositar": "जमा नहीं",
+    "detalle_cobros": "संग्रह विवरण",
+    "sin_cobros_titulo": "कोई लंबित संग्रह नहीं",
+    "sin_cobros_desc": "जब आप किसी ऑर्डर के लिए नकद वसूलेंगे, तो वह यहां दिखेगा।"
   }
 }
