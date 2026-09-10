@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 const BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl || 'https://lastmile-platform.onrender.com';
 
 const TOKEN_KEY = 'lastmile_chofer_token';
+const USER_KEY = 'lastmile_chofer_user';
 
 export async function getToken() {
   return SecureStore.getItemAsync(TOKEN_KEY);
@@ -12,6 +13,28 @@ export async function getToken() {
 export async function setToken(token) {
   if (token) await SecureStore.setItemAsync(TOKEN_KEY, token);
   else await SecureStore.deleteItemAsync(TOKEN_KEY);
+}
+
+// Se guarda el objeto de usuario (rol, nombre, empresa) junto al token para
+// poder mostrar la app AL INSTANTE al reabrir, sin esperar una llamada de red.
+// La validacion real del token corre en segundo plano (si expiro, el primer
+// request da 401 y api.js limpia la sesion).
+export async function getStoredUser() {
+  try {
+    const raw = await SecureStore.getItemAsync(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function setStoredUser(user) {
+  try {
+    if (user) await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    else await SecureStore.deleteItemAsync(USER_KEY);
+  } catch (e) {
+    // no critico: si falla, en el peor caso el proximo arranque valida por red
+  }
 }
 
 const REQUEST_TIMEOUT_MS = 15000;

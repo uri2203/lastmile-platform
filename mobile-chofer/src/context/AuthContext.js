@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { api, getToken, setToken } from '../api';
+import { api, getToken, setToken, getStoredUser, setStoredUser } from '../api';
 
 const AuthContext = createContext(null);
 
@@ -22,18 +22,18 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     (async () => {
-      const token = await getToken();
+      const [token, storedUser] = await Promise.all([getToken(), getStoredUser()]);
       if (token) {
-        // No hay endpoint "whoami"; se valida el token al primer request real
-        // (getMyProfile). Si el token expiro, api.js lo limpia solo (401).
-        try {
-          await loadProfile();
-          setUser({ token });
-        } catch (e) {
-          // token invalido/expirado
-        }
+        // Arranque INSTANTANEO: se muestra la app de una con la sesion guardada
+        // y se libera el loading sin esperar ninguna red. El perfil de chofer
+        // (getMyProfile) y la validacion real del token se resuelven en segundo
+        // plano -- si el token expiro, el primer request da 401 y se limpia.
+        setUser(storedUser || { token });
+        setLoading(false);
+        loadProfile(); // sin await: no bloquea el arranque
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, [loadProfile]);
 
@@ -50,6 +50,7 @@ export function AuthProvider({ children }) {
       throw err;
     }
     await setToken(res.token);
+    await setStoredUser(res.data);
     setUser(res.data);
     await loadProfile();
     return res.data;
@@ -57,6 +58,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     await setToken(null);
+    await setStoredUser(null);
     setUser(null);
     setChoferProfile(null);
   }, []);

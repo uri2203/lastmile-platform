@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -50,28 +50,14 @@ function Root() {
 }
 
 function AppInner() {
-  const [checkingUpdate, setCheckingUpdate] = useState(true);
-
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      // Si hay actualizacion, checkAndApplyUpdate() reinicia la app sola y
-      // este componente nunca vuelve a renderizar. Si no hay (o algo sale
-      // mal), checkAndApplyUpdate() ya atrapa sus propios errores y con
-      // timeout, asi que esto siempre resuelve.
-      try {
-        await checkAndApplyUpdate();
-      } catch (e) {
-        console.warn('[startup] checkAndApplyUpdate fallo:', e?.message);
-      }
-      if (!cancelled) setCheckingUpdate(false);
-    })();
-    return () => { cancelled = true; };
+    // Chequeo de actualizacion EN SEGUNDO PLANO: no bloquea el arranque. Antes
+    // se esperaba (await) esto antes de mostrar nada, y era la causa principal
+    // de que la app "tardara en entrar" (hasta 8s de chequeo + descarga sobre
+    // pantalla oscura). Ahora la app arranca al instante; si hay una version
+    // nueva, checkAndApplyUpdate la baja y recarga sola sin trabar el inicio.
+    checkAndApplyUpdate().catch((e) => console.warn('[startup] update:', e?.message));
   }, []);
-
-  if (checkingUpdate) {
-    return <View style={{ flex: 1, backgroundColor: colors.bgPrimary }} />;
-  }
 
   return (
     <SafeAreaProvider>
