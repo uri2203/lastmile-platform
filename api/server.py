@@ -2867,6 +2867,7 @@ def get_pedidos_estadisticas():
 # ========================================
 
 @app.route('/api/pedidos/<int:ped_id>/collect-cash', methods=['POST'])
+@requiere_rol('chofer', 'admin', 'operacion', 'superadmin')
 def collect_cash(ped_id):
     """Driver confirms cash collection for a COD order."""
     emp_id = get_emp_id()
@@ -2887,6 +2888,12 @@ def collect_cash(ped_id):
     if not cho_id:
         return jsonify({'success': False, 'error': 'Pedido sin chofer asignado'}), 400
 
+    # Un chofer solo puede registrar el cobro de SUS propios pedidos.
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        if not own or own[0]['CHO_ID'] != cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado: este pedido no esta asignado a tu perfil'}), 403
+
     # Update pedido
     execute(
         "UPDATE PEDIDOS SET PED_CANTIDAD_COBRADA=?, PED_PAGO_ESTATUS='COBRADO', PED_PAGO_FECHA=NOW() WHERE PED_ID=?",
@@ -2904,9 +2911,16 @@ def collect_cash(ped_id):
 
 
 @app.route('/api/choferes/<int:cho_id>/cash-summary', methods=['GET'])
+@requiere_rol('chofer', 'admin', 'operacion', 'superadmin')
 def get_cash_summary(cho_id):
     """Get cash holdings summary for a driver."""
     emp_id = get_emp_id()
+
+    # Un chofer solo puede consultar su propia caja.
+    if g.rol == 'chofer':
+        own = query("SELECT CHO_ID FROM CHOFERES WHERE CHO_USU_ID=? AND EMP_ID=?", [g.usu_id, emp_id])
+        if not own or own[0]['CHO_ID'] != cho_id:
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
 
     holdings = query(
         "SELECT h.*, p.PED_NUMERO, p.PED_CLIENTE_NOMBRE, p.PED_DESTINO_DIR "
