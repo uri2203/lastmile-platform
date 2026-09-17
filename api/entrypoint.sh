@@ -4,6 +4,10 @@ set -e
 # Production entrypoint: creates superadmin if env vars are set, then starts gunicorn
 echo "[ENTRYPOINT] Last Mile Delivery - Production Setup"
 
+# Initialize database schema first (creates tables if they don't exist)
+echo "[ENTRYPOINT] Initializing database schema..."
+python -c "from db import init_schema; init_schema()" || echo "[ENTRYPOINT] WARNING: Schema init failed, continuing anyway"
+
 # Create superadmin if env vars are provided
 if [ -n "$SUPERADMIN_USER" ] && [ -n "$SUPERADMIN_PASS" ]; then
     echo "[ENTRYPOINT] Creating superadmin: $SUPERADMIN_USER"
