@@ -13,7 +13,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv
-from db import query, execute, init_schema, check_empty, get_db_info, USE_POSTGRES
+from db import query, execute, execute_returning, init_schema, check_empty, get_db_info, USE_POSTGRES
 from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, current_token, blacklist_token, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 from webhooks import webhook_bp
@@ -1074,21 +1074,23 @@ def onboarding_register():
     verification_expires = datetime.utcnow() + timedelta(hours=24)
 
     try:
-        execute(
+        emp_id = execute_returning(
             "INSERT INTO EMPRESAS (EMP_RFC, EMP_NOMBRE, EMP_EMAIL, EMP_ESTATUS, EMP_PLAN, "
             "EMP_MAX_USUARIOS, EMP_MAX_CHOFERES, EMP_MAX_PEDIDOS_MES, EMP_REFERRAL_CODE, EMP_REFERRED_BY, "
             "EMP_EMAIL_VERIFIED, EMP_VERIFICATION_TOKEN, EMP_VERIFICATION_EXPIRES) "
-            "VALUES (?, ?, ?, 'PENDIENTE_VERIFICACION', ?, ?, ?, ?, ?, ?, 'N', ?, ?)",
+            "VALUES (?, ?, ?, 'PENDIENTE_VERIFICACION', ?, ?, ?, ?, ?, ?, 'N', ?, ?) RETURNING EMP_ID",
             [emp_data['rfc'].upper(), emp_data['nombre'],
              usr_data.get('email', ''),
              plan, 5, plan_config.get(plan, 10), 500,
              referral_code, referred_by, verification_token, verification_expires]
         )
-        r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
-        emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
+        if not emp_id:
+            r = query("SELECT MAX(EMP_ID) as id FROM EMPRESAS")
+            emp_id = r[0].get('ID', r[0].get('id', 1)) if r else 1
+        print(f'[ONBOARDING] Empresa creada emp_id={emp_id}')
     except Exception as e:
         print(f'[ERROR] Creando empresa: {e}')
-        return jsonify({'success': False, 'error': 'Error al crear empresa. Intenta de nuevo.'}), 500
+        return jsonify({'success': False, 'error': f'Error al crear empresa: {str(e)[:100]}'}), 500
 
     # Record referral relationship
     if referrer_emp_id:
@@ -1105,20 +1107,22 @@ def onboarding_register():
     # Create admin user
     password_hash = hash_password(usr_data['password'])
     try:
-        execute(
+        usr_id = execute_returning(
             "INSERT INTO USUARIOS (USU_EMP_ID, USU_USUARIO, USU_PASS, USU_NOMBRE, USU_EMAIL, "
             "USU_TELEFONO, USU_ROL, USU_ACTIVO, USU_CREATED) "
-            "VALUES (?, ?, ?, ?, ?, ?, 'admin', 'S', NOW())",
+            "VALUES (?, ?, ?, ?, ?, ?, 'admin', 'S', NOW()) RETURNING USU_ID",
             [emp_id, usr_data.get('usuario', 'admin'), password_hash,
-             usr_data['nombre'], usr_data['email'],
+             usr_data.get('nombre', usr_data.get('email', 'Admin')),
+             usr_data.get('email', ''),
              usr_data.get('telefono', '')]
         )
-        # Get the newly created user ID
-        usr_row = query("SELECT MAX(USR_ID) as id FROM USUARIOS WHERE USU_EMP_ID=?", [emp_id])
-        usr_id = usr_row[0].get('ID', usr_row[0].get('id', 0)) if usr_row else 0
+        if not usr_id:
+            usr_row = query("SELECT MAX(USR_ID) as id FROM USUARIOS WHERE USU_EMP_ID=?", [emp_id])
+            usr_id = usr_row[0].get('ID', usr_row[0].get('id', 0)) if usr_row else 0
+        print(f'[ONBOARDING] Usuario creado usr_id={usr_id} emp_id={emp_id}')
     except Exception as e:
         print(f'[ERROR] Creando usuario: {e}')
-        return jsonify({'success': False, 'error': 'Error al crear usuario. Intenta de nuevo.'}), 500
+        return jsonify({'success': False, 'error': f'Error al crear usuario: {str(e)[:100]}'}), 500
 
     # Record legal acceptance for legal protection
     legal_data = data.get('legal', {})
