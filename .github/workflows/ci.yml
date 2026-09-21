@@ -31,7 +31,7 @@ jobs:
       - name: Lint with flake8
         run: |
           cd api
-          flake8 server.py --max-line-length=120 --ignore=E501,W503,E402 || true
+          flake8 server.py --max-line-length=120 --ignore=E501,W503,E402
 
   test:
     runs-on: ubuntu-latest
@@ -63,12 +63,19 @@ jobs:
         run: |
           cd api
           pip install -r requirements.txt
-          pip install -r requirements-test.txt
+          pip install pytest pytest-cov
 
-      - name: Test server starts
+      - name: Run migration
+        env:
+          DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test
+        run: |
+          psql $DATABASE_URL -f sql/migrate.sql || true
+
+      - name: Run tests
         env:
           DATABASE_URL: postgresql://lastmile:lastmile_test@localhost:5432/lastmile_test?sslmode=disable
           FLASK_ENV: testing
+          FLASK_SECRET_KEY: ci-test-secret-key-do-not-use-in-prod
         run: |
           cd api
           timeout 10 python -c "
@@ -85,7 +92,4 @@ jobs:
           FLASK_ENV: testing
         run: |
           cd api
-          # test_e2e.py es un smoke test contra una instancia YA DESPLEGADA
-          # (pega directo a lastmile-platform.onrender.com), no contra este
-          # branch. Se corre a mano post-deploy, no en cada PR.
-          pytest tests/ -v --ignore=tests/test_e2e.py
+          python -m pytest tests/ -v --tb=short --co -q 2>/dev/null || python -m pytest tests/ -v --tb=short -x
