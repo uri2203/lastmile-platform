@@ -10,14 +10,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../App';
-import Card from '../../shared/components/Card';
-import Avatar from '../../shared/components/Avatar';
-import Badge from '../../shared/components/Badge';
-import EmptyState from '../../shared/components/EmptyState';
-import { get } from '../../shared/api';
-import { formatCurrency, formatRelativeTime, formatPhone } from '../../shared/formatters';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import { useTheme } from '../theme-context';
+import Card from '../shared/components/Card';
+import Avatar from '../shared/components/Avatar';
+import Badge from '../shared/components/Badge';
+import EmptyState from '../shared/components/EmptyState';
+import { get } from '../shared/api';
+import { formatCurrency, formatRelativeTime, formatPhone } from '../shared/formatters';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 import useAuth from '../hooks/useAuth';
 
 const FILTER_TABS = [

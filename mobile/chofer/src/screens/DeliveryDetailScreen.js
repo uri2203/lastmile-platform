@@ -16,13 +16,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { useTheme } from '../../App';
-import Card from '../../shared/components/Card';
-import Button from '../../shared/components/Button';
-import Badge from '../../shared/components/Badge';
-import { get, put, post } from '../../shared/api';
-import { formatCurrency, formatPhone, formatDateTime } from '../../shared/formatters';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import { useTheme } from '../theme-context';
+import Card from '../shared/components/Card';
+import Button from '../shared/components/Button';
+import Badge from '../shared/components/Badge';
+import { get, put, post } from '../shared/api';
+import { formatCurrency, formatPhone, formatDateTime } from '../shared/formatters';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 const { width } = Dimensions.get('window');
 

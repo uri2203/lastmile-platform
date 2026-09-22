@@ -1,1 +1,1 @@
-export { default } from '../../shared/components/LoadingScreen';
+export { default } from '../shared/components/LoadingScreen';

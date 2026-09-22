@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#6366f1"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lastmile.chofer",
@@ -20,11 +22,12 @@
         "googleMapsApiKey": ""
       },
       "infoPlist": {
-        "NSCameraUsageDescription": "Last Mile Chofer necesita acceso a la cámara para capturar evidencia de entrega.",
+        "NSCameraUsageDescription": "Permiso de cámara para evidencia fotográfica",
         "NSLocationWhenInUseUsageDescription": "Last Mile Chofer necesita tu ubicación para rastrear entregas en tiempo real.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Last Mile Chofer necesita tu ubicación en segundo plano para rastreo continuo.",
-        "NSCameraUsageDescription": "Permiso de cámara para evidencia fotográfica",
-        "UIBackgroundModes": ["location"]
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
@@ -39,13 +42,16 @@
         }
       },
       "permissions": [
-        "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
-        "WAKE_LOCK"
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "plugins": [
@@ -75,7 +81,9 @@
       [
         "expo-task-manager",
         {
-          "permissions": ["ACCESS_BACKGROUND_LOCATION"]
+          "permissions": [
+            "ACCESS_BACKGROUND_LOCATION"
+          ]
         }
       ],
       [
@@ -93,8 +101,9 @@
     "extra": {
       "apiUrl": "https://lastmile-platform.onrender.com",
       "eas": {
-        "projectId": ""
+        "projectId": "19ee50f4-fadb-41a2-91b6-8a677fc5f91b"
       }
-    }
+    },
+    "owner": "uri220378"
   }
 }

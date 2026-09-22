@@ -12,13 +12,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { useTheme } from '../../App';
-import Card from '../../shared/components/Card';
-import Badge from '../../shared/components/Badge';
-import Button from '../../shared/components/Button';
-import { get, del } from '../../shared/api';
-import { formatCurrency, formatDateTime, formatPhone } from '../../shared/formatters';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import { useTheme } from '../theme-context';
+import Card from '../shared/components/Card';
+import Badge from '../shared/components/Badge';
+import Button from '../shared/components/Button';
+import { get, del } from '../shared/api';
+import { formatCurrency, formatDateTime, formatPhone } from '../shared/formatters';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 const { height } = Dimensions.get('window');
 const MAP_HEIGHT = height * 0.3;

@@ -12,14 +12,14 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../App';
-import Input from '../../shared/components/Input';
-import Button from '../../shared/components/Button';
-import Card from '../../shared/components/Card';
-import { post } from '../../shared/api';
-import { formatCurrency } from '../../shared/formatters';
-import { validateRequired, validatePhone } from '../../shared/validators';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import { useTheme } from '../theme-context';
+import Input from '../shared/components/Input';
+import Button from '../shared/components/Button';
+import Card from '../shared/components/Card';
+import { post } from '../shared/api';
+import { formatCurrency } from '../shared/formatters';
+import { validateRequired, validatePhone } from '../shared/validators';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 const SERVICE_TYPES = [
   {

@@ -11,13 +11,13 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../App';
-import Card from '../../shared/components/Card';
-import Badge from '../../shared/components/Badge';
-import EmptyState from '../../shared/components/EmptyState';
-import { get } from '../../shared/api';
-import { formatCurrency, formatDate } from '../../shared/formatters';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import { useTheme } from '../theme-context';
+import Card from '../shared/components/Card';
+import Badge from '../shared/components/Badge';
+import EmptyState from '../shared/components/EmptyState';
+import { get } from '../shared/api';
+import { formatCurrency, formatDate } from '../shared/formatters';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 const FILTERS = [
   { id: 'all', label: 'Todas' },

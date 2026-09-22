@@ -14,10 +14,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import useAuth from '../hooks/useAuth';
-import Input from '../../shared/components/Input';
-import Button from '../../shared/components/Button';
-import { validateEmail } from '../../shared/validators';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import Input from '../shared/components/Input';
+import Button from '../shared/components/Button';
+import { validateEmail } from '../shared/validators';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 const { width, height } = Dimensions.get('window');
 

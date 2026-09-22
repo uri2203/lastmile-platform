@@ -1,17 +1,14 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { StatusBar, Platform, StyleSheet, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import ThemeContext from './src/theme-context';
 import LoadingScreen from './src/components/LoadingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import MainNavigator from './src/navigation';
 import useAuth from './src/hooks/useAuth';
-
-const ThemeContext = createContext();
-
-export const useTheme = () => useContext(ThemeContext);
 
 const Stack = createNativeStackNavigator();
 

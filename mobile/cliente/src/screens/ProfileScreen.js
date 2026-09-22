@@ -9,13 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../App';
+import { useTheme } from '../theme-context';
 import useAuth from '../hooks/useAuth';
-import Card from '../../shared/components/Card';
-import Avatar from '../../shared/components/Avatar';
-import { get } from '../../shared/api';
-import { formatCurrency } from '../../shared/formatters';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import Card from '../shared/components/Card';
+import Avatar from '../shared/components/Avatar';
+import { get } from '../shared/api';
+import { formatCurrency } from '../shared/formatters';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 export default function ProfileScreen({ navigation }) {
   const { theme, toggleTheme, isDarkMode } = useTheme();

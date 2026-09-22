@@ -1,8 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { post } from '../../../shared/api';
-import { TOKEN_KEY } from '../../../shared/auth';
+import { post } from '../shared/api';
+import { TOKEN_KEY } from '../shared/auth';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

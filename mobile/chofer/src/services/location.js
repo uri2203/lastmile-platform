@@ -1,6 +1,6 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
-import { post } from '../../../shared/api';
+import { post } from '../shared/api';
 
 const BACKGROUND_TASK_NAME = 'background-location-task';
 

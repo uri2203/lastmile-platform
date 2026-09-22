@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../App';
-import Card from '../../shared/components/Card';
-import Avatar from '../../shared/components/Avatar';
-import Button from '../../shared/components/Button';
-import { get } from '../../shared/api';
-import { colors, typography, spacing, borderRadius, shadows } from '../../shared/theme';
+import { useTheme } from '../theme-context';
+import Card from '../shared/components/Card';
+import Avatar from '../shared/components/Avatar';
+import Button from '../shared/components/Button';
+import { get } from '../shared/api';
+import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 import useAuth from '../hooks/useAuth';
 
 export default function ProfileScreen() {

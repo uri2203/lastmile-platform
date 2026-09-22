@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#6366f1"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lastmile.cliente",
@@ -32,7 +34,9 @@
         "ACCESS_COARSE_LOCATION",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
@@ -50,13 +54,17 @@
           "color": "#6366f1"
         }
       ],
-      ["expo-secure-store", {}]
+      [
+        "expo-secure-store",
+        {}
+      ]
     ],
     "extra": {
       "apiUrl": "https://lastmile-platform.onrender.com",
       "eas": {
-        "projectId": ""
+        "projectId": "8049b0d6-ea2e-48be-ae4d-18a61d05948b"
       }
-    }
+    },
+    "owner": "uri220378"
   }
 }
