@@ -581,7 +581,7 @@
 
         <div class="step-nav">
           <button class="btn btn-ghost" onclick="goStep(3)"><i class="fas fa-arrow-left"></i> <span data-i18n="onboarding.btn_atras">Atrás</span></button>
-          <button class="btn btn-success" onclick="crearCuenta()"><i class="fas fa-rocket"></i> <span data-i18n="onboarding.crear_mi_empresa">Crear Mi Empresa</span></button>
+          <button class="btn btn-success" onclick="crearCuenta(event)"><i class="fas fa-rocket"></i> <span data-i18n="onboarding.crear_mi_empresa">Crear Mi Empresa</span></button>
         </div>
       </div>
 
@@ -655,26 +655,33 @@
       selectedPlan = plan;
     }
 
-    async function crearCuenta() {
+    async function crearCuenta(e) {
+      if(e)e.preventDefault();
       const nombre = document.getElementById('emp-nombre').value;
       const rfc = document.getElementById('emp-rfc').value;
+      const razon = document.getElementById('emp-razon')?.value || '';
+      const regimen = document.getElementById('emp-regimen')?.value || '601';
+      const cp = document.getElementById('emp-cp')?.value || '';
       const email = document.getElementById('usr-email').value;
       const pass = document.getElementById('usr-pass').value;
       const pass2 = document.getElementById('usr-pass2').value;
-      const telefono = document.getElementById('emp-telefono')?.value || '';
+      const telefono = document.getElementById('usr-telefono')?.value || '';
 
       if (!nombre || !rfc || !email) {
-        Utils.toast(window.i18n.t('onboarding.error_campos'), 'warning');
+        if(window.Utils&&Utils.toast)Utils.toast(window.i18n.t('onboarding.error_campos'), 'warning');
+        else alert(window.i18n.t('onboarding.error_campos'));
         return;
       }
 
       if (pass !== pass2) {
-        Utils.toast(window.i18n.t('onboarding.error_contrasenas'), 'error');
+        if(window.Utils&&Utils.toast)Utils.toast(window.i18n.t('onboarding.error_contrasenas'), 'error');
+        else alert(window.i18n.t('onboarding.error_contrasenas'));
         return;
       }
 
       if (pass.length < 8) {
-        Utils.toast(window.i18n.t('onboarding.error_longitud'), 'error');
+        if(window.Utils&&Utils.toast)Utils.toast(window.i18n.t('onboarding.error_longitud'), 'error');
+        else alert(window.i18n.t('onboarding.error_longitud'));
         return;
       }
 
@@ -684,12 +691,13 @@
       const legalError = document.getElementById('legalError');
       if (!allChecked) {
         if (legalError) legalError.style.display = 'block';
-        Utils.toast(window.i18n.t('onboarding.legal_required'), 'error');
+        if(window.Utils&&Utils.toast)Utils.toast(window.i18n.t('onboarding.legal_required'), 'error');
+        else alert(window.i18n.t('onboarding.legal_required'));
         return;
       }
       if (legalError) legalError.style.display = 'none';
 
-      const btn = event.target;
+      const btn = e ? e.target : document.querySelector('[onclick*="crearCuenta"]');
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + window.i18n.t('onboarding.creando');
 
@@ -702,6 +710,9 @@
             empresa: {
               nombre: nombre,
               rfc: rfc,
+              razon_social: razon,
+              regimen_fiscal: regimen,
+              codigo_postal: cp,
               telefono: telefono,
               plan: selectedPlan.toUpperCase()
             },
@@ -730,20 +741,22 @@
           document.getElementById('res-plan').textContent = selectedPlan.toUpperCase();
           document.getElementById('res-email').textContent = email;
           goStep(5);
-          Utils.toast(window.i18n.t('onboarding.empresa_creada'), 'success');
+          if(window.Utils&&Utils.toast)Utils.toast(window.i18n.t('onboarding.empresa_creada'), 'success');
         } else {
-          Utils.toast(data.error || window.i18n.t('onboarding.error_crear'), 'error');
+          if(window.Utils&&Utils.toast)Utils.toast(data.error || window.i18n.t('onboarding.error_crear'), 'error');
+          else alert(data.error || window.i18n.t('onboarding.error_crear'));
           btn.disabled = false;
           btn.innerHTML = '<i class="fas fa-rocket"></i> ' + window.i18n.t('onboarding.crear_mi_empresa');
         }
       } catch(e) {
-        Utils.toast(window.i18n.t('onboarding.errorConexion'), 'error');
+        if(window.Utils&&Utils.toast)Utils.toast(window.i18n.t('onboarding.errorConexion'), 'error');
+        else alert(window.i18n.t('onboarding.errorConexion'));
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-rocket"></i> ' + window.i18n.t('onboarding.crear_mi_empresa');
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
+    document.addEventListener('DOMContentLoaded', () => { if(window.ThemeManager)ThemeManager.init(); });
   </script>
   <script src="js/cookie-consent.js"></script>
   <div style="text-align:center; padding:1rem; color:#666; font-size:0.75rem; border-top:1px solid #eee; margin-top:2rem;">

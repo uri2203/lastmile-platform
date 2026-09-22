@@ -29,6 +29,7 @@
 
   window.LMAuth = {
     token: getToken,
+    getToken: getToken,
     setToken: function (t) {
       try { sessionStorage.setItem(TOKEN_KEY, t || ''); } catch (e) {}
     },
