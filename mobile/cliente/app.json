@@ -58,7 +58,8 @@
         "expo-secure-store",
         {}
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ],
     "extra": {
       "apiUrl": "https://lastmile-platform.onrender.com",
