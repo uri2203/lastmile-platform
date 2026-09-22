@@ -96,7 +96,8 @@
           "photosPermission": "Last Mile Chofer necesita acceso a tus fotos para evidencia de entrega.",
           "cameraPermission": "Last Mile Chofer necesita acceso a la cámara para evidencia fotográfica."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "apiUrl": "https://lastmile-platform.onrender.com",
