@@ -11,6 +11,7 @@
   <script src="js/theme.js"></script>
   <style>
     body {
+      margin: 0;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -285,7 +286,10 @@
     }
 
     .onboard-footer {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
       margin-top: 20px;
       font-size: var(--font-xs);
       color: var(--text-muted);
@@ -293,6 +297,35 @@
 
     .onboard-footer a {
       color: var(--accent);
+    }
+
+    .legal-footer {
+      text-align: center;
+      padding: 12px 0 0;
+      margin-top: 16px;
+      font-size: var(--font-xs);
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-primary);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .legal-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0 4px;
+      transition: color var(--transition-fast);
+    }
+
+    .legal-footer a:hover {
+      color: var(--accent);
+    }
+
+    .legal-footer .legal-sep {
+      color: var(--border-secondary);
     }
 
     .legal-checkbox:hover {
@@ -609,6 +642,20 @@
     <div class="onboard-footer">
       <span data-i18n="onboarding.ya_tienes">¿Ya tienes cuenta?</span> <a href="index.html" data-i18n="onboarding.iniciar_sesion">Iniciar sesión</a>
     </div>
+
+    <div class="legal-footer">
+      <a href="/legal/terminos-condiciones.html" target="_blank" rel="noopener">Terminos y Condiciones</a>
+      <span class="legal-sep">|</span>
+      <a href="/legal/aviso-privacidad.html" target="_blank" rel="noopener">Aviso de Privacidad</a>
+      <span class="legal-sep">|</span>
+      <a href="/legal/politica-cookies.html" target="_blank" rel="noopener">Politica de Cookies</a>
+      <span class="legal-sep">|</span>
+      <a href="/legal/politica-cobros-reembolsos.html" target="_blank" rel="noopener">Politica de Cobros</a>
+      <span class="legal-sep">|</span>
+      <a href="/legal/deslinde-responsabilidades.html" target="_blank" rel="noopener">Deslinde</a>
+      <span class="legal-sep">|</span>
+      <a href="/legal/politica-ia.html" target="_blank" rel="noopener">Politica de IA</a>
+    </div>
   </div>
 
   <script>
@@ -759,13 +806,5 @@
     document.addEventListener('DOMContentLoaded', () => { if(window.ThemeManager)ThemeManager.init(); });
   </script>
   <script src="js/cookie-consent.js"></script>
-  <div style="text-align:center; padding:1rem; color:#666; font-size:0.75rem; border-top:1px solid #eee; margin-top:2rem;">
-    <a href="/legal/terminos-condiciones.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Terminos y Condiciones</a> |
-    <a href="/legal/aviso-privacidad.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Aviso de Privacidad</a> |
-    <a href="/legal/politica-cookies.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Politica de Cookies</a> |
-    <a href="/legal/politica-cobros-reembolsos.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Politica de Cobros</a> |
-    <a href="/legal/deslinde-responsabilidades.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Deslinde</a> |
-    <a href="/legal/politica-ia.html" target="_blank" style="color:#666;text-decoration:none;margin:0 0.5rem;">Politica de IA</a>
-  </div>
 </body>
 </html>
