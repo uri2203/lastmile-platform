@@ -1,0 +1,100 @@
+{
+  "expo": {
+    "name": "Last Mile Chofer",
+    "slug": "lastmile-chofer",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "lastmilechofer",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6366f1"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lastmile.chofer",
+      "config": {
+        "googleMapsApiKey": ""
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Last Mile Chofer necesita acceso a la cámara para capturar evidencia de entrega.",
+        "NSLocationWhenInUseUsageDescription": "Last Mile Chofer necesita tu ubicación para rastrear entregas en tiempo real.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Last Mile Chofer necesita tu ubicación en segundo plano para rastreo continuo.",
+        "NSCameraUsageDescription": "Permiso de cámara para evidencia fotográfica",
+        "UIBackgroundModes": ["location"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6366f1"
+      },
+      "package": "com.lastmile.chofer",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Last Mile Chofer necesita acceso a la cámara para capturar evidencia de entrega."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Last Mile Chofer necesita tu ubicación para rastrear entregas.",
+          "locationAlwaysPermission": "Last Mile Chofer necesita tu ubicación en segundo plano para rastreo continuo.",
+          "locationWhenInUsePermission": "Last Mile Chofer necesita tu ubicación para mostrar rutas.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366f1"
+        }
+      ],
+      [
+        "expo-task-manager",
+        {
+          "permissions": ["ACCESS_BACKGROUND_LOCATION"]
+        }
+      ],
+      [
+        "expo-secure-store",
+        {}
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Last Mile Chofer necesita acceso a tus fotos para evidencia de entrega.",
+          "cameraPermission": "Last Mile Chofer necesita acceso a la cámara para evidencia fotográfica."
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://lastmile-platform.onrender.com",
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

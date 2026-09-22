@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Last Mile",
+    "slug": "lastmile-cliente",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "lastmilecliente",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6366f1"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lastmile.cliente",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Last Mile necesita tu ubicación para calcular distancias y rutas de envío.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Last Mile necesita tu ubicación para rastrear envíos en tiempo real."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6366f1"
+      },
+      "package": "com.lastmile.cliente",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Last Mile necesita tu ubicación para calcular distancias y rutas de envío.",
+          "locationAlwaysAndWhenInUsePermission": "Last Mile necesita tu ubicación para rastrear envíos en tiempo real."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366f1"
+        }
+      ],
+      ["expo-secure-store", {}]
+    ],
+    "extra": {
+      "apiUrl": "https://lastmile-platform.onrender.com",
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
