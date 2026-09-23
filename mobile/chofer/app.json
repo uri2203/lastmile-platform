@@ -18,9 +18,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lastmile.chofer",
-      "config": {
-        "googleMapsApiKey": ""
-      },
       "infoPlist": {
         "NSCameraUsageDescription": "Permiso de cámara para evidencia fotográfica",
         "NSLocationWhenInUseUsageDescription": "Last Mile Chofer necesita tu ubicación para rastrear entregas en tiempo real.",
@@ -36,11 +33,6 @@
         "backgroundColor": "#6366f1"
       },
       "package": "com.lastmile.chofer",
-      "config": {
-        "googleMaps": {
-          "apiKey": ""
-        }
-      },
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
