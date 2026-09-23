@@ -56,6 +56,24 @@ def _chofer_profile():
             [usu_id, free[0]['CHO_ID'], emp_id],
         )
         return free[0]
+
+    # Create a profile for this user if none exist for the tenant
+    nombre = (user[0].get('USU_NOMBRE') if user else None) or getattr(g, 'usuario', '') or 'Chofer'
+    partes = str(nombre).split(' ', 1)
+    try:
+        execute(
+            '''INSERT INTO CHOFERES (EMP_ID, CHO_USU_ID, CHO_NOMBRE, CHO_APELLIDO, CHO_EMAIL, CHO_ESTATUS)
+               VALUES (?, ?, ?, ?, ?, 'ACTIVO')''',
+            [emp_id, usu_id, partes[0], partes[1] if len(partes) > 1 else '', email or ''],
+        )
+        created = query(
+            "SELECT * FROM CHOFERES WHERE EMP_ID=? AND CHO_USU_ID=? ORDER BY CHO_ID DESC LIMIT 1",
+            [emp_id, usu_id],
+        )
+        if created:
+            return created[0]
+    except Exception:
+        pass
     return None
 
 
@@ -122,16 +140,31 @@ def mobile_deliveries():
     status = request.args.get('status')
     chofer = _chofer_profile()
     if not chofer:
-        return jsonify([])
+        # Still return tenant pendings so the app is not empty
+        rows = query(
+            "SELECT * FROM PEDIDOS WHERE EMP_ID = ? AND PED_ESTADO IN ('PENDIENTE','ASIGNADO','EN_RUTA') ORDER BY PED_FECHA_PEDIDO DESC LIMIT 50",
+            [emp_id],
+        )
+        return jsonify([_map_pedido(r) for r in rows])
 
-    sql = 'SELECT * FROM PEDIDOS WHERE EMP_ID = ? AND CHO_ID = ?'
+    sql = (
+        'SELECT * FROM PEDIDOS WHERE EMP_ID = ? AND (CHO_ID = ? OR CHO_ID IS NULL) '
+        "AND PED_ESTADO NOT IN ('ELIMINADO','CANCELADO')"
+    )
     params = [emp_id, chofer['CHO_ID']]
     if status:
         sql += ' AND PED_ESTADO = ?'
         params.append(status)
-    sql += " AND PED_ESTADO NOT IN ('ELIMINADO') ORDER BY PED_FECHA_PEDIDO DESC LIMIT 200"
+    elif not status:
+        # Active work queue: assigned to me + unassigned pendings
+        sql += " AND PED_ESTADO IN ('PENDIENTE','ASIGNADO','EN_RUTA')"
+    sql += ' ORDER BY PED_FECHA_PEDIDO DESC LIMIT 200'
     rows = query(sql, params)
-    return jsonify([_map_pedido(r, chofer) for r in rows])
+    out = []
+    for r in rows:
+        d = chofer if r.get('CHO_ID') == chofer['CHO_ID'] else None
+        out.append(_map_pedido(r, d))
+    return jsonify(out)
 
 
 @mobile_bp.route('/api/deliveries/history', methods=['GET'])
@@ -144,12 +177,14 @@ def mobile_deliveries_history():
         return jsonify([])
 
     sql = (
-        "SELECT * FROM PEDIDOS WHERE EMP_ID = ? AND CHO_ID = ? "
+        "SELECT * FROM PEDIDOS WHERE EMP_ID = ? AND (CHO_ID = ? OR CHO_ID IS NULL) "
         "AND PED_ESTADO IN ('ENTREGADO','CANCELADO','FALLIDO','NO_ENTREGADO')"
     )
     params = [emp_id, chofer['CHO_ID']]
     sql += ' ORDER BY PED_FECHA_PEDIDO DESC LIMIT 300'
     rows = query(sql, params)
+    # Keep only rows linked to this chofer or unassigned (already filtered)
+    rows = [r for r in rows if not r.get('CHO_ID') or r.get('CHO_ID') == chofer['CHO_ID']]
 
     if period in ('today', 'week', 'month'):
         now = datetime.utcnow()
@@ -605,29 +640,31 @@ def mobile_invoices():
 
     out = []
     for r in rows:
-        estatus = (r.get('FAC_ESTATUS') or 'PENDIENTE').upper()
-    if estatus in ('PAGADA', 'TIMBRADA', 'PAGADO', 'PAID'):
-        status = 'PAID'
-    elif estatus in ('CANCELADA', 'CANCELLED'):
-        status = 'CANCELLED'
-    else:
-        status = 'PENDING'
-
-    out.append({
-            'id': r.get('FAC_ID'),
-            'serie': r.get('FAC_SERIE'),
-            'folio': r.get('FAC_FOLIO'),
-            'number': f"{r.get('FAC_SERIE') or ''}-{r.get('FAC_FOLIO') or ''}",
-            'total': r.get('FAC_TOTAL') or 0,
-            'amount': r.get('FAC_TOTAL') or 0,
-            'subtotal': r.get('FAC_SUBTOTAL') or 0,
-            'iva': r.get('FAC_TOTAL_IVA') or 0,
-            'status': status,
-            'estado': estatus,
-            'created_at': str(r.get('FAC_FECHA_EMISION') or ''),
-            'date': str(r.get('FAC_FECHA_EMISION') or ''),
-            'receiver': r.get('FAC_RECEPTOR_RAZON') or '',
-        })
+        try:
+            estatus = str(r.get('FAC_ESTATUS') or 'PENDIENTE').upper()
+            if estatus in ('PAGADA', 'TIMBRADA', 'PAGADO', 'PAID'):
+                status = 'PAID'
+            elif estatus in ('CANCELADA', 'CANCELLED'):
+                status = 'CANCELLED'
+            else:
+                status = 'PENDING'
+            out.append({
+                'id': r.get('FAC_ID'),
+                'serie': r.get('FAC_SERIE'),
+                'folio': r.get('FAC_FOLIO'),
+                'number': f"{r.get('FAC_SERIE') or ''}-{r.get('FAC_FOLIO') or ''}",
+                'total': r.get('FAC_TOTAL') or 0,
+                'amount': r.get('FAC_TOTAL') or 0,
+                'subtotal': r.get('FAC_SUBTOTAL') or 0,
+                'iva': r.get('FAC_TOTAL_IVA') or 0,
+                'status': status,
+                'estado': estatus,
+                'created_at': str(r.get('FAC_FECHA_EMISION') or ''),
+                'date': str(r.get('FAC_FECHA_EMISION') or ''),
+                'receiver': r.get('FAC_RECEPTOR_RAZON') or '',
+            })
+        except Exception:
+            continue
     return jsonify(out)
 
 
