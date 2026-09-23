@@ -50,6 +50,10 @@ reportes/
 node_modules/
 package-lock.json
 
+# Expo
+.expo/
+dist/
+
 # SSL certs (nunca commitear)
 *.pem
 

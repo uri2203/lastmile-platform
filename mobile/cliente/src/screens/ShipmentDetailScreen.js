@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,8 @@ import {
   Linking,
   Alert,
   ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useTheme } from '../theme-context';
 import Card from '../shared/components/Card';
 import Badge from '../shared/components/Badge';
@@ -20,8 +18,7 @@ import { get, del } from '../shared/api';
 import { formatCurrency, formatDateTime, formatPhone } from '../shared/formatters';
 import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
-const { height } = Dimensions.get('window');
-const MAP_HEIGHT = height * 0.3;
+const MAP_HEIGHT = 220;
 
 const TIMELINE_STEPS = [
   { key: 'PENDIENTE', label: 'Orden creada', icon: 'document-text' },
@@ -122,48 +119,24 @@ export default function ShipmentDetailScreen({ route, navigation }) {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Map */}
-        <View style={styles.mapContainer}>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: shipment.origin_lat || 19.4326,
-              longitude: shipment.origin_lng || -99.1332,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-            scrollEnabled={false}
-          >
-            <Marker
-              coordinate={{
-                latitude: shipment.origin_lat || 19.4326,
-                longitude: shipment.origin_lng || -99.1332,
+        {/* Map placeholder */}
+        <View style={[styles.mapContainer, { backgroundColor: theme.surfaceVariant }]}>
+          <View style={styles.mapPlaceholder}>
+            <Ionicons name="cube" size={48} color={theme.primary} />
+            <Text style={[styles.mapPlaceholderText, { color: theme.textSecondary }]}>
+              {destination}
+            </Text>
+            <TouchableOpacity
+              style={[styles.openMapsBtn, { backgroundColor: theme.primary }]}
+              onPress={() => {
+                const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
+                Linking.openURL(url);
               }}
-              title="Origen"
-              pinColor={colors.primary[500]}
-            />
-            <Marker
-              coordinate={{
-                latitude: shipment.dest_lat || 19.45,
-                longitude: shipment.dest_lng || -99.15,
-              }}
-              title="Destino"
-              pinColor={colors.success[500]}
-            />
-            {shipment.driver_lat && shipment.driver_lng && (
-              <Marker
-                coordinate={{
-                  latitude: shipment.driver_lat,
-                  longitude: shipment.driver_lng,
-                }}
-                title="Chofer"
-              >
-                <View style={styles.driverMarker}>
-                  <Ionicons name="car" size={16} color="#fff" />
-                </View>
-              </Marker>
-            )}
-          </MapView>
+            >
+              <Ionicons name="open-outline" size={16} color="#fff" />
+              <Text style={styles.openMapsText}>Abrir en Maps</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Back button overlay */}
           <TouchableOpacity
@@ -396,8 +369,30 @@ const styles = StyleSheet.create({
     height: MAP_HEIGHT,
     position: 'relative',
   },
-  map: {
+  mapPlaceholder: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing[4],
+  },
+  mapPlaceholderText: {
+    fontSize: typography.fontSize.sm,
+    textAlign: 'center',
+    marginTop: spacing[2],
+    marginBottom: spacing[3],
+  },
+  openMapsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.md,
+  },
+  openMapsText: {
+    color: '#fff',
+    fontSize: typography.fontSize.sm,
+    fontWeight: '600',
   },
   backOverlay: {
     position: 'absolute',
@@ -409,17 +404,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.95)',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.md,
-  },
-  driverMarker: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary[500],
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
     ...shadows.md,
   },
   content: {

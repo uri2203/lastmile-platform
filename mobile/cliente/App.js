@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,13 +11,78 @@ import MainNavigator from './src/navigation';
 import useAuth from './src/hooks/useAuth';
 import {
   registerForPushNotifications,
-  setupNotificationListeners,
 } from './src/services/notifications';
 
 const Stack = createNativeStackNavigator();
 
-export default function App() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('App crashed:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Algo salió mal</Text>
+          <Text style={styles.errorMessage}>{String(this.state.error?.message || this.state.error)}</Text>
+          <TouchableOpacity
+            style={styles.errorButton}
+            onPress={() => this.setState({ hasError: false, error: null })}
+          >
+            <Text style={styles.errorButtonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    padding: 24,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  errorButton: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  errorButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
+function AppContent() {
+  const { isLoading, isAuthenticated } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
@@ -91,5 +156,13 @@ export default function App() {
         </NavigationContainer>
       </SafeAreaProvider>
     </ThemeContext.Provider>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }

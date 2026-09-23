@@ -1,38 +1,7 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
-import { post } from '../shared/api';
 
 const BACKGROUND_TASK_NAME = 'background-location-task';
-
-let isTaskDefined = false;
-
-function ensureTaskDefined() {
-  if (isTaskDefined) return;
-  try {
-    TaskManager.defineTask(BACKGROUND_TASK_NAME, async ({ data, error }) => {
-      if (error) {
-        console.error('Background location task error:', error);
-        return;
-      }
-      if (data?.locations?.length > 0) {
-        const location = data.locations[0];
-        try {
-          await post('/api/gps/update', {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            accuracy: location.coords.accuracy,
-            timestamp: new Date(location.timestamp).toISOString(),
-          });
-        } catch (err) {
-          console.error('Failed to report background GPS:', err);
-        }
-      }
-    });
-    isTaskDefined = true;
-  } catch (e) {
-    console.warn('Task already defined or error:', e.message);
-  }
-}
 
 export async function requestPermissions() {
   const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
@@ -45,8 +14,6 @@ export async function requestPermissions() {
 }
 
 export async function startBackgroundLocation() {
-  ensureTaskDefined();
-
   const { status } = await Location.getForegroundPermissionsAsync();
   if (status !== 'granted') {
     const result = await requestPermissions();
@@ -110,6 +77,7 @@ export async function getCurrentLocation() {
 
 export async function reportLocationToAPI(latitude, longitude) {
   try {
+    const { post } = await import('../shared/api');
     await post('/api/gps/update', {
       latitude,
       longitude,

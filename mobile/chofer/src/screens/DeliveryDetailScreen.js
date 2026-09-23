@@ -9,13 +9,11 @@ import {
   Modal,
   TextInput,
   Image,
-  Dimensions,
   ActivityIndicator,
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../theme-context';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
@@ -23,8 +21,6 @@ import Badge from '../shared/components/Badge';
 import { get, put, post } from '../shared/api';
 import { formatCurrency, formatPhone, formatDateTime } from '../shared/formatters';
 import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
-
-const { width } = Dimensions.get('window');
 
 const TIMELINE_STEPS = [
   { key: 'created', label: 'Creada', icon: 'document-text-outline' },
@@ -228,8 +224,6 @@ export default function DeliveryDetailScreen({ route, navigation }) {
     );
   }
 
-  const lat = delivery?.destino_lat || delivery?.lat || 19.4326;
-  const lng = delivery?.destino_lng || delivery?.lng || -99.1332;
   const currentStep = getTimelineIndex();
 
   return (
@@ -243,26 +237,13 @@ export default function DeliveryDetailScreen({ route, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.mapContainer}>
-          <MapView
-            provider={PROVIDER_GOOGLE}
-            style={styles.map}
-            initialRegion={{
-              latitude: lat,
-              longitude: lng,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-          >
-            <Marker
-              coordinate={{ latitude: lat, longitude: lng }}
-              title={delivery.direccion || delivery.address}
-            >
-              <View style={[styles.marker, { backgroundColor: theme.primary }]}>
-                <Ionicons name="location" size={16} color="#ffffff" />
-              </View>
-            </Marker>
-          </MapView>
+        <View style={[styles.mapContainer, { backgroundColor: theme.surfaceVariant }]}>
+          <View style={styles.mapPlaceholder}>
+            <Ionicons name="location" size={48} color={theme.primary} />
+            <Text style={[styles.mapPlaceholderText, { color: theme.textSecondary }]}>
+              {delivery.direccion || delivery.address || 'Ubicación de entrega'}
+            </Text>
+          </View>
           <TouchableOpacity style={styles.mapOverlay} onPress={handleOpenMaps}>
             <Ionicons name="open-outline" size={16} color={theme.primary} />
             <Text style={[styles.mapOverlayText, { color: theme.primary }]}>Abrir en Maps</Text>
@@ -513,7 +494,8 @@ const styles = StyleSheet.create({
   topBarTitle: { fontSize: typography.fontSize.lg, fontWeight: '700', flex: 1, textAlign: 'center' },
   scrollContent: { paddingBottom: 40 },
   mapContainer: { height: 200, margin: spacing[4], borderRadius: borderRadius.lg, overflow: 'hidden' },
-  map: { flex: 1 },
+  mapPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[4] },
+  mapPlaceholderText: { fontSize: typography.fontSize.sm, textAlign: 'center', marginTop: spacing[2] },
   mapOverlay: {
     position: 'absolute',
     bottom: spacing[3],
@@ -527,7 +509,6 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   mapOverlayText: { fontSize: typography.fontSize.sm, fontWeight: '600', marginLeft: spacing[1] },
-  marker: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', ...shadows.md },
   infoCard: { marginHorizontal: spacing[4], marginBottom: spacing[3] },
   infoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing[4] },
   deliveryLabel: { fontSize: typography.fontSize.xs, marginBottom: 2 },
