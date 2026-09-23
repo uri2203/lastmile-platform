@@ -137,6 +137,7 @@ export default function CreateShipmentScreen({ navigation }) {
         description,
         declared_value: parseFloat(declaredValue) || 0,
         service_type: serviceType,
+        estimated_cost: Math.round(estimatedCost * 100) / 100,
         pickup_time: pickupTime || null,
       };
       await post('/api/shipments', payload);

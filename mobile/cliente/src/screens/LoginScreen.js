@@ -16,7 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import useAuth from '../hooks/useAuth';
 import Input from '../shared/components/Input';
 import Button from '../shared/components/Button';
-import { validateEmail } from '../shared/validators';
 import { colors, typography, spacing, borderRadius, shadows } from '../shared/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -59,9 +58,8 @@ export default function LoginScreen() {
     let valid = true;
     setLoginError('');
 
-    const emailResult = validateEmail(email);
-    if (!emailResult.valid) {
-      setEmailError(emailResult.error);
+    if (!email || !email.trim()) {
+      setEmailError('El usuario es requerido');
       valid = false;
     } else {
       setEmailError('');
@@ -153,19 +151,18 @@ export default function LoginScreen() {
                 ) : null}
 
                 <Input
-                  label="Correo electrónico"
+                  label="Usuario"
                   value={email}
                   onChangeText={(text) => {
                     setEmail(text);
                     if (emailError) setEmailError('');
                     if (loginError) setLoginError('');
                   }}
-                  placeholder="correo@ejemplo.com"
+                  placeholder="Tu usuario"
                   error={emailError}
-                  keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  icon={<Ionicons name="mail-outline" size={20} color={colors.neutral[400]} />}
+                  icon={<Ionicons name="person-outline" size={20} color={colors.neutral[400]} />}
                   required
                 />
 

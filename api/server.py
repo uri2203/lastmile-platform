@@ -17,6 +17,7 @@ from db import query, execute, execute_returning, init_schema, check_empty, get_
 from auth import generate_token, generate_refresh_token, refresh_access_token, current_identity, current_token, blacklist_token, requiere_auth, requiere_rol, requiere_superadmin
 from security import hash_password, verify_password, is_legacy_hash, validate_password_strength
 from webhooks import webhook_bp
+from mobile_api import mobile_bp
 from monitoring import init_monitoring
 from agents import RouteOptimizer, SmartAssignment, ETAPredictor, SupportChatbot, DemandForecaster, DynamicPricing, FraudDetector, SentimentAnalyzer
 from ai_service import optimize_routes
@@ -58,6 +59,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 # Servir archivos estaticos desde /web
 app = Flask(__name__, static_folder='web', static_url_path='')
 app.register_blueprint(webhook_bp)
+app.register_blueprint(mobile_bp)
 
 # ========================================
 # MONITORING: Sentry + metrics
@@ -1789,6 +1791,7 @@ def auth_login():
             'usuario': matched['USU_USUARIO'],
             'nombre': matched['USU_NOMBRE'],
             'rol': matched['USU_ROL'],
+            'email': matched.get('USU_EMAIL', ''),
             'empresa': matched.get('EMP_NOMBRE', '')
         }
     })
