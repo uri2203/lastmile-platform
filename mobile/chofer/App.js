@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,6 +11,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import MainNavigator from './src/navigation';
 import useAuth from './src/hooks/useAuth';
 import { post } from './src/shared/api';
+import { startBackgroundLocation } from './src/services/location';
+import { registerForPushNotifications } from './src/services/notifications';
 
 const BACKGROUND_TASK_NAME = 'background-location-task';
 
@@ -105,6 +107,17 @@ const styles = StyleSheet.create({
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      startBackgroundLocation().catch((err) =>
+        console.error('Failed to start location:', err)
+      );
+      registerForPushNotifications().catch((err) =>
+        console.error('Failed to register push:', err)
+      );
+    }
+  }, [isAuthenticated]);
 
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
