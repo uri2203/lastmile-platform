@@ -1,6 +1,8 @@
 /**
  * @module hooks/useAuth
  * @description Authentication hook providing user state, login, logout, and token management.
+ * Auth state is kept in a module-level snapshot shared by every hook instance so that
+ * login/logout performed in any screen is immediately reflected app-wide.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,32 +16,51 @@ import {
 } from '../auth';
 import { post } from '../api';
 
+/** @type {{token: string|null, user: object|null, isLoading: boolean}} */
+let snapshot = { token: null, user: null, isLoading: true };
+const listeners = new Set();
+
+function subscribe(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function emit() {
+  listeners.forEach((listener) => listener());
+}
+
 export default function useAuth() {
-  const [user, setUser] = useState(null);
-  const [token, setTokenState] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState(() => ({ ...snapshot }));
 
   useEffect(() => {
-    loadStoredAuth();
+    const unsubscribe = subscribe(() => setState({ ...snapshot }));
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const storedToken = await getToken();
+        const storedUser = await getUserData();
+        if (cancelled) return;
+        snapshot = {
+          token: storedToken || null,
+          user: storedUser || null,
+          isLoading: false,
+        };
+      } catch (error) {
+        console.error('Failed to load stored auth:', error);
+        if (cancelled) return;
+        snapshot = { token: null, user: null, isLoading: false };
+      }
+      setState({ ...snapshot });
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
-  async function loadStoredAuth() {
-    try {
-      const storedToken = await getToken();
-      const storedUser = await getUserData();
-      if (storedToken && storedUser) {
-        setTokenState(storedToken);
-        setUser(storedUser);
-      }
-    } catch (error) {
-      console.error('Failed to load stored auth:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   const login = useCallback(async (identifier, password) => {
-    setIsLoading(true);
     try {
       const response = await post('/api/auth/login', { user: identifier, pass: password }, false);
       if (!response?.success || !response?.token) {
@@ -49,14 +70,10 @@ export default function useAuth() {
       await setToken(response.token);
       if (response.refresh_token) await setRefreshToken(response.refresh_token);
       await setUserData(userData);
-      setTokenState(response.token);
-      setUser(userData);
+      snapshot = { token: response.token, user: userData, isLoading: false };
+      emit();
     } catch (error) {
-      setTokenState(null);
-      setUser(null);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -66,17 +83,17 @@ export default function useAuth() {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      setTokenState(null);
-      setUser(null);
+      snapshot = { token: null, user: null, isLoading: false };
+      emit();
     }
   }, []);
 
   return {
-    user,
-    token,
+    user: state.user,
+    token: state.token,
     login,
     logout,
-    isLoading,
-    isAuthenticated: !!token && !!user,
+    isLoading: state.isLoading,
+    isAuthenticated: !!state.token && !!state.user,
   };
 }
