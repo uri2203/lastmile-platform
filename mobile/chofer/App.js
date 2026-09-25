@@ -11,7 +11,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import MainNavigator from './src/navigation';
 import useAuth from './src/hooks/useAuth';
 import { post } from './src/shared/api';
-import { startBackgroundLocation } from './src/services/location';
+import { startBackgroundLocation, stopBackgroundLocation } from './src/services/location';
 import { registerForPushNotifications } from './src/services/notifications';
 
 const BACKGROUND_TASK_NAME = 'background-location-task';
@@ -115,6 +115,10 @@ function AppContent() {
       );
       registerForPushNotifications().catch((err) =>
         console.error('Failed to register push:', err)
+      );
+    } else {
+      stopBackgroundLocation().catch((err) =>
+        console.error('Failed to stop location:', err)
       );
     }
   }, [isAuthenticated]);
