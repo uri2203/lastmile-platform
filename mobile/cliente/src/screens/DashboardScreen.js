@@ -82,7 +82,8 @@ export default function DashboardScreen({ navigation }) {
       icon: 'search',
       color: colors.success[600],
       bgColor: colors.success[50],
-      screen: 'Tracking',
+      tab: 'Rastrear',
+      screen: 'TrackingList',
     },
     {
       id: 'shipments',
@@ -90,6 +91,7 @@ export default function DashboardScreen({ navigation }) {
       icon: 'cube',
       color: colors.accent[600],
       bgColor: colors.accent[50],
+      tab: 'Envíos',
       screen: 'MyShipments',
     },
     {
@@ -98,6 +100,7 @@ export default function DashboardScreen({ navigation }) {
       icon: 'receipt',
       color: '#7c3aed',
       bgColor: '#f3e8ff',
+      tab: 'Envíos',
       screen: 'Invoices',
     },
   ];
@@ -150,7 +153,11 @@ export default function DashboardScreen({ navigation }) {
           <TouchableOpacity
             key={action.id}
             style={[styles.quickAction, { backgroundColor: action.bgColor }]}
-            onPress={() => navigation.navigate(action.screen)}
+            onPress={() =>
+              action.tab
+                ? navigation.navigate(action.tab, { screen: action.screen })
+                : navigation.navigate(action.screen)
+            }
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: action.color + '20' }]}>
