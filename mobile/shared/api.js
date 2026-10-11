@@ -7,6 +7,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 import { TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from './auth';
+import { emitSessionExpired } from './session';
 
 const BASE_URL = 'https://lastmile-platform.onrender.com';
 const TIMEOUT_MS = 30000;
@@ -33,7 +34,12 @@ async function buildHeaders(authenticated = true) {
 
 async function refreshAccessToken() {
   const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-  if (!refreshToken) throw new ApiError('No refresh token available', 401);
+  if (!refreshToken) {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(USER_KEY);
+    emitSessionExpired();
+    throw new ApiError('No refresh token available', 401);
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -50,11 +56,16 @@ async function refreshAccessToken() {
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+      emitSessionExpired();
       throw new ApiError('Session expired', 401);
     }
 
     const data = await response.json();
     if (!data?.success || !data?.token) {
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(USER_KEY);
+      emitSessionExpired();
       throw new ApiError('Session expired', 401);
     }
     await SecureStore.setItemAsync(TOKEN_KEY, data.token);

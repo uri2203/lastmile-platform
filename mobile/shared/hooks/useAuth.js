@@ -15,6 +15,7 @@ import {
   logout as clearAuth,
 } from '../auth';
 import { post } from '../api';
+import { onSessionExpired } from '../session';
 
 /** @type {{token: string|null, user: object|null, isLoading: boolean}} */
 let snapshot = { token: null, user: null, isLoading: true };
@@ -34,6 +35,10 @@ export default function useAuth() {
 
   useEffect(() => {
     const unsubscribe = subscribe(() => setState({ ...snapshot }));
+    const unsubscribeExpired = onSessionExpired(() => {
+      snapshot = { token: null, user: null, isLoading: false };
+      setState({ ...snapshot });
+    });
     let cancelled = false;
 
     (async () => {
@@ -57,6 +62,7 @@ export default function useAuth() {
     return () => {
       cancelled = true;
       unsubscribe();
+      unsubscribeExpired();
     };
   }, []);
 
