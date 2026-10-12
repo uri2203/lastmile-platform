@@ -309,13 +309,36 @@ def ensure_billing_columns():
 
 def create_suscripcion(emp_id, plan_name, provider, external_id=None):
     plan = get_plan_config(plan_name)
+    plan_id = 1
     try:
-        execute(
-            "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO, SUS_METODO_PAGO, "
-            "SUS_STRIPE_CUSTOMER_ID, SUS_STRIPE_SUBSCRIPTION_ID) "
-            "VALUES (?, 1, 'ACTIVA', NOW(), ?, ?, ?)",
-            [emp_id, provider.upper(), external_id if provider == 'stripe' else '', external_id if provider == 'stripe' else '']
-        )
+        rows = query("SELECT PLAN_ID FROM SAAS_PLANES WHERE PLAN_NOMBRE=? AND PLAN_ACTIVO='S'",
+                     [plan_name.upper()] if plan_name else [])
+        if rows:
+            plan_id = rows[0].get('PLAN_ID', 1)
+        else:
+            rows = query("SELECT PLAN_ID FROM SAAS_PLANES WHERE PLAN_NOMBRE=?", [plan_name])
+            if rows:
+                plan_id = rows[0].get('PLAN_ID', 1)
+    except Exception:
+        pass
+    prov = (provider or '').upper()
+    try:
+        if prov == 'MERCADOPAGO':
+            execute(
+                "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO, "
+                "SUS_FECHA_FIN, SUS_FECHA_PROXIMO_COBRO, SUS_METODO_PAGO, SUS_MP_SUBSCRIPTION_ID) "
+                "VALUES (?, ?, 'ACTIVA', NOW(), CURRENT_DATE + INTERVAL '30 days', "
+                "CURRENT_DATE + INTERVAL '30 days', ?, ?)",
+                [emp_id, plan_id, prov, external_id or '']
+            )
+        else:
+            execute(
+                "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO, "
+                "SUS_FECHA_FIN, SUS_FECHA_PROXIMO_COBRO, SUS_METODO_PAGO, SUS_STRIPE_SUBSCRIPTION_ID) "
+                "VALUES (?, ?, 'ACTIVA', NOW(), CURRENT_DATE + INTERVAL '30 days', "
+                "CURRENT_DATE + INTERVAL '30 days', ?, ?)",
+                [emp_id, plan_id, prov, external_id or '']
+            )
     except Exception:
         execute(
             "INSERT INTO SUSCRIPCIONES (EMP_ID, SUS_PLAN, SUS_PRECIO_MXN, SUS_PROVEEDOR, SUS_EXTERNAL_ID, SUS_ESTADO, SUS_FECHA_INICIO) "
@@ -326,20 +349,38 @@ def create_suscripcion(emp_id, plan_name, provider, external_id=None):
         "UPDATE EMPRESAS SET EMP_PLAN=?, EMP_MAX_USUARIOS=?, EMP_MAX_CHOFERES=?, EMP_MAX_PEDIDOS_MES=? WHERE EMP_ID=?",
         [plan_name, plan['max_usuarios'], plan['max_choferes'], plan['max_pedidos_mes'], emp_id]
     )
+    try:
+        from billing_service import invalidar_cache_licencia, activar_licencia
+        activar_licencia(emp_id)
+    except Exception:
+        try:
+            from billing_service import invalidar_cache_licencia
+            invalidar_cache_licencia(emp_id)
+        except Exception:
+            pass
     return True
 
 
 def create_pago(emp_id, monto, metodo, referencia=None, notas=None):
+    # Vincular el cobro a la suscripcion vigente del tenant (no SUS_ID=0).
+    sus_id = 0
+    try:
+        rows = query("SELECT SUS_ID FROM SAAS_SUSCRIPCIONES WHERE EMP_ID=? "
+                     "ORDER BY SUS_ID DESC LIMIT 1", [emp_id])
+        if rows:
+            sus_id = rows[0].get('SUS_ID', 0)
+    except Exception:
+        pass
     try:
         execute(
-            "INSERT INTO SAAS_COBROS (SUS_ID, EMP_ID, COB_MONTO, COB_CONCEPTO, COB_ESTATUS, COB_METODO_PAGO, COB_REFERENCIA_PAGO) "
-            "VALUES (0, ?, ?, ?, 'PENDIENTE', ?, ?)",
-            [emp_id, monto, notas or 'Pago SaaS', metodo, referencia or '']
+            "INSERT INTO SAAS_COBROS (SUS_ID, EMP_ID, COB_MONTO, COB_CONCEPTO, COB_ESTATUS, COB_METODO_PAGO, COB_REFERENCIA_PAGO, COB_FECHA_COBRO, COB_FECHA_APLICADO) "
+            "VALUES (?, ?, ?, ?, 'PAGADO', ?, ?, NOW(), NOW())",
+            [sus_id, emp_id, monto, notas or 'Pago SaaS', metodo, referencia or '']
         )
     except Exception:
         execute(
             "INSERT INTO PAGOS_TRANSACCIONES (EMP_ID, TRP_MONTO, TRP_METODO, TRP_NUM_REFERENCIA, TRP_ESTATUS, TRP_NOTAS) "
-            "VALUES (?, ?, ?, ?, 'PENDIENTE', ?)",
+            "VALUES (?, ?, ?, ?, 'PAGADO', ?)",
             [emp_id, monto, metodo, referencia or '', notas or '']
         )
     return True
@@ -364,6 +405,11 @@ def cancel_suscripcion(emp_id):
         "UPDATE EMPRESAS SET EMP_PLAN='STARTER', EMP_MAX_USUARIOS=5, EMP_MAX_CHOFERES=10, EMP_MAX_PEDIDOS_MES=500 WHERE EMP_ID=?",
         [emp_id]
     )
+    try:
+        from billing_service import invalidar_cache_licencia
+        invalidar_cache_licencia(emp_id)
+    except Exception:
+        pass
     return True
 
 
@@ -392,7 +438,7 @@ def get_billing_stats(emp_id):
     try:
         pagos = query(
             "SELECT COUNT(*) as total_pagos, SUM(COB_MONTO) as monto_total, "
-            "SUM(CASE WHEN COB_ESTATUS='COMPLETADO' THEN COB_MONTO ELSE 0 END) as monto_completado "
+            "SUM(CASE WHEN COB_ESTATUS IN ('PAGADO','COMPLETADO') THEN COB_MONTO ELSE 0 END) as monto_completado "
             "FROM SAAS_COBROS WHERE EMP_ID = ?", [emp_id]
         )
     except Exception:

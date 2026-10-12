@@ -825,6 +825,21 @@ def before_request():
         except Exception:
             pass  # table might not exist yet
 
+    # Gate de LICENCIA: empresa suspendida/vencida no opera apps ni panel (fail-closed).
+    # Superadmin y logout quedan exentos.
+    if g.rol != 'superadmin' and g.emp_id and path != '/api/auth/logout':
+        try:
+            from billing_service import licencia_bloqueo
+            bloqueo = licencia_bloqueo(g.emp_id)
+            if bloqueo:
+                return jsonify({
+                    'success': False,
+                    'error': bloqueo['mensaje'],
+                    'code': bloqueo['code'],
+                }), 403
+        except Exception:
+            pass  # no cortar la plataforma por un error transitorio de billing
+
     # Contexto de tenant para RLS (best-effort; no-op en SQLite).
     try:
         if g.emp_id:
@@ -1153,10 +1168,21 @@ def onboarding_register():
             pid = plan_row[0].get('PLAN_ID', plan_row[0].get('plan_id', 1))
         else:
             pid = 1
+        # Toda licencia nueva nace TRIAL con vencimiento real (anti-hack:
+        # sin fecha de fin la licencia no puede vencer jamas).
+        trial_days = 14
+        try:
+            cfg = query("SELECT CONFIG_VALUE FROM SAAS_CONFIG WHERE CONFIG_KEY='trial_days' LIMIT 1")
+            if cfg and cfg[0].get('CONFIG_VALUE'):
+                trial_days = int(cfg[0]['CONFIG_VALUE'])
+        except Exception:
+            pass
+        fin = (datetime.utcnow() + timedelta(days=trial_days)).strftime('%Y-%m-%d')
         execute(
-            "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO) "
-            "VALUES (?, ?, 'ACTIVA', CURRENT_TIMESTAMP)",
-            [emp_id, pid]
+            "INSERT INTO SAAS_SUSCRIPCIONES (EMP_ID, PLAN_ID, SUS_ESTADO, SUS_FECHA_INICIO, "
+            "SUS_FECHA_FIN, SUS_FECHA_PROXIMO_COBRO) "
+            "VALUES (?, ?, 'TRIAL', CURRENT_TIMESTAMP, ?, ?)",
+            [emp_id, pid, fin, fin]
         )
     except Exception as e:
         print(f'[ERROR] Suscripcion: {e}')
@@ -1548,8 +1574,23 @@ def verify_age():
 # ========================================
 # HEALTH CHECK
 # ========================================
+_last_lic_sweep = 0.0  # timestamp del ultimo barrido de licencias vencidas
+
+
 @app.route('/api/health', methods=['GET'])
 def health():
+    # Barrido opportunista de licencias vencidas/morosas (max 1 vez por hora).
+    try:
+        global _last_lic_sweep
+        if time.time() - _last_lic_sweep > 3600:
+            _last_lic_sweep = time.time()
+            from billing_service import suspender_licencias_vencidas
+            susp = suspender_licencias_vencidas()
+            if susp:
+                print(f'[LICENSE] Barrido automatico suspendio: {susp}')
+    except Exception as e:
+        print(f'[WARN] barrido licencias en health: {e}')
+
     checks = {'database': 'UNKNOWN', 'stripe': 'NOT_CONFIGURED', 'mp': 'NOT_CONFIGURED', 'redis': 'NOT_CONFIGURED', 'websocket': 'UNKNOWN'}
 
     # DB check
@@ -1767,6 +1808,20 @@ def auth_login():
             'email': matched.get('USU_EMAIL', '')
         }), 403
 
+    # Gate de LICENCIA: sin licencia vigente no hay token (apps chofer/cliente y panel).
+    if matched.get('USU_ROL') != 'superadmin' and matched.get('USU_EMP_ID'):
+        try:
+            from billing_service import licencia_bloqueo
+            bloqueo = licencia_bloqueo(matched['USU_EMP_ID'])
+            if bloqueo:
+                return jsonify({
+                    'success': False,
+                    'error': bloqueo['mensaje'],
+                    'code': bloqueo['code'],
+                }), 403
+        except Exception:
+            pass
+
     # Migracion transparente: si el hash almacenado era SHA-256 heredado, re-hashea a bcrypt.
     if is_legacy_hash(str(matched.get('USU_PASS', '')).strip()):
         try:
@@ -1805,6 +1860,18 @@ def auth_refresh():
     refresh_token = data.get('refresh_token') or ''
     if not refresh_token:
         return jsonify({'success': False, 'error': 'refresh_token requerido'}), 400
+    # Revalidar licencia en cada refresh: una licencia suspendida/vencida
+    # no puede seguir renovando tokens (life 7 dias).
+    try:
+        from auth import decode_token
+        payload = decode_token(refresh_token)
+        if payload and payload.get('rol') != 'superadmin' and payload.get('emp_id'):
+            from billing_service import licencia_bloqueo
+            bloqueo = licencia_bloqueo(payload['emp_id'])
+            if bloqueo:
+                return jsonify({'success': False, 'error': bloqueo['mensaje'], 'code': bloqueo['code']}), 401
+    except Exception:
+        pass
     new_token, err = refresh_access_token(refresh_token)
     if err:
         return jsonify({'success': False, 'error': err}), 401
@@ -4380,12 +4447,19 @@ def get_cobros():
 
 @app.route('/api/saas/cobros/resumen', methods=['GET'])
 def get_cobros_resumen():
-    data = query('''SELECT
+    _venc_sql = (
+        "COALESCE(SUM(CASE WHEN COB_ESTATUS='PENDIENTE' "
+        "AND COB_FECHA_COBRO < CURRENT_DATE - INTERVAL '7 days' THEN COB_MONTO ELSE 0 END), 0)"
+        if USE_POSTGRES else
+        "COALESCE(SUM(CASE WHEN COB_ESTATUS='PENDIENTE' "
+        "AND COB_FECHA_COBRO < date('now','-7 days') THEN COB_MONTO ELSE 0 END), 0)"
+    )
+    data = query(f'''SELECT
         COUNT(*) as TOTAL_COBROS,
         COALESCE(SUM(COB_MONTO), 0) as MONTO_TOTAL,
-        COALESCE(SUM(CASE WHEN COB_ESTATUS = 'PAGADO' THEN COB_MONTO ELSE 0 END), 0) as COBRADO,
+        COALESCE(SUM(CASE WHEN COB_ESTATUS IN ('PAGADO','COMPLETADO') THEN COB_MONTO ELSE 0 END), 0) as COBRADO,
         COALESCE(SUM(CASE WHEN COB_ESTATUS = 'PENDIENTE' THEN COB_MONTO ELSE 0 END), 0) as PENDIENTE,
-        0 as VENCIDO
+        {_venc_sql} as VENCIDO
         FROM SAAS_COBROS''')
     return jsonify({'success': True, 'data': data[0] if data else {'TOTAL_COBROS': 0, 'MONTO_TOTAL': 0, 'COBRADO': 0, 'PENDIENTE': 0, 'VENCIDO': 0}})
 
@@ -4538,27 +4612,45 @@ def update_saas_tenant(emp_id):
     execute("UPDATE EMPRESAS SET EMP_NOMBRE=?, EMP_RFC=?, EMP_EMAIL=?, EMP_TELEFONO=?, EMP_ESTATUS=?, EMP_PLAN=? WHERE EMP_ID=?",
             [data.get('nombre', ''), data.get('rfc', ''), data.get('email', ''), data.get('telefono', ''),
              data.get('estatus', 'ACTIVA'), data.get('plan', 'STARTER'), emp_id])
+    try:
+        from billing_service import invalidar_cache_licencia
+        invalidar_cache_licencia(emp_id)
+    except Exception:
+        pass
     return jsonify({'success': True, 'message': 'Tenant actualizado'})
 
 
 @app.route('/api/saas/tenants/<int:emp_id>/suspend', methods=['POST'])
 @requiere_superadmin
 def suspend_saas_tenant(emp_id):
-    execute("UPDATE EMPRESAS SET EMP_ESTATUS='SUSPENDIDA' WHERE EMP_ID=?", [emp_id])
-    try:
-        execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='SUSPENDIDA' WHERE EMP_ID=? AND SUS_ESTADO='ACTIVA'", [emp_id])
-    except Exception:
-        pass
+    from billing_service import suspender_licencia
+    suspender_licencia(emp_id, 'manual_superadmin')
     log_audit('tenant_suspended', f'emp_id={emp_id}')
-    return jsonify({'success': True, 'message': 'Tenant suspendido'})
+    return jsonify({'success': True, 'message': 'Tenant suspendido (licencia bloqueada en apps y panel)'})
 
 
 @app.route('/api/saas/tenants/<int:emp_id>/activate', methods=['POST'])
 @requiere_superadmin
 def activate_saas_tenant(emp_id):
-    execute("UPDATE EMPRESAS SET EMP_ESTATUS='ACTIVA' WHERE EMP_ID=?", [emp_id])
+    from billing_service import activar_licencia
+    activar_licencia(emp_id)
     log_audit('tenant_activated', f'emp_id={emp_id}')
     return jsonify({'success': True, 'message': 'Tenant activado'})
+
+
+@app.route('/api/saas/licencias/monitor', methods=['GET'])
+@requiere_superadmin
+def saas_licencias_monitor():
+    """Monitoreo global de licencias: estado, vencimientos, morosas y bloqueos."""
+    from billing_service import monitor_licencias, suspender_licencias_vencidas
+    try:
+        suspendidas = suspender_licencias_vencidas()
+    except Exception as e:
+        print(f'[ERROR] barrido licencias: {e}')
+        suspendidas = []
+    data = monitor_licencias()
+    data['suspendidas_automaticas'] = suspendidas
+    return jsonify({'success': True, 'data': data})
 
 
 @app.route('/api/saas/all-users', methods=['GET'])
@@ -5208,6 +5300,8 @@ def stripe_webhook():
     if not event:
         return jsonify({'error': 'Invalid webhook'}), 400
 
+    from billing_service import suspender_licencia, marcar_pago_exitoso
+
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         emp_id = int(session.get('metadata', {}).get('emp_id', 0))
@@ -5215,20 +5309,26 @@ def stripe_webhook():
         if emp_id:
             create_suscripcion(emp_id, plan_name, 'stripe', session.get('subscription'))
             create_pago(emp_id, PLANS.get(plan_name, {}).get('price_mxn', 0), 'STRIPE', session.get('payment_intent'))
+            marcar_pago_exitoso(emp_id)
     elif event['type'] == 'invoice.paid':
         invoice = event['data']['object']
         emp_id = int(invoice.get('metadata', {}).get('emp_id', 0))
         if emp_id:
             create_pago(emp_id, invoice.get('amount_paid', 0) / 100, 'STRIPE', invoice.get('payment_intent'), 'Renovacion automatica')
+            marcar_pago_exitoso(emp_id)
     elif event['type'] == 'invoice.payment_failed':
         invoice = event['data']['object']
         emp_id = int(invoice.get('metadata', {}).get('emp_id', 0))
         if emp_id:
             create_pago(emp_id, invoice.get('amount_due', 0) / 100, 'STRIPE', invoice.get('payment_intent'), 'Pago fallido')
+            # Sin pago no hay licencia: suspender de inmediato (apps + panel caen).
+            suspender_licencia(emp_id, 'stripe_payment_failed')
     elif event['type'] == 'customer.subscription.deleted':
         sub = event['data']['object']
         sub_id = sub.get('id')
-        rows = query("SELECT EMP_ID FROM SAAS_SUSCRIPCIONES WHERE SUS_EXTERNAL_ID=? AND SUS_ESTADO='ACTIVA'", [sub_id])
+        rows = query("SELECT EMP_ID FROM SAAS_SUSCRIPCIONES WHERE SUS_STRIPE_SUBSCRIPTION_ID=? AND SUS_ESTADO='ACTIVA'", [sub_id])
+        if not rows:
+            rows = query("SELECT EMP_ID FROM SAAS_SUSCRIPCIONES WHERE SUS_EXTERNAL_ID=? AND SUS_ESTADO='ACTIVA'", [sub_id])
         if rows:
             cancel_suscripcion(rows[0]['EMP_ID'])
 
@@ -5238,20 +5338,28 @@ def stripe_webhook():
 @app.route('/api/billing/webhook/mercadopago', methods=['POST'])
 @limiter.limit("100 per minute")
 def mercadopago_webhook():
+    from billing_service import suspender_licencia, marcar_pago_exitoso
     data = request.get_json() or {}
     if data.get('type') == 'payment':
         payment_id = data.get('data', {}).get('id')
         if payment_id:
             payment = mp_service.get_payment(payment_id)
-            if payment.get('status') == 'approved':
-                ext_ref = payment.get('external_reference', '')
-                if ext_ref.startswith('emp_'):
-                    parts = ext_ref.split('_')
-                    emp_id = int(parts[1]) if len(parts) > 1 else 0
-                    plan_name = parts[2] if len(parts) > 2 else 'STARTER'
-                    if emp_id:
-                        create_suscripcion(emp_id, plan_name, 'mercadopago', str(payment_id))
-                        create_pago(emp_id, payment.get('transaction_amount', 0), 'MERCADOPAGO', str(payment_id))
+            status = payment.get('status') or ''
+            ext_ref = payment.get('external_reference', '')
+            emp_id = 0
+            plan_name = 'STARTER'
+            if ext_ref.startswith('emp_'):
+                parts = ext_ref.split('_')
+                emp_id = int(parts[1]) if len(parts) > 1 else 0
+                plan_name = parts[2] if len(parts) > 2 else 'STARTER'
+            if status == 'approved' and emp_id:
+                create_suscripcion(emp_id, plan_name, 'mercadopago', str(payment_id))
+                create_pago(emp_id, payment.get('transaction_amount', 0), 'MERCADOPAGO', str(payment_id))
+                marcar_pago_exitoso(emp_id)
+            elif status in ('rejected', 'cancelled', 'charged_back') and emp_id:
+                # Pago de licencia rechazado -> suspender (no operar sin pago).
+                create_pago(emp_id, payment.get('transaction_amount', 0), 'MERCADOPAGO', str(payment_id), f'Pago {status}')
+                suspender_licencia(emp_id, f'mp_{status}')
     return jsonify({'received': True})
 
 

@@ -60,6 +60,7 @@ function loadSection(sec){
     case 'pedidos': loadPedidosGlobal(); break;
     case 'suscripciones': loadSuscripciones(); break;
     case 'cobros': loadCobros(); break;
+    case 'licencias': loadLicencias(); break;
     case 'planes': loadPlanes(); break;
     case 'auditoria': loadAuditoria(); break;
   }
@@ -260,6 +261,78 @@ function activateTenant(id){
   apiPost('/api/saas/tenants/'+id+'/activate',{}).then(res=>{
     if(res.success){showToast(window.i18n.t('saas.kpi_activos'),'success');loadTenants();}
     else showToast(res.error||window.i18n.t('common.error'),'error');
+  });
+}
+
+/* ==========================================
+   MONITOREO DE LICENCIAS
+   ========================================== */
+let DB_LICENCIAS=[];
+function licEstadoBadge(e){
+  const c={ACTIVA:'badge-success',TRIAL:'badge-info',MOROSA:'badge-warning',LICENCIA_VENCIDA:'badge-danger',LICENCIA_SUSPENDIDA:'badge-danger',SIN_SUSCRIPCION:'badge-gray',CANCELADA:'badge-danger',CUENTA_NO_ACTIVA:'badge-warning'};
+  const l={ACTIVA:'Activa',TRIAL:'Trial',MOROSA:'Morosa',LICENCIA_VENCIDA:'Vencida',LICENCIA_SUSPENDIDA:'Suspendida',SIN_SUSCRIPCION:'Sin suscripcion',CANCELADA:'Cancelada',CUENTA_NO_ACTIVA:'No activa'};
+  return '<span class="badge '+(c[e]||'badge-gray')+'">'+(l[e]||e)+'</span>';
+}
+function loadLicencias(){
+  apiGet('/api/saas/licencias/monitor').then(res=>{
+    if(!res.success||!res.data){showToast(res.error||'Error cargando licencias','error');return;}
+    DB_LICENCIAS=res.data.licencias||[];
+    const r=res.data.resumen||{};
+    const el=id=>document.getElementById(id);
+    if(el('lic-activas'))el('lic-activas').textContent=r.activas||0;
+    if(el('lic-trial'))el('lic-trial').textContent=r.trial||0;
+    if(el('lic-morosas'))el('lic-morosas').textContent=r.morosas||0;
+    if(el('lic-vencidas'))el('lic-vencidas').textContent=r.vencidas||0;
+    if(el('lic-suspendidas'))el('lic-suspendidas').textContent=r.suspendidas||0;
+    if(el('lic-bloqueadas'))el('lic-bloqueadas').textContent=r.bloqueadas||0;
+    renderLicencias();
+  });
+}
+function renderLicencias(){
+  const search=(document.getElementById('licSearch')?document.getElementById('licSearch').value:'').toLowerCase();
+  const filtro=document.getElementById('licEstadoFilter')?document.getElementById('licEstadoFilter').value:'';
+  const filtered=DB_LICENCIAS.filter(l=>{
+    const nombre=(l.EMP_NOMBRE||'').toLowerCase();
+    return (!search||nombre.includes(search))&&(!filtro||l.ESTADO_LICENCIA===filtro);
+  });
+  const tbody=document.getElementById('licenciasTableBody');
+  if(!tbody)return;
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Sin licencias</td></tr>';return;}
+  tbody.innerHTML=filtered.map(l=>{
+    const dias=l.DIAS_RESTANTES;
+    const diasTxt=dias===null||dias===undefined?'—':(dias<0?dias+' d (vencida)':dias+' d');
+    const diasColor=dias===null||dias===undefined?'':(dias<0?'color:var(--danger);font-weight:600;':(dias<=7?'color:var(--warning);font-weight:600;':''));
+    const bloqueo=l.ACCESO_BLOQUEADO?'<span class="badge badge-danger">Bloqueado</span>':'<span class="badge badge-success">OK</span>';
+    const vence=l.SUS_FECHA_FIN?(String(l.SUS_FECHA_FIN).substring(0,10)):'—';
+    const morosaBadge=l.MOROSA?' <span class="badge badge-warning">Mora</span>':'';
+    return '<tr>'+
+      '<td style="padding:10px 12px;">#'+l.EMP_ID+'</td>'+
+      '<td style="padding:10px 12px;"><div style="font-weight:500;">'+(l.EMP_NOMBRE||'-')+'</div><div style="font-size:10px;color:var(--text-muted);">'+(l.EMP_EMAIL||'')+'</div></td>'+
+      '<td style="padding:10px 12px;">'+planBadge(l.PLAN_NOMBRE||l.EMP_PLAN||'STARTER')+'</td>'+
+      '<td style="padding:10px 12px;">'+licEstadoBadge(l.ESTADO_LICENCIA)+morosaBadge+'</td>'+
+      '<td style="padding:10px 12px;">'+vence+'</td>'+
+      '<td style="padding:10px 12px;'+diasColor+'">'+diasTxt+'</td>'+
+      '<td style="padding:10px 12px;">'+(l.ULTIMO_COBRO_FECHA?String(l.ULTIMO_COBRO_FECHA).substring(0,10)+' ('+(l.ULTIMO_COBRO_ESTADO||'?')+')':'—')+'</td>'+
+      '<td style="padding:10px 12px;text-align:center;">'+bloqueo+'</td>'+
+      '<td style="padding:10px 12px;"><div style="display:flex;gap:4px;">'+
+        (l.EMP_ESTATUS==='ACTIVA'
+          ?'<button class="btn btn-ghost btn-sm" onclick="suspendLicencia('+l.EMP_ID+')" title="Suspender licencia" style="color:var(--warning);"><i class="fas fa-ban" style="font-size:10px;"></i></button>'
+          :'<button class="btn btn-ghost btn-sm" onclick="activarLicencia('+l.EMP_ID+')" title="Activar licencia" style="color:var(--success);"><i class="fas fa-play" style="font-size:10px;"></i></button>')+
+        '<button class="btn btn-ghost btn-sm" onclick="viewTenant('+l.EMP_ID+')" title="Detalle"><i class="fas fa-eye" style="font-size:10px;"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+function suspendLicencia(id){
+  if(!confirm('¿Suspender licencia de la empresa #'+id+'? Las apps de choferes y clientes dejaran de operar.'))return;
+  apiPost('/api/saas/tenants/'+id+'/suspend',{}).then(res=>{
+    if(res.success){showToast('Licencia suspendida','success');loadLicencias();}
+    else showToast(res.error||'Error','error');
+  });
+}
+function activarLicencia(id){
+  apiPost('/api/saas/tenants/'+id+'/activate',{}).then(res=>{
+    if(res.success){showToast('Licencia activada','success');loadLicencias();}
+    else showToast(res.error||'Error','error');
   });
 }
 

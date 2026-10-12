@@ -90,7 +90,7 @@ html[data-theme="light"] .toast-info{background:rgba(37,99,235,0.9)}
   <nav style="padding:8px 0;">
     <div class="nav-section"><div class="nav-section-title" data-i18n="saas.nav_overview">Overview</div><div class="nav-item active" data-section="dashboard"><i class="fas fa-chart-pie"></i> <span data-i18n="saas.nav_dashboard">Dashboard</span></div></div>
     <div class="nav-section"><div class="nav-section-title" data-i18n="saas.nav_gestion">Gestion</div><div class="nav-item" data-section="tenants"><i class="fas fa-building"></i> <span data-i18n="saas.nav_tenants">Tenants</span></div><div class="nav-item" data-section="usuarios"><i class="fas fa-users"></i> <span data-i18n="saas.nav_usuarios">Usuarios</span></div><div class="nav-item" data-section="pedidos"><i class="fas fa-box"></i> <span data-i18n="saas.nav_pedidos_global">Pedidos Global</span></div></div>
-    <div class="nav-section"><div class="nav-section-title" data-i18n="saas.nav_revenue">Revenue</div><div class="nav-item" data-section="suscripciones"><i class="fas fa-rotate"></i> <span data-i18n="saas.nav_suscripciones">Suscripciones</span></div><div class="nav-item" data-section="cobros"><i class="fas fa-dollar-sign"></i> <span data-i18n="saas.nav_cobros">Cobros</span></div><div class="nav-item" data-section="planes"><i class="fas fa-tags"></i> <span data-i18n="saas.nav_planes">Planes</span></div></div>
+    <div class="nav-section"><div class="nav-section-title" data-i18n="saas.nav_revenue">Revenue</div><div class="nav-item" data-section="suscripciones"><i class="fas fa-rotate"></i> <span data-i18n="saas.nav_suscripciones">Suscripciones</span></div><div class="nav-item" data-section="cobros"><i class="fas fa-dollar-sign"></i> <span data-i18n="saas.nav_cobros">Cobros</span></div><div class="nav-item" data-section="licencias"><i class="fas fa-shield-halved"></i> <span>Licencias</span></div><div class="nav-item" data-section="planes"><i class="fas fa-tags"></i> <span data-i18n="saas.nav_planes">Planes</span></div></div>
     <div class="nav-section"><div class="nav-section-title" data-i18n="saas.nav_sistema">Sistema</div><div class="nav-item" data-section="soporte"><i class="fas fa-headset"></i> <span data-i18n="saas.nav_soporte">Soporte</span></div><div class="nav-item" data-section="auditoria"><i class="fas fa-clipboard-list"></i> <span data-i18n="saas.nav_auditoria">Auditoria</span></div><div class="nav-item" data-section="config"><i class="fas fa-cog"></i> <span data-i18n="saas.nav_config">Config</span></div></div>
   </nav>
   <div style="padding:16px 20px;border-top:1px solid var(--border-primary);margin-top:8px;">
@@ -315,6 +315,49 @@ html[data-theme="light"] .toast-info{background:rgba(37,99,235,0.9)}
     <div style="margin-top:16px;display:flex;justify-content:flex-end;"><button class="btn btn-primary" onclick="saveSaasConfig()"><i class="fas fa-save" style="font-size:10px;"></i> <span data-i18n="saas.btn_guardar_config">Guardar Config</span></button></div>
   </div>
 </div>
+
+  <!-- ============ LICENCIAS (monitoreo) ============ -->
+  <div class="section" id="section-licencias">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+      <h2 style="font-size:18px;font-weight:600;">Monitoreo de Licencias</h2>
+      <button class="btn btn-primary" onclick="loadLicencias()"><i class="fas fa-sync-alt" style="font-size:10px;"></i> Actualizar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;">
+      <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--success);" id="lic-activas">0</div><div style="font-size:11px;color:var(--text-muted);">Activas</div></div>
+      <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;" id="lic-trial">0</div><div style="font-size:11px;color:var(--text-muted);">Trial</div></div>
+      <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--warning);" id="lic-morosas">0</div><div style="font-size:11px;color:var(--text-muted);">Morosas</div></div>
+      <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--danger);" id="lic-vencidas">0</div><div style="font-size:11px;color:var(--text-muted);">Vencidas</div></div>
+      <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--danger);" id="lic-suspendidas">0</div><div style="font-size:11px;color:var(--text-muted);">Suspendidas</div></div>
+      <div class="kpi-card" style="text-align:center;"><div style="font-size:22px;font-weight:600;" id="lic-bloqueadas">0</div><div style="font-size:11px;color:var(--text-muted);">Sin Acceso</div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <input type="text" class="input" placeholder="Buscar empresa..." style="width:240px;" id="licSearch" oninput="renderLicencias()">
+      <select class="input" style="width:180px;" id="licEstadoFilter" onchange="renderLicencias()">
+        <option value="">Todos los estados</option>
+        <option value="ACTIVA">Activas</option>
+        <option value="TRIAL">Trial</option>
+        <option value="MOROSA">Morosas</option>
+        <option value="LICENCIA_VENCIDA">Vencidas</option>
+        <option value="LICENCIA_SUSPENDIDA">Suspendidas</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table style="width:100%;font-size:12px;">
+        <thead><tr style="border-bottom:1px solid var(--border-primary);color:var(--text-muted);text-transform:uppercase;font-size:10px;letter-spacing:.5px;">
+          <th style="padding:12px;text-align:left;">ID</th>
+          <th style="padding:12px;text-align:left;">Empresa</th>
+          <th style="padding:12px;text-align:left;">Plan</th>
+          <th style="padding:12px;text-align:left;">Estado Lic.</th>
+          <th style="padding:12px;text-align:left;">Vence</th>
+          <th style="padding:12px;text-align:left;">Dias</th>
+          <th style="padding:12px;text-align:left;">Ult. Cobro</th>
+          <th style="padding:12px;text-align:center;">Acceso</th>
+          <th style="padding:12px;text-align:left;">Acciones</th>
+        </tr></thead>
+        <tbody id="licenciasTableBody"><tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
 <!-- MODAL: Nuevo Tenant -->
 <div class="modal-overlay" id="modalNuevoTenant">

@@ -109,6 +109,14 @@ async function request(endpoint, options = {}, authenticated = true, retryOn401 
       } catch {
         errorData = null;
       }
+      // Licencia vencida/suspendida: cerrar sesion en caliente (todas las apps).
+      if (
+        (response.status === 403 || response.status === 401) &&
+        typeof errorData?.code === 'string' &&
+        errorData.code.startsWith('LICENCIA')
+      ) {
+        emitSessionExpired();
+      }
       throw new ApiError(
         errorData?.error || errorData?.message || `Request failed with status ${response.status}`,
         response.status,
