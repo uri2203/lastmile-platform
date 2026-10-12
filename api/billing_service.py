@@ -151,22 +151,31 @@ def suspender_licencia(emp_id, motivo='manual'):
 
 
 def activar_licencia(emp_id, renovar_dias=None):
-    """Reactiva empresa y su suscripcion mas reciente (y opcionalmente extiende FIN)."""
+    """Reactiva empresa y su suscripcion mas reciente.
+
+    Si la suscripcion ya vencio (o no tiene fecha), la renueva por 30 dias
+    (o `renovar_dias` si se indico) para que el activar restaure el acceso real.
+    """
     execute("UPDATE EMPRESAS SET EMP_ESTATUS='ACTIVA' WHERE EMP_ID=?", [emp_id])
     try:
-        if renovar_dias:
-            execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='ACTIVA', "
-                    "SUS_FECHA_FIN=CURRENT_DATE + INTERVAL '%s days', "
-                    "SUS_FECHA_PROXIMO_COBRO=CURRENT_DATE + INTERVAL '%s days' "
-                    "WHERE SUS_ID=(SELECT SUS_ID FROM SAAS_SUSCRIPCIONES WHERE EMP_ID=? "
-                    "ORDER BY SUS_ID DESC LIMIT 1)",
-                    [int(renovar_dias), int(renovar_dias), emp_id])
-        else:
-            execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='ACTIVA' "
-                    "WHERE SUS_ID=(SELECT SUS_ID FROM SAAS_SUSCRIPCIONES WHERE EMP_ID=? "
-                    "ORDER BY SUS_ID DESC LIMIT 1)", [emp_id])
-    except Exception:
-        pass
+        rows = query("SELECT SUS_ID, SUS_FECHA_FIN FROM SAAS_SUSCRIPCIONES "
+                     "WHERE EMP_ID=? ORDER BY SUS_ID DESC LIMIT 1", [emp_id])
+        if rows:
+            sus = rows[0]
+            fin = _parse_fecha(sus.get('SUS_FECHA_FIN'))
+            hoy = datetime.utcnow().date()
+            vencida = (fin is None) or (fin < hoy)
+            if renovar_dias or vencida:
+                dias = int(renovar_dias) if renovar_dias else 30
+                nueva = (hoy + timedelta(days=dias)).isoformat()
+                execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='ACTIVA', "
+                        "SUS_FECHA_FIN=?, SUS_FECHA_PROXIMO_COBRO=? WHERE SUS_ID=?",
+                        [nueva, nueva, sus['SUS_ID']])
+            else:
+                execute("UPDATE SAAS_SUSCRIPCIONES SET SUS_ESTADO='ACTIVA' "
+                        "WHERE SUS_ID=?", [sus['SUS_ID']])
+    except Exception as e:
+        print(f'[WARN] activar_licencia({emp_id}): {e}')
     invalidar_cache_licencia(emp_id)
 
 
