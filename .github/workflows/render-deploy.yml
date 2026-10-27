@@ -1,0 +1,52 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'api/**'
+      - 'render.yaml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          resp=$(curl -sS -w '\n%{http_code}' -X POST \
+            'https://api.render.com/v1/services/srv-d9n4c9fqj5pc73e6schg/deploys' \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d '{"clear_cache": false}')
+          code=$(echo "$resp" | tail -n1)
+          body=$(echo "$resp" | head -n-1)
+          echo "HTTP $code: $body"
+          if [ "$code" != "201" ] && [ "$code" != "200" ]; then
+            echo "Render deploy trigger failed"
+            exit 1
+          fi
+
+      - name: Wait until deploy is live
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          for i in $(seq 1 60); do
+            sleep 10
+            status=$(curl -sS \
+              'https://api.render.com/v1/services/srv-d9n4c9fqj5pc73e6schg/deploys?limit=1' \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['deploy']['status'])")
+            echo "[$((i*10))s] deploy status: $status"
+            case "$status" in
+              live) echo "DEPLOY LIVE"; exit 0 ;;
+              failed|update_failed)
+                echo "Deploy failed"
+                exit 1 ;;
+            esac
+          done
+          echo "Timeout waiting for deploy"
+          exit 1
